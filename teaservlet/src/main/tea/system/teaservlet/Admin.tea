@@ -1,0 +1,106 @@
+<% template Admin(String subTemplate) 
+admin = getTeaServletAdmin()
+if (subTemplate == null) {
+    subTitle = "Administration"
+    subTemplate = "system.teaservlet.About"
+}
+else {
+    subTitle = substring(subTemplate,findLast(subTemplate,".")+1)
+}
+%>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+/*
+Created by Sharon Paine of Dynamic Web Coding
+www.dyn-web.com
+*/
+
+// avoid error of passing event object in older browsers
+if (!document.layers && !document.all) {
+        event = "nope"
+}
+
+function doTooltip(evt,Y,txt) {
+// enclose tip in nested tables for uniform 'tooltip' effect
+// customize here
+var tip = '<TABLE BGCOLOR="#000000" WIDTH="280" CELLSPACING="0" CELLPADDING="1" BORDER="0"><TR><TD><TABLE BGCOLOR="#FFFFCC" WIDTH="100%" CELLSPACING="0" CELLPADDING="4" BORDER="0"><TR><TD CLASS="tip">' + txt  + '</TD></TR></TABLE></TD></TR></TABLE>'
+
+// check for object (i.e., layers or all) 
+// for Netscape 4+
+if (document.layers) {
+    document.tooltip.document.write(tip)
+    document.tooltip.document.close()
+    document.tooltip.left = evt.pageX + 80
+    document.tooltip.top = evt.pageY
+    document.tooltip.visibility = "show"
+}
+// for IE 4+    
+if (document.all) {
+    document.all.tooltip.innerHTML = tip
+    document.all.tooltip.style.pixelLeft = evt.offsetX + 80
+    document.all.tooltip.style.pixelTop = evt.offsetY + (Y*20) + 300
+    document.all.tooltip.style.visibility = "visible"
+ }
+}
+
+function hideTip() {
+if (document.layers) {
+    document.tooltip.visibility = "hide"  
+ }
+
+if (document.all) {
+        document.all.tooltip.style.visibility = "hidden"  
+ }
+}
+//-->
+</SCRIPT>
+<html><head><title>TeaServlet <% subTitle %></title></head>
+<body bgcolor="#ffffff" link="#000066" vlink="333399">
+
+
+<table width="100%" cellspacing="0" cellpadding="4" border="0">
+  <tr bgcolor="#737398">
+    <td align="left">
+      <font size="4" face="Arial" color="#FFFFFF"><b>TeaServlet Administration</b></font> <font size="2" face="Arial" color="#FFFFFF"><b>(<% getRequest().serverName %>)</b></font>
+    </td><td align="right">
+      <font size="2" face="Arial" color="#FFFFFF"><b>TeaServlet <% admin.teaServletVersion %></b></font>
+    </td>
+  </tr>
+    
+    <%firstRow = true
+    foreach (adminLink in admin.adminLinks) {%>
+  <tr>
+    <td <% if (not firstRow) {'colspan="2"'} %> >
+      <font size="2" face="Arial" color="#000000"><b>
+
+    <i><% adminLink.appName '</i> - '  
+    linkCount = adminLink.links.length
+    foreach (link in adminLink.links) {
+        linkCount = linkCount - 1
+        call MenuLink(link.location,link.name) 
+        if (linkCount > 0) {' | '}
+    }%>
+
+      </b></font>
+    </td><% if (firstRow) {%><td align = right>
+      <font size="2" face="Arial" color="#000000"><b>
+      <% call MenuLink("/system/teaservlet/About", "About") %>
+      
+    <td><%
+    firstRow =false}%>
+  </tr>    
+<%}
+'</table><hr>'
+if (admin.clusteredServers != null) {
+    if (admin.clusteredServers.length > 0) {
+         '<font size="2" face="Arial" color="#000000"><b>Known Peers: ' 
+         call ClusterLink(admin)
+        '</b></font><hr>'
+    }
+}
+
+ if (subTemplate != null) {
+    dynamicTemplateCall(subTemplate)
+}%>
+
+</body></html>

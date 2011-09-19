@@ -1,0 +1,108 @@
+<% template LogViewer(String debug, String fullTimestamp, String thread, String logName)
+admin = getTeaServletAdmin()
+debug = debug == "on"
+fullTimestamp = fullTimestamp == "on"
+thread = thread == "on"
+logName = logName == "on"%>
+<form action="Admin" method="GET">
+<input type="hidden" name="subTemplate" value="system.teaservlet.LogViewer">
+Show:
+&nbsp;<input type="checkbox" <%if(debug){'checked'}%> value="on" name="debug">Debug
+&nbsp;<input type="checkbox" <%if(fullTimestamp){'checked'}%> value="on" name="fullTimestamp">Full Timestamp
+&nbsp;<input type="checkbox" <%if(thread){'checked'}%> value="on" name="thread">Threads
+&nbsp;<input type="checkbox" <%if(logName){'checked'}%> value="on" name="logName">Log Names
+&nbsp;<input type="submit" value="Update">
+</form>
+<table width="100%" border="1" cellpadding="2" cellspacing="1">
+  <tr>
+    <td bgcolor="#737398"><font size="2" face="Arial" color="#FFFFFF"><b>Recent Log Events</b></font></td>
+  </tr>
+</table>
+<% if (fullTimestamp) {
+    dateFormat("yyyy/MM/dd HH:mm:ss.SSS z")
+}
+else {
+    dateFormat("HH:mm:ss.SSS")
+}
+//admin.logEvents.length ' events recorded<br>'
+
+foreach (event in admin.logEvents) {
+
+    show = true
+
+    type = event.type
+    if (type == 1) {
+        type = " D"
+        if (not debug) {
+            show = false
+        }
+    }
+    else if (type == 2) {
+        type = " I"
+    }
+    else if (type == 3) {
+        type = "*W"
+    }
+    else {
+        type = "*E"
+    }
+
+    if (show) {
+        line = type & "," & event.timestamp
+        
+        if (thread) {
+            line = line & "," & event.threadName
+        }
+        if (logName) {
+            name = event.logSource.name
+            if (name != null) {
+                line = line & "," & name
+            }
+        }
+        line = line & "> "
+
+		// these brackets won't be replaced by the Clean template
+		OPEN_BRACKET  = "!OPEN_BRACKET!"
+		CLOSE_BRACKET = "!CLOSE_BRACKET!"
+		SPACE         = "!SPACE!"
+		bracketMap = ##(OPEN_BRACKET, "<",
+		                CLOSE_BRACKET, ">",
+		                SPACE, " ")
+        if (event isa org.teatrove.tea.log.TeaLogEvent) {
+        	firstLine = true;
+        	foreach (stackTraceLine in event.lines) {
+				if (firstLine) {
+					firstLine = false
+				}
+				else {
+					line = line & '\n'
+				}
+        		if (stackTraceLine.lineNumber == null) {
+        			line = line & stackTraceLine.line & ""
+        		}
+        		else {
+	        	    line = line & "\tat line " & stackTraceLine.lineNumber & " of template " & stackTraceLine.templateName 
+    	    	           & " [" & OPEN_BRACKET & "a" & SPACE & "href=\"Admin?subTemplate=system.teaservlet.EditTemplates\"" 
+    	    	           & CLOSE_BRACKET & "Edit Template" & OPEN_BRACKET & "/a" & CLOSE_BRACKET & "]"
+				}
+			}
+		}
+		else {
+	        if (event.exception != null) {
+	            line = line & event.exceptionStackTrace
+	        }
+	        else {
+	            line = line & event.message;
+	        }
+		}
+        line = replace(line, "\t", "    ")
+        if (event.type > 2) {
+            '<table width=1000 border="0" cellpadding="0" cellspacing="0" bgcolor=#ffffc0><tr><td>'
+        }
+        '<font face="courier new" size="2">' & replace(call Clean(line), bracketMap) & '</font><br>'
+        if (event.type > 2) {
+            '</td></tr></table>'
+        }
+    }
+   
+}%>

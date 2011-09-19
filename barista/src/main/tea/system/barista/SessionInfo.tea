@@ -1,0 +1,40 @@
+<% 
+template SessionInfo(String handlerName)
+
+    
+    handlers = getBaristaAdmin().httpHandlers
+    foreach (handler in handlers) {
+        if (handler.config.log.name == handlerName) {
+            stages = handler.stages
+            config = handler.config
+            
+            foreach (stage in stages) {
+                if (stage isa org.teatrove.barista.http.HttpServletDispatcher) {
+                    sessions = stage.sessionInfos
+
+                    '<table border="1" cellpadding="2" cellspacing="1">'
+                    '<tr><td bgcolor="#737398" colspan="2"><font size="2" face="Arial" color="#FFFFFF"><b>Session Info</b></font>&nbsp;</td></tr>'
+                    '<tr><td><b>HTTP Handler</b></td><td>' handlerName '</td></tr>'                     
+                    '<tr><td><b>Servlet Dispatcher</b></td><td>'stage.config.log.name'</td></tr>'                    
+                    '<tr><td colspan="2">'sessions.length' Active Session' if (sessions.length != 1) {'s'}'</td></tr>'
+                    '</table><br>'
+                    
+                    if (sessions.length > 0) {
+                        '<table border="1" cellpadding="2" cellspacing="1">'
+                        '<tr><td colspan="3" bgcolor="#737398"><font size="2" face="Arial" color="#FFFFFF"><b>Session Detail</b></font></td></tr>'
+                        '<tr><td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Session ID</font></td>'
+                        '<td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Last Accessed</font></td>'
+                        '<td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Created</font></td></tr>'
+                        foreach (session in sessions) {
+                            '<tr><td>' session.id '</td><td>'
+                            session.lastAccessedDate '</td><td>'
+                            session.creationDate '</td></tr>' 
+                        }
+                        '</table>'                
+                    }                    
+                }
+            }
+        }
+    }   
+
+%>

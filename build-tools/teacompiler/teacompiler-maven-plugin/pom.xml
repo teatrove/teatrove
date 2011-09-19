@@ -1,0 +1,115 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.teatrove</groupId>
+    <artifactId>teacompiler-maven-plugin</artifactId>
+
+    <parent>
+        <groupId>org.teatrove</groupId>
+        <artifactId>teacompiler</artifactId>
+        <version>3.9-SNAPSHOT</version>
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.teatrove</groupId>
+            <artifactId>tea</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.teatrove</groupId>
+            <artifactId>trove</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.teatrove</groupId>
+            <artifactId>teacompiler-api</artifactId>
+            <exclusions>
+                <!-- It is assumed the project will provide TeaServlet -->
+                <exclusion>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>teaservlet</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>tea</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>trove</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+
+    <!-- Project Information -->
+    <name>Tea Compiler Maven Mojo</name>
+    <description>A Maven plugin for compiling Tea templates.</description>
+    <inceptionYear>2008</inceptionYear>
+    <developers>
+        <developer>
+            <id>jacksbrr</id>
+            <name>Brian R. Jackson</name>
+            <email>brian.r.jackson@gmail.com</email>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <!-- Build Settings -->
+    <packaging>maven-plugin</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <target>1.6</target>
+                    <source>1.6</source>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </reporting>
+
+</project>

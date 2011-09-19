@@ -1,0 +1,56 @@
+<% template AdminApplications(String desc)
+admin = getTeaServletAdmin()
+%>
+<table width="100%" border="1" cellpadding="2" cellspacing="1">
+  <tr>
+    <td bgcolor="#737398" colspan="2"><font size="2" face="Arial" color="#FFFFFF"><b>Applications</b></font></td>
+  </tr><tr>
+    <td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Application</font></td>
+    <td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Functions</font></td>
+  </tr>
+  <%
+    // display org.teatrove.teaservlet.HttpContext
+    httpContext = "org.teatrove.teaservlet.HttpContext"
+    '<tr valign="top">'
+    '<td><font face="Arial" size="2">'
+    '<b>Name: </b>&lt;TeaServlet&gt;'
+    '<br><b>Class: </b>org.teatrove.teaservlet.TeaServlet'
+    '<br><b>Context: </b><a href="Admin?subTemplate=system.teaservlet.ContextDetail&context=' httpContext'">' httpContext '</a>'
+    '</font></td><td><font face="Arial" size="2">'
+    info = getHandyClassInfo(httpContext)
+    descriptions = info.teaContextMethodDescriptors
+    foreach (metDesc in descriptions) {
+        call PrintClassLink(metDesc.method.returnType, false)
+        '&nbsp;<b>'call PrintMethodLink(metDesc,1)'</b>(' 
+        call PrintParameterDescriptors(metDesc.method.parameterTypes, metDesc.parameterDescriptors,false)
+        ') '
+        '<br>'
+    }
+    '</font></td>'
+    '</tr>'
+    foreach (app in admin.applications) {
+        '<tr valign="top">'
+        '<td><font face="Arial" size="2">'
+        '<b>Name: </b>' app.name
+        '<br><b>Class: </b>' app.value.class.name
+        contextType = app.contextType
+        if (contextType != null) {
+            '<br><b>Context: </b><a href="Admin?subTemplate=system.teaservlet.ContextDetail&context=' contextType.name'">' contextType.name '</a>'
+        }
+        '</font></td><td><font face="Arial" size="2">'
+        if (contextType == null) {
+            'No functions specified'
+        }
+        else if (app.contextFunctions != null) {
+            foreach (metDesc in app.contextFunctions) {
+                call PrintClassLink(metDesc.method.returnType, false)
+                '&nbsp;<b>'call PrintMethodLink(metDesc,1)'</b>(' 
+                call PrintParameterDescriptors(metDesc.method.parameterTypes, metDesc.parameterDescriptors,false)
+                ') '
+                '<br>'
+            }
+        }
+        '</font></td>'
+        '</tr>'
+    }%>
+</table>

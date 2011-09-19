@@ -1,0 +1,417 @@
+<% template BeanInfo(org.teatrove.toolbox.beandoc.teadoc.ClassDoc classDoc) 
+
+GENERATOR_NAME = "BeanDoc"
+
+beanClassName = classDoc.typeName
+beanClass = beanClassName & ".class"
+beanFullClassName = classDoc.qualifiedTypeName
+beanInfoClassName = classDoc.typeNameForFile & "BeanInfo"
+beanInfoJavaFileName = beanInfoClassName & ".java"
+
+authorNames = classDoc.tagMap["author"]
+authorName = null
+foreach (author in authorNames) {
+    authorName = author.text;
+}
+
+if (authorName == null) {
+    authorName = GENERATOR_NAME
+}
+
+packageStatement = ""
+
+packageName = classDoc.packageName
+if (packageName != null) {    
+    // Create the package statement        
+    packageStatement = "package " & packageName & ";"             
+}
+
+classComment = formatForLiteral(classDoc.commentText)
+
+
+customizerClassNames = classDoc.tagMap["customizer"]
+customizerClass = null
+foreach (customizer in customizerClassNames) {
+    customizerClass = customizer.text;
+}
+
+superclassName = null 
+if (not (classDoc.interface)) {
+    superclass = classDoc.superclass
+    if (superclass != null) {
+        superclassName = superclass.qualifiedTypeName
+    }
+}
+
+
+dateFormat("EEE MMM dd 'at' hh:mm:ss z yyyyy")
+
+generatedMessage = GENERATOR_NAME & " generated on " & currentDate() & "."
+
+//
+//
+// Output starts here...
+//
+//
+
+%>/*
+ * <% beanInfoJavaFileName %>
+ *
+ * <% generatedMessage %>
+ * 
+ * See <% beanClassName %>.java for copyright information.
+ */
+
+<% packageStatement %>
+
+import java.beans.*;
+import java.lang.reflect.*;
+
+import java.util.Vector;
+
+/**
+ * The BeanInfo class describing <% beanClassName %>. 
+ *
+ * @author <% authorName %>
+ */
+public class <% beanInfoClassName %> extends SimpleBeanInfo {
+
+    /** BeanDescriptor returned by the <code>getBeanDescriptor</code> 
+        method */
+    private BeanDescriptor mBeanDescriptor;
+
+    /** BeanInfo array returned by the <code>getAdditionalBeanInfo</code> 
+        method */
+    private BeanInfo[] mAdditionalBeanInfo;
+
+    /** MethodDescriptor array returned by the 
+        <code>getMethodDescriptors</code> method */
+    private MethodDescriptor[] mMethodDescriptors;
+
+    /** PropertyDescriptor array returned by the 
+        <code>getPropertyDescriptors</code> method */
+    private PropertyDescriptor[] mPropertyDescriptors;
+    
+    /** The index of the default property */
+    private int mDefaultPropertyIndex;
+
+
+    /**
+     * Creates a new <% beanInfoClassName %>.
+     */
+    public <% beanInfoClassName %>() {        
+        <%  
+        defaultIndex = -1
+        propertyIndex = 0      
+        foreach (property in classDoc.properties) {
+            if (property.default) {
+                defaultIndex = propertyIndex 
+            }  
+            propertyIndex = propertyIndex + 1  
+        }
+        %>                  
+        mDefaultPropertyIndex = <% defaultIndex %>;
+        
+    }
+     
+    /**
+     * Returns a BeanDescriptor that describes <% beanClassName %>.
+     */    
+    public BeanDescriptor getBeanDescriptor() {
+        
+        if (mBeanDescriptor == null) {
+            mBeanDescriptor = createBeanDescriptor();       
+        }
+
+        return mBeanDescriptor;
+    }
+
+    /**
+     * Returns a BeanInfo array containing BeanInfo object's for:<br><%
+        if (not (superclassName == null)) {%>
+     * <code><% superclassName %></code><br><%
+        }        
+        foreach (interface in classDoc.interfaces) {
+            interfaceName = interface.qualifiedTypeName %>
+     * <code><% interfaceName %></code><br><%
+        }%>      
+     */  
+    public BeanInfo[] getAdditionalBeanInfo() {
+
+        if (mAdditionalBeanInfo == null) {
+            mAdditionalBeanInfo = createAdditionalBeanInfo();       
+        }
+
+        return mAdditionalBeanInfo;
+    }
+
+    /**    
+     * Returns MethodDescriptors that describe the methods of 
+     * <% beanClassName %>.  Call the 
+     * <code>getAdditionalBeanInfo</code> method to get the 
+     * method descriptors of the superclass and interfaces.
+     */ 
+    public MethodDescriptor[] getMethodDescriptors() {
+
+        if (mMethodDescriptors == null) {
+            mMethodDescriptors = createMethodDescriptors();       
+        }
+
+        return mMethodDescriptors;
+    }
+
+    /**    
+     * Returns a PropertyDescriptor array that describes the properties of 
+     * <% beanClassName %>.
+     */ 
+    public PropertyDescriptor[] getPropertyDescriptors() {
+
+        if (mPropertyDescriptors == null) {
+            mPropertyDescriptors = createPropertyDescriptors();     
+        }
+
+        return mPropertyDescriptors;
+    }
+
+    /**
+     * Return the index of the default property.
+     */
+    public int getDefaultPropertyIndex() {
+        return mDefaultPropertyIndex;
+    }
+
+
+    //
+    // Non-public interface
+    //
+
+    // Create the bean descriptor for the bean.
+    private BeanDescriptor createBeanDescriptor() {                        
+        <% if (customizerClass == null) { %>
+        BeanDescriptor bd = 
+            new BeanDescriptor(<% beanClass %>);
+        <%    
+        }
+        else { %>
+        BeanDescriptor bd = 
+            new BeanDescriptor(<% beanClass %>, <% customizerClass %>.class);
+        <% } %>
+        bd.setName("<% beanClassName %>");
+        bd.setDisplayName("<% beanClassName %>");
+        bd.setShortDescription("<% classComment %>");        
+        bd.setValue("<% GENERATOR_NAME %>", "<% getBeanDocVersion() %>");
+        
+        return bd;
+    }
+
+    // Create the additional bean info objects for the bean.
+    private BeanInfo[] createAdditionalBeanInfo() {
+        
+        Vector bis = new Vector();
+        BeanInfo bi = null;                
+        <%
+        if (classDoc.interfaces.length > 0) { %>
+        //
+        // Get the BeanInfo for each interface
+        //          
+        <% 
+        }
+        
+        foreach (interface in classDoc.interfaces) {
+            interfaceName = interface.qualifiedTypeName & ".class" 
+    
+        %>
+        bi = null;
+        try {
+            bi = Introspector.getBeanInfo(<% interfaceName %>);
+        }
+        catch (Throwable t) {
+            t.printStackTrace();
+        }        
+        
+        if (bi != null) {    
+            bis.addElement(bi);
+        }            
+        <%    
+        }                            
+        %><%         
+        if (not (superclassName == null)) {
+            superclass = superclassName & ".class"             
+        %>
+        bi = null;
+        try {
+            // Get the BeanInfo for the superclass
+            bi = Introspector.getBeanInfo(<% superclass %>);
+        }
+        catch (Throwable t) {
+            t.printStackTrace();
+        }        
+        
+        if (bi != null) {    
+            bis.addElement(bi);
+        }                            
+        <%    
+        }        
+        %>                
+        BeanInfo[] additionalBeanInfo = null;
+        if (bis.size() > 0) {
+            additionalBeanInfo = new BeanInfo[bis.size()];
+            bis.copyInto(additionalBeanInfo);
+        }
+        
+        return additionalBeanInfo;
+    }
+
+    // Create the method descriptor objects for the bean.
+    private MethodDescriptor[] createMethodDescriptors() {
+                
+        Class[] paramTypes = null;
+        int paramIndex = 0;  
+        ParameterDescriptor[] paramDescriptors = null;
+        ParameterDescriptor pd = null;
+        
+        Vector mds = new Vector();
+        Method m = null;
+        MethodDescriptor md = null;
+
+        <%
+                
+        methods = classDoc.sortedMethods
+        
+        foreach (method in methods) {
+                        
+            // Only public methods get descriptors                
+            if (method.public and not(method.excluded)) {
+                methodName = method.name
+                methodDescription = getMethodComment(classDoc, method);
+                methodParams = method.parameters
+                paramCount = methodParams.length
+        %>   
+        
+        //
+        // <% methodName %> 
+        //
+        paramTypes = new Class[<% paramCount %>];
+        paramDescriptors = new ParameterDescriptor[<% paramCount %>];
+        paramIndex = 0;        
+        <%      foreach (param in methodParams) {
+                    paramTypeName = param.type.qualifiedTypeName & param.type.dimension
+                    paramName = param.name
+                    paramDescripton = getMethodParamComment(classDoc, method, paramName)
+        %>                
+        paramTypes[paramIndex] = <% paramTypeName %>.class; 
+        pd = new ParameterDescriptor();
+        pd.setName("<% paramName %>");
+        pd.setDisplayName("<% paramTypeName %>"); <%
+        if (paramDescripton != null) { %>
+        pd.setShortDescription("<% paramDescripton %>"); <% } %>
+        paramDescriptors[paramIndex] = pd;        
+        paramIndex++;
+        <% } %>        
+        m = null;
+        try {
+            m = <% beanClass %>.getMethod("<% methodName %>", paramTypes);
+        }
+        catch (Throwable t) {
+            t.printStackTrace();
+        }
+        
+        if (m != null) {
+          
+            md = null;
+                    
+            if (paramDescriptors != null) {
+                md = new MethodDescriptor(m, paramDescriptors);
+            }
+            else {
+                md = new MethodDescriptor(m);    
+            }
+            
+            md.setName("<% methodName %>");
+            md.setDisplayName("<% methodName %>");<%
+            if (methodDescription != null) { %>
+            md.setShortDescription("<% methodDescription %>"); <% } %>  
+            <%       if (method.expert) { %>
+            md.setExpert(true);                               
+            <% }%><% if (method.preferred) { %>
+            //md.setPreferred(true);   setPreferred is a 1.2 addition
+            <% }%><% if (method.hidden) { %>
+            md.setHidden(true);    
+            <% }%>
+            mds.addElement(md);
+        }            
+        <%  
+            } 
+        } 
+        %>       
+                         
+        MethodDescriptor[] methodDescriptors = 
+                                new MethodDescriptor[mds.size()];
+        mds.copyInto(methodDescriptors);
+                
+        return methodDescriptors;
+    }
+
+    // Create the property descriptor objects for the bean.
+    private PropertyDescriptor[] createPropertyDescriptors() {
+        <% 
+        properties = classDoc.sortedProperties 
+        count = properties.length
+        %>                   
+        PropertyDescriptor[] propertyDescriptors = new PropertyDescriptor[<% count %>];
+        PropertyDescriptor pd = null;
+        int propertyIndex = 0;          
+        <%        
+        foreach (property in properties) {
+                        
+            
+            propertyName = property.name
+            propertyDescription = formatForLiteral(property.commentText)   
+            getterName = "null"
+            readMethod = property.readMethod
+            if (not (readMethod == null)) {
+                getterName = "\"" & readMethod.name & "\""   
+            }
+            
+            setterName = "null"            
+            writeMethod = property.writeMethod
+            if (not (writeMethod == null)) {
+                setterName = "\"" & writeMethod.name & "\""   
+            }
+                                 
+        %>  
+        pd = null;
+        try {         
+            pd = new PropertyDescriptor("<% propertyName %>", <% beanClass %>, <% getterName  %>, <% setterName %>);
+        }
+        catch (Throwable t) {
+            t.printStackTrace();
+        }
+        if (pd != null) {    
+            pd.setDisplayName("<% propertyName %>");
+            pd.setShortDescription("<% propertyDescription %>");  
+        <%  if (property.bound) { %>
+            pd.setBound(true);  
+        <%  } %><% if (property.constrained) { %>
+            pd.setConstrained(true);  
+        <%  } %><% if (property.hidden) { %>
+            pd.setHidden(true);            
+        <%  } %><% if (property.preferred) { %>
+            //pd.setPreferred(true);  setPreferred is a 1.2 addition
+        <%  } %><% if (property.expert) { %>
+            pd.setExpert(true);                        
+        <%  } %><% if (not (property.propertyEditorClassName == null)) { %>
+            pd.setPropertyEditorClass(<% property.propertyEditorClassName %>.class);  
+        <%  } %>          
+            propertyDescriptors[propertyIndex] = pd;
+            propertyIndex++;        
+        }
+        <% } %>
+        if (propertyDescriptors.length == 0) {
+            propertyDescriptors = null;    
+        }
+        
+        return propertyDescriptors;
+    }
+
+}

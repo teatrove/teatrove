@@ -1,0 +1,45 @@
+<% template ClusterLink(org.teatrove.teaservlet.TeaServletAdmin admin) 
+
+    count = 0
+    request = getRequest()
+    foreach (name in admin.clusteredServers) {
+        if (count > 0) {
+            ', '
+        }
+        '<a href='request.scheme'://' name 
+        if (not ((request.scheme == "http" and request.serverPort == 80) 
+            or (request.scheme == "https" and request.serverPort == 443))) {
+        
+            ':'request.serverPort
+        }
+        request.requestURI 
+    
+        key = null
+        value = null
+        foreach (param in admin.initParameters) {
+    
+            if (findFirst(param.name, "admin.key") >= 0) {
+                key = param.value
+            }
+            else if (findFirst(param.name, "admin.value") >= 0) {
+                value = param.value
+            }
+            
+            if (key != null and value != null) {
+                break;
+            }
+            
+        }
+        if (request.queryString != null and request.queryString.length > 0) {
+            '?' request.queryString
+            if (key != null and value != null) {
+                '&' key '=' value
+            }
+        }
+        else if (key != null and value != null) {
+                '?' key '=' value
+        }'>' name '</a>'
+        
+        count = count + 1
+    }
+

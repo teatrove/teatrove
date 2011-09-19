@@ -1,0 +1,24 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+         
+    <parent>
+    	<groupId>org.teatrove</groupId>
+        <artifactId>teatrove</artifactId>
+        <version>3.9-SNAPSHOT</version>
+    </parent>    
+
+    <groupId>org.teatrove</groupId>
+    <artifactId>build-tools</artifactId>
+
+    <packaging>pom</packaging>
+
+    <name>Build Tools</name>
+
+    <modules>
+        <module>package-info-maven-plugin</module>
+        <module>teatools</module>
+        <module>toolbox</module>
+        <module>teacompiler</module>
+    </modules>
+</project>

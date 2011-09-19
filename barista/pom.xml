@@ -1,0 +1,240 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.teatrove</groupId>
+    <artifactId>teatrove</artifactId>
+    <version>3.9-SNAPSHOT</version>
+  </parent>
+  
+  <groupId>org.teatrove</groupId>
+  <artifactId>barista</artifactId>
+  <version>3.9-SNAPSHOT</version>
+  
+  <name>Barista</name>
+
+  <description>Barista is a high-performance, easily managed, proprietary Java servlet engine and a package of Java servlets for building and delivering dynamic web pages.</description>
+
+  <developers>
+    
+    <developer>
+      <id>boneill</id>
+      <name>Brian O'Niell</name>
+      <email>bronee@gmail.com</email>
+      <roles>
+        <role>Lead Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+  
+    <developer>
+      <id>reece.wilton</id>
+      <name>Reece Wilton</name>
+      <email></email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    
+    <developer>
+      <id>jonathan.colwell</id>
+      <name>Jonathan Colwell</name>
+      <email></email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    
+    <developer>
+      <id>scott.jappinen</id>
+      <name>Scott Jappinen</name>
+      <email>jappinen@gmail.com</email>
+      <roles>
+        <role>Contributor</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    
+    <developer>
+      <id>guy.molinari</id>
+      <name>Guy Molinari</name>
+      <email></email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    
+    <developer>
+      <id>eearle</id>
+      <name>Erik Earle</name>
+      <email>eearle@disney.com</email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    
+    <developer>
+      <id>sean.treat</id>
+      <name>Sean Treat</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    
+    <developer>
+      <id>tammy.wang</id>
+      <name>Tammy Wang</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+
+  </developers>
+  
+  <dependencies>
+    
+    <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>teaservlet</artifactId>
+      <version>${teaservlet.version}</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <plugin>        
+        <groupId>org.teatrove</groupId>
+        <artifactId>package-info-maven-plugin</artifactId>
+        <version>${package-info-maven-plugin.version}</version>
+        <configuration>
+          <packageRoot>org.teatrove.barista</packageRoot>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>create-package-infos</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <!-- Use a Javadoc doclet to generate BeanInfo classes -->
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.7</version>
+          <inherited>true</inherited>
+          <executions>
+              <execution>
+                  <id>generate-beaninfo</id>
+                  <phase>generate-sources</phase>
+                  <configuration>
+                      <useStandardDocletOptions>false</useStandardDocletOptions>
+                      <reportOutputDirectory>${project.build.directory}/generated-sources/beaninfo
+                      </reportOutputDirectory>
+                      <destDir>.</destDir>
+                      <doclet>org.teatrove.toolbox.beandoc.BeanDocDoclet</doclet>
+                      <docletArtifact>
+                          <groupId>org.teatrove</groupId>
+                          <artifactId>toolbox</artifactId>
+                          <version>${toolbox.version}</version>
+                      </docletArtifact>
+                  </configuration>
+                  <goals>
+                      <goal>javadoc</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
+
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>1.5</version>
+          <executions>
+              <execution>
+                  <id>add-beaninfo-sources</id>
+                  <goals>
+                      <goal>add-source</goal>
+                  </goals>
+                  <configuration>
+                      <sources>
+                          <source>${project.build.directory}/generated-sources/beaninfo</source>
+                      </sources>
+                  </configuration>
+              </execution>
+          </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.teatrove</groupId>
+        <artifactId>teacompiler-maven-plugin</artifactId>
+        <version>${teacompiler.version}</version>
+        <executions>
+          <execution>
+            <id>compile-tea</id>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <force>true</force>
+              <guardian>true</guardian>
+              <context>org.teatrove.barista.admin.UberAdminContext</context>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.teatrove</groupId>
+            <artifactId>tea</artifactId>
+            <version>${tea.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.teatrove</groupId>
+            <artifactId>trove</artifactId>
+            <version>${trove.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <profiles>
+    <profile>
+      <id>tools.jar</id>
+      <activation>
+        <property>
+          <name>java.vendor</name>
+          <value>Sun Microsystems Inc.</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <inherited>true</inherited>
+          <dependencies>
+            <dependency>
+              <groupId>com.sun</groupId>
+              <artifactId>tools</artifactId>
+              <version>1.6</version>
+              <scope>system</scope>
+              <systemPath>${java.home}/../lib/tools.jar</systemPath>
+            </dependency>
+          </dependencies>
+        </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

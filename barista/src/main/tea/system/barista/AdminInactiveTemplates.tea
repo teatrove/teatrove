@@ -1,0 +1,15 @@
+<% template AdminInactiveTemplates()
+admin = getTeaServletAdmin()
+
+    '<table border="1">'
+    '<tr><td bgcolor="#737398" colspan="5"><font size="2" face="Arial" color="#FFFFFF"><b>Inactive Templates (No active transaction queue)</b></font>&nbsp;</td></tr>'    
+    '<tr><th bgcolor="#C2C8D1">Name</th></tr>'
+    foreach (templ in admin.knownTemplates) {
+        queue = getTransactionQueue(templ.name)
+        if (queue == null and not startsWith(templ.name, "system")) {
+            '<tr>'
+            '<td>' & replace(templ.name, '.', '/') & '</td>'
+            '</tr>'
+        }
+    }
+    '</table>'%>

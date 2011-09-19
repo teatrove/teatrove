@@ -1,0 +1,266 @@
+<% template AdminTemplateInfo(String templateName) 
+    callers = getCallers(templateName)
+    info = getTemplateInfo(templateName)
+    request = getRequest()
+    
+    '<table width="100%" border="1" cellpadding="2" cellspacing="1">'
+    '<tr><td bgcolor="#737398" colspan="2"><font size="2" face="Arial" color="#FFFFFF"><b>Template Info for &nbsp;<i><font size=+1>' & info.shortName & '</font></i></b></font></td></tr>'   
+    '<tr><td><b>Last Successful Compile<b></td><td>' & info.lastModifiedDate & '</td></tr>'
+    '<tr><td><b>Return Type<b></td><td>' & formatTypeDesc(info.returnType) & '</td></tr>'
+    tstats = getStatistics(templateName, null)
+    totalTime = 0.0
+    topLevelInvokes = 0
+    if (tstats != null) {
+        totalTime = tstats.averageServiceDuration
+        topLevelInvokes = tstats.servicedCount
+    }
+
+    tsubstats = getStatistics(templateName, "__substitution")
+    if (tsubstats != null) {
+        totalTime = totalTime - tsubstats.averageServiceDuration
+    }
+
+    netTime = totalTime;
+    
+    numberFormat("####0.00")
+    '<tr><td><b><a href="javascript:void(0)" onmouseover="doTooltip(event,1,\'This represents the total template execution time (less any passed in substitution blocks) divided by the top level cumulative invocation counter since the service was started or statistics were reset.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Average Time ms</font></a></td>'
+    '<td>' & totalTime & '</td></tr>'
+    numberFormat("#######")
+    '<tr><td><b><a href="javascript:void(0)" onmouseover="doTooltip(event,2,\'Cumulative count of calls made to this template (also referred to as the top level count) since the time the service was started or statistics were reset.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Cumulative Invokes</font></a></td>'
+    '<td>' & topLevelInvokes & '</td></tr>'
+    '<tr><td colspan=2>'
+        '<table width="70%" border="1" cellpadding="2" cellspacing="1">'
+        '<tr><td bgcolor="#C2C8D1" colspan="2"><font size="2" face="Arial" color="#000000"><b>Parameters:</b></font></td></tr>'   
+        if (info.parameterTypes.length > 1) {
+            foreach (i in 1..info.parameterTypes.length - 1) {
+                '<tr><td>' & formatTypeDesc(info.parameterTypes[i]) & '</td></tr>'
+            }
+        }
+        else {
+            '<tr><td>None.</td></tr>'
+        }
+        '</table>'
+    '</td></tr>'
+    '<tr><td colspan=2>'
+        '<table width="70%" border="1" cellpadding="2" cellspacing="1">'
+        '<tr>'
+        '<td bgcolor="#C2C8D1"><font size="2" face="Arial" color="#000000"><b>This template calls templates:</b></font></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<div ID="tooltip" style="position:absolute; visibility:hidden; z-index:10"></div>'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,3,\'Cumulative count of calls made from this template to the called template since the time the service was started or statistics were reset.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Cumulative Invokes</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,4,\'The cumulative invocations per called template divided by the top level invocation counter.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Per Page Invokes</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,5,\'The execution time of a substitution block passed to a template.  This time may also include the execution times of any other nested blocks.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Sub Block Time</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,6,\'Average execution time in ms.  This is calculated by dividing the cumulative elapsed time of template calls by the invocation count.  If there are multiple calls per page, then this number is multiplied by that count.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Average Time ms</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right"><font size="2" face="Arial" color="#000000">%</font></td>'
+        '</tr>'   
+        if (info.dependents.length != 0) {
+            foreach (j in info.dependents) {
+                i = substring(j, "/org/teatrove/teaservlet/template/".length - 1)
+                '<tr><td>'
+                '<a href="Admin?subTemplate=system.teaservlet.AdminTemplateInfo&templateName=' & replace(i, '/', '.') & '"><b><i>' & i & '</i></b></a></td>'
+                stats = getStatistics(templateName, '_' & replace(i, '/', '.'))
+                blockstats = getStatistics(templateName, '__block__' & replace(i, '/', '.'))
+                if (stats != null) {
+                    perPageInvokes = 0.0
+                    perPageDuration = stats.averageServiceDuration
+                    blockDuration = 0
+                    if (topLevelInvokes != 0) {
+                        perPageInvokes = (stats.servicedCount + 0.0) / (topLevelInvokes + 0.0)
+                        if (blockstats != null) {
+                            blockDuration = blockstats.averageServiceDuration
+                            perPageDuration = perPageDuration - blockDuration
+                            if (perPageDuration < 0) {
+                                perPageDuration = 0
+                            }
+                        }
+                        if (perPageInvokes > 0) {
+                            perPageDuration = perPageDuration * perPageInvokes
+                        }
+                    }
+                    '<td align="right">' & stats.servicedCount & '</td>'
+                    numberFormat("####0.00")
+                    '<td align="right">' & perPageInvokes & '</td>'
+                    '<td align="right">'
+                    if (blockstats != null) {
+                        blockDuration
+                    }
+                    else {
+                        'N/A'
+                    }
+    
+                    '</td>'
+                    '<td align="right">'
+                     numberFormat("####0.00")
+                     perPageDuration
+                     numberFormat("#######")
+                    '</td>'
+                    percent = 0.0
+                    if (totalTime != 0 and perPageInvokes > 0) {
+                        percent = (perPageDuration / totalTime) * 100
+                        netTime = netTime - perPageDuration
+                    }
+                    numberFormat("##0")
+                    '<td align="right">' & percent & '</td>'
+                    numberFormat("#######")
+                }
+                else {
+                    '<td></td><td></td><td></td><td></td>'
+                }
+                
+                '</tr>'
+            }
+        }
+        else {
+            '<tr><td>None.</td></tr>'
+        }
+        '</table>'
+    '</td></tr>'
+    '<tr><td colspan=2>'
+        '<table width="70%" border="1" cellpadding="2" cellspacing="1">'
+        '<tr>'
+        '<td bgcolor="#C2C8D1"><font size="2" face="Arial" color="#000000"><b>This template calls functions:</b></font></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,7,\'The number of times this function call appears in the template source.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000"># Occurs</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,8,\'Cumulative count of calls made from this template to the called function since the time the service was started or statistics were reset.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Cumulative Invokes</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,9,\'The cumulative invocations per called function divided by the top level invocation counter.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Per Page Invokes</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,10,\'The execution time of a substitution block passed to a function.  This time may also include the execution times of any other nested blocks.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Sub Block Time</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right">'
+        '<A href="javascript:void(0)" onmouseover="doTooltip(event,11,\'Average execution time in ms.  This is calculated by dividing the cumulative elapsed time of function calls by the invocation count.  If there are multiple calls per page, then this number is multiplied by that count.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Average Time ms</font>'
+        '</a></td>'
+        '<td bgcolor="#C2C8D1" align="right"><font size="2" face="Arial" color="#000000">%</font></td>'
+        '</tr>'
+        if (info.appMethodsCalled.length != 0) {
+            foreach (j in info.appMethodsCalled) {
+                s = "("
+                foreach (k in j.params) {
+                   p = k & ""
+                   if (findLast(k, "/") != -1) {
+                       p = substring(k, findLast(k, "/") + 1, findLast(k, ";"))
+                   }
+                   s = s & p & ", "
+                }
+                if (j.params != null and j.params.length > 0) {
+                   s = substring(s, 0, s.length - 2)
+                }
+                s = s & ")"
+                '<tr>'
+                '<td>' & call PrintMethodLink(getFunction(replace(j.descriptorStr, '$', '.')).descriptor, 1) & s & '</td><td align="right">' & j.callCount & '</td>'
+                stats = getStatistics(templateName, j.name)
+                blockstats = getStatistics(templateName, "__block_" & j.name)
+                if (stats != null) {
+                    perPageInvokes = 0.0
+                    perPageDuration = stats.averageServiceDuration
+                    blockDuration = 0
+                    if (topLevelInvokes != 0) {
+                        perPageInvokes = (stats.servicedCount + 0.0) / (topLevelInvokes + 0.0)
+                        if (blockstats != null) {
+                            blockDuration = blockstats.averageServiceDuration
+                            perPageDuration = perPageDuration - blockDuration
+                            if (perPageDuration < 0) {
+                                perPageDuration = 0
+                            }
+                        }
+                        if (perPageInvokes > 0) {
+                            perPageDuration = perPageDuration * perPageInvokes
+                        }
+                    }
+                    '<td align="right">' & stats.servicedCount & '</td>' 
+                    numberFormat("####0.00")
+                    '<td align="right">' & perPageInvokes & '</td><td align="right">' 
+                    if (blockstats != null) {
+                        blockDuration
+                    }
+                    else {
+                        'N/A'
+                    }
+                    '</td>'
+                    '<td align="right">'
+                    numberFormat("####0.00")
+                    perPageDuration
+                    numberFormat("#######")
+                    '</td>'
+                    percent = 0.0
+                    if (totalTime != 0 and perPageInvokes > 0) {
+                        percent = (perPageDuration / totalTime) * 100
+                        netTime = netTime - perPageDuration
+                    }
+                    numberFormat("##0")
+                    '<td align="right">' & percent & '</td>'
+                    numberFormat("#######")
+                }
+                else {
+                    '<td></td><td></td><td></td><td></td>'
+                }
+                '</tr>'
+            }
+        }
+        else {
+            '<tr><td colspan="2">None.</td></tr>'
+        }
+        '</table>'
+    '</td></tr>'
+    '<tr><td colspan=2>'
+    
+    
+        '<table width="70%" border="1" cellpadding="2" cellspacing="1">'
+        '<tr><td bgcolor="#C2C8D1" colspan="2">'
+        '<a href="javascript:void(0)" onmouseover="doTooltip(event,12,\'The top level average time less the average times of each template/function called.   This number is completely derived and is an attempt to determine the execution time of the template code itself.   This number does not include substitution block times and may be a negative value due to the fact that per page averages are derived.   This potential skew should be relatively small.  <b><i>Larger negative values could indicate that exceptions are being thrown from this template!</i></b>  Even so, the called template/function call averages and counters are still relevant.\')" onmouseout="hideTip()">'
+        '<font size="2" face="Arial" color="#000000">Net Template Time:</font>'
+        '</a></td>'
+          numberFormat("####0.00")
+          '<td align="right">' & netTime & '</td>'
+          percent = 0.0
+          if (totalTime != 0) {
+              percent = (netTime / totalTime) * 100
+          }
+          numberFormat("##0")
+          '<td align="right">' & percent & '%' & '</td>'
+          numberFormat("#######")
+        '</tr>'   
+        '</table>'
+    '</td></tr>'
+    '<tr><td colspan=2>'
+
+        '<table width="70%" border="1" cellpadding="2" cellspacing="1">'
+        '<tr><td bgcolor="#C2C8D1" colspan="2"><font size="2" face="Arial" color="#000000"><b>This template is called by:</b></font></td></tr>'   
+        if (callers.length != 0) {
+            foreach (i in callers) {
+                '<tr><td>'
+                '<a href="Admin?subTemplate=system.teaservlet.AdminTemplateInfo&templateName=' & replace(i.shortName, '/', '.') & '"><b><i>' & i.shortName & '</i></b></a>'
+                '</td></tr>'
+            }
+        }
+        else {
+            '<tr><td>No callers.</td></tr>'
+        }
+        '</table>'
+    '</td></tr>'
+    
+    '</table>'
+%>
+    

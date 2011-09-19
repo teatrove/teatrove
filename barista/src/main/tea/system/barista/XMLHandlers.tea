@@ -1,0 +1,31 @@
+<% template XMLHandlers()
+
+handlers = getBaristaAdmin().httpHandlers
+foreach (handler in handlers) {
+    stages = handler.stages
+
+    config = handler.config
+    handlerName = config.log.name%>
+    <http_handler name="<%handlerName%>" bind="<%config.serverSocket.inetAddress.hostAddress ':' config.serverSocket.localPort%>">
+    
+    <%
+    call XMLQueues(handlerName, null, null, null, null, null)
+    
+    foreach (stage in stages) {
+        '<stage name="' stage.config.log.name '" class="' stage.class.name '">'
+        if (stage isa org.teatrove.barista.http.HttpServletDispatcher) {            
+            pools = stage.servletPools
+            if (pools.length > 0) {
+                foreach (pool in pools) {
+                    call XMLQueues(handlerName, stage.config.log.name, pool.name, null, null, null)
+                    
+                }
+            }
+        }
+        '</stage>'
+    }
+    '</http_handler>'
+}
+
+
+

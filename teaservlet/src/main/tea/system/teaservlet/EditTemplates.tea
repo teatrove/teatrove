@@ -1,0 +1,41 @@
+<% template EditTemplates() %>
+
+<html>
+
+<head>
+    <META HTTP-EQUIV=Refresh CONTENT="0; URL=Kettle.kpj">
+</head>
+
+<%
+// find project directory
+admin = getTeaServletAdmin()
+ProjectDirectory = null
+if (admin.templatePaths.length > 0) {
+    ProjectDirectory = admin.templatePaths[0];
+}
+%>
+<br>
+<font face="Arial" size="2">
+<b>Edit Templates</b>
+<p>
+The TeaServlet has generated a Kettle project file that will allow you to edit the 
+templates for this service.  Please select "Open" or "Run this program from its current 
+location" in the File Download window that will appear shortly.  If the download does not 
+start automatically, click <a href=Kettle.kpj>here</a>.
+<p>
+<% if (ProjectDirectory != null) {%>
+The templates will be edited in the <% ProjectDirectory %> folder.
+<% }
+else { %>
+<b>Warning!</b> No template folder found.  Please email "<a href=mailto:tea.support@dig.com>#wdig Tea-support</a>" for help.
+<% } %>
+<p>
+<b>Problem Solving</b>
+<p>
+This feature requires Kettle version 4.2.0 or greater.  Download the latest version from 
+the <a href=http://teatrove.org>Central Engineering Web Site</a>.
+<p>
+Email "<a href=mailto:tea.support@dig.com>#wdig Tea-support</a>" if you have any questions.
+</font>
+
+</html>

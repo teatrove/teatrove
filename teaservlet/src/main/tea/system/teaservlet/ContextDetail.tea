@@ -1,0 +1,127 @@
+<% template ContextDetail(String context)
+admin = getTeaServletAdmin()
+
+
+            info = getHandyClassInfo(context)
+%>        
+<H2>
+
+
+<%
+packaged = false
+if (info.package != null) {
+    packaged = true
+    '<FONT SIZE="-1">'info.package'</FONT><BR>'
+}
+info.name
+%></H2>
+<%info.descriptionFirstSentence
+%>
+<!-- ========== METHOD SUMMARY =========== -->
+
+
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+
+<TR BGCOLOR="#C2C8D1">
+
+<TD COLSPAN=2><FONT SIZE="+2">
+
+<B>Method Summary</B></FONT></TD>
+
+</TR> 
+
+    <%descriptions = info.teaContextMethodDescriptors
+    
+    foreach (metDesc in descriptions) {
+        if (metDesc isa java.beans.MethodDescriptor) {
+         
+            '<TR BGCOLOR="white" >'
+            '<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">'
+            '<CODE>&nbsp;' call PrintClassLink(metDesc.method.returnType, true)'</CODE></FONT></TD>'
+            '<TD><CODE><B>'call PrintMethodLink(metDesc,-1)'</B>(' 
+            call PrintParameterDescriptors(metDesc.method.parameterTypes, metDesc.parameterDescriptors,true)')</CODE><BR>'
+            '&nbsp;&nbsp;&nbsp;&nbsp;'
+
+          getFirstSentence(metDesc.shortDescription)
+            
+            '<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+          templateInfo = getMethodCallers(metDesc)
+          if (templateInfo.length > 0) {
+              '<TABLE WIDTH="100%" BORDER="1" CELLSPACING="0"><TR><TD BGCOLOR="#C2C8D1"><FONT SIZE="-2"><b>Calling Templates</b></FONT></TD></TR>'
+              x = 0
+              '<TR><TD>'
+              foreach (t in templateInfo) {
+                i = substring(t.name, "/org/teatrove/teaservlet/template/".length - 1)
+                '<font size="-3"><a href="Admin?subTemplate=system.teaservlet.AdminTemplateInfo&templateName=' & i & '">' & i & '</a></font>'
+                if (x < templateInfo.length - 1) {
+                    ', '
+                }
+                x = x + 1
+              }
+              '</TR></TD>'
+              '</TABLE>'
+          }
+            '</TD>'
+
+        '</TR>'}
+}%>
+</TABLE>
+
+<br>&nbsp;
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#C2C8D1">
+
+<TD ><FONT SIZE="+2">
+
+<B>Method Detail</B></FONT></TD>
+
+</TR></TABLE>
+
+    <%foreach (metDesc in descriptions) {
+        if (metDesc isa java.beans.MethodDescriptor) {
+
+            '<B><H3>'call PrintMethodLink(metDesc,0) metDesc.method.name '</H3></B>'
+            '<CODE>' call PrintClassLink(metDesc.method.returnType, true)'<B>&nbsp;' metDesc.method.name '</B>(' 
+            call PrintParameterDescriptors(metDesc.method.parameterTypes, metDesc.parameterDescriptors,true)')</CODE>'
+            if (metDesc.shortDescription != metDesc.displayName) {
+                '<blockquote>'metDesc.shortDescription
+                    if (metDesc.parameterDescriptors.length > 0) {
+                        '<blockquote><B>Parameters:</B><BR>&nbsp;&nbsp;&nbsp;&nbsp;<CODE>'
+                        foreach (param in metDesc.parameterDescriptors) {
+                            param.name ' - ' param.displayName '<BR>&nbsp;&nbsp;'
+                        }
+                        '</CODE></blockquote>'
+                    }
+                    '<blockquote><B>Returns:</B><BR>&nbsp;&nbsp;&nbsp;&nbsp;<CODE>'
+                        call PrintClassLink(metDesc.method.returnType, false)
+                    '</CODE></blockquote>'
+                    '<blockquote><B>Declared in:</B><BR>&nbsp;&nbsp;&nbsp;&nbsp;<CODE>'
+                        call PrintClassLink(metDesc.method.declaringClass, false)
+                    '</CODE></blockquote>'
+
+                    templateInfo = getMethodCallers(metDesc)
+                    if (templateInfo.length > 0) {
+                        '<blockquote><B>Calling Templates:</B><BR>&nbsp;&nbsp;&nbsp;&nbsp;<CODE>'
+                    
+
+                        x = 0
+                        foreach (t in templateInfo) {
+                          i = substring(t.name, "/org/teatrove/teaservlet/template/".length - 1)
+                          '<a href="Admin?subTemplate=system.teaservlet.AdminTemplateInfo&templateName=' & i & '">' & i & '</a>'
+                          if (x < templateInfo.length - 1) {
+                              ',&nbsp;'
+                          }
+                          x = x + 1
+                        }
+                        '</CODE></blockquote>'
+                    }
+
+                '</blockquote>'
+            '</blockquote>'}
+            '<hr>'}
+
+     
+    }%>
+
+

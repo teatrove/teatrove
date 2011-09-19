@@ -1,0 +1,16 @@
+<% template ContextClassNames() 
+
+// The default context, used in all TeaServlet instances
+contextNames = "org.teatrove.teaservlet.HttpContext;"
+
+admin = getTeaServletAdmin()
+foreach (app in admin.applications) {
+    contextType = app.contextType
+    if (contextType != null) {
+        contextNames = contextNames & contextType.name & ";"
+    }
+}
+
+// Return the semicolon-delimited list of context class names     
+contextNames      
+%>

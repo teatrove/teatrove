@@ -1,0 +1,11 @@
+<% template XMLQueues(String handlerName,
+                        String stageName,
+                        String servletName,
+                        String queueName,
+                        String sort, String sort_r)
+
+data = getTransactionQueueData(handlerName, stageName, servletName, queueName)
+
+foreach (item in data) {
+    call XMLQueue(item)
+}

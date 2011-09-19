@@ -1,0 +1,131 @@
+<% template BeanDescriptions() 
+
+/*
+ * This template is used to add descriptions of standard Java classes.
+ * These classes can't be BeanDoc'd because the classloader security
+ * manager won't allow us to load the BeanInfo classes.
+ *
+ * The descriptions that are in this template have been taken from the
+ * source code of JDK 1.4.1.
+ *
+ * The format of the Map is "className-propertyName".
+ */
+
+// TODO: add java.util.Locale, java.util.Map, etc
+
+##(
+     "java.lang.String-bytes", 
+             "Encodes this String into a sequence of bytes using the platform's default charset, storing the result into a new byte array.",
+
+     "java.lang.String-length", 
+             "Returns the length of this string.  The length is equal to the number of 16-bit Unicode characters in the string.",
+
+     "java.util.Date-date", 
+             "Returns the day of the month represented by this Date object.  " & 
+             "The value returned is between 1 and 31 " & 
+             "representing the day of the month that contains or begins with the " & 
+             "instant in time represented by this Date object, as " & 
+             "interpreted in the local time zone.  ",
+
+     "java.util.Date-day", 
+             "Returns the day of the week represented by this date. The " &
+             "returned value (0 = Sunday, 1 = Monday, " &
+             "2 = Tuesday, 3 = Wednesday, 4 = " &
+             "Thursday, 5 = Friday, 6 = Saturday) " &
+             "represents the day of the week that contains or begins with " &
+             "the instant in time represented by this Date object, " &
+             "as interpreted in the local time zone.",
+
+     "java.util.Date-hours", 
+             "Returns the hour represented by this Date object. The " &
+             "returned value is a number (0 through 23) " &
+             "representing the hour within the day that contains or begins " &
+             "with the instant in time represented by this Date " &
+             "object, as interpreted in the local time zone.",
+
+     "java.util.Date-minutes", 
+             "Returns the number of minutes past the hour represented by this date, " &
+             "as interpreted in the local time zone. " &
+             "The value returned is between 0 and 59.",
+
+     "java.util.Date-month", 
+             "Returns a number representing the month that contains or begins " &
+             "with the instant in time represented by this Date object. " &
+             "The value returned is between 0 and 11, " &
+             "with the value 0 representing January.",
+     
+     "java.util.Date-seconds",
+             "Returns the number of seconds past the minute represented by this date." &
+             "The value returned is between 0 and 61. The " &
+             "values 60 and 61 can only occur on those " &
+             "Java Virtual Machines that take leap seconds into account.",
+
+     "java.util.Date-time", 
+             "Returns the number of milliseconds since January 1, 1970, 00:00:00 GMT " &
+             "represented by this Date object.",
+
+     "java.util.Date-timezoneOffset", 
+             "Returns the offset, measured in minutes, for the local time zone " &
+             "relative to UTC that is appropriate for the time represented by " &
+             "this Date object. " &
+             "<p>" &
+             "For example, in Massachusetts, five time zones west of Greenwich:" &
+             "<blockquote><pre>" &
+             "new Date(96, 1, 14).getTimezoneOffset() returns 300</pre></blockquote>" &
+             "because on February 14, 1996, standard time (Eastern Standard Time) " &
+             "is in use, which is offset five hours from UTC; but:" &
+             "<blockquote><pre>" &
+             "new Date(96, 5, 1).getTimezoneOffset() returns 240</pre></blockquote>" &
+             "because on May 1, 1996, daylight savings time (Eastern Daylight Time) " &
+             "is in use, which is offset only four hours from UTC.<p>",
+
+     "java.util.Date-year",
+             "Returns a value that is the result of subtracting 1900 from the " &
+             "year that contains or begins with the instant in time represented " &
+             "by this Date object, as interpreted in the local " &
+             "time zone.",
+             
+     "java.util.Set-empty",
+             "Returns true if this set contains no elements.",
+             
+     "java.util.Set-length",
+             "Returns the number of elements in this set (its cardinality).  If this " &
+             "set contains more than Integer.MAX_VALUE elements, returns " &
+             "Integer.MAX_VALUE.",
+
+     "java.util.TimeZone-displayName",
+             "Returns a name of this time zone suitable for presentation to the user " &
+             "in the default locale.  " &
+             "This method returns the long name, not including daylight savings.  " &
+             "If the display name is not available for the locale, " &
+             "then this method returns a string in the " &
+             "normalized custom ID format.",
+
+     "java.util.TimeZone-DSTSavings",
+             "Returns the amount of time to be added to local standard time " &
+             "to get local wall clock time." &
+             "<p>" &
+             "The default implementation always returns 3600000 milliseconds " &
+             "(i.e., one hour) if this time zone observes Daylight Saving " &
+             "Time. Otherwise, 0 (zero) is returned." &
+             "<p>" &
+             "If an underlying TimeZone implementation subclass supports " &
+             "historical Daylight Saving Time changes, this method returns " &
+             "the known latest daylight saving value.",
+
+     "java.util.TimeZone-ID",
+             "Gets the ID of this time zone.",
+
+     "java.util.TimeZone-rawOffset",
+             "Returns the amount of time in milliseconds to add to UTC to get " &
+             "standard time in this time zone. Because this value is not " &
+             "affected by daylight saving time, it is called <I>raw " &
+             "offset</I>. " &
+             "<p> " &
+             "If an underlying TimeZone implementation subclass " &
+             "supports historical GMT offset changes, the method returns the " &
+             "raw offset value of the current date. In Honolulu, for example, " &
+             "its raw offset changed from GMT-10:30 to GMT-10:00 in 1947, and " &
+             "this method always returns -36000000 milliseconds (i.e., -10 " &
+             "hours)."
+     )

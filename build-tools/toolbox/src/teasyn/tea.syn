@@ -1,0 +1,55 @@
+;
+; tea.syn
+; 
+; Original author: Mark Masse
+;
+; TextPad syntax definitions for Tea.
+;
+
+C=1
+
+[Syntax]
+Namespace1 = 6
+IgnoreCase = No
+KeyWordLength =
+BracketChars = {[()]}
+OperatorChars = -+*/<>!~%^&|.#=
+PreprocStart = 
+HexPrefix = # 0x
+SyntaxStart = <%
+SyntaxEnd = %>
+CommentStart = /*
+CommentEnd = */
+CommentStartAlt = 
+CommentEndAlt = 
+SingleComment = // 
+SingleCommentCol =
+SingleCommentAlt = 
+SingleCommentColAlt =
+SingleCommentEsc =
+StringsSpanLines = No
+StringStart = " 
+StringEnd = " 
+StringAlt = '
+StringEsc = \
+CharStart = '
+CharEnd = '
+CharEsc = \
+
+
+[Keywords 1]
+null
+true
+false
+not
+or
+and
+if
+else
+isa
+foreach
+in
+reverse
+template
+call
+break

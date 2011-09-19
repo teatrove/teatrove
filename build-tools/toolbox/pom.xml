@@ -1,0 +1,98 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.teatrove</groupId>
+    <artifactId>build-tools</artifactId>
+    <version>3.9-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.teatrove</groupId>
+  <artifactId>toolbox</artifactId>
+  <version>3.9-SNAPSHOT</version>
+  
+  <packaging>jar</packaging>
+
+  <name>Toolbox</name>
+  
+  <description>Toolkit is a collection of classes used during the build process.</description>
+  
+ <dependencies>
+ 
+     <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>trove</artifactId>
+      <version>${trove.version}</version>
+    </dependency>
+    
+     <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>tea</artifactId>
+      <version>${tea.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>1.6.2</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <plugins>
+
+      <plugin>
+        <groupId>org.teatrove</groupId>
+        <artifactId>package-info-maven-plugin</artifactId>
+        <version>${package-info-maven-plugin.version}</version>
+        <configuration>
+          <packageRoot>org.teatrove.toolbox</packageRoot>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>create-package-infos</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    
+      <!-- TODO ADD BACK -->
+        <plugin>
+            <groupId>org.teatrove</groupId>
+            <artifactId>teacompiler-maven-plugin</artifactId>
+            <version>${teacompiler.version}</version>
+            <executions>
+                <execution>
+                    <id>compile-tea</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <force>true</force>
+                        <guardian>true</guardian>
+                        <rootPackage>org.teatrove.toolbox.beandoc.template</rootPackage>
+                        <context>org.teatrove.toolbox.beandoc.BeanDocContext</context>
+                    </configuration>
+                </execution>
+            </executions>
+            <dependencies>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>tea</artifactId>
+                    <version>${tea.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>trove</artifactId>
+                    <version>${trove.version}</version>
+                </dependency>
+            </dependencies>
+        </plugin>
+    </plugins>
+
+  </build>
+
+</project>

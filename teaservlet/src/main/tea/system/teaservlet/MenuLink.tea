@@ -1,0 +1,14 @@
+<% template MenuLink(String location, String text)
+req = getRequest()
+if (startsWith(location,"/")) {
+    location = substring(location,1)
+}
+location = replace(location,"/",".")
+if (findLast(req.queryString, location) >= 0) {
+    '<b>' & text & '</b>'
+}
+else {
+   
+    '<a href="'req.requestURI'?subTemplate=' & location & '"><b>' & text & '</b></a>'
+}
+%>

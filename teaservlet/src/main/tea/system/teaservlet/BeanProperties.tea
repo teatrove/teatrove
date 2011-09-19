@@ -1,0 +1,59 @@
+<% template BeanProperties(String bean)
+    info = getHandyClassInfo(bean)
+    
+    if ((info == null) or (info.type == null)) {
+        'Bean class not found: ' bean
+    }
+    else {        
+        props = info.teaBeanPropertyDescriptors
+        
+        '<table border="1" cellpadding="2" cellspacing="1">'
+        '<tr><td bgcolor="#737398" colspan="3">'
+        '<font size="2" face="Arial" color="#FFFFFF">'
+        'Properties of <b>' info.fullName '</font></td></tr>'
+
+        
+        if (info.description != "") {
+            '<tr><td bgcolor="#C2C8D1" colspan="3" align="left"><font color="#000000" face="Arial" size="2">'
+            'Description </font></td></tr>'
+            '<tr><td bgcolor="#FFFFFF" colspan="3" align="left"><font color="#000000" face="Arial" size="2">'
+            info.description
+            '</font></td></tr>'
+        }        
+        
+        '<tr><td bgcolor="#C2C8D1" align="center"><font color="#000000" face="Arial" size="2">Type</font></td><td bgcolor="#C2C8D1" align="center"><font color="#000000" face="Arial" size="2">Name</font></td><td bgcolor="#C2C8D1" align="center"><font color="#000000" face="Arial" size="2">Description</font></td></tr>'
+        foreach (property in props) {
+            if(property isa java.beans.PropertyDescriptor) {
+                
+                if (property isa org.teatrove.tea.util.KeyedPropertyDescriptor) {
+                    propertyType = property.keyedPropertyType;
+                }
+                else {
+                    propertyType = property.propertyType;
+                }
+                
+                if (propertyType != null) {
+                    descriptions = call BeanDescriptions()
+                    descName = info.fullName & "-" & property.name                                     
+                    if (descriptions[descName] != null) {
+                        description = descriptions[descName]
+                    }                                                         
+                    else {
+                        description = property.shortDescription
+                    }
+                    if (description == property.name) {
+                        description = "&nbsp;"
+                    }
+                    
+                    '<tr><td align="right"><font color="#000000" face="Arial" size="2">'
+                    call PrintClassLink(propertyType, true) '</font></td>'
+                    '<td><font color="#000000" face="Arial" size="2">'
+                    property.name '</font></td>'
+                    '<td><font color="#000000" face="Arial" size="2">'
+                    description'</font></td></tr>'
+                }
+                
+            }
+        }
+        '</table>'
+    }%>

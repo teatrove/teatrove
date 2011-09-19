@@ -1,0 +1,287 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.teatrove</groupId>
+    <artifactId>teatrove</artifactId>
+    <version>3.9-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.teatrove</groupId>
+  <artifactId>teaservlet</artifactId>
+  <version>3.9-SNAPSHOT</version>
+  
+  <packaging>jar</packaging>
+
+  <name>TeaServlet</name>
+  
+  <description>The TeaServlet is a template engine that works with the Tea template language.</description>
+
+  <developers>
+  
+    <developer>
+      <id>reece.wilton</id>
+      <name>Reece Wilton</name>
+      <email></email>
+      <roles>
+        <role>Lead Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+  
+    <developer>
+      <id>boneill</id>
+      <name>Brian O'Niell</name>
+      <email>bronee@gmail.com</email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    
+    <developer>
+      <id>jonathan.colwell</id>
+      <name>Jonathan Colwell</name>
+      <email></email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    
+    <developer>
+      <id>scott.jappinen</id>
+      <name>Scott Jappinen</name>
+      <email>jappinen@gmail.com</email>
+      <roles>
+        <role>Contributor</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    
+    <developer>
+      <id>guy.molinari</id>
+      <name>Guy Molinari</name>
+      <email></email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    
+    <developer>
+      <id>eearle</id>
+      <name>Erik Earle</name>
+      <email>eearle@disney.com</email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+
+  </developers>
+  
+  <dependencies>
+
+    <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>trove</artifactId>
+      <version>${trove.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>tea</artifactId>
+      <version>${tea.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>teatools</artifactId>
+      <version>${teatools.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.3</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>1.6.2</version>
+    </dependency>
+
+      <!-- Here only to make sure the reactor orders the build of toolbox before teaservlet -->
+      <dependency>
+        <groupId>org.teatrove</groupId>
+        <artifactId>toolbox</artifactId>
+        <version>${toolbox.version}</version>
+          <scope>provided</scope>
+      </dependency>
+
+
+  </dependencies>
+  
+  <build>
+    <plugins>
+
+      <!-- this plugin is bound to the "generate-sources" phase -->
+      <!-- creates updated PackageInfo.java files for the project -->
+      <plugin>        
+        <groupId>org.teatrove</groupId>
+        <artifactId>package-info-maven-plugin</artifactId>
+        <version>${package-info-maven-plugin.version}</version>
+        <configuration>
+          <packageRoot>org.teatrove.teaservlet</packageRoot>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>create-package-infos</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+        <!-- Use a Javadoc doclet to generate BeanInfo classes -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.7</version>
+            <executions>
+                <execution>
+                    <id>generate-beaninfo</id>
+                    <phase>generate-sources</phase>
+                    <configuration>
+                        <useStandardDocletOptions>false</useStandardDocletOptions>
+                        <reportOutputDirectory>${project.build.directory}/generated-sources/beaninfo
+                        </reportOutputDirectory>
+                        <destDir>.</destDir>
+                        <doclet>org.teatrove.toolbox.beandoc.BeanDocDoclet</doclet>
+                        <docletArtifact>
+                            <groupId>org.teatrove</groupId>
+                            <artifactId>toolbox</artifactId>
+                            <version>${toolbox.version}</version>
+                        </docletArtifact>
+                    </configuration>
+                    <goals>
+                        <goal>javadoc</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+                <execution>
+                    <id>add-beaninfo-sources</id>
+                    <goals>
+                        <goal>add-source</goal>
+                    </goals>
+                    <configuration>
+                        <sources>
+                            <source>${project.build.directory}/generated-sources/beaninfo</source>
+                        </sources>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
+		<!-- TODO Add back in -->
+        <plugin>
+            <groupId>org.teatrove</groupId>
+            <artifactId>teacompiler-maven-plugin</artifactId>
+            <version>${teacompiler.version}</version>
+            <executions>
+                <execution>
+                    <id>compile-tea</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <force>true</force>
+                        <guardian>true</guardian>
+                        <context>org.teatrove.teaservlet.AdminHttpContext</context>
+                    </configuration>
+                </execution>
+            </executions>
+            <dependencies>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>tea</artifactId>
+                    <version>${tea.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>trove</artifactId>
+                    <version>${trove.version}</version>
+                </dependency>
+            </dependencies>
+        </plugin>
+
+        <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>rmic-maven-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+            <id>rmic-process-classes</id>
+            <goals>
+              <goal>rmic</goal>
+            </goals>
+            <configuration>
+              <includes>
+                  <include>org.teatrove.teaservlet.util.cluster.ClusterHook</include>
+                  <include>org.teatrove.teaservlet.util.cluster.TeaServletClusterHook</include>
+                  <include>org.teatrove.teaservlet.RegionCachingApplication$ClusterCacheInfoImpl</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+  <!-- Only activate the tools.jar dependency for Sun JDKs (aka everything but Mac OS) 
+ 	   http://docs.codehaus.org/display/MAVENUSER/Running+ant+tasks+that+use+the+JDK
+  -->
+
+  <profiles>
+        <profile>
+            <id>tools.jar</id>
+            <activation>
+                <property>
+                    <name>java.vendor</name>
+                    <value>Sun Microsystems Inc.</value>
+                </property>
+            </activation>
+            <build>
+              <plugins>
+              <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <inherited>true</inherited>
+                <dependencies>
+                  <dependency>
+                    <groupId>com.sun</groupId>
+                    <artifactId>tools</artifactId>
+                    <version>1.6</version>
+                    <scope>system</scope>
+                    <systemPath>${java.home}/../lib/tools.jar</systemPath>
+                  </dependency>
+                </dependencies>
+              </plugin>
+              </plugins>
+            </build>
+        </profile>
+  </profiles>
+
+</project>

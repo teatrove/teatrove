@@ -1,0 +1,13 @@
+<% template ContextPrefixNames() 
+
+// The default context name, used in all TeaServlet instances
+contextNames = "null;"
+
+admin = getTeaServletAdmin()
+foreach (app in admin.applications) {    
+    contextNames = contextNames & app.contextPrefixName & ";"
+}
+
+// Return the semicolon-delimited list of context class names     
+contextNames      
+%>

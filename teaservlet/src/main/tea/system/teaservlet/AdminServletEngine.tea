@@ -1,0 +1,39 @@
+<% template AdminServletEngine() 
+
+admin = getTeaServletAdmin()%>
+
+<table width="100%" border="1" cellpadding="2" cellspacing="1">
+  <tr>
+    <td bgcolor="#737398" colspan="2"><font size="2" face="Arial" color="#FFFFFF"><b>Servlet Engine</b></font></td>
+  </tr><tr>
+    <td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Item</font></td>
+    <td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Version</font></td>
+  </tr><tr>
+    <td><font face="Arial" size="2"><b>Servlet Engine</b></font></td>
+    <td><font face="Arial" size="2"><%admin.servletContext.serverInfo%></font></td>
+  </tr><tr>
+    <td><font face="Arial" size="2"><b>Servlet API</b></font></td>
+    <td><font face="Arial" size="2"><%admin.servletContext.majorVersion & "." & admin.servletContext.minorVersion%></font></td>
+  </tr><tr>
+    <td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Attribute</font></td>
+    <td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Value</font></td>
+  </tr>        
+  <%foreach (attribute in admin.attributes) {%>
+  <tr>
+    <td><font face="Arial" size="2"><b><%attribute.name%></b></font></td>
+    <td><font face="Arial" size="2"><%attribute.value%></font></td>
+  </tr>        
+  <%}%>
+  <tr>
+    <td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Initialization Parameter</font></td>
+    <td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Value</font></td>
+  </tr>        
+  <%foreach (param in admin.initParameters) {%>
+    <%if (findFirst(param.name, "password") < 0) {%>
+    <tr>
+      <td><font face="Arial" size="2"><b><%param.name%></b></font></td>
+      <td><font face="Arial" size="2"><%param.value%></font></td>
+    </tr>        
+    <%}%>
+  <%}%>
+</table>

@@ -1,0 +1,385 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 9">
+<meta name=Originator content="Microsoft Word 9">
+<link rel=File-List href="./TextPadToolParameterMacros_files/filelist.xml">
+<title>Tool Parameter Macros</title>
+<!--[if gte mso 9]><xml>
+ <o:DocumentProperties>
+  <o:Author>Mark Masse</o:Author>
+  <o:LastAuthor>Mark Masse</o:LastAuthor>
+  <o:Revision>4</o:Revision>
+  <o:TotalTime>3</o:TotalTime>
+  <o:Created>2001-10-19T22:11:00Z</o:Created>
+  <o:LastSaved>2001-10-19T22:12:00Z</o:LastSaved>
+  <o:Pages>2</o:Pages>
+  <o:Words>481</o:Words>
+  <o:Characters>2747</o:Characters>
+  <o:Company>TeaTrove.org</o:Company>
+  <o:Lines>22</o:Lines>
+  <o:Paragraphs>5</o:Paragraphs>
+  <o:CharactersWithSpaces>3373</o:CharactersWithSpaces>
+  <o:Version>9.3821</o:Version>
+ </o:DocumentProperties>
+</xml><![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+@font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:2;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+ /* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	color:windowtext;}
+h1
+	{margin-right:0in;
+	mso-margin-top-alt:auto;
+	mso-margin-bottom-alt:auto;
+	margin-left:0in;
+	mso-pagination:widow-orphan;
+	mso-outline-level:1;
+	font-size:24.0pt;
+	font-family:"Times New Roman";
+	color:black;
+	mso-font-kerning:18.0pt;
+	font-weight:bold;}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;
+	text-underline:single;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;
+	text-underline:single;}
+p
+	{margin-right:0in;
+	mso-margin-top-alt:auto;
+	mso-margin-bottom-alt:auto;
+	margin-left:0in;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	color:black;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+@list l0
+	{mso-list-id:1849640713;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-1348304022 323017624 -479057320 -860422966 -1682270282 -1604022532 -657828478 -856016256 -1325730432 -681426586;}
+@list l0:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+ol
+	{margin-bottom:0in;}
+ul
+	{margin-bottom:0in;}
+-->
+</style>
+</head>
+
+<body lang=EN-US link=blue vlink=purple style='tab-interval:.5in'>
+
+<div class=Section1>
+
+<h1>TextPad Tool Parameter Macros<o:p></o:p></h1>
+
+<p>Programs that you add to the Tools Menu can be started with context
+dependent information using parameter macros. These can be specified in the
+&quot;Command&quot;, &quot;Parameters&quot; and &quot;Initial Directory&quot;
+fields of the Tools dialog box, and in the Run and Tool Parameters dialog
+boxes. The following macros are defined:<o:p></o:p></p>
+
+<table border=0 cellpadding=0 style='mso-cellspacing:1.5pt' cols=2>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal><b>Macro Name</b><span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal><b>Expanded String</b><span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$File<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The fully qualified filename of the current document.<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$DOSFile<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Same as $File, except that DOS aliases are substituted for
+  any long names in the path, and characters are converted to the DOS (OEM)
+  code set.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$UNIXFile<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Same as $File, except any '\' characters are changed to
+  '/'.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$FileName<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The simple filename of the current document.<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$BaseName<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$FileName, stripped of any extension.<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$DOSBaseName<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Same as $BaseName, except that the DOS alias is
+  substituted for a long file name, and characters are converted to the DOS
+  (OEM) code set.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$WspBaseName<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The workspace filename, stripped of any path and
+  extension.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$FileDir<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The drive and directory of the current document.<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$WspDir<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The drive and directory of the current workspace file.<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$FilePath<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The directory of the current document, stripped of the
+  drive.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$UNIXPath<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Same as $FilePath, except any '\' characters are changed
+  to '/'.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$Dir<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The current working drive and directory.<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$UNIXDir<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Same as $Dir, except any '\' characters are changed to
+  '/'.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$Line<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The cursor line within the current document<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$Col<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The cursor column within the current document<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$Prompt<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Prompt for a parameter to substitute for
+  &quot;$Prompt&quot;. If it is followed by a string in brackets, that string
+  will be displayed in the prompt dialog box. E.g. $Prompt(Enter user name:).<span
+  style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$Password<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Prompt for a parameter to substitute for &quot;$Password
+  &quot;. The parameter will not be echoed as it is typed If it is followed by
+  a string in brackets, that string will be displayed in the prompt dialog box.
+  E.g. $Password(Enter password:).<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$Sel<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Selected text in the active document. This is limited to
+  the first line in a multiple-line selection.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$SelLine<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The text on the line containing the cursor. This has the
+  side effect of selecting that line.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$SelWord<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The word containing the cursor. This has the side effect
+  of selecting that word.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$Clip<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>Selected text in the active document, or the whole
+  document if nothing is selected, is copied to the clipboard before running
+  the tool. (This is not a real parameter, in that nothing is substituted in
+  the command line.)<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$AppWnd<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The handle of the main application window. This is a
+  decimal number.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width="23%" valign=top style='width:23.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>$DocWnd<span style='color:black'><o:p></o:p></span></p>
+  </td>
+  <td width="77%" valign=top style='width:77.0%;padding:.75pt .75pt .75pt .75pt'>
+  <p class=MsoNormal>The handle of the active document's window. This is a
+  decimal number.<span style='color:black'><o:p></o:p></span></p>
+  </td>
+ </tr>
+</table>
+
+<p class=MsoNormal><span style='color:black'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p><b>Notes:</b><o:p></o:p></p>
+
+<ul type=disc>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo1;tab-stops:list .5in'>An empty string replaces any
+     macro that is inappropriate in the current context. <o:p></o:p></li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo1;tab-stops:list .5in'>Macros can be in any case
+     (eg. $File == $file == $FILE). <o:p></o:p></li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo1;tab-stops:list .5in'>The macro name can be
+     bracketed to delimit it from subsequent text. (eg. $(Sel)ection), except
+     for $Prompt and $Password. <o:p></o:p></li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo1;tab-stops:list .5in'>If a filename macro contains
+     spaces when expanded, it will automatically be quoted. <o:p></o:p></li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo1;tab-stops:list .5in'><i>Fully qualified </i>is
+     defined to mean drive + path from the root of that drive (e.g.
+     C:\WINDOWS\WIN.INI). <o:p></o:p></li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo1;tab-stops:list .5in'>In any expression using
+     macros, a non-alphabetic character, or the end of line must terminate each
+     macro. <o:p></o:p></li>
+ <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;
+     mso-list:l0 level1 lfo1;tab-stops:list .5in'>If a tool uses any of the
+     macros $File, $FileName, $UNIXFile or $DOSFile, the active document will
+     be saved prior to running the tool. <o:p></o:p></li>
+</ul>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+</div>
+
+</body>
+
+</html>

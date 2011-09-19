@@ -1,0 +1,295 @@
+<% template AdminTemplates()
+
+// if we get hit directly then redirect back through
+// the main admin page.  this makes it much nicer
+// for Kettle users! (am i the only one left?)
+if (endsWith(getRequest().requestURI, "Templates")) {
+    uri = "Admin?subTemplate=system.teaservlet.AdminTemplates"
+    parameters = getRequest().parameters
+    foreach (param in parameters.names) {
+        uri = uri & "&" & param & "=" & parameters[param]
+    }
+    sendRedirect(uri)
+}
+else {
+    admin = getTeaServletAdmin()
+    request = getRequest()
+    reloadResult = getCompilationResults()
+
+    if (reloadResult != null) {
+        alreadyLoading = reloadResult.alreadyReloading
+        errors = reloadResult.allTemplateErrors
+        compiled = reloadResult.reloadedTemplateNames
+    }
+    else {
+        alreadyLoading = false
+        errors = null
+        compiled = null
+    }
+    if (request.parameters["sort"] != null and request.parameters["sort"] != "") { 
+        setTemplateOrdering(request.parameters["sort"])
+    }
+    templates = admin.knownTemplates
+    reloadTime = admin.timeOfLastReload
+
+/*********************
+RECOMPILE SECTION 
+*********************/
+
+    if(request.parameters["findUpdates"] != "true") {
+%>
+
+<div style="height: 50; "> 
+<!-- COMPILE CHANGES -->
+<div style="position: absolute;">
+        <form id="compileForm" action="<%request.requestURI%>" method="post"> 
+        <input type="submit" value="Compile Changes" style="width: 140px; ">
+        <input type="submit" value="Compile All" style="width: 100px;"
+            onclick="document.getElementById('compileForm').reloadTemplates.value='all';">
+        <input type="hidden" name="subTemplate" value="system.teaservlet.AdminTemplates">
+        <input type="hidden" name="reloadTemplates" value="changes"> 
+<%
+        if (admin.clusteredServers != null) {
+            if (admin.clusteredServers.length > 0) {
+                '<div style="position: relative; top: 10;"><input type="checkbox" name="cluster" value="true">Apply to cluster</div>'
+            }
+        }
+%>
+        </form>
+</div>
+
+<!-- SHOW SELECTIVE COMPILE -->
+<div style="position: absolute; left: 280px;" >
+        <form action="<%request.requestURI%>" method="post" >
+            <input type="submit" value="Choose Templates" style="width: 140px; ">
+            <input type="hidden" name="findUpdates" value="true" >
+            <input type="hidden" name="subTemplate" value="system.teaservlet.AdminTemplates">
+        </form>
+</div>
+
+<!-- VALIDATE CHANGES -->
+<div  style="position: absolute; left: 450px">
+        <form id="validateForm" action="<%request.requestURI%>" method="post">
+            <input type="submit" value="Validate Changes" style="width: 140px; "> 
+            <input type="submit" value="Validate All" style="width: 100px; " 
+                onclick="document.getElementById('validateForm').testCompile.value='all';"> 
+            <input type="hidden" name="testCompile" value="changes"> 
+            <input type="hidden" name="subTemplate" value="system.teaservlet.AdminTemplates">
+        </form>
+</div>
+</div>
+
+<% 
+    } else {
+        /*********************
+        SHOW SELECTIVE RECOMPILE FORM
+        *********************/
+        call system.teaservlet.SelectiveReload(admin, reloadResult)
+    }
+%>
+
+
+
+
+
+<br>
+<hr>
+<%
+
+
+/*********************
+RESULTS SECTION
+*********************/
+
+if(request.parameters["testCompile"] == "changes" or request.parameters["testCompile"] == "all" ) {
+%>
+    <font size="2" face="Arial" color="#000000">
+        <b>Note:</b>
+        Template validation verifies that template sources can compile or 
+        displays the errors that would preventing them from compiling. <br>
+        Running template validation does not compile anything and does not change live templates! 
+    </font><br><br>
+<%
+    reloadResult = checkTemplates(request.parameters["testCompile"] == "all")
+}
+
+call system.teaservlet.ReloadResults(reloadResult)
+
+
+/*********************
+SERVER STATS SECTION
+*********************/
+
+    path = request.requestURI
+    extension = ""
+    
+    if (request.pathInfo != null) {
+        index = findFirst(path, request.pathInfo)
+    }
+    else { 
+        // look for any extensions like ".tea"
+        index = findLast(path, ".") 
+        if (index >= 0) {
+            extension = substring(path, index)
+            path = substring(path, 0, index)        
+        }
+        index = 0 
+    }
+         
+    if (index >= 0) {
+        path = substring(path, 0, index)
+    }
+    path = path & '/'
+
+%>
+
+    <br/>
+    <form action="<%request.requestURI%>" method="post">
+    <input type="submit" value="Reset Stats">&nbsp;&nbsp;&nbsp;
+    <input type="hidden" name="subTemplate" value="system.teaservlet.AdminTemplates">
+    <input type="hidden" name="resetStatistics">
+    </form>
+<%    
+    if (request.parameters["resetStatistics"] != null) {
+        '<font face="Arial" size="2">Statistics have been reset</font>'
+    }
+
+    serverStats = getReloadStatusOfServers()
+    if (serverStats.length > 0) {
+        '<font face="Arial" size="2">'
+        foreach (status in serverStats) {
+            status.serverName ' - '
+            if (status.statusCode >= 300) {
+                '(' status.statusCode ') - <b>' status.message '</b>'
+            }
+            else {
+                status.message
+            }
+            '<p>'   
+        }
+        '</font>'
+    } 
+
+    if (request.parameters["useTable"] != "false") {%>
+    
+    <table width="100%" border="1" cellpadding="2" cellspacing="1">
+      <tr>
+        <td width="50%" bgcolor="#737398"><font size="2" face="Arial" color="#FFFFFF"><b>
+        <%if (templates == null) {
+        'No'
+        }
+        else {
+            templates.length
+        } 
+        '&nbsp;Known Templates&nbsp;&nbsp;|&nbsp;&nbsp;'
+        if (reloadTime == null) {
+            'no reloads since system startup.'
+        }
+        else {
+            'last reload: ' reloadTime
+        }
+        '</b></font></td><td bgcolor="#737398"/><td bgcolor="#737398"/><td bgcolor="#737398"/>'
+        '<td width="50%" bgcolor="#737398" align="right">'
+            '<a href="'request.requestURI '?subTemplate=system.teaservlet.EditTemplates'  
+            '"><font size="2" face="Arial" color="#FFFFFF"><b>Edit Templates</b></font></a>'
+            '<font size="2" face="Arial" color="#FFFFFF"> | </font>'
+            '<a href="'request.requestURI '?subTemplate='  
+            request.parameters["subTemplate"]
+            '&useTable=false"><font size="2" face="Arial" color="#FFFFFF"><b>Hide Parameters</b></font></a>'
+            '</td>'
+      '</tr>'
+      '<tr>'
+        '<td width="50%" align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">'
+        '<a href="' & request.requestURI & '?subTemplate=system.teaservlet.AdminTemplates' & 
+        '&sort=name">Template</font></a></td>'
+        '<td width="10%" align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">'
+        '<a href="' & request.requestURI & '?subTemplate=system.teaservlet.AdminTemplates' & 
+        '&sort=templateTime-">Time (ms)</font></a></td>'
+        '<td width="5%" align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">'
+        '<a href="' & request.requestURI & '?subTemplate=system.teaservlet.AdminTemplates' & 
+        '&sort=templateInvokes-">Invokes</font></a></td>'
+        '<td width="5%" align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">'
+        '<a href="' & request.requestURI & '?subTemplate=system.teaservlet.AdminTemplates' & 
+        '&sort=weight-">Weight&nbsp;(%)</font></a></td>'
+        '<td width="35%" align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Parameters</font></td>'
+      '</tr>'        
+
+        count = 1       
+        foreach (tea in templates) {
+
+            // create a new table every 50 templates
+            if (count % 50 == 0) {
+                %> </table>
+                   <table width="100%" border="1" cellpadding="2" cellspacing="1">
+                <%            
+            }
+            count = count + 1
+           
+            uri = path & replace(tea.name, '.', '/') & extension
+            infoUri = "Admin?subTemplate=system.teaservlet.AdminTemplateInfo" &
+                "&templateName=" & tea.name
+            
+      %>
+      <tr>
+        <td width="50%"><font face="Arial" size="2"><b><a href="<%uri%>"><%uri%></a>&nbsp;
+        <%
+            if (isTemplateRepositoryEnabled()) {
+                numberFormat("#####.00")
+                '<font size=-2><a href="' & infoUri & '">[Info]</a></font>'
+                '<td width="10%" align="right"><font face="Arial" size="2">' 
+                '<a href="' & infoUri & '">' & tea.templateTime & '</a></td>'
+                '<td width="5%" align="right"><font face="Arial" size="2">' 
+                numberFormat("########")
+                '<a href="' & infoUri & '">' & tea.templateInvokes & '</a></td>'
+                '<td width="5%" align="right"><font face="Arial" size="2">' 
+                numberFormat("#####.00")
+                '<a href="' & infoUri & '">' & (tea.weight * 100) & '</a></td>'
+            }
+        %>
+        </b></font></td><td width="35%"><font face="Arial" size="2">
+          <% if (tea.loaded) {
+               call PrintParameters(tea.loadedTemplate.parameterTypes, tea.loadedTemplate.parameterNames)
+             }
+             else {
+               'N/A'
+             }%>&nbsp;
+              
+          </font>
+        </td>
+      </tr>
+      <%}%>
+    </table>
+    <%}
+    else {
+        '<table width="100%" border="0" cellpadding="2" cellspacing="0">'
+          '<tr bgcolor="#737398" >'
+            '<td ><font size="2" face="Arial" color="#FFFFFF"><b>'
+            if (templates == null) {
+            'No'
+            }
+            else {
+                templates.length
+            }
+            '&nbsp;Known Templates&nbsp;&nbsp;|&nbsp;&nbsp;'
+             if (reloadTime == null) {
+                'no reloads since system startup.'
+             }
+            else {
+                'last reload:&nbsp;' reloadTime
+            }
+            '</b></font></td><td bgcolor="#737398" align="right">'
+            '<a href="'request.requestURI '?subTemplate=system.teaservlet.EditTemplates'
+            '"><font size="2" face="Arial" color="#FFFFFF"><b>Edit Templates</b></font></a>'
+            '<font size="2" face="Arial" color="#FFFFFF"> | </font>'
+            '<a href="'request.requestURI '?subTemplate='  
+            request.parameters["subTemplate"]
+            '&useTable=true"><font size="2" face="Arial" color="#FFFFFF"><b>Show Parameters</b></font></a>'
+            '</td></tr></table>'
+            '<font face="Arial" size="2"><b>'
+        foreach (tea in templates) {
+            uri = path & replace(tea.name, '.', '/') & extension
+            '<a href="' uri '">' uri '</a><br>'
+        }
+        '</b></font>'
+    }
+}

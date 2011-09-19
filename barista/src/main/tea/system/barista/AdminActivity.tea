@@ -1,0 +1,46 @@
+<% template AdminActivity()
+admin = getBaristaAdmin()
+    '<table cellspacing="0" cellpadding="0"><tr><td valign="top">'
+    
+    threadPool = admin.httpServer.config.threadPool
+    '<table border="1">'
+    numberFormat("#,###")
+    '<tr><td bgcolor="#737398" colspan="2"><font size="2" face="Arial" color="#FFFFFF"><b>Thread Pool</b></font>&nbsp;</td></tr>'    
+    '<tr><td>Pool Size</td><td>' & threadPool.pooledCount & '</td></tr>'
+    '<tr><td>Available</td><td>' & threadPool.availableCount & '</td></tr>'
+    '<tr><td>Total Threads</td><td>' & threadPool.threadCount & '</td></tr>'
+    '<tr><td>Maximum Allowed</td><td>' & threadPool.maximumAllowed & '</td></tr>'
+    '<tr><td>Maximum Priority</td><td>' & threadPool.maxPriority & '</td></tr>'
+    '<tr><td>Timeout</td><td>' & threadPool.timeout & 'ms.</td></tr>'
+    '<tr><td>Idle Timeout</td><td>' & threadPool.idleTimeout & 'ms.</td></tr>'
+    numberFormat(null)
+    '</table>'
+    
+    '</td><td>&nbsp;&nbsp;&nbsp;</td><td valign="top">'
+    
+    '<table border="1">'
+    numberFormat("#,###")
+    '<tr><td bgcolor="#737398" colspan="2"><font size="2" face="Arial" color="#FFFFFF"><b>Memory Usage</b></font>&nbsp;</td></tr>'    
+    '<tr><td>Free Memory</td><td>' & admin.freeMemory & ' bytes</td></tr>'
+    '<tr><td>Total Memory</td><td>' & admin.totalMemory & ' bytes</td></tr>'
+    numberFormat("#%")
+    '<tr><td>Percent Free</td><td>' & (admin.freeMemory + 0.0) / admin.totalMemory
+    '</td></tr>'
+    numberFormat(null)
+    '</table>'
+
+    '</td></tr></table><br>'
+
+    '<table border="1">'
+    '<tr><td bgcolor="#737398" colspan="5"><font size="2" face="Arial" color="#FFFFFF"><b>Active Threads</b></font>&nbsp;</td></tr>'    
+    '<tr><th bgcolor="#C2C8D1">Name</th><th bgcolor="#C2C8D1">Thread Group</th><th bgcolor="#C2C8D1">Priority</th><th bgcolor="#C2C8D1">Daemon</th><th bgcolor="#C2C8D1">Interrupted</th></tr>'
+    foreach (thread in threadPool.allThreads) {
+        '<tr>'
+        '<td>' & thread.name & '</td>'
+        '<td>' tg = thread.threadGroup; if (tg != null) { tg.name } '</td>'
+        '<td>' & thread.priority & '</td>'
+        '<td>' & thread.daemon & '</td>'
+        '<td>' & thread.interrupted & '</td>'
+        '</tr>'
+    }
+    '</table>'%>

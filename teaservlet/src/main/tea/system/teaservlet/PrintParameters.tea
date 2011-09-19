@@ -1,0 +1,16 @@
+<% template PrintParameters(Class[] types, String[] names)
+if (types.length != 0) {
+    foreach (index in 0..types.length - 1) {
+        if (index > 0) {
+            ', '
+        }
+        call PrintClassLink(types[index], true)
+		if (names != null) {
+            name = names[index]
+            if (name != null) {
+                '&nbsp;' name
+            }
+        }
+    }
+}
+%>

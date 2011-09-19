@@ -1,0 +1,107 @@
+<% 
+template SelectiveReload(org.teatrove.teaservlet.TeaServletAdmin admin, org.teatrove.tea.engine.TemplateCompilationResults reloadResult) 
+
+    request = getRequest()
+    
+    path = request.requestURI
+    extension = ""
+    
+    if (request.pathInfo != null) {
+        index = findFirst(path, request.pathInfo)
+    }
+    else { 
+        // look for any extensions like ".tea"
+        index = findLast(path, ".") 
+        if (index >= 0) {
+            extension = substring(path, index)
+            path = substring(path, 0, index)        
+        }
+        index = 0 
+    }
+         
+    if (index >= 0) {
+        path = substring(path, 0, index)
+    }
+    path = path & '/'    
+
+    if(request.parameters["findUpdates"] == "true") { 
+
+%>
+<div id="disableDiv" style="padding: 15px; background-color: #c2c8d1; >
+        <font face="Arial" size="2">
+        <form id="SelectiveReloadCancelForm" action="<%request.requestURI%>" method="get">
+            <input type="hidden" name="subTemplate" value="system.teaservlet.AdminTemplates">
+        </form>
+        <form id="SelectiveReloadForm" action="<%request.requestURI%>" method="post">
+            <input type="hidden" name="subTemplate" value="system.teaservlet.AdminTemplates">
+            <input type="hidden" name="reloadTemplates" value="selected"> 
+            <input type="hidden" name="SelectiveReload" value="true"> 
+<% 
+        if(admin.reloadableTemplates.length==0) {
+            '<font color="#000000" face="Arial" size="2">No templates need to be recompiled</font> &nbsp;'
+            '<input type="button" value="OK" onclick="javascript:SelectiveReloadCancelForm.submit();">'
+        } else {%>
+            <font color="#000000" face="Arial" size="2">Note: Templates highlighted with red asterisk have signature changes.  Compiling templates that have signature changes may break dependent templates<br><br>
+            <input type="submit" value="Re-Compile Checked Templates" >
+            <input type="button" value="Cancel" onclick="javascript:SelectiveReloadCancelForm.submit();"> <br>
+<%
+                if (admin.clusteredServers != null) {
+                    if (admin.clusteredServers.length > 0) {
+                        '<input type="checkbox" name="cluster" value="true">Apply to cluster'
+                        call ClusterLink(admin)
+                        ')'
+                    }
+                }
+%>
+            <br><br>
+            The following templates have been updated since the last compile:<br>
+            Select:
+            &nbsp;&nbsp <a href="javascript:checkAllCheckBoxes('SelectiveReloadForm', true)">all</a>
+            &nbsp;&nbsp; <a href="javascript:checkAllCheckBoxes('SelectiveReloadForm', false)">none</a></font>
+
+<%
+                '<br><br><table border="0">'
+
+            foreach(t in admin.reloadableTemplates) { 
+                if(t.signatureChanged) {
+                    checked = ""
+                    '<tr><td><font color="red">*</font></td>'
+                } else {
+                    '<tr><td>&nbsp;</td>'
+                }
+%>
+            <td><input type="checkbox" name="selectedTemplates" value="<%t.name%>" /> 
+                <font face="Arial" size="2"><b><% path & t.name%></b>
+<%
+                if(t.signatureChanged) { 
+                    ' - Dependent Templates:&nbsp;&nbsp;'
+                    sep = ""
+                    foreach(c in getCallers(t.name)) { 
+                        sep & path & c.shortName
+                        sep = ", " 
+                    }
+                }
+
+            '</font></td></tr>'
+            }
+            '</table>'
+            '<br>'
+        }
+        '</form>'
+        '</font>'
+'</div>'
+    }
+%>
+
+        <script language="javascript">
+
+            function checkAllCheckBoxes(id, checkTheBox) {
+                var frm = document.getElementById(id);
+                for (var i = 0; i < frm.elements.length; i++) {
+                    if(frm.elements[i].type=='checkbox' && frm.elements[i].name!='cluster') {
+                        frm.elements[i].checked = checkTheBox;
+                    }
+                }
+            }
+
+        </script>

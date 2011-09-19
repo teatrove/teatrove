@@ -1,0 +1,116 @@
+<% 
+template ReloadResults(org.teatrove.tea.engine.TemplateCompilationResults reloadResult)
+
+    admin = getTeaServletAdmin()
+    if (reloadResult != null) {
+        alreadyLoading = reloadResult.alreadyReloading
+        errors = reloadResult.allTemplateErrors
+        compiled = reloadResult.reloadedTemplateNames
+    }
+    else {
+        alreadyLoading = false
+        errors = null
+        compiled = null
+    }
+
+    templates = admin.knownTemplates
+    
+    if (alreadyLoading) {
+        '<font face="Arial" size="2">Reload already in progress, hang on a sec.</font><p>'
+    }
+    else {
+
+
+        if (compiled != null) {
+
+'<table width="100%" border="0" cellspacing="5"><tr><td valign="top">'
+
+
+            '<table width="100%" border="1" cellpadding="2" cellspacing="1">'
+            '<tr>'
+            '<td align="center" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2"><b>Successful Templates</b></font></td>'
+            '</tr>'
+
+            if (compiled.length == 0) {
+                '<tr>'
+                if(getRequest().parameters["testCompile"] == "changes" or getRequest().parameters["testCompile"] == "all" ) {
+                    '<td align="center"><font face="Arial" size="2"><b>-- no&nbsp;templates&nbsp;validated --</b></font></td>'
+                } else {
+                    '<td align="center"><font face="Arial" size="2"><b>-- no&nbsp;templates&nbsp;compiled --</b></font></td>'
+                }
+                '</tr>'
+            }
+            else {
+
+                request = getRequest()           
+                path = request.requestURI
+                extension = ""
+
+                if (request.pathInfo != null) {
+                    index = findFirst(path, request.pathInfo)
+                }
+                else { 
+                    // look for any extensions like ".tea"
+                    index = findLast(path, ".") 
+                    if (index >= 0) {
+                        extension = substring(path, index)
+                        path = substring(path, 0, index)        
+                    }
+                    index = 0 
+                }
+
+                if (index >= 0) {
+                    path = substring(path, 0, index)
+                }
+                path = path & '/'
+
+                foreach (tea in compiled) {
+                    uri = path & replace(tea, ".", "/")
+                    '<tr>'
+                    '<td><font face="Arial" size="2"><b>'
+                    '<a href="' uri '">' uri '</a></b></td>'
+                    '</tr>'
+                }
+            }
+
+            '</table>'
+'</td>'
+//            '<p>'
+        }
+
+        if (errors != null and errors.length > 0) {
+'<td valign="top">'
+            '<table width="100%" border="1" cellpadding="2" cellspacing="1">'
+            '<tr>'
+            '<td align="center" bgcolor="#FF0000"><font color="#FFFF00" face="Arial" size="3"><b>Template Errors</b></font></td>'
+            '</tr>'
+    
+            foreach(e in errors) {
+                if (e isa org.teatrove.tea.engine.TemplateError) {
+                    '<tr>'
+                    '<td><font face="Arial" size="2">'
+                    '<b>' e.sourcePath' ( line ' e.lineNumber ' )</b>: ' e.errorMessage '</font><br><tt>'
+                    call Clean(trimLeading(e.lineStart))
+                    '<b>'
+                    call Clean(e.errorStart)
+                    '<u>'
+                    call Clean(e.detail)
+                    '</u>'
+                    call Clean(e.errorEnd) 
+                    '</b>'
+                    call Clean(trimTrailing(e.lineEnd))
+                    '</tt>'
+                    '</td>'
+                    '</tr>'
+                }
+            }
+            '</table>'
+'</td>'
+
+//            '<p>'
+        }
+'</tr></table>'
+
+    }
+
+ %>

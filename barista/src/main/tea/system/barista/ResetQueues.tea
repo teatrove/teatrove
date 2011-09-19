@@ -1,0 +1,27 @@
+<% template ResetQueues(String handlerName,
+                        String stageName,
+                        String servletName,
+                        String queueName,
+                        String sort, String sort_r)
+
+resetTransactionQueues(handlerName, stageName, servletName, queueName)
+
+link = "Admin?subTemplate=system.barista.AdminQueues&handlerName=" & encodeParameter(handlerName)
+if (stageName != null) {
+    link = link & "&stageName=" & encodeParameter(stageName)
+}
+if (servletName != null) {
+    link = link & "&servletName=" & encodeParameter(servletName)
+}
+if (queueName != null) {
+    link = link & "&queueName=" & encodeParameter(queueName)
+}
+if (sort != null) {
+    link = link & "&sort=" & encodeParameter(sort)
+}
+if (sort_r != null) {
+    link = link & "&sort_r=" & encodeParameter(sort_r)
+}
+
+sendRedirect(link)
+%>

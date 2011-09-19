@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.teatrove</groupId>
+    <artifactId>teatrove</artifactId>
+    <version>3.9-SNAPSHOT</version>
+
+    <modules>
+        <module>tea</module>
+        <module>teaservlet</module>
+        <module>trove</module>
+        <module>build-tools</module>
+        <module>barista</module>
+    </modules>
+
+    <packaging>pom</packaging>
+
+    <name>Trove, Tea and TeaServlet</name>
+    <description>The Tea language along with supporting projects.</description>
+
+    <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+      <maven.version>3.0</maven.version>
+      <slf4j.version>1.6.1</slf4j.version>
+
+      <!-- The following properties centralize the definition of child module versions.
+           It is critical that these version numbers are kept in lockstep with the <version> elements
+           of their respective child poms, otherwise the build will be break.  The convenience is that
+           when you update the <version> of that child pom, you only need to update it one other place, here,
+           and all references to the child artifact will be updated accordingly.
+       -->
+      <barista.version>3.9-SNAPSHOT</barista.version>
+      <package-info-maven-plugin.version>3.9-SNAPSHOT</package-info-maven-plugin.version>
+      <teacompiler.version>3.9-SNAPSHOT</teacompiler.version>
+      <teatools.version>3.9-SNAPSHOT</teatools.version>
+      <toolbox.version>3.9-SNAPSHOT</toolbox.version>
+      <tea.version>3.9-SNAPSHOT</tea.version>
+      <teaservlet.version>3.9-SNAPSHOT</teaservlet.version>
+      <trove.version>3.9-SNAPSHOT</trove.version>
+    </properties>
+
+    <prerequisites>
+        <maven>3.0</maven>
+    </prerequisites>
+
+    <build>
+        <plugins>
+
+            <!-- Maven 3.x Site generation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.0-beta-3</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <!-- Site reports that every module runs -->
+                    <reportPlugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-project-info-reports-plugin</artifactId>
+                            <version>2.3.1</version>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-javadoc-plugin</artifactId>
+                            <version>2.7</version>
+                            <configuration>
+                                <!-- Override the project source directories so we don't run javadoc against generated sources -->
+                                <sourcepath>${project.basedir}/src/main/java</sourcepath>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-jxr-plugin</artifactId>
+                            <version>2.2</version>
+                        </plugin>
+                    </reportPlugins>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <!-- Override the project source directories so we don't run javadoc against generated sources -->
+                    <sourcepath>${project.basedir}/src/main/java</sourcepath>
+                </configuration>
+            </plugin>
+
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <!-- Target JDK 1.6 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.3.2</version>
+                    <configuration>
+                        <verbose>false</verbose>
+                        <showWarnings>true</showWarnings>
+                        <showDeprecation>true</showDeprecation>
+                        <compilerVersion>1.6</compilerVersion>
+                        <source>1.6</source>
+                        <target>1.6</target>
+                    </configuration>
+                </plugin>
+
+                <!-- All Jar files should include package info -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.3.1</version>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            </manifest>
+                        </archive>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <!-- During releases, generate source and javadoc jars -->
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.1.2</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>jar</goal>
+                                    <goal>test-jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                      <groupId>org.apache.maven.plugins</groupId>
+                      <artifactId>maven-javadoc-plugin</artifactId>
+                      <version>2.7</version>
+                      <inherited>true</inherited>
+                      <configuration>
+                            <!-- Override the project source directories so we don't run javadoc against generated sources -->
+                            <sourcepath>${project.basedir}/src/main/java</sourcepath>
+                      </configuration>
+                      <executions>
+                        <execution>
+                          <goals>
+                            <goal>jar</goal>
+                            <goal>test-jar</goal>
+                          </goals>
+                        </execution>
+                      </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

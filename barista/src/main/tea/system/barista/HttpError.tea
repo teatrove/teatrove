@@ -1,0 +1,58 @@
+<% template HttpError(Integer statusCode, String message, String path)
+
+if (message == null) {
+    msg = ""
+}
+else {
+    msg = message
+}
+
+if (statusCode != null) {
+    statusDesc = decodeStatusCode(statusCode)
+    msg = trim(msg)
+}
+else {
+    statusCode = 500
+    statusDesc = 'Internal Server Error'
+    msg = 'No error parameters passed to error template'
+}
+
+setStatus(statusCode)
+
+%>
+<html><head><title><%statusDesc%></title></head><body>
+<h1><%statusCode%> <%statusDesc%></h1><hr>
+<%
+
+if (statusCode == 404) {
+	desc = 'The requested resource was not found'
+}
+else if (statusCode == 503) {
+	desc = 'The server is unable to process your request at this time'
+}
+else {
+    if (statusDesc == null) {
+        statusDesc = "Unknown Error"
+    }
+    desc = toLowerCase(statusDesc)
+    if (desc.length > 0) {
+        desc = toUpperCase(desc[0]) & substring(desc, 1)
+    }
+    
+}
+
+desc = trim(desc)
+msg = trim(msg)
+
+if (msg.length > 0) {
+	if (desc.length > 0) {
+		desc & ': '
+	}
+	msg
+}
+else if (desc.length > 0) {
+	desc & '.'
+}
+
+%>
+</body></html>

@@ -1,0 +1,51 @@
+<% template AdminShell() {...}
+%>
+
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+/*
+Created by Sharon Paine of Dynamic Web Coding
+www.dyn-web.com
+*/
+
+// avoid error of passing event object in older browsers
+if (!document.layers && !document.all) {
+        event = "nope"
+}
+
+function doTooltip(evt,Y,txt) {
+// enclose tip in nested tables for uniform 'tooltip' effect
+// customize here
+var tip = '<TABLE BGCOLOR="#000000" WIDTH="280" CELLSPACING="0" CELLPADDING="1" BORDER="0"><TR><TD><TABLE BGCOLOR="#FFFFCC" WIDTH="100%" CELLSPACING="0" CELLPADDING="4" BORDER="0"><TR><TD CLASS="tip">' + txt  + '</TD></TR></TABLE></TD></TR></TABLE>'
+
+// check for object (i.e., layers or all) 
+// for Netscape 4+
+if (document.layers) {
+    document.tooltip.document.write(tip)
+    document.tooltip.document.close()
+    document.tooltip.left = evt.pageX + 80
+    document.tooltip.top = evt.pageY
+    document.tooltip.visibility = "show"
+}
+// for IE 4+    
+if (document.all) {
+    document.all.tooltip.innerHTML = tip
+    document.all.tooltip.style.pixelLeft = evt.offsetX + 80
+    document.all.tooltip.style.pixelTop = evt.offsetY + (Y*20) + 300
+    document.all.tooltip.style.visibility = "visible"
+ }
+}
+
+function hideTip() {
+if (document.layers) {
+    document.tooltip.visibility = "hide"  
+ }
+
+if (document.all) {
+        document.all.tooltip.style.visibility = "hidden"  
+ }
+}
+//-->
+</SCRIPT>
+<% ... %>
+

@@ -1,0 +1,11 @@
+<% template ClusterReload()
+admin = getBaristaAdmin()
+start = admin.httpServer.startDate
+restart = admin.httpServer.lastRestartDate
+%>
+Server started on <%start%><br>
+<% if (restart != null) {%>
+Server last restarted on <%restart%><br>
+<%}%>
+
+

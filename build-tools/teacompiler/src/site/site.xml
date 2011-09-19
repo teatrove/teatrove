@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project>
+    <bannerLeft>
+        <name>${project.name}</name>
+        <href>${project.url}</href>
+    </bannerLeft>
+    <version position="left"/>
+    <body>
+        <menu ref="modules"/>
+    </body>
+</project>

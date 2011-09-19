@@ -1,0 +1,53 @@
+<% template ClusterReload()
+admin = getTeaServletAdmin()
+results = getCompilationResults()
+
+if (results != null) {
+    alreadyLoading = results.alreadyReloading   
+    errors = results.allTemplateErrors
+    compiled = results.reloadedTemplateNames
+}
+else {
+    alreadyLoading = false
+    errors = null
+    compiled = null
+}
+if (not alreadyLoading) {
+
+    if (errors != null and errors.length > 0) {
+        foreach(e in errors) {
+            if (e isa org.teatrove.tea.engine.TemplateError) {
+                '<tr><td><font face="Arial" size="2">'
+                '<b>' e.sourceInfoMessage '</b>: ' e.errorMessage '</font><br>'
+                call Clean(trimLeading(e.lineStart))
+                '<b>'
+                call Clean(e.errorStart)
+                '<u>'
+                call Clean(e.detail)
+                '</u>'
+                call Clean(e.errorEnd) 
+                '</b>'
+                call Clean(trimTrailing(e.lineEnd))
+            }
+        }'</td></tr>'
+
+    }
+    else if (compiled != null) {
+        if (compiled.length == 0) {
+            'No templates need to be recompiled'
+        }
+        else {
+            'Recompiled templates: '
+            foreach(templateName in compiled) {
+                '<br><b>' templateName '</b>'
+            }
+        }
+
+    }
+    else {
+        'Up to Speed and Running Smooth'
+    }
+}
+else {
+    'A reload is already in progress'
+}
