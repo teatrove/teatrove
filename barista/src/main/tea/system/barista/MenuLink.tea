@@ -1,8 +1,0 @@
-<% template MenuLink(String location, String text)
-if (endsWith(getRequest().requestURI, location)) {
-	'<b>' & text & '</b>'
-}
-else {
-	'<a href="' & location & '">' & text & '</a>'
-}
-%>

@@ -1,9 +1,0 @@
-<% template Admin()
-request = getRequest()
-uri = replace(request.requestURI, "barista", "teaservlet")
-query = request.queryString
-if (query != null) {
-    uri = uri & '?' & query
-}
-sendRedirect(uri)
-%>
