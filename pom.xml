@@ -13,7 +13,6 @@
         <module>teaservlet</module>
         <module>trove</module>
         <module>build-tools</module>
-        <module>barista</module>
     </modules>
 
     <packaging>pom</packaging>
@@ -34,7 +33,6 @@
            when you update the <version> of that child pom, you only need to update it one other place, here,
            and all references to the child artifact will be updated accordingly.
        -->
-      <barista.version>3.9-SNAPSHOT</barista.version>
       <package-info-maven-plugin.version>3.9-SNAPSHOT</package-info-maven-plugin.version>
       <teacompiler.version>3.9-SNAPSHOT</teacompiler.version>
       <teatools.version>3.9-SNAPSHOT</teatools.version>
