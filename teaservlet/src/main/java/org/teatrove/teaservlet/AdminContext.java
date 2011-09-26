@@ -118,6 +118,8 @@ public interface AdminContext extends TeaToolsContext {
     
     public void resetStatistics();
     
+    public void resetStatistics(String caller, String callee);
+    
     public void setTemplateOrdering(String orderBy);
     
     public TemplateCompilationResults checkTemplates(boolean all) throws Exception;

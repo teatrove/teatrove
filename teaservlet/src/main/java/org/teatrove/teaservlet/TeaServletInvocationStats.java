@@ -56,6 +56,11 @@ public class TeaServletInvocationStats implements MergedClass.InvocationEventObs
     public void reset(int initialMapSize) {
         mStatsMap = new ConcurrentHashMap(initialMapSize);
     }
+    
+    public void reset(String caller, String callee) {
+        Stats stats = new Stats(caller, callee);
+        mStatsMap.put(stats, stats);
+    }
 
     public Stats getStatistics(String caller, String callee) {
         Stats l = new Stats(caller, callee);

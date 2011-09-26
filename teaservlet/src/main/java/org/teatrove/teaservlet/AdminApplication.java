@@ -499,6 +499,10 @@ public class AdminApplication implements AdminApp {
         public void resetStatistics() {
             TeaServletInvocationStats.getInstance().reset();
         }
+        
+        public void resetStatistics(String caller, String callee) {
+            TeaServletInvocationStats.getInstance().reset(caller, callee);
+        }
 
         /**
          * allows a template to dynamically call another template
