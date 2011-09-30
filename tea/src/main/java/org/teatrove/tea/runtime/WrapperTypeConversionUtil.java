@@ -22,7 +22,7 @@ import org.teatrove.trove.util.IntegerFactory;
  * 
  * @author Guy A. Molinari
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  4/01/04 <!-- $-->
+
  */
 
 public class WrapperTypeConversionUtil {

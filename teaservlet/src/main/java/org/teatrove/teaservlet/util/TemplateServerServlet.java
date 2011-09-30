@@ -34,7 +34,7 @@ import javax.servlet.http.*;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 8 <!-- $--> 21 <!-- $$JustDate:--> 11/18/03 <!-- $-->
+
  * 
  */
 public class TemplateServerServlet extends HttpServlet {

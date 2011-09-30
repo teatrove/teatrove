@@ -25,8 +25,6 @@ import java.io.*;
  * and System.err is redirected into the system log.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  * @see Log
  */
 public class Syslog {

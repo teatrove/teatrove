@@ -24,7 +24,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 10/23/00 <!-- $-->
+
  */
 public class ErrorRange extends Range {
 

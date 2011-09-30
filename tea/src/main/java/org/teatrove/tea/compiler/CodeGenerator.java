@@ -24,7 +24,7 @@ import org.teatrove.tea.parsetree.Template;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public abstract class CodeGenerator {
     private Template mTree;

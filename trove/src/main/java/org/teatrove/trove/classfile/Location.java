@@ -20,8 +20,6 @@ package org.teatrove.trove.classfile;
  * Provides the location of an instruction in a CodeBuffer.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public interface Location extends Comparable {
     /**

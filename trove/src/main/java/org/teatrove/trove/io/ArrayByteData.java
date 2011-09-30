@@ -24,8 +24,6 @@ import java.io.Serializable;
  * A ByteData implementation that wraps an array of bytes.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:--> 01/05/30 <!-- $-->
  */
 public class ArrayByteData implements ByteData, Serializable {
     private byte[] mData;

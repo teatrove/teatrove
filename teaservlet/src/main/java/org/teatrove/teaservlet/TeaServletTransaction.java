@@ -24,7 +24,7 @@ import org.teatrove.tea.runtime.OutputReceiver;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  2/01/02 <!-- $-->
+
  * @see TeaServletEngine
  */
 public interface TeaServletTransaction {

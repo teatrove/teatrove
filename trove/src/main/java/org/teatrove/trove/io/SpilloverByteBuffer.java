@@ -27,8 +27,6 @@ import java.util.ArrayList;
  * into a FileByteBuffer.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 16 <!-- $-->, <!--$$JustDate:--> 00/12/05 <!-- $-->
  */
 public class SpilloverByteBuffer implements ByteBuffer {
     private Group mGroup;

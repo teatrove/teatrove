@@ -21,7 +21,6 @@ package org.teatrove.trove.util.plugin;
  * configure itself.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 3 <!-- $-->-<!--$$JustDate:--> 11/13/03 <!-- $-->
  */
 public interface PluginConfig extends PluginBasicConfig {
 

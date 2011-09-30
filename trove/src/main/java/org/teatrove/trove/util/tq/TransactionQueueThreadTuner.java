@@ -25,8 +25,6 @@ package org.teatrove.trove.util.tq;
  * experimental and should not be used in production systems.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  9/25/00 <!-- $-->
  */
 public class TransactionQueueThreadTuner extends TransactionQueueAdapter {
     private long mLastQueueTime;

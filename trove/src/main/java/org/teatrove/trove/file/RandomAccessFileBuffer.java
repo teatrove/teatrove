@@ -28,8 +28,6 @@ import org.teatrove.trove.util.SecureReadWriteLock;
  * RandomAccessFile class.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
  */
 public class RandomAccessFileBuffer implements FileBuffer {
     private RandomAccessFile mRAF;

@@ -24,8 +24,6 @@ import java.text.*;
  * Opens up files to be used by an {@link IntervalLogStream}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class FileLogStreamFactory implements IntervalLogStream.Factory {
     private File mDirectory;

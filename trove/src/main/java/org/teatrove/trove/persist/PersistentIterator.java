@@ -22,8 +22,6 @@ import java.io.IOException;
  * Just like {@link java.util.Iterator} except methods may throw IOExceptions.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public interface PersistentIterator {
     boolean hasNext() throws IOException;

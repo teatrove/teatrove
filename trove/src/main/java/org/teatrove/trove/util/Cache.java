@@ -25,8 +25,6 @@ package org.teatrove.trove.util;
  * Collections.synchronizedMap to be made thread-safe.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 26 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class Cache extends SoftHashMap {
     private final int mMaxRecent;

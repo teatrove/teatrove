@@ -41,8 +41,6 @@ import org.teatrove.trove.util.FastDateFormat;
  * </pre>
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 20 <!-- $-->, <!--$$JustDate:--> 01/07/02 <!-- $-->
  */
 public class LogScribe implements LogListener {
     private PrintWriter mWriter;

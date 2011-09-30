@@ -25,8 +25,6 @@ import java.io.RandomAccessFile;
  * closed, finalized, or when the system exits.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class TemporaryFile extends RandomAccessFile {
     /**

@@ -20,7 +20,7 @@ package org.teatrove.toolbox.beandoc.teadoc;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  3/01/01 <!-- $-->
+
  */
 public class MethodDoc extends ExecutableMemberDoc {
 

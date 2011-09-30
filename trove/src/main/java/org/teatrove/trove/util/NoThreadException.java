@@ -21,8 +21,6 @@ package org.teatrove.trove.util;
  * available.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class NoThreadException extends InterruptedException {
     private boolean mIsClosed;

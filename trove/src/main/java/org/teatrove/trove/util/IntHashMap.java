@@ -24,8 +24,6 @@ import java.io.*;
  * this class is ripped off from java.util.HashMap.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  * @see java.util.HashMap
  */
 public class IntHashMap extends AbstractMap 

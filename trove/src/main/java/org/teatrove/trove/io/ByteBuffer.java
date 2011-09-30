@@ -22,8 +22,6 @@ import java.io.IOException;
  * ByteBuffer extends ByteData such that bytes can be added to it.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:--> 00/12/05 <!-- $-->
  */
 public interface ByteBuffer extends ByteData {
     /**

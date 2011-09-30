@@ -22,7 +22,7 @@ import org.teatrove.tea.runtime.Context;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 10/30/01 <!-- $-->
+
  */
 public class SimpleTeaEngine implements TeaExecutionEngine {
 

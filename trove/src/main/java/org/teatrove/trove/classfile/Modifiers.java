@@ -24,9 +24,7 @@ import java.lang.reflect.Modifier;
  * legal. i.e. setting it public automatically clears it from being
  * private or protected.
  * 
- * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
+ * @author Brian S O'Neill, Nick Hagan
  */
 public class Modifiers extends Modifier implements Cloneable {
     /**
@@ -180,6 +178,18 @@ public class Modifiers extends Modifier implements Cloneable {
             return modifier & ~STRICT;
         }
     }
+    
+    public static int setBridge(int modifier, boolean b) {
+        // NOTE: JDK 1.6 and less do not expose Modifier.BRIDGE as public
+        // API...hower it shares its value with VOLATILE, so use that
+        
+        if (b) {
+            return modifier | VOLATILE;
+        }
+        else {
+            return modifier & ~VOLATILE;
+        }
+    }
 
     int mModifier;
     
@@ -244,6 +254,12 @@ public class Modifiers extends Modifier implements Cloneable {
         return isStrict(mModifier);
     }
 
+    public boolean isBridge() {
+        // NOTE: JDK 1.6 and less do not expose isBridge yet, but BRIDGE shares
+        // the same value as volatile so test for that
+        return isVolatile(mModifier);
+    }
+    
     public void setPublic(boolean b) {
         mModifier = setPublic(mModifier, b);
     }
@@ -290,6 +306,10 @@ public class Modifiers extends Modifier implements Cloneable {
 
     public void setStrict(boolean b) {
         mModifier = setStrict(mModifier, b);
+    }
+    
+    public void setBridge(boolean b) {
+        mModifier = setBridge(mModifier, b);
     }
 
     public Object clone() {

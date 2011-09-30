@@ -29,7 +29,7 @@ import java.util.Iterator;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 22 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public abstract class TreeMutator implements NodeVisitor {
     public Object visit(Template node) {

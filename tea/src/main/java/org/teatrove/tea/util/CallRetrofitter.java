@@ -28,7 +28,7 @@ import org.teatrove.tea.runtime.*;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class CallRetrofitter {
     /**

@@ -20,7 +20,6 @@ package org.teatrove.trove.util;
  * Applies the filter pattern to Exceptions.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public class FilterException extends Exception {
 

@@ -23,8 +23,6 @@ import java.io.IOException;
  * and read/write locks are built in.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public interface PersistentSet extends PersistentCollection {
 }

@@ -20,7 +20,7 @@ package org.teatrove.tea.compiler;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class ErrorEvent extends java.util.EventObject {
 

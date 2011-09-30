@@ -26,8 +26,6 @@ import java.util.ArrayList;
  * A ByteBuffer implementation that keeps byte data in memory.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:--> 01/05/30 <!-- $-->
  */
 public class DefaultByteBuffer implements ByteBuffer, Serializable {
     private static final int BUFFER_SIZE = 512;

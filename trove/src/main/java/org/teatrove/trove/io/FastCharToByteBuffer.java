@@ -26,8 +26,6 @@ import java.util.HashSet;
  * with ISO-8859-1 as the default encoding.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 01/06/14 <!-- $-->
  */
 public class FastCharToByteBuffer implements CharToByteBuffer, Serializable {
     private static final int TEMP_BUF_LEN = 512;

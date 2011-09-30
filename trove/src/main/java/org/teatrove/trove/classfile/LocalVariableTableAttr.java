@@ -24,8 +24,6 @@ import java.io.*;
  * defined in section 4.7.7 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  */
 class LocalVariableTableAttr extends Attribute {
     private List<Entry> mEntries = new ArrayList<Entry>(10);

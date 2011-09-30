@@ -22,7 +22,6 @@ import org.teatrove.trove.log.Log;
  * This class provides a default implementation for the Config interface.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public class ConfigSupport implements Config {
     

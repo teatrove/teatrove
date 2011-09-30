@@ -25,8 +25,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * the collection will cause an UnsupportedOperationException to be thrown.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 02/04/09 <!-- $-->
  */
 public class UnmodifiableViews {
     public static PersistentIterator wrap(PersistentIterator it) {

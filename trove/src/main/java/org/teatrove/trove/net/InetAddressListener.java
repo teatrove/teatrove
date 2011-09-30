@@ -24,8 +24,6 @@ import java.net.*;
  * and then only called again if anything has changed.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 00/12/05 <!-- $-->
  */
 public interface InetAddressListener {
     public void unknown(UnknownHostException e);

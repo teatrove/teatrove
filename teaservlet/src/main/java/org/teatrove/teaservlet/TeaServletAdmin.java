@@ -48,7 +48,7 @@ import org.teatrove.teaservlet.util.cluster.Restartable;
  *
  * @author Reece Wilton, Brian S O'Neill, Jonathan Colwell
  * @version
- * <!--$$Revision:--> 20 <!-- $-->, <!--$$JustDate:--> 10/19/04 <!-- $-->
+
  */
 public class TeaServletAdmin implements Restartable {
 

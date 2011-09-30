@@ -21,12 +21,11 @@ import java.lang.reflect.*;
 /**
  * This class is used as an aid in generating code for a method.
  * It controls the max stack, local variable allocation, labels and bytecode.
- * 
- * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 32 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
+ *
+ * @author Brian S O'Neill, Nick Hagan
  */
 public class CodeBuilder implements CodeBuffer, CodeAssembler {
+    private String mName;
     private CodeAttr mCodeAttr;
     private ClassFile mClassFile;
     private ConstantPool mCp;
@@ -62,6 +61,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
      */
     public CodeBuilder(MethodInfo info, boolean saveLineNumberInfo,
                        boolean saveLocalVariableInfo) {
+        mName = info.getName();
         mCodeAttr = info.getCodeAttr();
         mClassFile = info.getClassFile();
         mCp = mClassFile.getConstantPool();
@@ -114,7 +114,24 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
     }
 
     public byte[] getByteCodes() {
-        return mInstructions.getByteCodes();
+        try {
+            return mInstructions.getByteCodes();
+        }
+        catch (Exception exception) {
+            StringBuilder error = new StringBuilder();
+            error.append("error generating code: ")
+                 .append(mClassFile.getClassName()).append('.').append(mName)
+                 .append('(');
+            
+            for (int i = 0; i < mParameters.length; i++) {
+                if (i > 0) { error.append(", "); }
+                error.append(mParameters[i].getType()).append(' ')
+                     .append(mParameters[i].getName());
+            }
+            
+            error.append(')');
+            throw new RuntimeException(error.toString(), exception);
+        }
     }
 
     public ExceptionHandler[] getExceptionHandlers() {
@@ -132,7 +149,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
 
     private void addCode(int stackAdjust, byte opcode, short operand) {
         mInstructions.new CodeInstruction
-            (stackAdjust, 
+            (stackAdjust,
              new byte[] {opcode, (byte)(operand >> 8), (byte)operand});
     }
 
@@ -150,7 +167,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
 //    }
 
     private void addCode(int stackAdjust, byte opcode, ConstantInfo info) {
-        // The zeros get filled in later, when the ConstantInfo index 
+        // The zeros get filled in later, when the ConstantInfo index
         // is resolved.
         mInstructions.new ConstantOperandInstruction
             (stackAdjust,
@@ -188,13 +205,13 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
             catchClass = ConstantClassInfo.make(mCp, catchClassName);
         }
 
-        ExceptionHandler handler = 
-            new ExceptionHandler(startLocation, endLocation, 
+        ExceptionHandler handler =
+            new ExceptionHandler(startLocation, endLocation,
                                  catchLocation, catchClass);
 
         mInstructions.addExceptionHandler(handler);
     }
-    
+
     public void mapLineNumber(int lineNumber) {
         if (mSaveLineNumberInfo) {
             mCodeAttr.mapLineNumber(createLabel().setLocation(), lineNumber);
@@ -203,9 +220,13 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
 
     // load-constant-to-stack style instructions
 
+    public void loadNull() {
+        addCode(1, Opcode.ACONST_NULL);
+    }
+    
     public void loadConstant(String value) {
         if (value == null) {
-            addCode(1, Opcode.ACONST_NULL);
+            loadNull();
             return;
         }
 
@@ -244,19 +265,19 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         // Break string up into chunks and construct in a StringBuffer.
 
         TypeDesc stringBufferDesc = TypeDesc.forClass(StringBuffer.class);
-        
+
         TypeDesc intDesc = TypeDesc.INT;
         TypeDesc stringDesc = TypeDesc.STRING;
         TypeDesc[] stringParam = new TypeDesc[] {stringDesc};
-        
+
         newObject(stringBufferDesc);
         dup();
         loadConstant(strlen);
         invokeConstructor("java.lang.StringBuffer", new TypeDesc[] {intDesc});
-        
+
         int beginIndex;
         int endIndex = 0;
-        
+
         while (endIndex < strlen) {
             beginIndex = endIndex;
 
@@ -291,9 +312,9 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
             invokeVirtual("java.lang.StringBuffer", "append",
                           stringBufferDesc, stringParam);
         }
-        
+
         invokeVirtual("java.lang.StringBuffer", "toString",
-                      stringDesc, null);
+                      stringDesc);
     }
 
     public void loadConstant(boolean value) {
@@ -386,6 +407,19 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         }
     }
 
+    public void loadThisClass() {
+        loadClass(mClassFile.getType());
+    }
+    
+    public void loadClass(Class clazz) {
+        loadClass(TypeDesc.forClass(clazz));
+    }
+    
+    public void loadClass(TypeDesc clazz) {
+        ConstantInfo info = mCp.addConstantClass(clazz.getFullName());
+        mInstructions.new LoadConstantInstruction(1, info);
+    }
+    
     // load-local-to-stack style instructions
 
     public void loadLocal(LocalVariable local) {
@@ -402,7 +436,8 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         }
         else {
             throw new RuntimeException
-                ("Attempt to load \"this\" reference in a static method");
+                ("Attempt to load \"this\" reference in a static method: " +
+                 mClassFile.getClassName() + "." + mName);
         }
     }
 
@@ -506,7 +541,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
                           TypeDesc type) {
 
         getfield(0, Opcode.GETFIELD,
-                 mCp.addConstantField(className, fieldName, type), 
+                 mCp.addConstantField(className, fieldName, type),
                  type);
     }
 
@@ -521,11 +556,11 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
                                 TypeDesc type) {
 
         getfield(1, Opcode.GETSTATIC,
-                 mCp.addConstantField(className, fieldName, type), 
+                 mCp.addConstantField(className, fieldName, type),
                  type);
     }
 
-    private void getfield(int stackAdjust, byte opcode, ConstantInfo info, 
+    private void getfield(int stackAdjust, byte opcode, ConstantInfo info,
                           TypeDesc type) {
         if (type.isDoubleWord()) {
             stackAdjust++;
@@ -551,8 +586,8 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
                            String fieldName,
                            TypeDesc type) {
 
-        putfield(-1, Opcode.PUTFIELD, 
-                 mCp.addConstantField(className, fieldName, type), 
+        putfield(-1, Opcode.PUTFIELD,
+                 mCp.addConstantField(className, fieldName, type),
                  type);
     }
 
@@ -567,11 +602,11 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
                                  TypeDesc type) {
 
         putfield(0, Opcode.PUTSTATIC,
-                 mCp.addConstantField(className, fieldName, type), 
+                 mCp.addConstantField(className, fieldName, type),
                  type);
     }
 
-    private void putfield(int stackAdjust, byte opcode, ConstantInfo info, 
+    private void putfield(int stackAdjust, byte opcode, ConstantInfo info,
                           TypeDesc type) {
         if (type.isDoubleWord()) {
             stackAdjust -= 2;
@@ -698,7 +733,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
                 throw invalidConversion(fromType, toType);
             }
             break;
-            
+
         case TypeDesc.LONG_CODE:
             switch (toTypeCode) {
             case TypeDesc.INT_CODE:
@@ -794,7 +829,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
                 throw invalidConversion(fromType, toType);
             }
             break;
-            
+
         default:
             throw invalidConversion(fromType, toType);
         }
@@ -855,7 +890,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
             return;
         }
 
-        invokeVirtual(from.getRootName(), methodName, to, null);
+        invokeVirtual(from.getRootName(), methodName, to);
     }
 
     private void prebox(TypeDesc from, TypeDesc to) {
@@ -939,12 +974,14 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
     // invocation style instructions
 
     public void invoke(Method method) {
-        TypeDesc ret = TypeDesc.forClass(method.getReturnType());
+        TypeDesc ret = TypeDesc.forClass(method.getReturnType(),
+                                         method.getGenericReturnType());
 
         Class[] paramClasses = method.getParameterTypes();
+        Type[] paramTypes = method.getGenericParameterTypes();
         TypeDesc[] params = new TypeDesc[paramClasses.length];
         for (int i=0; i<params.length; i++) {
-            params[i] = TypeDesc.forClass(paramClasses[i]);
+            params[i] = TypeDesc.forClass(paramClasses[i], paramTypes[i]);
         }
 
         Class clazz = method.getDeclaringClass();
@@ -952,28 +989,29 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         if (Modifier.isStatic(method.getModifiers())) {
             invokeStatic(clazz.getName(),
                          method.getName(),
-                         ret, 
+                         ret,
                          params);
         }
         else if (clazz.isInterface()) {
             invokeInterface(clazz.getName(),
                             method.getName(),
-                            ret, 
+                            ret,
                             params);
         }
         else {
             invokeVirtual(clazz.getName(),
                           method.getName(),
-                          ret, 
+                          ret,
                           params);
         }
     }
 
     public void invoke(Constructor constructor) {
         Class[] paramClasses = constructor.getParameterTypes();
+        Type[] paramTypes = constructor.getGenericParameterTypes();
         TypeDesc[] params = new TypeDesc[paramClasses.length];
         for (int i=0; i<params.length; i++) {
-            params[i] = TypeDesc.forClass(paramClasses[i]);
+            params[i] = TypeDesc.forClass(paramClasses[i], paramTypes[i]);
         }
 
         invokeConstructor(constructor.getDeclaringClass().toString(), params);
@@ -981,7 +1019,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
 
     public void invokeVirtual(String methodName,
                               TypeDesc ret,
-                              TypeDesc[] params) {
+                              TypeDesc... params) {
 
         ConstantInfo info = mCp.addConstantMethod
             (mClassFile.getClassName(), methodName, ret, params);
@@ -997,8 +1035,8 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
     public void invokeVirtual(String className,
                               String methodName,
                               TypeDesc ret,
-                              TypeDesc[] params) {
-        ConstantInfo info = 
+                              TypeDesc... params) {
+        ConstantInfo info =
             mCp.addConstantMethod(className, methodName, ret, params);
 
         int stackAdjust = returnSize(ret) - 1;
@@ -1011,7 +1049,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
 
     public void invokeStatic(String methodName,
                              TypeDesc ret,
-                             TypeDesc[] params) {
+                             TypeDesc... params) {
         ConstantInfo info = mCp.addConstantMethod
             (mClassFile.getClassName(), methodName, ret, params);
 
@@ -1026,7 +1064,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
     public void invokeStatic(String className,
                              String methodName,
                              TypeDesc ret,
-                             TypeDesc[] params) {
+                             TypeDesc... params) {
         ConstantInfo info =
             mCp.addConstantMethod(className, methodName, ret, params);
 
@@ -1041,9 +1079,9 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
     public void invokeInterface(String className,
                                 String methodName,
                                 TypeDesc ret,
-                                TypeDesc[] params) {
+                                TypeDesc... params) {
 
-        ConstantInfo info = 
+        ConstantInfo info =
             mCp.addConstantInterfaceMethod(className, methodName, ret, params);
 
         int paramCount = 1;
@@ -1066,7 +1104,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
 
     public void invokePrivate(String methodName,
                               TypeDesc ret,
-                              TypeDesc[] params) {
+                              TypeDesc... params) {
         ConstantInfo info = mCp.addConstantMethod
             (mClassFile.getClassName(), methodName, ret, params);
 
@@ -1081,8 +1119,8 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
     public void invokeSuper(String superClassName,
                             String methodName,
                             TypeDesc ret,
-                            TypeDesc[] params) {
-        ConstantInfo info = 
+                            TypeDesc... params) {
+        ConstantInfo info =
             mCp.addConstantMethod(superClassName, methodName, ret, params);
 
         int stackAdjust = returnSize(ret) - 1;
@@ -1094,22 +1132,24 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
     }
 
     public void invokeSuper(Method method) {
-        TypeDesc ret = TypeDesc.forClass(method.getReturnType());
+        TypeDesc ret = TypeDesc.forClass(method.getReturnType(),
+                                         method.getGenericReturnType());
 
         Class[] paramClasses = method.getParameterTypes();
+        Type[] paramTypes = method.getGenericParameterTypes();
         TypeDesc[] params = new TypeDesc[paramClasses.length];
         for (int i=0; i<params.length; i++) {
-            params[i] = TypeDesc.forClass(paramClasses[i]);
+            params[i] = TypeDesc.forClass(paramClasses[i], paramTypes[i]);
         }
 
         invokeSuper(method.getDeclaringClass().getName(),
                     method.getName(),
-                    ret, 
+                    ret,
                     params);
     }
 
-    public void invokeConstructor(TypeDesc[] params) {
-        ConstantInfo info = 
+    public void invokeConstructor(TypeDesc... params) {
+        ConstantInfo info =
             mCp.addConstantConstructor(mClassFile.getClassName(), params);
 
         int stackAdjust = -1;
@@ -1119,8 +1159,13 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
 
         addCode(stackAdjust, Opcode.INVOKESPECIAL, info);
     }
+    
+    public void invokeConstructor(MethodInfo mi) {
+        invokeConstructor(mi.getClassFile().getClassName(),
+                          mi.getMethodDescriptor().getParameterTypes());
+    }
 
-    public void invokeConstructor(String className, TypeDesc[] params) {
+    public void invokeConstructor(String className, TypeDesc... params) {
         ConstantInfo info = mCp.addConstantConstructor(className, params);
 
         int stackAdjust = -1;
@@ -1131,15 +1176,17 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         addCode(stackAdjust, Opcode.INVOKESPECIAL, info);
     }
 
-    public void invokeSuperConstructor(TypeDesc[] params) {
+    public void invokeSuperConstructor(TypeDesc... params) {
         invokeConstructor(mClassFile.getSuperClassName(), params);
     }
 
     public void invokeSuper(Constructor constructor) {
         Class[] paramClasses = constructor.getParameterTypes();
+        Type[] paramTypes = constructor.getGenericParameterTypes();
+
         TypeDesc[] params = new TypeDesc[paramClasses.length];
         for (int i=0; i<params.length; i++) {
-            params[i] = TypeDesc.forClass(paramClasses[i]);
+            params[i] = TypeDesc.forClass(paramClasses[i], paramTypes[i]);
         }
 
         invokeSuperConstructor(params);
@@ -1155,7 +1202,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         return 1;
     }
 
-    private int argSize(TypeDesc[] params) {
+    private int argSize(TypeDesc... params) {
         int size = 0;
         if (params != null) {
             for (int i=0; i<params.length; i++) {
@@ -1204,7 +1251,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         //bytes[1] = (byte)0;
         //bytes[2] = (byte)0;
         bytes[3] = (byte)dimensions;
-        
+
         mInstructions.new ConstantOperandInstruction(stackAdjust, bytes, info);
     }
 
@@ -1269,7 +1316,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         branch(-2, location, choice ? Opcode.IF_ACMPEQ : Opcode.IF_ACMPNE);
     }
 
-    public void ifZeroComparisonBranch(Location location, String choice) 
+    public void ifZeroComparisonBranch(Location location, String choice)
         throws IllegalArgumentException {
 
         choice = choice.intern();
@@ -1297,7 +1344,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
             throw new IllegalArgumentException
                 ("Invalid comparision choice: " + choice);
         }
-        
+
         branch(-1, location, opcode);
     }
 
@@ -1333,7 +1380,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
         branch(-2, location, opcode);
     }
 
-    public void switchBranch(int[] cases, 
+    public void switchBranch(int[] cases,
                              Location[] locations, Location defaultLocation) {
 
         mInstructions.new SwitchInstruction(cases, locations, defaultLocation);
@@ -1356,7 +1403,7 @@ public class CodeBuilder implements CodeBuffer, CodeAssembler {
 
     public void math(byte opcode) {
         int stackAdjust;
-        
+
         switch(opcode) {
         case Opcode.INEG:
         case Opcode.LNEG:

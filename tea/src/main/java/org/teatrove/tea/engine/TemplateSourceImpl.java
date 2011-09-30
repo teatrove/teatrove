@@ -57,7 +57,7 @@ import java.util.TreeSet;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 24 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class TemplateSourceImpl implements TemplateSource {
     /**

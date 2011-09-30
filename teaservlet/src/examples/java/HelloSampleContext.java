@@ -57,7 +57,7 @@ import org.teatrove.teaservlet.*;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  7/10/00 <!-- $-->
+
  */
 public class HelloSampleContext {
 

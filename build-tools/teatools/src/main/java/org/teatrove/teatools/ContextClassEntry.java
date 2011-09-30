@@ -23,7 +23,7 @@ package org.teatrove.teatools;
  * 
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 10/18/00 <!-- $-->
+
  */
 public class ContextClassEntry {
     

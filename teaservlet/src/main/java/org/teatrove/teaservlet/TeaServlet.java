@@ -94,7 +94,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author Reece Wilton
  * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:-->  7/15/04 <!-- $-->
+
  */
 public class TeaServlet extends HttpServlet {
  

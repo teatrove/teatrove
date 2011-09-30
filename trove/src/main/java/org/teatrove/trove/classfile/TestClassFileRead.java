@@ -22,8 +22,6 @@ import java.io.*;
  * Reads a class file and prints out its contents. 
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  */
 public class TestClassFileRead {
     /**

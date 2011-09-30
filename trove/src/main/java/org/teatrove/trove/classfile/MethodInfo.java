@@ -26,9 +26,8 @@ import java.lang.reflect.Modifier;
  * To make it easier to create bytecode for a method's CodeAttr, the 
  * CodeBuilder class is provided.
  * 
- * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 35 <!-- $-->, <!--$$JustDate:--> 03-08-04 <!-- $-->
+ * @author Brian S O'Neill, Nick Hagan
+ * 
  * @see ClassFile
  * @see CodeBuilder
  */
@@ -38,12 +37,14 @@ public class MethodInfo {
 
     private String mName;
     private MethodDesc mDesc;
-    
+    private SignatureDesc mSignature;
+
     private int mModifier;
 
     private ConstantUTFInfo mNameConstant;
     private ConstantUTFInfo mDescriptorConstant;
-    
+    private ConstantUTFInfo mSignatureConstant;
+
     private List mAttributes = new ArrayList(2);
 
     private CodeAttr mCode;
@@ -52,19 +53,29 @@ public class MethodInfo {
     MethodInfo(ClassFile parent,
                Modifiers modifiers,
                String name,
-               MethodDesc desc) {
+               MethodDesc desc,
+               SignatureDesc signature) {
 
         mParent = parent;
         mCp = parent.getConstantPool();
         mName = name;
         mDesc = desc;
-        
+        mSignature = signature;
+
         mModifier = modifiers.getModifier();
         mNameConstant = ConstantUTFInfo.make(mCp, name);
         mDescriptorConstant = ConstantUTFInfo.make(mCp, desc.toString());
 
         if (!modifiers.isAbstract() && !modifiers.isNative()) {
             addAttribute(new CodeAttr(mCp));
+        }
+
+        if (mSignature != null) {
+            String signatureStr = signature.toString();
+            //TODO: why was this here?
+            //if (signatureStr.contains("<")) {
+                addAttribute(new SignatureAttr(mCp, signatureStr));
+            //}
         }
     }
 
@@ -82,7 +93,7 @@ public class MethodInfo {
         mNameConstant = nameConstant;
         mDescriptorConstant = descConstant;
     }
-    
+
     /**
      * Returns the parent ClassFile for this MethodInfo.
      */
@@ -111,16 +122,16 @@ public class MethodInfo {
     public Modifiers getModifiers() {
         return new Modifiers(mModifier);
     }
-    
+
     /**
      * Returns a constant from the constant pool with this method's name.
      */
     public ConstantUTFInfo getNameConstant() {
         return mNameConstant;
     }
-    
+
     /**
-     * Returns a constant from the constant pool with this method's type 
+     * Returns a constant from the constant pool with this method's type
      * descriptor string.
      * @see MethodDesc
      */
@@ -167,8 +178,8 @@ public class MethodInfo {
         }
         return false;
     }
-    
-    /** 
+
+    /**
      * Add a declared exception that this method may throw.
      */
     public void addException(String className) {
@@ -221,20 +232,20 @@ public class MethodInfo {
      */
     public int getLength() {
         int length = 8;
-        
+
         int size = mAttributes.size();
         for (int i=0; i<size; i++) {
             length += ((Attribute)mAttributes.get(i)).getLength();
         }
-        
+
         return length;
     }
-    
+
     public void writeTo(DataOutput dout) throws IOException {
         dout.writeShort(mModifier);
         dout.writeShort(mNameConstant.getIndex());
         dout.writeShort(mDescriptorConstant.getIndex());
-        
+
         int size = mAttributes.size();
         dout.writeShort(size);
         for (int i=0; i<size; i++) {
@@ -253,7 +264,7 @@ public class MethodInfo {
         }
     }
 
-    static MethodInfo readFrom(ClassFile parent, 
+    static MethodInfo readFrom(ClassFile parent,
                                DataInput din,
                                AttributeFactory attrFactory)
         throws IOException

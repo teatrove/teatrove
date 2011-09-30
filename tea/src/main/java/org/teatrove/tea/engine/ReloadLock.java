@@ -20,7 +20,7 @@ package org.teatrove.tea.engine;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 02/04/05 <!-- $-->
+
  */
 public class ReloadLock {
 

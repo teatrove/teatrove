@@ -45,7 +45,7 @@ import org.teatrove.tea.util.BeanAnalyzer;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 119 <!-- $-->, <!--$$JustDate:-->  8/16/04 <!-- $-->
+
  */
 public class TypeChecker {
     private CompilationUnit mUnit;

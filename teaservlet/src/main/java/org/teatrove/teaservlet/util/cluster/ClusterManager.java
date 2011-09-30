@@ -42,7 +42,7 @@ import org.teatrove.trove.log.Syslog;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 25 <!-- $-->, <!--$$JustDate:-->  6/25/02 <!-- $-->
+
  */
 public class ClusterManager {
 

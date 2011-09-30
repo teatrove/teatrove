@@ -21,7 +21,7 @@ package org.teatrove.tea.compiler;
  *
  * @author Sean Treat
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  5/14/01 <!-- $-->
+
  */
 public interface StatusListener extends java.util.EventListener {
     public void statusUpdate(StatusEvent e);

@@ -22,7 +22,7 @@ import java.util.Date;
  * 
  * @author Reece Wilton
  * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:-->  8/29/02 <!-- $-->
+
  */
 public class TemplateError implements java.io.Serializable {
 

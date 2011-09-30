@@ -23,7 +23,7 @@ import java.util.ArrayList;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  3/01/01 <!-- $-->
+
  */
 public class PackageDoc extends Doc {
 

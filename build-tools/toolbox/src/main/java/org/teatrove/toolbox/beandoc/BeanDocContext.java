@@ -28,7 +28,7 @@ import java.io.*;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  8/11/04 <!-- $-->
+
  */
 public class BeanDocContext extends org.teatrove.tea.runtime.DefaultContext {
 

@@ -22,8 +22,6 @@ import org.teatrove.trove.util.ReadWriteLock;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public class ReadOnlyFileBuffer implements FileBuffer {
     private static final IOException fail() {

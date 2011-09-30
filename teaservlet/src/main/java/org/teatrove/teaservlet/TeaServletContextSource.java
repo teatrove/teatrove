@@ -33,7 +33,7 @@ import org.teatrove.tea.engine.ContextCreationException;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 11/07/02 <!-- $-->
+
  */
 public class TeaServletContextSource extends MergedContextSource {
 

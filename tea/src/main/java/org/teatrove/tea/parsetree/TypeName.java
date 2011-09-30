@@ -23,7 +23,7 @@ import org.teatrove.tea.compiler.Type;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class TypeName extends Name {
     private int mDimensions;

@@ -21,7 +21,7 @@ package org.teatrove.toolbox.beandoc.teadoc;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  3/01/01 <!-- $-->
+
  */
 public interface MethodFinder {
 

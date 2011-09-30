@@ -22,8 +22,6 @@ import java.net.*;
  * Allows client sockets to be created or recycled.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 00/12/05 <!-- $-->
  */
 public interface SocketFactory {
     /**

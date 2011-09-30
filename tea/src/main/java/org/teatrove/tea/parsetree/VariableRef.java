@@ -23,7 +23,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 27 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  * @see Variable
  */
 public class VariableRef extends Expression {

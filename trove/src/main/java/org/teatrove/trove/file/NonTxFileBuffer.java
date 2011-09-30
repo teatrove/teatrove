@@ -28,8 +28,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * need to override only begin and commit.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public class NonTxFileBuffer implements TxFileBuffer {
     protected final FileBuffer mFile;

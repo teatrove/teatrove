@@ -24,8 +24,6 @@ import java.io.*;
  * are both treated as messages.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class LogSerializer implements LogListener {
     private ObjectOutput mOut;

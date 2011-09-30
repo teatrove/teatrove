@@ -27,8 +27,6 @@ import org.teatrove.trove.util.ReadWriteLock;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:--> 02/02/04 <!-- $-->
  */
 public class MultiplexFileStorageStrategy implements BTree.StorageStrategy {
     private static final int

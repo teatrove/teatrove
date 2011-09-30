@@ -24,7 +24,7 @@ import java.io.*;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 00/12/05 <!-- $-->
+
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class TemporaryFile extends RandomAccessFile {

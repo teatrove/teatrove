@@ -24,8 +24,6 @@ import org.teatrove.trove.io.*;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 01/07/16 <!-- $-->
  */
 public class HttpHeaderMap implements Map, Serializable {
     private final static TimeZone GMT_ZONE;

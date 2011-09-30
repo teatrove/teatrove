@@ -23,7 +23,6 @@ package org.teatrove.trove.util;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class Deflater {
     public static final int

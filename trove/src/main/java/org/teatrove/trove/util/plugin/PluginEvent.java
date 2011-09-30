@@ -22,7 +22,6 @@ import java.util.EventObject;
  * The PluginEvent class encapsulates the information pertaining to a plugin event.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public class PluginEvent extends EventObject {
 

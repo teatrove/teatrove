@@ -27,8 +27,6 @@ import java.util.*;
  * that may have been closed.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 01/10/09 <!-- $-->
  */
 public class PooledSocketFactory implements SocketFactory {
     private final SocketFactory mFactory;

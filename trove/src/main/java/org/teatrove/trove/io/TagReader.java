@@ -21,8 +21,6 @@ import java.io.*;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 12/11/00 <!-- $-->
  */
 public class TagReader extends EscapeReader {
     private int mTagCount;

@@ -25,8 +25,6 @@ import java.lang.ref.*;
  * and port of the socket.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 02/08/23 <!-- $-->
  */
 public class CheckedSocketException extends SocketException {
     static CheckedSocketException create

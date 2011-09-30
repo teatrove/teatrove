@@ -24,7 +24,7 @@ import java.util.Date;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 10/01/01 <!-- $-->
+
  */
 public class ServerNote {
 

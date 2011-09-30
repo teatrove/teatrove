@@ -23,7 +23,7 @@ import java.io.File;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 19 <!-- $-->, <!--$$JustDate:--> 00/12/06 <!-- $-->
+
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class FileByteData extends org.teatrove.trove.io.FileByteData

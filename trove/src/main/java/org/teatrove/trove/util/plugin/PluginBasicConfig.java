@@ -22,7 +22,6 @@ import org.teatrove.trove.util.Config;
  * A config interface that both PluginConfig and HandlerConfig extend.
  *
  * @author Reece Wilton
- * @version <!--$$Revision:--> 2 <!-- $-->-<!--$$JustDate:--> 11/13/03 <!-- $-->
  */
 public interface PluginBasicConfig extends Config {
 

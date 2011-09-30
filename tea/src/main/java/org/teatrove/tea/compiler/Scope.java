@@ -34,7 +34,7 @@ import java.util.Set;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 30 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class Scope {
     // Shared variables, maps Variable objects to Variable objects.

@@ -32,8 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  * Some generic utilities.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 30 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
+
  * @see java.util.Collections
  */
 public class Utils {

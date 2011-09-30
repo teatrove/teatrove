@@ -16,23 +16,17 @@
 
 package org.teatrove.trove.util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +42,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.teatrove.trove.util.tq.Transaction;
 import org.teatrove.trove.util.tq.TransactionQueue;
 import org.teatrove.trove.util.tq.TransactionQueueData;
+import com.javabi.sizeof.MemoryUtil;
 
 /**
  * Depot implements a simple and efficient caching strategy. It is thread-safe,
@@ -78,8 +73,6 @@ import org.teatrove.trove.util.tq.TransactionQueueData;
  * requires asynchronous notification from the actual data providers.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision: #15 $-->, <!--$$JustDate:--> 11/21/03 <!-- $-->
  * @see MultiKey
  */
 
@@ -91,6 +84,8 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
     private final Factory<? extends V> mDefaultFactory;
     final Map<ValueWrapper<Object>, ValueWrapper<V>> mValidCache;
     final Map<ValueWrapper<Object>, ValueWrapper<V>> mInvalidCache;
+    final Map<ValueWrapper<Object>, ValueWrapper<V>> mBackingValidCache;
+    final Map<ValueWrapper<Object>, ValueWrapper<V>> mBackingInvalidCache;
     private final Kernel<V> mKernel;
     final TransactionQueue mQueue;
     private final long mTimeout;
@@ -102,14 +97,15 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
     private List<InvalidationListener> mListeners = new ArrayList<InvalidationListener>();
     private ScheduledExecutorService mCleanupScheduler = null;
     private long mCleanupInterval = DEFAULT_CLEANUP_INTERVAL;
-    private final ConcurrentMap<ValueWrapper<Object>, Retriever> mRetrievers = new ConcurrentHashMap<ValueWrapper<Object>, Retriever>();
-    
+    private final ConcurrentMap<ValueWrapper<Object>, Retriever> mRetrievers = 
+        new ConcurrentHashMap<ValueWrapper<Object>, Retriever>();
+
     /**
      * Indicates whether or not the current thread should be renamed while this {@link Depot} is fetching
      * an object.  This is currently only done for the {@link Depot} class itself, and not its subclasses,
      * as the authors of the subclasses found that this had a serious performance impact for them.
      */
-    
+
     private final boolean mSetThreadName;
 
     /**
@@ -127,14 +123,14 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
      * @param cleanupInterval Number of seconds between TTL cleanup thread runs.  A nonpositive
      * value disables the cleanup thread.
      */
-    
+
     public Depot(Factory<? extends V> factory, Map<ValueWrapper<Object>, ValueWrapper<V>> validCache, Map<ValueWrapper<Object>, ValueWrapper<V>> invalidCache,
                  TransactionQueue tq, long timeout, boolean returnInvalidNoWait,
                  boolean synchronize, long cleanupInterval) {
         Validate.notNull(validCache, "Valid cache cannot be null when creating a Depot.");
         Validate.notNull(invalidCache, "Invalid cache cannot be null when creating a Depot.");
         Validate.notNull(tq, "Transaction queue cannot be null when creating a Depot.");
-        
+
         mDefaultFactory = factory;
         mCleanupInterval = cleanupInterval;
         if (synchronize) {
@@ -152,7 +148,8 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         if (validCache instanceof LRUCache) {
             ((LRUCache) validCache).addListener(this);
         }
-        
+        mBackingValidCache = validCache;
+        mBackingInvalidCache = invalidCache;
         mSetThreadName = getClass() == Depot.class;
     }
 
@@ -285,22 +282,24 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         }
 
         mDefaultFactory = factory;
+        mBackingValidCache = valid;
+        mBackingInvalidCache = invalid;
         mValidCache = Collections.synchronizedMap(valid);
         mInvalidCache = Collections.synchronizedMap(invalid);
         mKernel = new SimpleKernel();
         mQueue = tq;
         mTimeout = timeout;
-        
+
         mSetThreadName = getClass() == Depot.class;
     }
-    
+
     protected interface CacheProvider<V> {
         Map<ValueWrapper<Object>, ValueWrapper<V>> createValidCache();
         Map<ValueWrapper<Object>, ValueWrapper<V>> createInvalidCache(final Map<ValueWrapper<Object>, ValueWrapper<V>> validCache);
         Map<ValueWrapper<Object>, ValueWrapper<V>> createValidHashMap();
         Map<ValueWrapper<Object>, ValueWrapper<V>> createInvalidHashMap();
     }
-    
+
     @SuppressWarnings("unchecked")
     public Depot(Factory<? extends V> factory, final int validCacheSize, final int invalidCacheSize,
             TransactionQueue tq, long timeout, boolean useLRUCache, long cleanupInterval) {
@@ -323,7 +322,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                     return new SoftHashMap();
                 }
              }, tq, timeout, useLRUCache, cleanupInterval);
-    }    
+    }
 
 
     /**
@@ -377,14 +376,14 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                  TransactionQueue tq, long timeout) {
         Validate.notNull(kernel, "Kernel cannot be null when creating a Depot.");
         Validate.notNull(tq, "Transaction queue cannot be null when creating a Depot.");
-        
+
         mDefaultFactory = factory;
-        mValidCache = kernel.validCache();
-        mInvalidCache = kernel.invalidCache();
+        mBackingValidCache = mValidCache = kernel.validCache();
+        mBackingInvalidCache = mInvalidCache = kernel.invalidCache();
         mKernel = kernel;
         mQueue = tq;
         mTimeout = timeout;
-        
+
         mSetThreadName = getClass() == Depot.class;
     }
 
@@ -408,8 +407,8 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
     }
 
     public void setReturnInvalidNoWait(boolean flag) {
-		mReturnInvalidNoWait = flag;
-	}
+        mReturnInvalidNoWait = flag;
+    }
 
 
     @Override protected void finalize() {
@@ -428,7 +427,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
      */
     public void addInvalidationListener(final InvalidationListener l) {
         Validate.notNull(l, "Listener cannot be null when being added to a depot");
-        
+
         mListeners.add(l);
     }
 
@@ -438,7 +437,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
      */
     public void removeInvalidationListener(InvalidationListener l) {
         Validate.notNull(l, "Listener cannot be null when being removed from a depot");
-        
+
         mListeners.remove(l);
     }
 
@@ -449,7 +448,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
      */
     public void expireEvent(final LRUCache.Entry entry) {
         Validate.notNull(entry, "Cannot expire null event.");
-        
+
         fireInvalidationEvent(entry.getKey());
     }
 
@@ -486,6 +485,14 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
      */
     public int validSize() {
         return mValidCache.size();
+    }
+
+    public int getValidMaxRecent() {
+        if (mBackingValidCache instanceof LRUCache)
+            return ((LRUCache) mBackingValidCache).getMaxRecent();
+        if (mBackingValidCache instanceof Cache)
+            return ((Cache) mBackingValidCache).getMaxRecent();
+        return -1;
     }
 
     /**
@@ -527,6 +534,13 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         return mInvalidCache.size();
     }
 
+    public int getInvalidMaxRecent() {
+        if (mBackingInvalidCache instanceof LRUCache)
+            return ((LRUCache) mBackingInvalidCache).getMaxRecent();
+        if (mBackingInvalidCache instanceof Cache)
+            return ((Cache) mBackingInvalidCache).getMaxRecent();
+        return -1;
+    }
 
     /**
      * Determines whether a key is in the valid cache.
@@ -606,7 +620,9 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
      */
     public V get(Factory<? extends V> factory, Object key, long timeout) {
         ValueWrapper<? extends V> value = getWrappedValue(factory, key, timeout);
-        return (value == null) ? null : value.getValue();
+        if (value != null && value.isValueSet())
+            return value.getValue();
+        return null;
     }
 
 
@@ -678,7 +694,6 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         Retriever r = getRetriever(key);
         try {
             synchronized (r) {
-                value = mValidCache.get(key);
                 if (value != null) {
                     validTest: {
                         if (value.getValue() instanceof Perishable) {
@@ -686,7 +701,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                                 break validTest;
                             }
                         }
-    
+
                         if (mExpirations == null) {
                             mCacheHits.getAndIncrement();
                             value.setLastAccessTime();
@@ -700,12 +715,12 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                             value.setLastAccessTime();
                             return value;
                         }
-    
+
                         // Value has expired.
                         mExpirations.remove(inKey);
                         invalidate(inKey);
                     }
-    
+
                 }
                 else {
                     value = mInvalidCache.get(key);
@@ -714,7 +729,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                         timeout = -1;
                     }
                 }
-    
+
                 ValueWrapper<? extends V> newValue = r.retrieve(factory, timeout, false);
                 mCacheMisses.getAndIncrement();
                 return (newValue.isValueSet()) ? newValue : value;
@@ -813,7 +828,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                 // Bypass the factory produced value so that any waiting
                 // threads are notified.
                 r.bypassValue(value);
-    
+
                 if (oldValid != null)
                     return oldValid.getValue();
                 else if (oldInvalid != null)
@@ -913,29 +928,31 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
      * Returns a set view of all items in both valid and invalid caches.
      */
     public Set<Map.Entry<Object, V>> entrySet() {
-        Set<Map.Entry<Object, V>> result = new HashSet<Map.Entry<Object, V>>(mValidCache.size() + mInvalidCache.size());
+        CopyOnWriteArraySet<Map.Entry<Object, V>> result = 
+            new CopyOnWriteArraySet<Map.Entry<Object, V>>();
         for (Map.Entry<ValueWrapper<Object>, ValueWrapper<V>> o : mValidCache.entrySet()) {
             result.add(new Entry<V>(o.getKey().getValue(), o.getValue().getValue()));
         }
-        
+
         for (Map.Entry<ValueWrapper<Object>, ValueWrapper<V>> o : mInvalidCache.entrySet()) {
             result.add(new Entry<V>(o.getKey().getValue(), o.getValue().getValue()));
         }
-        
+
         return result;
     }
 
     /**
      * Returns a set view of all keys in both valid and invalid caches.
      */
-    
+
     public Set<Object> keySet() {
-        Set<Object> result = new HashSet<Object>(mValidCache.size() + mInvalidCache.size());
+        CopyOnWriteArraySet<Object> result = 
+            new CopyOnWriteArraySet<Object>();
         
         for (ValueWrapper<Object> key : mValidCache.keySet()) {
             result.add(key.getValue());
         }
-        
+
         for (ValueWrapper<Object> key : mInvalidCache.keySet()) {
             result.add(key.getValue());
         }
@@ -953,10 +970,10 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                     Depot<?> otherDepot = (Depot<?>) o;
                     Map<Object, ValueWrapper<V>> thisMap = new HashMap<Object, ValueWrapper<V>>(mValidCache);
                     thisMap.putAll(mInvalidCache);
-                    
+
                     Map<Object, Object> otherMap = new HashMap<Object, Object>(otherDepot.mValidCache);
                     otherMap.putAll(otherDepot.mInvalidCache);
-                    
+
                     result = thisMap.equals(otherMap);
                 }
                 else {
@@ -967,7 +984,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                 result = false;
             }
         }
-        
+
         return result;
     }
 
@@ -998,11 +1015,11 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         for (ValueWrapper<V> wrappedValue : mValidCache.values()) {
             result.add(wrappedValue.getValue());
         }
-        
+
         for (ValueWrapper<V> wrappedValue : mInvalidCache.values()) {
             result.add(wrappedValue.getValue());
         }
-        
+
         return result;
     }
 
@@ -1013,7 +1030,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
             initCleanupThread();
             mExpirations = new ConcurrentHashMap<Object, Long>();
         }
-        
+
         mExpirations.put(key, expire);
         ValueWrapper<V> value = mValidCache.get(key);
         if (value != null) {
@@ -1026,19 +1043,19 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         Retriever result = mRetrievers.get(key);
         if (result == null) {
             result = new Retriever(key);
-            
+
             // Attempt to store the new retriever in the map. If one has been added since we last
             // checked, use that instead.
-            
+
             Retriever tempResult = mRetrievers.putIfAbsent(key, result);
             if (tempResult != null) {
                 result = tempResult;
             }
         }
-        
+
         return result;
     }
-    
+
     private void releaseRetriever(final ValueWrapper<Object> key, final Retriever retriever) {
         mRetrievers.remove(key, retriever);
     }
@@ -1183,7 +1200,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
 
         public void invalidateAll(final Filter filter) {
             Validate.notNull(filter, "Filter may not be null when invalidating objects");
-            
+
             Map<ValueWrapper<Object>, ValueWrapper<V>> valid = mValidCache;
             Map<ValueWrapper<Object>, ValueWrapper<V>> invalid = mInvalidCache;
             synchronized (valid) {
@@ -1210,7 +1227,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
 
         public void removeAll(final Filter filter) {
             Validate.notNull(filter, "Filter may not be null when removing objects");
-            
+
             Map<ValueWrapper<Object>, ValueWrapper<V>> valid = mValidCache;
             Map<ValueWrapper<Object>, ValueWrapper<V>> invalid = mInvalidCache;
             synchronized (valid) {
@@ -1222,7 +1239,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                             it.remove();
                         }
                     }
-                    
+
                     it = invalid.entrySet().iterator();
                     while (it.hasNext()) {
                         ValueWrapper<Object> key = it.next().getKey();
@@ -1247,7 +1264,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
 
     final class Retriever implements Transaction {
         private final ValueWrapper<Object> mKey;
-        // All access to mFactory, mValue, or mCancelled must be done while holding the object's lock 
+        // All access to mFactory, mValue, or mCancelled must be done while holding the object's lock
         private Factory<? extends V> mFactory;
         private ValueWrapper<V> mValue;
         private boolean mCancelled;
@@ -1258,7 +1275,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
             mFactory = null;
             mCancelled = false;
         }
-        
+
         /**
          * Returns sentinel value NOTHING if object couldn't be retrieved.
          */
@@ -1321,8 +1338,8 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                     originalName = t.getName();
                     t.setName(originalName + ' ' + mKey.getValue());
                 }
-                
-                V value;
+                V value = null;
+                Throwable error = null;
                 try {
                     long startTime = System.currentTimeMillis();
                     value = factory.create(mKey.getValue());
@@ -1332,17 +1349,27 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                     synchronized (this) {
                         mCancelled = true;
                     }
-                    
+
                     break fetch;
                 }
+                catch (Throwable e) {
+                    error = e;
+                }
                 finally {
-                    if (t != null) {   
+                    if (t != null) {
                         t.setName(originalName);
                     }
                 }
                 synchronized (this) {
                     mValue = ValueWrapper.wrap(value);
-                    mValue.setRetrievalElapsedTime(elapsedTime);
+                    if (error != null) {
+                        mValue.setError(error);
+                        mValue.setRetrievalElapsedTime(-1);
+                        throw new RuntimeException(error);
+                    }
+                    else {
+                        mValue.setRetrievalElapsedTime(elapsedTime);
+                    }
                     if (factory instanceof PerishablesFactory<?>) {
                         long duration =
                             ((PerishablesFactory<? extends V>)factory).getValidDuration();
@@ -1374,7 +1401,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
             if (oldInvalid != null) {
                 wrappedValue.setArrivalTime(oldInvalid.getArrivalTime());
             }
-            
+
             ValueWrapper<V> oldValid = mValidCache.put(key, wrappedValue);
             wrappedValue.setValid(true);
             if (!wrappedValue.equals(oldValid)) {
@@ -1396,22 +1423,22 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         }
 
         private static final long TIMER_RESOLUTION = 10;
-        
+
         private ValueWrapper<? extends V> waitForValue(final long inTimeout) {
             if (mReturnInvalidNoWait && mInvalidCache.containsKey(mKey)) {
                 return mInvalidCache.get(mKey);
             }
-            
+
             synchronized (this) {
                 if (inTimeout != 0) {
                     long timeout = inTimeout > 0 ? inTimeout : 0;
                     long wakeup = timeout > 0 ? (System.currentTimeMillis() + timeout) : Long.MAX_VALUE;
-                
+
                     try {
                         boolean timedOut = false;
                         while (!mValue.isValueSet() && !timedOut && !mCancelled) {
                             wait(timeout);
-                            
+
                             if (!mValue.isValueSet()) {
                                 long now = System.currentTimeMillis();
                                 if (now >= (wakeup - TIMER_RESOLUTION)) {
@@ -1429,7 +1456,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
                         // the current state of the value is (likely NOTHING).
                     }
                 }
-                
+
                 return mValue;
             }
         }
@@ -1449,20 +1476,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
     public int calculateAvgPerEntrySize() {
 
         Object[] keys = mValidCache.keySet().toArray();
-        int objectCount = 0;
-        if (keys.length > 0) {
-            Object exampleKey = mValidCache.get(keys[0]).getValue();
-            if (exampleKey != null) {
-                objectCount = getObjectCount(exampleKey.getClass()) + 1;
-            }
-        }
         int cumulativeSize = 0;
-        ByteArrayOutputStream sink = new ByteArrayOutputStream(1024);
-        ObjectOutputStream out = null;
-        try {
-            out = new ObjectOutputStream(sink);
-        }
-        catch (IOException ex) { return -1; }
         int sampled = 0;
         for (int i = 0; i < keys.length && i < 10000; i++) {
             Object k = keys[i];
@@ -1470,35 +1484,18 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
             if (w == null)
                 continue;
             Object v = w.getValue();
-            if (v == null || ! (v instanceof Serializable))
+            if (v == null)
                 continue;
-            try {
-                sink.reset();
-                out.writeObject(v);
-                out.flush();
-            }
-            catch (IOException ex) { continue; }
             sampled++;
-            cumulativeSize += (sink.size() + (objectCount * 8));
+            try {
+                // TODO: this fails with anonymous classes because MemoryUtil
+                // checks each instance variable which will include the parent
+                // class which will end up in an endless loop possibly.
+                cumulativeSize += MemoryUtil.sizeOf(v);
+            }
+            catch (IllegalAccessException ignore) { }
         }
         return sampled > 0 ? cumulativeSize / sampled : 0;
-    }
-
-
-    private int getObjectCount(final Class<?> c) {
-        int count = 0;
-        Field[] fields = c.getDeclaredFields();
-        for (int i = 0; i < fields.length; i++) {
-            Class<?> clazz = fields[i].getType();
-            if (!clazz.isPrimitive() && !clazz.isArray() && Modifier.STATIC != clazz.getModifiers() &&
-                    Modifier.TRANSIENT != clazz.getModifiers())  {
-                if (clazz.getName().startsWith("java.util.Date") || clazz.getName().startsWith("java.sql.Date"))
-                    count += 4;
-                else
-                    count++;
-            }
-        }
-        return count;
     }
 
     public static final class ValueWrapper<T> {
@@ -1512,24 +1509,24 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         private final AtomicInteger mHits = new AtomicInteger(0);
         private final AtomicLong mVersion = new AtomicLong(1L);
         private final AtomicBoolean mValueSet;
-
+        private Throwable mError = null;
         ValueWrapper() {
             mValue = new AtomicReference<T>(null);
             mArrivalTime = new AtomicLong(System.currentTimeMillis());
             mValid = new AtomicBoolean(true);
             mValueSet = new AtomicBoolean(false);
         }
-        
+
         ValueWrapper(final T value) {
             this();
             mValue.set(value);
             mValueSet.set(true);
         }
-        
+
         static <V> ValueWrapper<V> wrap(final V value) {
             return new ValueWrapper<V>(value);
         }
-        
+
         public boolean isValueSet() {
             return mValueSet.get();
         }
@@ -1539,7 +1536,7 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
             mValueSet.set(true);
             return mValue.getAndSet(value);
         }
-        
+
         public long getArrivalTime() { return mArrivalTime.get(); }
         void setArrivalTime(final long arrivalTime) { mArrivalTime.set(arrivalTime); }
 
@@ -1548,36 +1545,36 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
             mLastAccessTime.set(System.currentTimeMillis());
             mHits.getAndIncrement();
         }
-        
+
         public long getLastUpdateTime() { return mLastUpdateTime.get(); }
         void setLastUpdateTime() {
             mLastUpdateTime.lazySet(System.currentTimeMillis());
             mVersion.getAndIncrement();
         }
-        
+
         public long getExpirationTime() { return mExpirationTime.get(); }
         void setExpirationTime(final long expirationTime) { mExpirationTime.set(expirationTime); }
-        
+
         public boolean isValid() { return mValid.get(); }
         void setValid(final boolean valid) { mValid.set(valid); }
-        
+
         public boolean wasCached() { return mLastAccessTime.get() != 0L; }
 
-        @Override public synchronized int hashCode() { 
+        @Override public synchronized int hashCode() {
             return new HashCodeBuilder(37, 113).append(mValue.get()).append(mValueSet.get()).toHashCode();
         }
 
         @Override public synchronized boolean equals(final Object o) {
             boolean result = false;
-            
-			if (o instanceof ValueWrapper<?>) {
-			    ValueWrapper<?> other = (ValueWrapper<?>) o;
-			    result = new EqualsBuilder().append(mValue.get(), other.mValue.get())
-			                                .append(mValueSet.get(), other.mValueSet.get()).isEquals();
-			}
-			
-			return result;
-		}
+
+            if (o instanceof ValueWrapper<?>) {
+                ValueWrapper<?> other = (ValueWrapper<?>) o;
+                result = new EqualsBuilder().append(mValue.get(), other.mValue.get())
+                                            .append(mValueSet.get(), other.mValueSet.get()).isEquals();
+            }
+
+            return result;
+        }
 
         public int getRetrievalElapsedTime() { return mRetrievalElapsedTime.get(); }
         void setRetrievalElapsedTime(final int elapsedTime) { mRetrievalElapsedTime.set(elapsedTime); }
@@ -1585,6 +1582,9 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         public int getHits() { return mHits.get(); }
 
         public long getVersion() { return mVersion.get(); }
+        public Throwable getError() { return mError; }
+        public void setError(Throwable error) { mError = error; }
+        public boolean isError() { return mError != null; }
     }
 
 
@@ -1601,18 +1601,18 @@ public class Depot<V> implements Map<Object, V>, LRUCache.ExpirationListener {
         public Object getKey() { return mKey; }
         public T getValue() { return mValue.get(); }
         public T setValue(final T value) { return mValue.getAndSet(value); }
-        
+
         @Override public boolean equals(final Object o) {
             boolean result = false;
             if (o instanceof Entry<?>) {
                 Entry<?> other = (Entry<?>) o;
                 result = new EqualsBuilder().append(mKey, other.mKey).append(mValue.get(), other.mValue.get()).isEquals();
             }
-            
+
             return result;
         }
-            
-        
+
+
         @Override public int hashCode() { return mValue != null ? mValue.hashCode() : -1; }
     }
 

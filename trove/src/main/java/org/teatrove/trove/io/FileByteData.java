@@ -25,8 +25,6 @@ import java.io.IOException;
  * A ByteData implementation that reads the contents of a file.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 19 <!-- $-->, <!--$$JustDate:--> 00/12/06 <!-- $-->
  */
 public class FileByteData implements ByteData {
     private static final Object NULL = new Object();

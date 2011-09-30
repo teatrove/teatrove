@@ -24,7 +24,6 @@ import java.util.*;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 01/06/14 <!-- $-->
  */
 public class DeflaterPool {
     private static final int LIMIT;

@@ -24,8 +24,6 @@ import java.io.*;
  * defined  in section 4.7.6 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 30 <!-- $-->, <!--$$JustDate:--> 00/11/27 <!-- $-->
  */
 class LineNumberTableAttr extends Attribute {
     private List mEntries = new ArrayList();

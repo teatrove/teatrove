@@ -32,8 +32,6 @@ import org.teatrove.trove.util.ReadWriteLock;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 8 <!-- $-->, <!--$$JustDate:--> 02/03/07 <!-- $-->
  */
 public class BasicObjectRepository implements ObjectRepository {
     // How many milleseconds to wait on ReferenceQueue before exiting the

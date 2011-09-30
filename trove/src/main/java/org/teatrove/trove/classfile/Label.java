@@ -27,8 +27,6 @@ package org.teatrove.trove.classfile;
  * the time the CodeBuilder's class file is output.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 22 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  * @see CodeBuilder
  */
 public interface Label extends Location {

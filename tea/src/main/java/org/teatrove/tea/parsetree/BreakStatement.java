@@ -22,7 +22,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  * 
  * @author Sean T. Treat
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  5/31/01 <!-- $-->
+
  */
 public class BreakStatement extends Statement {
 

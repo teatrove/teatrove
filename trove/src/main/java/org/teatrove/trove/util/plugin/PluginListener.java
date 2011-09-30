@@ -23,7 +23,6 @@ import java.util.EventListener;
  * events pertaining to Plugins.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public interface PluginListener extends EventListener {
 

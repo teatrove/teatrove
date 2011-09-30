@@ -28,7 +28,7 @@ import java.util.ArrayList;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class MergedContextSource implements ContextSource {
 

@@ -22,8 +22,6 @@ import java.io.*;
  * This reader aids in decoding escapes in a character stream.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 12/11/00 <!-- $-->
  */
 public abstract class EscapeReader extends PositionReader {
     protected PushbackPositionReader mSource;

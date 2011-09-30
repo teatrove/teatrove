@@ -27,7 +27,7 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 27 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class Template extends Node {
     private Name mName;

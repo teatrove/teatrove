@@ -19,8 +19,6 @@ package org.teatrove.trove.classfile;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 class FixedLocation implements Location {
     private int mLocation;

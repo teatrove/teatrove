@@ -38,8 +38,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * purpose persistent map.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 16 <!-- $-->, <!--$$JustDate:--> 02/01/03 <!-- $-->
  * @see ObjectRepositoryMap
  */
 public class BTree implements PersistentSortedMapKernel {

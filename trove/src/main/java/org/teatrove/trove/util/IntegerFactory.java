@@ -23,8 +23,6 @@ package org.teatrove.trove.util;
  * frequently.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 02/09/10 <!-- $-->
  */
 public final class IntegerFactory {
     private static final Integer[] CACHE;

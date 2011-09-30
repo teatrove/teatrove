@@ -25,8 +25,6 @@ import java.util.Arrays;
  * caching against complex keys.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 01/07/09 <!-- $-->
  * @see Pair
  */
 public class MultiKey implements java.io.Serializable {
@@ -41,24 +39,24 @@ public class MultiKey implements java.io.Serializable {
 
         Class clazz = obj.getClass();
 
-        if (!clazz.isArray()) {
-            return obj.hashCode();
-        }
+        //if (!clazz.isArray()) {
+            //return obj.hashCode();
+        //}
         
         // Compute hashcode of array.
 
         int hash = clazz.hashCode();
         
-        if (obj instanceof Object[]) {
-            Object[] array = (Object[])obj;
-            for (int i = array.length; --i >= 0; ) {
-                hash = hash * 31 + hashCode(array[i]);
-            }
-        }
-        else if (obj instanceof int[]) {
+        if (obj instanceof int[]) {
             int[] array = (int[])obj;
             for (int i = array.length; --i >= 0; ) {
                 hash = hash * 31 + array[i];
+            }
+        }
+        else if (obj instanceof Object[]) {
+            Object[] array = (Object[])obj;
+            for (int i = array.length; --i >= 0; ) {
+                hash = hash * 31 + hashCode(array[i]);
             }
         }
         else if (obj instanceof float[]) {
@@ -105,6 +103,10 @@ public class MultiKey implements java.io.Serializable {
                 hash = hash * 31 + array[i];
             }
         }
+        else {
+            hash = obj.hashCode();
+        }
+        
         
         return hash;
     }
@@ -123,16 +125,19 @@ public class MultiKey implements java.io.Serializable {
 
         Class clazz1 = obj1.getClass();
 
-        if (!(clazz1.isArray())) {
-            return obj1.equals(obj2);
-        }
+        //if (!(clazz1.isArray())) {
+            //return obj1.equals(obj2);
+        //}
         
         if (clazz1 != obj2.getClass()) {
             return false;
         }
         
         // Perform array equality test.
-        if (obj1 instanceof Object[]) {
+        if (obj1 instanceof int[]) {
+            return Arrays.equals((int[])obj1, (int[])obj2);
+        }
+        else if (obj1 instanceof Object[]) {
             // Don't use Arrays.equals for objects since it doesn't
             // recurse into arrays of arrays.
             Object[] array1 = (Object[])obj1;
@@ -150,9 +155,6 @@ public class MultiKey implements java.io.Serializable {
             }
             
             return true;
-        }
-        else if (obj1 instanceof int[]) {
-            return Arrays.equals((int[])obj1, (int[])obj2);
         }
         else if (obj1 instanceof float[]) {
             return Arrays.equals((float[])obj1, (float[])obj2);

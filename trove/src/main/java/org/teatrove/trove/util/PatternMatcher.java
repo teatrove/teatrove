@@ -27,8 +27,6 @@ import org.teatrove.trove.classfile.*;
  * map keys must be strings. Asterisks (*) are treated as wildcard characters.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  4/14/04 <!-- $-->
  */
 public abstract class PatternMatcher {
     private static final int[] NO_POSITIONS = new int[0];

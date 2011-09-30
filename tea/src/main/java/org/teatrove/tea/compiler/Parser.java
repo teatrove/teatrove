@@ -30,7 +30,7 @@ import org.teatrove.trove.io.SourceReader;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 66 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class Parser {
     private Scanner mScanner;
@@ -1268,7 +1268,7 @@ public class Parser {
      * 
      * @author Brian S O'Neill
      * @version
-     * <!--$$Revision:--> 66 <!-- $--> 36 <!-- $$JustDate:--> 11/14/03 <!-- $-->
+
      */
     private static class Tester implements ErrorListener {
         String mFilename;

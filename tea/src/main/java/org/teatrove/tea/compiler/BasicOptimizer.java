@@ -36,7 +36,7 @@ import org.teatrove.tea.parsetree.*;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 45 <!-- $--> 6 <!-- $$JustDate:-->  5/31/01 <!-- $-->
+
  */
 public class BasicOptimizer {
     private Node mTree;

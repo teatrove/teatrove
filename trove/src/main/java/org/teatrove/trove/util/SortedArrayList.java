@@ -26,11 +26,9 @@ import java.util.*;
  * Note: Not all methods for adding and removing elements are supported.
  *
  * @author Sean T. Treat
- * @version
  * @see java.util.Collection
  * @see java.util.List
  * @see java.util.ArrayList
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  5/04/01 <!-- $-->
  */
 public class SortedArrayList extends ArrayList {
 

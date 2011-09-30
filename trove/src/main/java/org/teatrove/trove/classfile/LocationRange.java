@@ -19,8 +19,6 @@ package org.teatrove.trove.classfile;
 /**
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public interface LocationRange extends Comparable {
     /**

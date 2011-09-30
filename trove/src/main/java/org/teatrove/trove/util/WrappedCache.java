@@ -25,8 +25,6 @@ import java.util.*;
  * thread-safe.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 01/07/31 <!-- $-->
  */
 public class WrappedCache extends AbstractMap implements Map {
     private final Map mCacheMap;

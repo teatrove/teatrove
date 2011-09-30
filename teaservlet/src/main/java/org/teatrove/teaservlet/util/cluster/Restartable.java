@@ -23,7 +23,7 @@ import java.rmi.RemoteException;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  4/03/02 <!-- $-->
+
  */
 public interface Restartable extends Remote {
 

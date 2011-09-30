@@ -24,7 +24,7 @@ import java.io.IOException;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 class FastCharToByteBuffer extends org.teatrove.trove.io.FastCharToByteBuffer
     implements org.teatrove.teaservlet.io.CharToByteBuffer

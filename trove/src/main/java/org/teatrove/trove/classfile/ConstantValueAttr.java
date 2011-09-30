@@ -23,8 +23,6 @@ import java.io.*;
  * in section 4.7.3 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 23 <!-- $-->, <!--$$JustDate:--> 00/11/27 <!-- $-->
  */
 class ConstantValueAttr extends Attribute {
     private ConstantInfo mConstant;

@@ -25,8 +25,6 @@ import java.text.SimpleDateFormat;
  * {@link FileLogStreamFactory}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class DailyFileLogStream extends DailyLogStream {
     /** Default format is "yyyyMMdd" */

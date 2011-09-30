@@ -26,8 +26,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * collections may be very large.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 8 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public abstract class AbstractPersistentCollection
     implements PersistentCollection

@@ -104,7 +104,7 @@ import java.util.logging.Level;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 117 <!-- $-->, <!--$$JustDate:-->  4/01/04 <!-- $-->
+
  */
 public class JavaClassGenerator extends CodeGenerator {
 

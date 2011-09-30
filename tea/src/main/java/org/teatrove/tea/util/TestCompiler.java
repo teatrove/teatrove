@@ -33,7 +33,7 @@ import java.io.PrintStream;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class TestCompiler extends FileCompiler {
     public static void main(String[] args) throws Exception {

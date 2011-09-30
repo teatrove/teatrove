@@ -21,8 +21,6 @@ import java.util.*;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 19 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
  */
 public class CodeDisassembler {
     private final MethodInfo mMethod;

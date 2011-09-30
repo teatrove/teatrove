@@ -25,8 +25,6 @@ import org.teatrove.trove.util.SecureReadWriteLock;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 02/02/05 <!-- $-->
  */
 public class MultiplexFileRepository implements FileRepository {
     private final MultiplexFile mMF;

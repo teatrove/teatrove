@@ -33,8 +33,6 @@ import org.teatrove.trove.util.IdentityMap;
  * against socket factories that may be dead.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 01/11/06 <!-- $-->
  */
 public class DistributedSocketFactory implements SocketFactory {
     private final long mTimeout;

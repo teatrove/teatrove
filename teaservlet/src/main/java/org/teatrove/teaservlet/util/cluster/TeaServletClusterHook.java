@@ -24,7 +24,7 @@ import java.rmi.RemoteException;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  4/03/02 <!-- $-->
+
  */
 public class TeaServletClusterHook extends ClusterHook 
     implements Restartable {

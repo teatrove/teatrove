@@ -68,8 +68,6 @@ package org.teatrove.trove.util;
  * </pre>
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 01/11/26 <!-- $-->
  */
 public interface ReadWriteLock {
     public final int NONE = 0, READ = 1, UPGRADABLE = 2, WRITE = 3;

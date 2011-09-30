@@ -306,7 +306,7 @@ public interface CodeAssembler {
      */
     public void invokeVirtual(String methodName,
                               TypeDesc ret,
-                              TypeDesc[] params);
+                              TypeDesc... params);
 
     /**
      * Generates code to invoke a virtual method in any class. The object
@@ -318,7 +318,7 @@ public interface CodeAssembler {
     public void invokeVirtual(String className,
                               String methodName,
                               TypeDesc ret,
-                              TypeDesc[] params);
+                              TypeDesc... params);
 
     /**
      * Generates code to invoke a static method in this class. The method's
@@ -329,7 +329,7 @@ public interface CodeAssembler {
      */
     public void invokeStatic(String methodName,
                              TypeDesc ret,
-                             TypeDesc[] params);
+                             TypeDesc... params);
 
     /**
      * Generates code to invoke a static method in any class. The method's
@@ -341,7 +341,7 @@ public interface CodeAssembler {
     public void invokeStatic(String className,
                              String methodName,
                              TypeDesc ret,
-                             TypeDesc[] params);
+                             TypeDesc... params);
 
     /**
      * Generates code to invoke an interface method in any class. The object
@@ -353,7 +353,7 @@ public interface CodeAssembler {
     public void invokeInterface(String className,
                                 String methodName,
                                 TypeDesc ret,
-                                TypeDesc[] params);
+                                TypeDesc... params);
 
     /**
      * Generates code to invoke a private method in this class.
@@ -364,7 +364,7 @@ public interface CodeAssembler {
      */
     public void invokePrivate(String methodName,
                               TypeDesc ret,
-                              TypeDesc[] params);
+                              TypeDesc... params);
 
     /**
      * Generates code to invoke a method in the super class.
@@ -376,7 +376,7 @@ public interface CodeAssembler {
     public void invokeSuper(String superClassName,
                             String methodName,
                             TypeDesc ret,
-                            TypeDesc[] params);
+                            TypeDesc... params);
 
     /**
      * Generates code to invoke a class constructor in this class. The object 
@@ -384,7 +384,7 @@ public interface CodeAssembler {
      *
      * @param params May be null if constructor takes no parameters.
      */
-    public void invokeConstructor(TypeDesc[] params);
+    public void invokeConstructor(TypeDesc... params);
 
     /**
      * Generates code to invoke a class constructor in any class. The object 
@@ -392,7 +392,7 @@ public interface CodeAssembler {
      *
      * @param params May be null if constructor takes no parameters.
      */
-    public void invokeConstructor(String className, TypeDesc[] params);
+    public void invokeConstructor(String className, TypeDesc... params);
 
     /**
      * Generates code to invoke a super class constructor. The object 
@@ -400,7 +400,7 @@ public interface CodeAssembler {
      *
      * @param params May be null if constructor takes no parameters.
      */
-    public void invokeSuperConstructor(TypeDesc[] params);
+    public void invokeSuperConstructor(TypeDesc... params);
 
     // creation style instructions
 

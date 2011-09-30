@@ -19,8 +19,6 @@ package org.teatrove.trove.classfile;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  * @see CodeBuilder#createLocalVariable
  */
 public interface LocalVariable {

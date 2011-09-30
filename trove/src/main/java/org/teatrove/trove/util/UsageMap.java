@@ -25,8 +25,6 @@ import java.util.*;
  * back in.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class UsageMap extends AbstractMap implements java.io.Serializable {
     private Map mRecentMap;

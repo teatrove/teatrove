@@ -23,8 +23,6 @@ import java.util.*;
  * entries.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:-->  1/23/01 <!-- $-->
  */
 public abstract class AbstractMapEntry implements Map.Entry {
     /**

@@ -22,7 +22,7 @@ package org.teatrove.teaservlet;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public interface AdminApp extends Application {
     

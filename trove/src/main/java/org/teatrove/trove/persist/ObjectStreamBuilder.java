@@ -24,8 +24,6 @@ import java.io.*;
  * apply to it.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 02/02/19 <!-- $-->
  */
 public class ObjectStreamBuilder {
     public ObjectInputStream createInputStream(InputStream in)

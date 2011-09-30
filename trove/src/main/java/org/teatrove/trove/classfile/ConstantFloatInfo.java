@@ -23,8 +23,6 @@ import java.io.*;
  * section 4.4.4 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class ConstantFloatInfo extends ConstantInfo {
     private Float mValue;

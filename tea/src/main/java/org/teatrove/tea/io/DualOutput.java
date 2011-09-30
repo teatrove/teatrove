@@ -24,7 +24,7 @@ import java.io.OutputStream;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 6 <!-- $--> 21 <!-- $$JustDate:--> 11/14/03 <!-- $-->
+
  * @deprecated Moved to org.teatrove.trove.io package.
  * @see ClassInjector
  */

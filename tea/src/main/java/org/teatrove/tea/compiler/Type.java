@@ -36,7 +36,7 @@ import org.teatrove.tea.util.KeyedPropertyDescriptor;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 46 <!-- $-->, <!--$$JustDate:--> 03-03-05 <!-- $-->
+
  * @see org.teatrove.tea.parsetree.Expression
  */
 public class Type implements java.io.Serializable {

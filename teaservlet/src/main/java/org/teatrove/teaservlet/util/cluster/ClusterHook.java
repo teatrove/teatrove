@@ -30,7 +30,7 @@ import java.util.Vector;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  6/26/01 <!-- $-->
+
  */
 public class ClusterHook extends UnicastRemoteObject 
     implements Clustered {

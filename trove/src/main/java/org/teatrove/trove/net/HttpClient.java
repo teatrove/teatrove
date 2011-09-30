@@ -35,8 +35,6 @@ import java.net.SocketException;
 /**
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 20 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class HttpClient {
     private final SocketFactory mFactory;
@@ -388,7 +386,13 @@ public class HttpClient {
         /**
          * Add method stub for use by GoPublish.
          */
-        public void close() { }
+        public void close() {
+            try {
+                mSocket.close();
+            }
+            catch (Exception ignore) { }
+        }
+
 
         /**
          * Returns the server's status code, 200 for OK, 404 for not found,

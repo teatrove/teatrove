@@ -24,7 +24,6 @@ import java.io.*;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 01/06/13 <!-- $-->
  */
 public class DeflaterOutputStream extends FilterOutputStream {
     protected Deflater mDeflater;

@@ -24,7 +24,7 @@ import java.lang.reflect.Method;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  * @see TemplateCallExpression
  */
 public class FunctionCallExpression extends CallExpression {

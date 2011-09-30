@@ -25,7 +25,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 22 <!-- $-->, <!--$$JustDate:-->  5/31/01 <!-- $-->
+
  */
 public class Statement extends Node {
 

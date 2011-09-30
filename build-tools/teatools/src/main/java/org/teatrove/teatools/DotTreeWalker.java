@@ -45,7 +45,7 @@ import org.teatrove.tea.parsetree.TreeWalker;
  * 
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  9/06/00 <!-- $-->
+
  */
 public class DotTreeWalker extends TreeWalker {
     

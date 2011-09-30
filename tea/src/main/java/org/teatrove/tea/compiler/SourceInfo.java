@@ -22,7 +22,7 @@ package org.teatrove.tea.compiler;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 17 <!-- $-->, <!--$$JustDate:--> 00/12/14 <!-- $-->
+
  */
 public class SourceInfo implements Cloneable, java.io.Serializable {
     private int mLine;

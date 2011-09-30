@@ -36,7 +36,6 @@ import org.teatrove.trove.util.XMLMapFactory;
  * configuration block.
  *
  * @author Scott Jappinen, Travis Greer
- * @version <!--$$Revision:--> 3 <!-- $-->-<!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class PluginFactory {
 

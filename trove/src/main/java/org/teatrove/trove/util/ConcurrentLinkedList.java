@@ -113,6 +113,55 @@ public class ConcurrentLinkedList<E> {
         }
     }
 
+    public boolean moveToTail(Node<E> e){
+          mPutLock.lock();
+          try {
+              mPollLock.lock();
+              try{
+                  if (e == null)
+                      return false;
+          
+                  if (e.mRemoved)
+                      return false;
+          
+                  if (mSize.get() == 0)
+                      return false;
+    
+                  if (e == mTail) {
+                      return true;
+                  }
+                  
+                  if (e.mPrev == null || e.mNext == null)
+                      return false;
+    
+                  e.mPrev.mNext = e.mNext;
+                  e.mNext.mPrev = e.mPrev;
+              }
+              finally{
+                  mPollLock.unlock();
+              }
+              if (mSize.get() > 0)
+                  e.mPrev = mTail;
+              mTail.mNext = e;
+              if (mSize.get() <= 1) {
+                  mPollLock.lock();
+                  try {
+                      if (mSize.get() == 0)
+                          mHead.mNext = e;
+                      else
+                          mHead.mNext = e.mPrev;
+                  }
+                  finally {
+                      mPollLock.unlock();
+                  }
+              }
+              mTail = e;
+              return true;
+          }
+          finally {
+              mPutLock.unlock();
+          }
+    }
 
     /**
      *  Removes a given Node handle.   This is a blocking operation that runs in constant time.

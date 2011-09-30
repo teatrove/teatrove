@@ -28,7 +28,7 @@ import java.io.*;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 12/11/00 <!-- $-->
+
  * @deprecated Moved to org.teatrove.trove.io package.
  * @see java.io.PushbackReader
  */

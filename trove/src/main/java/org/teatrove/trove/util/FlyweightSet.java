@@ -30,8 +30,6 @@ import java.util.*;
  * as the one passed in.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  * @see Utils#intern
  */
 public class FlyweightSet extends AbstractSet {

@@ -24,8 +24,6 @@ import java.io.*;
  * section 4.7.5 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 26 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  */
 class ExceptionsAttr extends Attribute {
     private List mExceptions = new ArrayList(2);

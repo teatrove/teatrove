@@ -37,7 +37,7 @@ import org.teatrove.trove.io.SourceReader;
  * 
  * @author Guy A. Molinari
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  3/09/04 <!-- $-->
+
  */
 public class CompiledTemplate extends CompilationUnit {
     private Template mTree;

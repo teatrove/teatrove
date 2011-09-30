@@ -24,7 +24,7 @@ import java.util.StringTokenizer;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 10/09/01 <!-- $-->
+
  */
 public class TemplateClassLoader extends URLClassLoader {
 

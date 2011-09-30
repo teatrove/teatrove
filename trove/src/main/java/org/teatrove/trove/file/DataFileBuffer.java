@@ -24,8 +24,6 @@ import java.io.EOFException;
  * primitive data types.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public interface DataFileBuffer extends FileBuffer {
     /**

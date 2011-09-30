@@ -26,7 +26,7 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 25 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public abstract class BinaryExpression extends Expression {
     private Token mOperator;

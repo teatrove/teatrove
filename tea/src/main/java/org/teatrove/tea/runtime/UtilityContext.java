@@ -22,7 +22,7 @@ package org.teatrove.tea.runtime;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:--> 02-11-20 <!-- $-->
+
  */
 public interface UtilityContext extends Context {
 

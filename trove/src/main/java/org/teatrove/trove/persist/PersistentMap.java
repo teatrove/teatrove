@@ -24,8 +24,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * and read/write locks are built in.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public interface PersistentMap {
     int size() throws IOException;

@@ -45,8 +45,6 @@ import java.util.*;
  * The iterators may return less entries than the amount reported by size().
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  * @see java.util.WeakHashMap
  * @see java.util.HashMap
  */

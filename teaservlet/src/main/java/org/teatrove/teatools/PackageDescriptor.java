@@ -24,7 +24,7 @@ import java.util.Date;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  2/20/01 <!-- $-->
+
  */
 public class PackageDescriptor {
 

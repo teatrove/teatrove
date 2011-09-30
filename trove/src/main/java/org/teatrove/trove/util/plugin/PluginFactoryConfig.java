@@ -23,7 +23,6 @@ import org.teatrove.trove.util.Config;
  * to configure itself.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public interface PluginFactoryConfig extends Config {
 

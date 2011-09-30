@@ -23,8 +23,6 @@ import java.io.*;
  * in section 4.7.2 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 24 <!-- $-->, <!--$$JustDate:--> 00/11/27 <!-- $-->
  * @see ClassFile
  */
 class SourceFileAttr extends Attribute {

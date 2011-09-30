@@ -26,7 +26,7 @@ import org.teatrove.tea.compiler.Type;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 22 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class NotExpression extends Expression implements Logical {
     private Expression mExpr;

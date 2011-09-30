@@ -27,7 +27,7 @@ import java.beans.*;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 03-08-05 <!-- $-->
+
  */
 public class TypeDescription extends FeatureDescription {
     

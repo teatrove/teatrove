@@ -33,8 +33,6 @@ import java.io.*;
  * from a SourceReader is either ENTER_CODE or ENTER_TEXT;
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:-->  4/26/01 <!-- $-->
  */
 public class SourceReader extends PushbackPositionReader {
     public static final int ENTER_CODE = -2;

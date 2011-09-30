@@ -34,8 +34,6 @@ import java.util.Random;
  * passed to the append method have been converted before.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 28 <!-- $-->, <!--$$JustDate:--> 02/07/19 <!-- $-->
  */
 public class InternedCharToByteBuffer
     implements CharToByteBuffer, Serializable

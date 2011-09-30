@@ -23,8 +23,6 @@ import org.teatrove.trove.util.ReadWriteLock;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  * @see PersistentSortedMapView
  */
 public interface PersistentSortedMapKernel {

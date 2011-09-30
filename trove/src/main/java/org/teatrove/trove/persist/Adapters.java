@@ -29,8 +29,6 @@ import org.teatrove.trove.util.SecureReadWriteLock;
  * {@link UndeclaredThrowableException}s.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 02/04/09 <!-- $-->
  */
 public class Adapters {
     public static PersistentIterator wrap(Iterator it) {

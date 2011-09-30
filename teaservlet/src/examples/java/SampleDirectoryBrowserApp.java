@@ -63,7 +63,7 @@ import javax.servlet.ServletException;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  1/18/01 <!-- $-->
+
  */
 public class SampleDirectoryBrowserApp implements Application {
 

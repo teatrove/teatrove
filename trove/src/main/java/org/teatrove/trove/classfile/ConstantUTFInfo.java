@@ -23,8 +23,6 @@ import java.io.*;
  * section 4.4.7 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 22 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class ConstantUTFInfo extends ConstantInfo {
     private String mStr;

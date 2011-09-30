@@ -31,7 +31,7 @@ import java.io.Reader;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  * @see java.lang.Class#getResource
  */
 public class ResourceCompiler extends Compiler {

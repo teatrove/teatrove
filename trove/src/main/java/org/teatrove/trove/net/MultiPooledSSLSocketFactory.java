@@ -22,8 +22,6 @@ import java.net.InetAddress;
  * Wrapper for using secure sockets.
  *
  * @author Jonathan Colwell
- * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class MultiPooledSSLSocketFactory extends MultiPooledSocketFactory {
     public MultiPooledSSLSocketFactory(String[] hosts, 

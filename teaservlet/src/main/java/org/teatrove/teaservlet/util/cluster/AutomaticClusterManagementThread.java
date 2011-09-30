@@ -24,7 +24,7 @@ import org.teatrove.trove.log.Syslog;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:-->  8/22/01 <!-- $-->
+
  */
 public class AutomaticClusterManagementThread extends Thread {
 

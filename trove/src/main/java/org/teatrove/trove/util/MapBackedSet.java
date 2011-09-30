@@ -22,8 +22,6 @@ import java.util.*;
  * A set implementation that is backed by any map.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class MapBackedSet extends AbstractSet implements java.io.Serializable {
     // Dummy value to associate with an Object in the backing Map

@@ -24,8 +24,6 @@ import java.util.Comparator;
  * IOExceptions. 
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public interface PersistentSortedMap extends PersistentMap {
     Comparator comparator();

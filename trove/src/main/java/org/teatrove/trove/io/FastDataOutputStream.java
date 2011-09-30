@@ -24,8 +24,6 @@ import java.io.*;
  * same OutputStream.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 01/12/26 <!-- $-->
  */
 public class FastDataOutputStream extends AbstractDataOutputStream
     implements DataOutput

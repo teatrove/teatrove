@@ -26,8 +26,6 @@ import java.util.*;
  * different thread.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class LogEventParsingWriter extends Writer {
     private Vector mListeners;

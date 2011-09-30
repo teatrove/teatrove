@@ -26,7 +26,7 @@ import org.teatrove.trove.log.Syslog;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:-->  5/20/02 <!-- $-->
+
  */
 public class LocalNetResolver {
 

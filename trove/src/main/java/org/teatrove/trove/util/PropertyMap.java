@@ -32,8 +32,6 @@ import java.util.Set;
  * properties as certain types.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 17 <!-- $--> 4 <!-- $$JustDate:--> 11/14/03 <!-- $-->
  */
 public class PropertyMap extends AbstractMap {
     public static final Class ELEMENT_TYPE = String.class;

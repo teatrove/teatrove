@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
  *
  * @author Reece Wilton, Brian S O'Neill
  * @version
- * <!--$$Revision:--> 10 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
  */
 class HttpContextImpl extends org.teatrove.tea.runtime.DefaultContext
 implements HttpContext {

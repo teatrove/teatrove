@@ -64,7 +64,7 @@ import javax.servlet.ServletException;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  3/25/04 <!-- $-->
+
  */
 public class RegionCachingApplication implements AdminApp {
 

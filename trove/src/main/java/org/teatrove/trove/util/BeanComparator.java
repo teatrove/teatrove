@@ -79,8 +79,6 @@ import org.teatrove.trove.classfile.*;
  * Serializable.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 20 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  * @see java.beans.Introspector
  * @see CompleteIntrospector
  * @see java.util.Collections.sort
@@ -569,7 +567,7 @@ public class BeanComparator implements Comparator, Serializable {
         CodeBuilder builder = new CodeBuilder(ctor);
 
         builder.loadThis();
-        builder.invokeSuperConstructor(null);
+        builder.invokeSuperConstructor();
         builder.loadThis();
         builder.loadLocal(builder.getParameters()[0]);
         builder.storeField("mCollators", comparatorArrayType);

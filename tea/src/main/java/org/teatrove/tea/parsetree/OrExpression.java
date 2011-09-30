@@ -26,7 +26,7 @@ import org.teatrove.tea.compiler.Token;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class OrExpression extends BinaryLogicalExpression {
     public OrExpression(SourceInfo info,

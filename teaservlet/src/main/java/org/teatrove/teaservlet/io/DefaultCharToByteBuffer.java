@@ -23,7 +23,7 @@ import java.io.IOException;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 24 <!-- $-->, <!--$$JustDate:--> 01/04/12 <!-- $-->
+
  * deprecated Moved to org.teatrove.trove.io package.
  */
 public class DefaultCharToByteBuffer

@@ -53,7 +53,7 @@ import org.teatrove.teaservlet.util.cluster.TeaServletClusterHook;
  *
  * @author Reece Wilton, Brian S O'Neill, Jonathan Colwell
  * @version
- * <!--$$Revision:--> 25 <!-- $-->, <!--$$JustDate:-->  8/26/04 <!-- $-->
+
  */
 public class AdminApplication implements AdminApp {
     protected ApplicationConfig mConfig;

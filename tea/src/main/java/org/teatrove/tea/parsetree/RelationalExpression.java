@@ -29,7 +29,7 @@ import org.teatrove.tea.compiler.Token;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 25 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class RelationalExpression extends BinaryLogicalExpression {
     private TypeName mTypeName;

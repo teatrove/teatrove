@@ -26,7 +26,6 @@ import java.net.URL;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 17 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class DelegateClassLoader extends ClassLoader {
     private ClassLoader[] mScouts;

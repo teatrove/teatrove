@@ -19,8 +19,6 @@ package org.teatrove.trove.classfile;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 class LocationRangeImpl implements LocationRange {
     private final Location mStart;

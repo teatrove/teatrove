@@ -22,8 +22,6 @@ import java.io.*;
  * A CharToByteBuffer implementation that wraps a ByteBuffer for storage.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 23 <!-- $-->, <!--$$JustDate:--> 01/05/30 <!-- $-->
  */
 public class DefaultCharToByteBuffer
     implements CharToByteBuffer, Serializable

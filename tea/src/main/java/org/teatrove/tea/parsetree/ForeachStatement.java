@@ -33,7 +33,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 32 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class ForeachStatement extends Statement {
     private VariableRef mLoopVar;

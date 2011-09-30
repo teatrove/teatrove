@@ -21,8 +21,6 @@ import java.net.*;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 00/12/05 <!-- $-->
  */
 public class InetAddressAndPort {
     /**

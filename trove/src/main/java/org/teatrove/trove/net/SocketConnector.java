@@ -25,8 +25,6 @@ import org.teatrove.trove.util.*;
  * Allows client socket connections to be established with a timeout.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 02/02/08 <!-- $-->
  */
 public class SocketConnector {
     // Limit the number of threads that may simultaneously connect to a

@@ -23,7 +23,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class SubstitutionStatement extends Statement {
     public SubstitutionStatement(SourceInfo info) {

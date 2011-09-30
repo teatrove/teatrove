@@ -22,8 +22,6 @@ import java.util.*;
  * An implementation of the IntervalLogStream with an interval of one hour.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class HourlyLogStream extends IntervalLogStream {
     public HourlyLogStream(Factory factory) {

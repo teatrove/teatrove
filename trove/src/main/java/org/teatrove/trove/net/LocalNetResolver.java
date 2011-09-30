@@ -32,8 +32,6 @@ import org.teatrove.trove.log.Syslog;
  * This class provides functionality for finding the right network interface.
  * 
  * @author Jonathan Colwell, Reece Wilton
- * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 10/07/04 <!-- $-->
  */
 public class LocalNetResolver {
 

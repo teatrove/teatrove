@@ -24,7 +24,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 16 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  * @see Block
  * @see Template#getStatement()
  */

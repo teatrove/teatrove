@@ -22,7 +22,7 @@ package org.teatrove.tea.parsetree;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  *
  * @see NotExpression
  * @see AndExpression

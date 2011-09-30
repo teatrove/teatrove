@@ -38,8 +38,6 @@ import org.teatrove.trove.util.SecureReadWriteLock;
  * systems.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 23 <!-- $-->, <!--$$JustDate:--> 02/03/12 <!-- $-->
  */
 public class MultiplexFile {
     private static final int MAGIC = 0xc1a3af92;

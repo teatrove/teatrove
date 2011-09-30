@@ -27,8 +27,6 @@ import java.io.*;
  * multiple threads to read from the same InputStream.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 02/03/04 <!-- $-->
  */
 public abstract class AbstractDataInputStream extends InputStream
     implements DataInput

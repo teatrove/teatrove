@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 19 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class ExpressionStatement extends Statement {
     private Expression mExpr;

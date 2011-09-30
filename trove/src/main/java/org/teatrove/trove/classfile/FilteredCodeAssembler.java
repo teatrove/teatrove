@@ -19,8 +19,6 @@ package org.teatrove.trove.classfile;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  */
 public class FilteredCodeAssembler implements CodeAssembler {
     protected final CodeAssembler mAssembler;

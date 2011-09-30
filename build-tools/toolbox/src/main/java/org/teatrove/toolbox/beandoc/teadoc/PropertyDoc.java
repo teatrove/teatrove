@@ -27,7 +27,7 @@ import java.util.HashMap;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  3/01/01 <!-- $-->
+
  */
 public class PropertyDoc extends MemberDoc {
 

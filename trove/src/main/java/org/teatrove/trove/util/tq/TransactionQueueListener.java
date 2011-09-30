@@ -22,8 +22,6 @@ import java.util.EventListener;
  * Interface used to receive events from a {@link TransactionQueue}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:-->  9/25/00 <!-- $-->
  * @see TransactionQueueAdapter
  */
 public interface TransactionQueueListener extends EventListener {

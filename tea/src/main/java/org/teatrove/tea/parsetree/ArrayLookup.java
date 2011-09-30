@@ -33,7 +33,7 @@ import java.lang.reflect.Method;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 23 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  * @see org.teatrove.tea.util.BeanAnalyzer
  */
 public class ArrayLookup extends Expression {

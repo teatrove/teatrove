@@ -24,8 +24,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * IOExceptions, and read/write locks are built in.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 8 <!-- $-->, <!--$$JustDate:--> 02/04/09 <!-- $-->
  */
 public interface PersistentCollection {
     int size() throws IOException;

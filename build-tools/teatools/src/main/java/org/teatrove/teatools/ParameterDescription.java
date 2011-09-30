@@ -22,7 +22,7 @@ import java.beans.*;
  * 
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 03-08-05 <!-- $-->
+
  */
 public class ParameterDescription extends FeatureDescription {
 

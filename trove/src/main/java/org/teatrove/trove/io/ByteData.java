@@ -23,8 +23,6 @@ import java.io.IOException;
  * Simple interface for writing a list of bytes to an OutputStream.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:--> 00/12/05 <!-- $-->
  */
 public interface ByteData {
     /**

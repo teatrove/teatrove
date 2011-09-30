@@ -27,8 +27,6 @@ import java.io.*;
  * a character, the unread operation cannot accept any arbitrary character.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 12/11/00 <!-- $-->
  * @see java.io.PushbackReader
  */
 public class PushbackPositionReader extends PositionReader {

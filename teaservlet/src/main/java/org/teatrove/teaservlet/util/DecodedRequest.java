@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:--> 03-10-09 <!-- $-->
+
  */
 public class DecodedRequest extends HttpServletRequestWrapper {
     private static final byte[] TEST_BYTES = {65};

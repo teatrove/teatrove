@@ -29,8 +29,6 @@ import java.util.*;
  * against socket factories that may be dead.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 02/02/08 <!-- $-->
  */
 public class MultiPooledSocketFactory extends DistributedSocketFactory {
     final InetAddress mLocalAddr;

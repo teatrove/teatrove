@@ -25,8 +25,6 @@ import java.lang.ref.*;
  * discovered.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 00/12/13 <!-- $-->
  */
 public class CompleteIntrospector {
     // Weakly maps Class objects to softly referenced PropertyDescriptor maps.

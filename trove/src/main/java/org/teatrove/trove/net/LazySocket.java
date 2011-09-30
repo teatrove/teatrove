@@ -31,8 +31,6 @@ import java.io.*;
  * is tried again.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 10 <!-- $-->, <!--$$JustDate:--> 02/08/23 <!-- $-->
  */
 class LazySocket implements SocketFace {
     private final SocketFactory mFactory;

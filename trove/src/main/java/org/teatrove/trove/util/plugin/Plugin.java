@@ -20,7 +20,6 @@ package org.teatrove.trove.util.plugin;
  * Implement this interface for providing plugin functionality.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public interface Plugin extends PluginListener {
     

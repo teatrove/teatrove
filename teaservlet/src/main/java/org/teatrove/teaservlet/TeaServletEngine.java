@@ -42,7 +42,7 @@ import org.teatrove.tea.engine.TemplateSource;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 10 <!-- $-->, <!--$$JustDate:-->  5/07/03 <!-- $-->
+
  */
 public interface TeaServletEngine extends ApplicationConfig {
     /**

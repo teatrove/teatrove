@@ -29,8 +29,6 @@ import java.io.*;
  * is null.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 02/02/20 <!-- $-->
  * @see ObjectRepository#local
  */
 public class Link implements Externalizable {

@@ -25,7 +25,7 @@ import java.io.IOException;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:--> 01/02/20 <!-- $-->
+
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class SpilloverByteBuffer extends org.teatrove.trove.io.SpilloverByteBuffer

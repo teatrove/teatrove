@@ -26,7 +26,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 24 <!-- $-->, <!--$$JustDate:-->  5/31/01 <!-- $-->
+
  */
 public class IfStatement extends Statement {
     private Expression mCondition;

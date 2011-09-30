@@ -24,8 +24,6 @@ package org.teatrove.trove.util.tq;
  * TransactionQueue.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:-->  9/25/00 <!-- $-->
  */
 public class TransactionQueueSizeTuner extends TransactionQueueAdapter {
     public void transactionQueueFull(TransactionQueueEvent e) {

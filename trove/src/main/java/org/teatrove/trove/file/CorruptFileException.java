@@ -22,8 +22,6 @@ import java.io.IOException;
  * Exception thrown if file corruption has been detected.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public class CorruptFileException extends IOException {
     public CorruptFileException() {

@@ -25,7 +25,7 @@ import org.teatrove.trove.util.Depot;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public class RegionCacheInfo implements Serializable {
         

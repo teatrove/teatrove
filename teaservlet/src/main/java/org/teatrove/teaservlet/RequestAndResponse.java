@@ -22,7 +22,7 @@ import org.teatrove.tea.runtime.OutputReceiver;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  2/01/02 <!-- $-->
+
  */
 public class RequestAndResponse implements TeaServletTransaction {
 

@@ -28,7 +28,7 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 28 <!-- $-->, <!--$$JustDate:--> 01/02/01 <!-- $-->
+
  */
 public class ParenExpression extends Expression {
     private Expression mExpr;

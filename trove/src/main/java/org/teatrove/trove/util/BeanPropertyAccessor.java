@@ -33,8 +33,6 @@ import org.teatrove.trove.classfile.*;
  * directly, using a special hash/switch design pattern.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  9/08/03 <!-- $-->
  */
 public abstract class BeanPropertyAccessor {
     private static final boolean DEBUG;
@@ -44,7 +42,7 @@ public abstract class BeanPropertyAccessor {
 
     static {
         DEBUG = Boolean.getBoolean
-            ("org.teatrove.trove.util.BeanPropertyAccessor.DEBUG");
+            ("com.go.trove.util.BeanPropertyAccessor.DEBUG");
     }
 
     /**
@@ -66,9 +64,9 @@ public abstract class BeanPropertyAccessor {
     private static BeanPropertyAccessor generate(Class beanType) {
         ClassInjector injector = new ClassInjector
             (beanType.getClassLoader(), (File)null, null);
-        
+
         int id = beanType.hashCode();
-            
+
         String baseName = BeanPropertyAccessor.class.getName() + '$';
         String className = baseName;
         try {
@@ -84,7 +82,7 @@ public abstract class BeanPropertyAccessor {
         }
         catch (ClassNotFoundException e) {
         }
-        
+
         ClassFile cf = generateClassFile(className, beanType);
 
         if (DEBUG) {
@@ -101,7 +99,7 @@ public abstract class BeanPropertyAccessor {
                 e.printStackTrace();
             }
         }
-        
+
         try {
             OutputStream stream = injector.getStream(cf.getClassName());
             cf.writeTo(stream);
@@ -110,7 +108,7 @@ public abstract class BeanPropertyAccessor {
         catch (IOException e) {
             throw new InternalError(e.toString());
         }
-        
+
         try {
             Class clazz = injector.loadClass(cf.getClassName());
             return (BeanPropertyAccessor)clazz.newInstance();
@@ -137,12 +135,12 @@ public abstract class BeanPropertyAccessor {
         Modifiers publicAccess = new Modifiers();
         publicAccess.setPublic(true);
 
-        MethodInfo ctor = cf.addConstructor(publicAccess, null);
+        MethodInfo ctor = cf.addConstructor(publicAccess);
         ctor.markSynthetic();
         CodeBuilder builder = new CodeBuilder(ctor);
 
         builder.loadThis();
-        builder.invokeSuperConstructor(null);
+        builder.invokeSuperConstructor();
         builder.returnVoid();
 
         generateMethod(cf, beanType, props[0], true);
@@ -207,7 +205,7 @@ public abstract class BeanPropertyAccessor {
             Label[] switchLabels = new Label[caseCount];
             Label noMatch = builder.createLabel();
             List[] caseMethods = caseMethods(caseCount, properties);
-            
+
             for (int i=0; i<caseCount; i++) {
                 List matches = caseMethods[i];
                 if (matches == null || matches.size() == 0) {
@@ -221,39 +219,39 @@ public abstract class BeanPropertyAccessor {
             if (properties.length > 1) {
                 builder.loadLocal(propertyVar);
                 builder.invokeVirtual(String.class.getName(),
-                                      "hashCode", intType, null);
+                                      "hashCode", intType);
                 builder.loadConstant(0x7fffffff);
                 builder.math(Opcode.IAND);
                 builder.loadConstant(caseCount);
                 builder.math(Opcode.IREM);
-            
+
                 builder.switchBranch(cases, switchLabels, noMatch);
             }
-            
+
             // Params to invoke String.equals.
             TypeDesc[] params = {objectType};
-            
+
             for (int i=0; i<caseCount; i++) {
                 List matches = caseMethods[i];
                 if (matches == null || matches.size() == 0) {
                     continue;
                 }
-                
+
                 switchLabels[i].setLocation();
-                
+
                 int matchCount = matches.size();
                 for (int j=0; j<matchCount; j++) {
                     PropertyDescriptor pd = (PropertyDescriptor)matches.get(j);
-                    
+
                     // Test against name to find exact match.
-                    
+
                     builder.loadConstant(pd.getName());
                     builder.loadLocal(propertyVar);
                     builder.invokeVirtual(String.class.getName(),
                                           "equals", booleanType, params);
-                    
+
                     Label notEqual;
-                    
+
                     if (j == matchCount - 1) {
                         notEqual = null;
                         builder.ifZeroComparisonBranch(noMatch, "==");
@@ -262,7 +260,7 @@ public abstract class BeanPropertyAccessor {
                         notEqual = builder.createLabel();
                         builder.ifZeroComparisonBranch(notEqual, "==");
                     }
-                    
+
                     if (forRead) {
                         loadPropertyAsObject(builder, beanVar,
                                              pd.getReadMethod());
@@ -273,13 +271,13 @@ public abstract class BeanPropertyAccessor {
                                                pd.getWriteMethod());
                         builder.returnVoid();
                     }
-                    
+
                     if (notEqual != null) {
                         notEqual.setLocation();
                     }
                 }
             }
-            
+
             noMatch.setLocation();
         }
 
@@ -300,6 +298,7 @@ public abstract class BeanPropertyAccessor {
                                              LocalVariable beanVar,
                                              Method m) {
         Class returnType = m.getReturnType();
+        Type genericType = m.getGenericReturnType();
 
         if (!returnType.isPrimitive()) {
             builder.loadLocal(beanVar);
@@ -322,7 +321,8 @@ public abstract class BeanPropertyAccessor {
             return;
         }
 
-        TypeDesc objectType = TypeDesc.forClass(returnType).toObjectType();
+        TypeDesc objectType =
+            TypeDesc.forClass(returnType, genericType).toObjectType();
         TypeDesc[] params = {objectType.toPrimitiveType()};
 
         builder.newObject(objectType);
@@ -367,7 +367,7 @@ public abstract class BeanPropertyAccessor {
         builder.loadLocal(valueVar);
         builder.checkCast(TypeDesc.forClass(objectName));
         builder.invokeVirtual(objectName, methodName,
-                              TypeDesc.forClass(valueType), null);
+                              TypeDesc.forClass(valueType));
         builder.invoke(m);
     }
 
@@ -435,7 +435,7 @@ public abstract class BeanPropertyAccessor {
         }
 
         PropertyDescriptor[][] props = new PropertyDescriptor[2][];
-        
+
         props[0] = new PropertyDescriptor[readProperties.size()];
         readProperties.toArray(props[0]);
         props[1] = new PropertyDescriptor[writeProperties.size()];
@@ -460,7 +460,7 @@ public abstract class BeanPropertyAccessor {
     /*
     public Object getPropertyValue(Object bean, String property) {
         Bean bean = (Bean)bean;
-        
+
         switch ((property.hashCode() & 0x7fffffff) % 11) {
         case 0:
             if ("name".equals(property)) {
@@ -500,13 +500,13 @@ public abstract class BeanPropertyAccessor {
             // No case
             break;
         }
-        
+
         throw new NoSuchPropertyException(property, true);
     }
 
     public void setPropertyValue(Object bean, String property, Object value) {
         Bean bean = (Bean)bean;
-        
+
         switch ((property.hashCode() & 0x7fffffff) % 11) {
         case 0:
             if ("name".equals(property)) {
@@ -546,7 +546,7 @@ public abstract class BeanPropertyAccessor {
             // No case
             break;
         }
-        
+
         throw new NoSuchPropertyException(property, false);
     }
     */

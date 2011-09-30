@@ -24,7 +24,7 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Guy Molinari
  * @version
- * <!--$$Revision:--> 35 <!-- $-->, <!--$$JustDate:--> 05/09/25 <!-- $-->
+
  */
 public class ImportDirective extends Directive {
     private String mName;

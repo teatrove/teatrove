@@ -23,8 +23,6 @@ import java.util.EventListener;
  * {@link TransactionQueue}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  9/25/00 <!-- $-->
  * @see TransactionQueueAdapter
  */
 public interface UncaughtExceptionListener extends EventListener {

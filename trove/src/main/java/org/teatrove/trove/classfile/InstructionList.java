@@ -16,15 +16,24 @@
 
 package org.teatrove.trove.classfile;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * The InstructionList class is used by the CodeBuilder to perform lower-level
  * bookkeeping operations and flow analysis.
  *
- * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
+ * @author Brian S O'Neill, Nick Hagan
  * @see CodeBuilder
  */
 class InstructionList implements CodeBuffer {
@@ -153,12 +162,7 @@ class InstructionList implements CodeBuffer {
                 resolve0();
             }
             finally {
-                System.out.println("-- Instructions --");
-
-                Iterator it = getInstructions().iterator();
-                while (it.hasNext()) {
-                    System.out.println(it.next());
-                }
+                printInstructions("unable to resolve");
             }
         }
     }
@@ -430,6 +434,7 @@ class InstructionList implements CodeBuffer {
 
             if (instr.isFlowThrough()) {
                 if ((next = instr.mNext) == null) {
+                    printInstructions("execution flows through end of method");
                     throw new RuntimeException
                         ("Execution flows through end of method");
                 }
@@ -470,7 +475,8 @@ class InstructionList implements CodeBuffer {
                 instr.mStackDepth = stackDepth;
             }
             else {
-                if (instr.mStackDepth != stackDepth) {
+            	if (instr.mStackDepth != stackDepth) {
+            		printInstructions("invalid stack depth");
                     throw new RuntimeException
                         ("Stack depth different at previously visited " +
                          "instruction: " + instr.mStackDepth +
@@ -485,6 +491,7 @@ class InstructionList implements CodeBuffer {
 
             if (instr.isFlowThrough()) {
                 if ((next = instr.mNext) == null) {
+                    printInstructions("execution flows through end of method");
                     throw new RuntimeException
                         ("Execution flows through end of method");
                 }
@@ -495,6 +502,7 @@ class InstructionList implements CodeBuffer {
                 mMaxStack = stackDepth;
             }
             else if (stackDepth < 0) {
+            	printInstructions("invalid stack depth");
                 throw new RuntimeException("Stack depth is negative: " +
                                            stackDepth);
             }
@@ -679,8 +687,6 @@ class InstructionList implements CodeBuffer {
      * Java byte code instruction.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public abstract class Instruction implements Location {
         private int mStackAdjust;
@@ -966,6 +972,12 @@ class InstructionList implements CodeBuffer {
             catch (Exception e) {
             }
 
+            if (DEBUG) {
+                buf.append(' ').append(this.hashCode());
+            }
+            
+            buf.append(" [").append(isFlowThrough()).append(']');
+            
             return buf.toString();
         }
     }
@@ -975,8 +987,6 @@ class InstructionList implements CodeBuffer {
      * from a label. Labels are not automatically added to the list.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class LabelInstruction extends Instruction implements Label {
         public LabelInstruction() {
@@ -1001,6 +1011,7 @@ class InstructionList implements CodeBuffer {
             int loc;
             if ((loc = mLocation) < 0) {
                 if (mPrev == null && mNext == null) {
+                    printInstructions("label location not set");
                     throw new IllegalStateException
                         ("Label location is not set");
                 }
@@ -1025,8 +1036,6 @@ class InstructionList implements CodeBuffer {
      * Defines a code instruction and has storage for byte codes.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class CodeInstruction extends Instruction {
         protected byte[] mBytes;
@@ -1082,8 +1091,6 @@ class InstructionList implements CodeBuffer {
      * branch.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class BranchInstruction extends CodeInstruction {
         private Location mTarget;
@@ -1132,6 +1139,7 @@ class InstructionList implements CodeBuffer {
                 mBytes[0] = opcode;
                 break;
             default:
+                printInstructions("opcode not a branch instruction");
                 throw new IllegalArgumentException
                     ("Opcode not a branch instruction: " +
                      Opcode.getMnemonic(opcode));
@@ -1219,8 +1227,6 @@ class InstructionList implements CodeBuffer {
      * constant in the constant pool.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class ConstantOperandInstruction extends CodeInstruction {
         private ConstantInfo mInfo;
@@ -1236,6 +1242,7 @@ class InstructionList implements CodeBuffer {
             int index = mInfo.getIndex();
 
             if (index < 0) {
+                printInstructions("constant pool index not resolved");
                 throw new RuntimeException("Constant pool index not resolved");
             }
 
@@ -1248,6 +1255,31 @@ class InstructionList implements CodeBuffer {
         public boolean isResolved() {
             return mInfo.getIndex() >= 0;
         }
+        
+        public String toString() {
+            StringBuilder buffer = new StringBuilder();
+            buffer.append(super.toString()).append(' ');
+            if (mInfo instanceof ConstantMethodInfo) {
+                ConstantMethodInfo info = (ConstantMethodInfo) mInfo;
+                buffer.append(info.getNameAndType().getName())
+                      .append(info.getNameAndType().getType());
+            }
+            else if (mInfo instanceof ConstantInterfaceMethodInfo) {
+                ConstantInterfaceMethodInfo info = 
+                    (ConstantInterfaceMethodInfo) mInfo;
+                buffer.append(info.getNameAndType().getName())
+                      .append(info.getNameAndType().getType());
+            }
+            else if (mInfo instanceof ConstantFieldInfo) {
+                ConstantFieldInfo info = (ConstantFieldInfo) mInfo;
+                buffer.append(info.getNameAndType().getType())
+                      .append(' ')
+                      .append(info.getNameAndType().getName());
+                
+            }
+            
+            return buffer.toString();
+        }
     }
 
     /**
@@ -1255,8 +1287,6 @@ class InstructionList implements CodeBuffer {
      * constant pool.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class LoadConstantInstruction extends CodeInstruction {
         private ConstantInfo mInfo;
@@ -1283,6 +1313,7 @@ class InstructionList implements CodeBuffer {
             int index = mInfo.getIndex();
 
             if (index < 0) {
+                printInstructions("constant pool index not resolved");
                 throw new RuntimeException("Constant pool index not resolved");
             }
 
@@ -1318,8 +1349,6 @@ class InstructionList implements CodeBuffer {
      * LocalVariable.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class LocalOperandInstruction extends CodeInstruction {
         protected LocalVariable mLocal;
@@ -1342,6 +1371,7 @@ class InstructionList implements CodeBuffer {
             int varNum = mLocal.getNumber();
 
             if (varNum < 0) {
+                printInstructions("local variable number not resolved");
                 throw new RuntimeException
                     ("Local variable number not resolved");
             }
@@ -1354,8 +1384,6 @@ class InstructionList implements CodeBuffer {
      * Defines an instruction that loads a local variable onto the stack.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class LoadLocalInstruction extends LocalOperandInstruction {
         public LoadLocalInstruction(int stackAdjust,
@@ -1521,8 +1549,6 @@ class InstructionList implements CodeBuffer {
      * variable.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class StoreLocalInstruction extends LocalOperandInstruction {
         public StoreLocalInstruction(int stackAdjust,
@@ -1688,8 +1714,6 @@ class InstructionList implements CodeBuffer {
      * Defines a ret instruction for returning from a jsr call.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class RetInstruction extends LocalOperandInstruction {
         public RetInstruction(LocalVariable local) {
@@ -1725,8 +1749,6 @@ class InstructionList implements CodeBuffer {
      * a signed 16-bit amount.
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
      */
     public class ShortIncrementInstruction extends LocalOperandInstruction {
         private short mAmount;
@@ -1771,9 +1793,7 @@ class InstructionList implements CodeBuffer {
      * implementation to use (table or lookup switch) is determined
      * automatically based on which generates to the smallest amount of bytes.
      *
-     * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 38 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
+     * @author Brian S O'Neill, Nick Hagan
      */
     public class SwitchInstruction extends CodeInstruction {
         private int[] mCases;
@@ -1793,6 +1813,7 @@ class InstructionList implements CodeBuffer {
             super(-1);
 
             if (casesParam.length != locationsParam.length) {
+                printInstructions("switch cases and location sizes differ");
                 throw new IllegalArgumentException
                     ("Switch cases and locations sizes differ: " +
                      casesParam.length + ", " + locationsParam.length);
@@ -1814,6 +1835,7 @@ class InstructionList implements CodeBuffer {
             int lastCase = 0;
             for (int i=0; i<mCases.length; i++) {
                 if (i > 0 && mCases[i] == lastCase) {
+                    printInstructions("duplicate switch cases");
                     throw new RuntimeException("Duplicate switch cases: " +
                                                lastCase);
                 }
@@ -1974,5 +1996,15 @@ class InstructionList implements CodeBuffer {
             mLocations[i] = mLocations[j];
             mLocations[j] = tempLocation;
         }
+    }
+    
+    private void printInstructions(String errorMsg) {
+        System.err.println("Error generating instructions: " + errorMsg);
+        System.err.println("-- Instructions --");
+
+        Iterator it = getInstructions().iterator();
+        while (it.hasNext()) {
+            System.err.println(it.next().toString());
+        }        
     }
 }

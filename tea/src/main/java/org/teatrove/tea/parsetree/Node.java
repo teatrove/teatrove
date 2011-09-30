@@ -24,7 +24,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 25 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  * @see NodeVisitor
  */
 public abstract class Node implements Cloneable, java.io.Serializable {

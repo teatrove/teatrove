@@ -25,7 +25,6 @@ import org.teatrove.trove.util.PropertyMap;
  * PluginFactoryConfig interface.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public class PluginFactoryConfigSupport extends ConfigSupport implements PluginFactoryConfig {
     

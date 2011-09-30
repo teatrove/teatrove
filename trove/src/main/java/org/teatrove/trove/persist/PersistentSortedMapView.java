@@ -27,8 +27,6 @@ import java.io.*;
  * in managing views.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 02/04/09 <!-- $-->
  */
 public class PersistentSortedMapView extends AbstractPersistentMap
     implements PersistentSortedMap

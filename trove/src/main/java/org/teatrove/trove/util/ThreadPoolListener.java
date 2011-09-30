@@ -22,8 +22,6 @@ import java.util.EventListener;
  * Interface used to receive events from a {@link ThreadPool}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public interface ThreadPoolListener extends EventListener {
     /**

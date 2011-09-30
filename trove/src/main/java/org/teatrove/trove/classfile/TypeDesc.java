@@ -24,17 +24,20 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.util.Map;
 import java.lang.reflect.Array;
+import java.lang.reflect.Type;
+
+import org.teatrove.trove.classfile.generics.GenericArrayTypeDesc;
+import org.teatrove.trove.classfile.generics.GenericTypeDesc;
+import org.teatrove.trove.classfile.generics.GenericTypeFactory;
 import org.teatrove.trove.util.FlyweightSet;
 import org.teatrove.trove.util.IdentityMap;
 
 /**
- * This class is used to build field and return type descriptor strings as 
+ * This class is used to build field and return type descriptor strings as
  * defined in <i>The Java Virtual Machine Specification</i>, section 4.3.2.
  * TypeDesc instances are canonicalized and therefore "==" comparable.
  *
- * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
+ * @author Brian S O'Neill, Nick Hagan
  */
 public abstract class TypeDesc extends Descriptor implements Serializable {
     /**
@@ -103,6 +106,116 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
 
     static TypeDesc intern(TypeDesc type) {
         return (TypeDesc)cInstances.put(type);
+    }
+
+    public synchronized static TypeDesc forClass(Class clazz, Type genericType) {
+        if (clazz == null) {
+            return null;
+        } else if (genericType == null || genericType == clazz) {
+            return forClass(clazz);
+        } else {
+            return forClass(clazz, GenericTypeFactory.fromType(genericType));
+        }
+    }
+
+    protected static class ClassKey {
+        private Class clazz;
+        private GenericTypeDesc genericType;
+        
+        public ClassKey(Class clazz, GenericTypeDesc genericType) {
+            this.clazz = clazz;
+            this.genericType = genericType;
+        }
+        
+        public int hashCode() {
+            int hashCode = 11;
+            hashCode += (13 * this.clazz.hashCode());
+            if (this.genericType != null) {
+                hashCode += (17 * this.genericType.hashCode());
+            }
+            
+            return hashCode;
+        }
+        
+        public boolean equals(Object object) {
+            if (object == this) { return true; }
+            else if (!(object instanceof ClassKey)) { return false; }
+            
+            ClassKey other = (ClassKey) object;
+            if (!this.clazz.equals(other.clazz) ||
+                (this.genericType == null && other.genericType != null) ||
+                (other.genericType == null && this.genericType != null) ||
+                (this.genericType != null && !this.genericType.equals(other.genericType))) {
+                return false;
+            }
+
+            return true;
+        }
+    }
+    
+    public synchronized static TypeDesc forClass(Class clazz,
+                                                 GenericTypeDesc genericType) {
+        if (clazz == null) {
+            return null;
+        } else if (genericType == null) {
+            return forClass(clazz);
+        }
+
+        ClassKey key = new ClassKey(clazz, genericType);
+        TypeDesc type = (TypeDesc)cClassesToInstances.get(key);
+        if (type != null) {
+            return type;
+        }
+
+        if (clazz.isArray()) {
+            if (genericType instanceof GenericArrayTypeDesc) {
+                type = forClass
+                (
+                    clazz.getComponentType(),
+                    ((GenericArrayTypeDesc) genericType).getComponentType()
+                ).toArrayType();
+            }
+            else {
+                type = forClass(clazz.getComponentType()).toArrayType();
+            }
+        }
+        else if (clazz.isPrimitive()) {
+            if (clazz == int.class) {
+                type = INT;
+            }
+            if (clazz == boolean.class) {
+                type = BOOLEAN;
+            }
+            if (clazz == char.class) {
+                type = CHAR;
+            }
+            if (clazz == byte.class) {
+                type = BYTE;
+            }
+            if (clazz == long.class) {
+                type = LONG;
+            }
+            if (clazz == float.class) {
+                type = FLOAT;
+            }
+            if (clazz == double.class) {
+                type = DOUBLE;
+            }
+            if (clazz == short.class) {
+                type = SHORT;
+            }
+            if (clazz == void.class) {
+                type = VOID;
+            }
+        }
+        else {
+            String name = clazz.getName();
+            type = intern(new GenericType(generateDescriptor(name), name,
+                                          genericType));
+        }
+
+        cClassesToInstances.put(key, type);
+        return type;
     }
 
     /**
@@ -243,6 +356,15 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         return intern(new ObjectType(desc, name));
     }
 
+    public static TypeDesc[] forClasses(Class<?>[] clazzes) {
+        TypeDesc[] types = new TypeDesc[clazzes.length];
+        for (int i = 0; i < clazzes.length; i++) {
+            types[i] = TypeDesc.forClass(clazzes[i]);
+        }
+        
+        return types;
+    }
+    
     private static IllegalArgumentException invalidName(String name) {
         return new IllegalArgumentException("Invalid name: " + name);
     }
@@ -350,6 +472,131 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         return new String(buf);
     }
 
+    /*
+    private static GenericDescriptor generateDescriptor(Type type) {
+        GenericDescriptor descriptor = new GenericDescriptor();
+        descriptor.setSignature(generateDescriptor(type, descriptor));
+        return descriptor;
+    }
+
+    private static String generateDescriptor(Type type,
+                                             GenericDescriptor descriptor) {
+        if (type instanceof Class) {
+            return generateDescriptor((Class) type, descriptor);
+        }
+        else if (type instanceof ParameterizedType) {
+            return generateDescriptor((ParameterizedType) type, descriptor);
+        }
+        else if (type instanceof TypeVariable) {
+            return generateDescriptor((TypeVariable) type, descriptor);
+        }
+        else if (type instanceof WildcardType) {
+            return generateDescriptor((WildcardType) type, descriptor);
+        }
+        else if (type instanceof GenericArrayType) {
+            return generateDescriptor((GenericArrayType) type, descriptor);
+        }
+        else {
+            throw new IllegalArgumentException("invalid type: " + type);
+        }
+    }
+
+    private static String generateDescriptor(Class<?> type,
+                                             GenericDescriptor descriptor) {
+        if (byte.class.equals(type)) { return "B"; }
+        else if (char.class.equals(type)) { return "C"; }
+        else if (double.class.equals(type)) { return "D"; }
+        else if (float.class.equals(type)) { return "F"; }
+        else if (int.class.equals(type)) { return "I"; }
+        else if (long.class.equals(type)) { return "J"; }
+        else if (short.class.equals(type)) { return "S"; }
+        else if (boolean.class.equals(type)) { return "Z"; }
+
+        String name = type.getName();
+        StringBuilder buffer = new StringBuilder(name.length() * 2);
+
+        buffer.append('L').append(name.replace('.', '/')).append(';');
+        return buffer.toString();
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static String generateDescriptor(ParameterizedType type,
+                                             GenericDescriptor descriptor) {
+        StringBuilder buffer = new StringBuilder(256);
+
+        Class<?> rawtype = (Class) type.getRawType();
+        buffer.append('L')
+              .append(rawtype.getName().replace('.', '/')).append('<');
+
+        for (Type argtype : type.getActualTypeArguments()) {
+            buffer.append(generateDescriptor(argtype, descriptor));
+        }
+
+        buffer.append('>').append(';');
+        return buffer.toString();
+    }
+
+    private static String generateDescriptor(WildcardType type,
+                                             GenericDescriptor descriptor) {
+        StringBuilder buffer = new StringBuilder(128);
+
+        boolean found = false;
+        for (Type btype : type.getLowerBounds()) {
+            found = true;
+            if (Object.class.equals(btype)) {
+                buffer.append('*');
+            }
+            else {
+                buffer.append('-')
+                      .append(generateDescriptor(btype, descriptor));
+            }
+        }
+
+        for (Type btype : type.getUpperBounds()) {
+            found = true;
+            if (Object.class.equals(btype)) {
+                buffer.append('*');
+            }
+            else {
+                buffer.append('+')
+                      .append(generateDescriptor(btype, descriptor));
+            }
+        }
+
+        if (!found) {
+            buffer.append('*');
+        }
+
+        return buffer.toString();
+    }
+
+    private static String generateDescriptor(TypeVariable<?> type,
+                                             GenericDescriptor descriptor) {
+        StringBuilder buffer = new StringBuilder(128);
+        for (Type btype : type.getBounds()) {
+            descriptor.addType(type.getName(),
+                               generateDescriptor(btype, descriptor));
+            // buffer.append('T').append(type.getName()).append(';');
+            // prefix.append('<').append(type.getName()).append(':')
+            //       .append(generateDescriptor(btype)).append('>');
+            // buffer.append('+').append(generateDescriptor(btype));
+            buffer.append('T').append(type.getName()).append(';');
+        }
+
+        return buffer.toString();
+    }
+
+    private static String generateDescriptor(GenericArrayType type,
+                                             GenericDescriptor descriptor) {
+        StringBuilder buffer = new StringBuilder(128);
+        buffer.append('[')
+              .append(generateDescriptor(type.getGenericComponentType(),
+                                         descriptor));
+
+        return buffer.toString();
+    }
+    */
+
     transient final String mDescriptor;
 
     TypeDesc(String desc) {
@@ -417,7 +664,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
 
     /**
      * Returns the object peer of this primitive type. For int, the object peer
-     * is java.lang.Integer. If this type is an object type, it is simply 
+     * is java.lang.Integer. If this type is an object type, it is simply
      * returned.
      */
     public abstract TypeDesc toObjectType();
@@ -449,6 +696,10 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         return mDescriptor;
     }
 
+    public String getSignature() {
+        return toString();
+    }
+
     public int hashCode() {
         return mDescriptor.hashCode();
     }
@@ -471,7 +722,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         private transient final int mCode;
         private transient TypeDesc mArrayType;
         private transient TypeDesc mObjectType;
-        
+
         PrimitiveType(String desc, int code) {
             super(desc);
             mCode = code;
@@ -500,7 +751,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
                 return "double";
             }
         }
-        
+
         public String getFullName() {
             return getRootName();
         }
@@ -508,31 +759,31 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         public int getTypeCode() {
             return mCode;
         }
-        
+
         public boolean isPrimitive() {
             return true;
         }
-        
+
         public boolean isDoubleWord() {
             return mCode == DOUBLE_CODE || mCode == LONG_CODE;
         }
-        
+
         public boolean isArray() {
             return false;
         }
-        
+
         public int getDimensions() {
             return 0;
         }
-        
+
         public TypeDesc getComponentType() {
             return null;
         }
-        
+
         public TypeDesc getRootComponentType() {
             return null;
         }
-        
+
         public TypeDesc toArrayType() {
             if (mArrayType == null) {
                 char[] buf = new char[2];
@@ -542,7 +793,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             }
             return mArrayType;
         }
-        
+
         public TypeDesc toObjectType() {
             if (mObjectType == null) {
                 switch (mCode) {
@@ -578,7 +829,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             }
             return mObjectType;
         }
-        
+
         public TypeDesc toPrimitiveType() {
             return this;
         }
@@ -612,6 +863,55 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         }
     }
 
+    private static class GenericType extends ObjectType {
+        private transient GenericTypeDesc mGenericDesc;
+        private transient TypeDesc mArrayType;
+
+        GenericType(String desc, String name, GenericTypeDesc genericDesc) {
+            super(desc, name);
+            mGenericDesc = genericDesc;
+        }
+
+        public GenericTypeDesc getGenericDesc() {
+            return mGenericDesc;
+        }
+
+        public TypeDesc toArrayType() {
+            if (mArrayType == null) {
+                int length = mDescriptor.length();
+                char[] buf = new char[length + 1];
+                buf[0] = '[';
+                mDescriptor.getChars(0, length, buf, 1);
+
+                mArrayType = intern
+                (
+                    new GenericArray(new String(buf), this,
+                                     GenericArrayTypeDesc.forType(mGenericDesc))
+                );
+            }
+            return mArrayType;
+        }
+
+        public int hashCode() {
+            return super.hashCode() ^ mGenericDesc.hashCode();
+        }
+
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (other instanceof GenericType) {
+                return super.equals(other) &&
+                    ((GenericType) other).mGenericDesc.equals(this.mGenericDesc);
+            }
+            return false;
+        }
+
+        public String getSignature() {
+            return mGenericDesc.getSignature();
+        }
+    }
+
     private static class ObjectType extends TypeDesc {
         private transient final String mName;
         private transient TypeDesc mArrayType;
@@ -638,27 +938,27 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         public boolean isPrimitive() {
             return false;
         }
-        
+
         public boolean isDoubleWord() {
             return false;
         }
-        
+
         public boolean isArray() {
             return false;
         }
-        
+
         public int getDimensions() {
             return 0;
         }
-        
+
         public TypeDesc getComponentType() {
             return null;
         }
-        
+
         public TypeDesc getRootComponentType() {
             return null;
         }
-        
+
         public TypeDesc toArrayType() {
             if (mArrayType == null) {
                 int length = mDescriptor.length();
@@ -669,11 +969,11 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             }
             return mArrayType;
         }
-        
+
         public TypeDesc toObjectType() {
             return this;
         }
-        
+
         public TypeDesc toPrimitiveType() {
             if (mPrimitiveType == null) {
                 String name = mName;
@@ -776,6 +1076,56 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         }
     }
 
+    private static class GenericArray extends ArrayType {
+        private transient TypeDesc mArrayType;
+        private transient GenericTypeDesc mGenericDesc;
+
+        GenericArray(String desc, TypeDesc component,
+                     GenericTypeDesc genericDesc) {
+            super(desc, component);
+            mGenericDesc = genericDesc;
+        }
+
+        public GenericTypeDesc getGenericDesc() {
+            return mGenericDesc;
+        }
+
+        public TypeDesc toArrayType() {
+            if (mArrayType == null) {
+                int length = mDescriptor.length();
+                char[] buf = new char[length + 1];
+                buf[0] = '[';
+                mDescriptor.getChars(0, length, buf, 1);
+
+                mArrayType = intern
+                (
+                    new GenericArray(new String(buf), this,
+                                     GenericArrayTypeDesc.forType(mGenericDesc))
+                );
+            }
+            return mArrayType;
+        }
+
+        public int hashCode() {
+            return super.hashCode() ^ mGenericDesc.hashCode();
+        }
+
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (other instanceof GenericType) {
+                return super.equals(other) &&
+                    ((GenericType) other).mGenericDesc.equals(this.mGenericDesc);
+            }
+            return false;
+        }
+
+        public String getSignature() {
+            return mGenericDesc.getSignature();
+        }
+    }
+
     private static class ArrayType extends ObjectType {
         private transient final TypeDesc mComponent;
         private transient final String mFullName;
@@ -793,15 +1143,15 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         public boolean isArray() {
             return true;
         }
-        
+
         public int getDimensions() {
             return mComponent.getDimensions() + 1;
         }
-        
+
         public TypeDesc getComponentType() {
             return mComponent;
         }
-        
+
         public TypeDesc getRootComponentType() {
             TypeDesc type = mComponent;
             while (type.isArray()) {
@@ -809,7 +1159,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             }
             return type;
         }
-        
+
         public TypeDesc toPrimitiveType() {
             return null;
         }

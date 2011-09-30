@@ -24,7 +24,7 @@ import java.io.PrintStream;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 46 <!-- $-->, <!--$$JustDate:-->  5/31/01 <!-- $-->
+
  */
 public class Token implements java.io.Serializable {
     /** Token ID for an unknown token. */

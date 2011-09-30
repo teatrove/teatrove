@@ -25,8 +25,6 @@ import java.net.*;
  * instance.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 02/02/08 <!-- $-->
  * @see SocketWrapper
  */
 public class SocketFaceWrapper implements SocketFace {

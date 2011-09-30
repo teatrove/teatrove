@@ -30,8 +30,6 @@ import org.teatrove.trove.util.MapBackedSet;
  * storage. CachedPersistentMap uses the backing map's lock for thread safety.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 01/12/20 <!-- $-->
  * @see org.teatrove.trove.util.WrappedCache
  */
 public class CachedPersistentMap extends AbstractPersistentMap {

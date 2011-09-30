@@ -22,8 +22,6 @@ package org.teatrove.trove.classfile;
  * <i>The Java Virual Machine Specification</i>.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 25 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  * @see CodeAttr
  */
 public class Opcode {

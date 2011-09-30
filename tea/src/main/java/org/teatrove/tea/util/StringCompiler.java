@@ -32,7 +32,7 @@ import org.teatrove.tea.compiler.CompilationUnit;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 10 <!-- $-->, <!--$$JustDate:--> 10/22/01 <!-- $-->
+
  */
 public class StringCompiler extends Compiler {
 

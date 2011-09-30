@@ -32,8 +32,6 @@ import java.util.Comparator;
  * ObjectRepositoryMaps uses the index's lock for thread safety.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:--> 02/04/09 <!-- $-->
  */
 public class ObjectRepositoryMap extends AbstractPersistentMap
     implements PersistentSortedMap

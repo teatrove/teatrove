@@ -22,7 +22,7 @@ package org.teatrove.tea.engine;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:--> 02/01/04 <!-- $-->
+
  * @see org.teatrove.tea.runtime.Context
  */
 public interface ContextSource {

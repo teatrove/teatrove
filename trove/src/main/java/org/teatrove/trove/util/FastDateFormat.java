@@ -35,8 +35,6 @@ import java.text.SimpleDateFormat;
  * SimpleDateFormat.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class FastDateFormat {
     /** Style pattern */

@@ -31,7 +31,7 @@ import java.util.*;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  2/06/01 <!-- $-->
+
  */
 public class TeaCompiler extends FileCompiler {
 

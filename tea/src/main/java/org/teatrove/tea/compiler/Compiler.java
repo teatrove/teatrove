@@ -33,7 +33,7 @@ import org.teatrove.tea.parsetree.*;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 61 <!-- $-->, <!--$$JustDate:-->  3/05/04 <!-- $-->
+
  * @see org.teatrove.tea.util.FileCompiler
  * @see org.teatrove.tea.util.ResourceCompiler
  */

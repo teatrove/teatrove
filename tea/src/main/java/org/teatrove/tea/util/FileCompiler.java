@@ -51,7 +51,7 @@ import org.teatrove.tea.compiler.TemplateRepository;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 44 <!-- $--> 21 <!-- $$JustDate:-->  3/19/04 <!-- $-->
+
  * @see ClassInjector
  */
 public class FileCompiler extends AbstractFileCompiler {

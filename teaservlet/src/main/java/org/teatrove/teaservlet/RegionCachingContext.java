@@ -22,7 +22,7 @@ import org.teatrove.tea.runtime.Substitution;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  3/25/04 <!-- $-->
+
  */
 public interface RegionCachingContext {
 

@@ -39,8 +39,6 @@ import java.util.zip.GZIPOutputStream;
  * non-injected class files before asking the parent ClassLoader for a class.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 29 <!-- $-->, <!--$$JustDate:-->  7/30/01 <!-- $-->
  */
 public class ClassInjector extends ClassLoader {
     private static Map cShared = new NullKeyMap(new IdentityMap());

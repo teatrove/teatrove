@@ -29,7 +29,7 @@ import org.teatrove.tea.compiler.Token;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class ArithmeticExpression extends BinaryExpression {
     public ArithmeticExpression(SourceInfo info,

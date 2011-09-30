@@ -33,7 +33,7 @@ import org.teatrove.tea.runtime.TemplateLoader;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  3/01/01 <!-- $-->
+
  */
 public class BeanDocDoclet extends com.sun.javadoc.Doclet {
 

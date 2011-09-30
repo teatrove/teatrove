@@ -20,7 +20,6 @@ package org.teatrove.trove.util.plugin;
  *
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public class PluginAdapter implements Plugin {
 

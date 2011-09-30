@@ -86,8 +86,6 @@ import java.util.Vector;
  * </pre>
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class PropertyParser {
     // Parsed grammer (EBNF) is:
@@ -301,7 +299,7 @@ public class PropertyParser {
      * 
      * @author Brian S O'Neill
      * @version
-     * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
      */
     public static interface ErrorListener extends java.util.EventListener {
         public void parseError(ErrorEvent e);
@@ -311,7 +309,7 @@ public class PropertyParser {
      * 
      * @author Brian S O'Neill
      * @version
-     * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
      */
     public static class ErrorEvent extends java.util.EventObject {
         private String mErrorMsg;
@@ -363,7 +361,7 @@ public class PropertyParser {
      * 
      * @author Brian S O'Neill
      * @version
-     * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
      */
     private static class Token implements java.io.Serializable {
         public final static int UNKNOWN = 0;
@@ -480,7 +478,7 @@ public class PropertyParser {
      * 
      * @author Brian S O'Neill
      * @version
-     * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
      */
     private static class Scanner {
         private SourceReader mSource;

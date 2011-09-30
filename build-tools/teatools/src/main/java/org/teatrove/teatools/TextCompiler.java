@@ -30,7 +30,7 @@ import java.io.*;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 5 <!-- $--> 1 <!-- $$JustDate:-->  2/06/01 <!-- $-->
+
  */
 public class TextCompiler extends TeaCompiler implements TeaToolsConstants {
 

@@ -34,8 +34,6 @@ import org.teatrove.trove.log.Syslog;
  * A bunch of functions that aid in creating peristent collection instances.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:--> 02/09/10 <!-- $-->
  */
 public class PersistentCollectionKit {
     /**

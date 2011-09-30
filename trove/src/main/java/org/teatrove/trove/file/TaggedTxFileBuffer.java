@@ -24,8 +24,6 @@ import java.io.IOException;
  * file will be tagged clean. Rollback operations are not supported.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public class TaggedTxFileBuffer extends NonTxFileBuffer
     implements TxFileBuffer

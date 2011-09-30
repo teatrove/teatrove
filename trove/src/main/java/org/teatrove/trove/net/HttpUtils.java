@@ -21,8 +21,6 @@ import java.io.*;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 01/10/09 <!-- $-->
  */
 public class HttpUtils {
     /**

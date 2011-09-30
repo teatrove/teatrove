@@ -23,8 +23,6 @@ import java.io.*;
  * section 4.4.1 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 27 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  */
 public class ConstantClassInfo extends ConstantInfo {
     private final TypeDesc mType;

@@ -25,8 +25,6 @@ import java.util.*;
  * re-add it.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 17 <!-- $-->, <!--$$JustDate:--> 02/02/14 <!-- $-->
  */
 public class UsageSet extends MapBackedSet {
     /**

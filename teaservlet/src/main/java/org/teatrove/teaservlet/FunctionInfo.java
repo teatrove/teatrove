@@ -23,7 +23,7 @@ import org.teatrove.teaservlet.util.NameValuePair;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public class FunctionInfo extends NameValuePair {
     private ApplicationInfo mApp;

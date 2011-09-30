@@ -21,7 +21,7 @@ package org.teatrove.teatools;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public interface TeaToolsConstants {
 

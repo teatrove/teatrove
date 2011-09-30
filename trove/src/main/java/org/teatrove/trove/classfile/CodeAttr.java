@@ -26,8 +26,7 @@ import java.io.*;
  * CodeBuilder.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 34 <!-- $-->, <!--$$JustDate:--> 01/01/02 <!-- $-->
+ * 
  * @see Opcode
  * @see CodeBuilder
  */

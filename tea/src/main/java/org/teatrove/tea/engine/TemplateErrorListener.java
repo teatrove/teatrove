@@ -24,7 +24,7 @@ import org.teatrove.tea.compiler.ErrorListener;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 03-08-19 <!-- $-->
+
  */
 public interface TemplateErrorListener extends ErrorListener {
     public Map getTemplateErrors();

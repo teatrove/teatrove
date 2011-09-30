@@ -25,8 +25,6 @@ import org.teatrove.trove.io.AbstractDataInputStream;
  * uncommon for multiple threads to read from the same InputStream.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 01/12/26 <!-- $-->
  */
 public class FileBufferInputStream extends AbstractDataInputStream
     implements DataInput

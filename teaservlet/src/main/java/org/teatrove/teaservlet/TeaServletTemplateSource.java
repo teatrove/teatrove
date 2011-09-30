@@ -46,7 +46,7 @@ import java.util.Vector;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class TeaServletTemplateSource extends TemplateSourceImpl {
 

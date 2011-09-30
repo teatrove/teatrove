@@ -28,8 +28,6 @@ import java.util.List;
  * MethodDesc instances are canonicalized and therefore "==" comparable.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  */
 public class MethodDesc extends Descriptor implements Serializable {
     private static final TypeDesc[] EMPTY_PARAMS = new TypeDesc[0];
@@ -47,12 +45,12 @@ public class MethodDesc extends Descriptor implements Serializable {
      * @param ret return type of method; null implies void
      * @param params parameters to method; null implies none
      */
-    public static MethodDesc forArguments(TypeDesc ret, TypeDesc[] params) {
+    public static MethodDesc forArguments(TypeDesc ret, TypeDesc... params) {
         final String[] paramNames = createGenericParameterNames(params);
         return forArguments(ret, params, paramNames);
     }
 
-    static String[] createGenericParameterNames(TypeDesc[] params) {
+    static String[] createGenericParameterNames(TypeDesc... params) {
         String[] paramNames = null;
         if(params != null) {
             paramNames = new String[params.length];

@@ -23,7 +23,6 @@ import org.teatrove.trove.util.FilterException;
  * is thrown.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 2 <!-- $-->-<!--$$JustDate:-->  8/01/03 <!-- $-->
  */
 public class PluginException extends FilterException {
    

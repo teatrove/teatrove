@@ -23,8 +23,6 @@ import java.util.*;
  * objects.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 class LocationRangeSet {
     /**

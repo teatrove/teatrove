@@ -30,7 +30,7 @@ import java.lang.reflect.Method;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 24 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  * @see java.beans.Introspector
  */
 public class Lookup extends Expression {

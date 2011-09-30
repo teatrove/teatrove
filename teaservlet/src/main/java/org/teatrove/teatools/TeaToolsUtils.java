@@ -40,7 +40,7 @@ import java.text.BreakIterator;
  *
  * @author Mark Masse, Sean Treat
  * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:--> 03-08-05 <!-- $-->
+
  */
 public class TeaToolsUtils extends DefaultContext 
 implements TeaToolsConstants {
@@ -1249,7 +1249,7 @@ implements TeaToolsConstants {
      *
      * @author Mark Masse
      * @version
-     * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:--> 03-08-05 <!-- $-->
+
      */
     private static class DescriptorComparator implements Comparator {
 
@@ -1312,7 +1312,7 @@ implements TeaToolsConstants {
      *
      * @author Mark Masse
      * @version
-     * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:--> 03-08-05 <!-- $-->
+
      */
     private class ArrayIndexPropertyDescriptor 
     extends PropertyDescriptor {
@@ -1346,7 +1346,7 @@ implements TeaToolsConstants {
      *
      * @author Mark Masse
      * @version
-     * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:--> 03-08-05 <!-- $-->
+
      */
     private static class Tester {
         

@@ -23,8 +23,6 @@ import java.util.Comparator;
  * Just like {@link java.util.SortedSet} except methods may throw IOExceptions.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public interface PersistentSortedSet extends PersistentSet {
     Comparator comparator();

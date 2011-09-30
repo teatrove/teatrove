@@ -26,8 +26,6 @@ import java.net.ConnectException;
  * Wrapper for using secure sockets.
  *
  * @author Jonathan Colwell
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 02/02/08 <!-- $-->
  */
 public class SSLSocketFactory extends PlainSocketFactory {
     private final javax.net.ssl.SSLSocketFactory mSSLFactory;

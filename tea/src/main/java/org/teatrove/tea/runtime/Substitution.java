@@ -48,7 +48,7 @@ package org.teatrove.tea.runtime;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:--> 01/05/03 <!-- $-->
+
  */
 public interface Substitution {
     /**

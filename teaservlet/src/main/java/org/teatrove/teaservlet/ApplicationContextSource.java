@@ -23,7 +23,7 @@ import org.teatrove.tea.engine.DynamicContextSource;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  2/01/02 <!-- $-->
+
  */
 public class ApplicationContextSource implements DynamicContextSource {
 

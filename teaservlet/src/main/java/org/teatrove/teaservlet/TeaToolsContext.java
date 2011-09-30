@@ -32,7 +32,7 @@ import java.beans.*;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public interface TeaToolsContext {
 

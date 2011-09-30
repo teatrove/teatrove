@@ -33,7 +33,6 @@ import java.util.Map;
  *
  * @author Josh Yockey
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  9/08/04 <!-- $-->
  */
 public class DelegatingClassInjector extends ClassInjector {
     private static Map cShared = new NullKeyMap(new IdentityMap());

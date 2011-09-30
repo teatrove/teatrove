@@ -24,7 +24,6 @@ package org.teatrove.trove.util;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 02/06/25 <!-- $-->
  */
 public class DecimalConvertor {
     /**
@@ -1393,7 +1392,7 @@ public class DecimalConvertor {
      *
      * @author Brian S O'Neill
      * @version
-     * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 02/06/25 <!-- $-->
+
      */
     public final static class LargeUInt {
         // Internally, the number is stored as an array of radix 4294967296

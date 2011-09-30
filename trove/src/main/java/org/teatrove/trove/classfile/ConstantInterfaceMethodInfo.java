@@ -23,8 +23,6 @@ import java.io.*;
  * defined in section 4.4.2 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 22 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  */
 public class ConstantInterfaceMethodInfo extends ConstantInfo {
     private ConstantClassInfo mParentClass;

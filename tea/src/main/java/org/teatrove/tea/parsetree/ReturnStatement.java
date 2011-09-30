@@ -24,7 +24,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 01/05/31 <!-- $-->
+
  */
 public class ReturnStatement extends Statement {
     private Expression mExpr;

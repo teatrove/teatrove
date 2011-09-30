@@ -22,8 +22,6 @@ import java.io.*;
  * LinePositionReader aids in printing line numbers for error reporting. 
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 17 <!-- $-->, <!--$$JustDate:--> 12/11/00 <!-- $-->
  */
 public class LinePositionReader extends PositionReader {
     private int mLineNumber = 1;

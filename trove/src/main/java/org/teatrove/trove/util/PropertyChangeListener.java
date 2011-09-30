@@ -19,8 +19,6 @@ package org.teatrove.trove.util;
 /**
  * 
  * @author Sean T. Treat
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  9/06/01 <!-- $-->
  */
 public interface PropertyChangeListener {
     public void propertyChanged(PropertyChangeEvent e);

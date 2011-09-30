@@ -29,7 +29,7 @@ import org.teatrove.trove.util.plugin.Plugin;
  *
  * @author Reece Wilton
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public interface ApplicationConfig extends ServletConfig, Config {
     /**

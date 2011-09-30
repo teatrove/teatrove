@@ -28,7 +28,7 @@ import org.teatrove.trove.util.IdentityMap;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:--> 00/12/13 <!-- $-->
+
  *
  * @see java.beans.Introspector
  */

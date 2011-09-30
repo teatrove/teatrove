@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 10 <!-- $-->, <!--$$JustDate:-->  9/06/02 <!-- $-->
+
  */
 public interface TemplateSource {
 

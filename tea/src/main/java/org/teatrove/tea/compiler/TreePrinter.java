@@ -24,7 +24,7 @@ import org.teatrove.tea.parsetree.*;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 35 <!-- $-->, <!--$$JustDate:-->  5/31/01 <!-- $-->
+
  */
 public class TreePrinter extends CodeGenerator {
     private String mIndentStr;

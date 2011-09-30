@@ -24,8 +24,6 @@ import java.net.*;
  * already an interface?
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 01/10/09 <!-- $-->
  */
 public interface SocketFace {
     InetAddress getInetAddress();

@@ -27,8 +27,6 @@ import java.io.DataOutput;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 02/08/28 <!-- $-->
  */
 public class DataIO {
     public static final void readFully(InputStream in, byte[] b)

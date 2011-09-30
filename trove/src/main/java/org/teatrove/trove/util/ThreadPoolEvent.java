@@ -24,8 +24,6 @@ import java.util.EventObject;
  * {@link ThreadPoolListener}.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class ThreadPoolEvent extends EventObject {
     private Thread mThread;

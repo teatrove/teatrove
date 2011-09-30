@@ -22,7 +22,7 @@ package org.teatrove.teatools;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 10/23/00 <!-- $-->
+
  */
 public class Range {
 

@@ -26,8 +26,6 @@ import java.io.PrintWriter;
  * how to use a CodeAssembler.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  3/19/04 <!-- $-->
  */
 public class CodeAssemblerPrinter implements CodeAssembler {
     private TypeDesc[] mParamTypes;

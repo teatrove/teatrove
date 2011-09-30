@@ -22,7 +22,7 @@ import org.teatrove.trove.util.Config;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 11/14/01 <!-- $-->
+
  */
 public interface TemplateSourceConfig extends Config {
 

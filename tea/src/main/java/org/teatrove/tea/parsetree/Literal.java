@@ -23,7 +23,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 19 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public abstract class Literal extends Expression {
     protected Literal(SourceInfo info) {

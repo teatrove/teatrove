@@ -28,7 +28,7 @@ import org.teatrove.tea.runtime.TemplateLoader;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:-->  2/20/02 <!-- $-->
+
  */
 class TemplateAdapter extends TemplateLoader {
     private final Class mContextClass;

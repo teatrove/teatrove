@@ -28,7 +28,7 @@ import org.teatrove.tea.runtime.Substitution;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public interface ApplicationResponse extends HttpServletResponse {
     /**

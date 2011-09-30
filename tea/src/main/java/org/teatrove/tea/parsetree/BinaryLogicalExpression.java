@@ -24,7 +24,7 @@ import org.teatrove.tea.compiler.Type;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public abstract class BinaryLogicalExpression extends BinaryExpression
     implements Logical

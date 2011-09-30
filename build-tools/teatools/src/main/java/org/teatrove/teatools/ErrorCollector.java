@@ -27,7 +27,7 @@ import java.util.*;
  * 
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 11/16/00 <!-- $-->
+
  */
 public class ErrorCollector implements ErrorListener {
     

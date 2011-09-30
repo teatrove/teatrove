@@ -24,8 +24,6 @@ import java.net.*;
  * socket. Sessions are ignored on all requests.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 8 <!-- $-->, <!--$$JustDate:--> 02/02/08 <!-- $-->
  */
 public class PlainSocketFactory implements SocketFactory {
     protected final InetAddress mAddr;

@@ -23,7 +23,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Guy Molinari
  * @version
- * <!--$$Revision:--> 35 <!-- $-->, <!--$$JustDate:--> 05/09/25 <!-- $-->
+
  */
 public abstract class Directive extends Node { 
 

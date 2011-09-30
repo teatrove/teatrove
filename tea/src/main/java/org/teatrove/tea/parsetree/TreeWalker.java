@@ -24,7 +24,7 @@ package org.teatrove.tea.parsetree;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:-->  5/31/01 <!-- $-->
+
  */
 public abstract class TreeWalker implements NodeVisitor {
     public Object visit(Template node) {

@@ -22,7 +22,7 @@ import java.io.*;
  * This class corresponds to the attribute_info structure defined in section
  * 4.7 of <i>The Java Virtual Machine Specification</i>.
  *
- * @author Brian S O'Neill
+ * @author Brian S O'Neill, Nick Hagan
  * @see ClassFile
  */
 public abstract class Attribute {
@@ -37,13 +37,14 @@ public abstract class Attribute {
     final static String LOCAL_VARIABLE_TABLE = "LocalVariableTable";
     final static String SOURCE_FILE = "SourceFile";
     final static String SYNTHETIC = "Synthetic";
+    final static String SIGNATURE = "Signature";
 
     /** The ConstantPool that this attribute is defined against. */
     protected final ConstantPool mCp;
 
     private String mName;
     private ConstantUTFInfo mNameConstant;
-    
+
     protected Attribute(ConstantPool cp, String name) {
         mCp = cp;
         mName = name;
@@ -56,18 +57,18 @@ public abstract class Attribute {
     public ConstantPool getConstantPool() {
         return mCp;
     }
- 
+
     /**
      * Returns the name of this attribute.
      */
     public String getName() {
         return mName;
     }
-    
+
     public ConstantUTFInfo getNameConstant() {
         return mNameConstant;
     }
-    
+
     /**
      * Some attributes have sub-attributes. Default implementation returns an
      * empty array.
@@ -80,7 +81,7 @@ public abstract class Attribute {
      * Returns the length (in bytes) of this attribute in the class file.
      */
     public abstract int getLength();
-    
+
     /**
      * This method writes the 16 bit name constant index followed by the
      * 32 bit attribute length, followed by the attribute specific data.
@@ -115,64 +116,68 @@ public abstract class Attribute {
     }
 
     private static class Factory implements AttributeFactory {
+
         private final AttributeFactory mAttrFactory;
 
-        public Factory(AttributeFactory attrFactory) {
-            mAttrFactory = attrFactory;
-        }
-
-        public Attribute createAttribute(ConstantPool cp, 
-                                         String name,
-                                         final int length,
-                                         DataInput din) throws IOException {
-            if (name.equals(CODE)) {
-                return CodeAttr.define(cp, name, length, din, mAttrFactory);
-            }
-            else if (name.equals(CONSTANT_VALUE)) {
-                return ConstantValueAttr.define(cp, name, length, din);
-            }
-            else if (name.equals(DEPRECATED)) {
-                return DeprecatedAttr.define(cp, name, length, din);
-            }
-            else if (name.equals(EXCEPTIONS)) {
-                return ExceptionsAttr.define(cp, name, length, din);
-            }
-            else if (name.equals(INNER_CLASSES)) {
-                return InnerClassesAttr.define(cp, name, length, din);
-            }
-            else if (name.equals(LINE_NUMBER_TABLE)) {
-                return LineNumberTableAttr.define(cp, name, length, din);
-            }
-            else if (name.equals(LOCAL_VARIABLE_TABLE)) {
-                return LocalVariableTableAttr.define
-                    (cp, name, length, din);
-            }
-            else if (name.equals(SOURCE_FILE)) {
-                return SourceFileAttr.define(cp, name, length, din);
-            }
-            else if (name.equals(SYNTHETIC)) {
-                return SyntheticAttr.define(cp, name, length, din);
-            }
-
-            if (mAttrFactory != null) {
-                Attribute attr =
-                    mAttrFactory.createAttribute(cp, name, length, din);
-                if (attr != null) {
-                    return attr;
-                }
-            }
-
-            // Default case, return attribute that captures the data, but
-            // doesn't decode it.
-
-            final byte[] data = new byte[length];
-            din.readFully(data);
-            
+	    public Factory(AttributeFactory attrFactory) {
+	            mAttrFactory = attrFactory;
+	    }
+	
+	    public Attribute createAttribute(ConstantPool cp,
+	                                         String name,
+	                                         final int length,
+	                                         DataInput din) throws IOException {
+	        if (name.equals(CODE)) {
+	            return CodeAttr.define(cp, name, length, din, mAttrFactory);
+	        }
+	        else if (name.equals(CONSTANT_VALUE)) {
+	            return ConstantValueAttr.define(cp, name, length, din);
+	        }
+	        else if (name.equals(DEPRECATED)) {
+	            return DeprecatedAttr.define(cp, name, length, din);
+	        }
+	        else if (name.equals(EXCEPTIONS)) {
+	            return ExceptionsAttr.define(cp, name, length, din);
+	        }
+	        else if (name.equals(INNER_CLASSES)) {
+	            return InnerClassesAttr.define(cp, name, length, din);
+	        }
+	        else if (name.equals(LINE_NUMBER_TABLE)) {
+	            return LineNumberTableAttr.define(cp, name, length, din);
+	        }
+	        else if (name.equals(LOCAL_VARIABLE_TABLE)) {
+	            return LocalVariableTableAttr.define
+	                (cp, name, length, din);
+	        }
+	        else if (name.equals(SOURCE_FILE)) {
+	            return SourceFileAttr.define(cp, name, length, din);
+	        }
+	        else if (name.equals(SYNTHETIC)) {
+	            return SyntheticAttr.define(cp, name, length, din);
+	        }
+	        else if (name.equals(SIGNATURE)) {
+	            return SignatureAttr.define(cp, name, length, din);
+	        }
+	
+	        if (mAttrFactory != null) {
+	            Attribute attr =
+	                mAttrFactory.createAttribute(cp, name, length, din);
+	            if (attr != null) {
+	                return attr;
+	            }
+	        }
+	
+	        // Default case, return attribute that captures the data, but
+	        // doesn't decode it.
+	
+	        final byte[] data = new byte[length];
+	        din.readFully(data);
+	
             return new Attribute(cp, name) {
                 public int getLength() {
                     return length;
                 }
-                
+
                 public void writeDataTo(DataOutput dout) throws IOException {
                     dout.write(data);
                 }

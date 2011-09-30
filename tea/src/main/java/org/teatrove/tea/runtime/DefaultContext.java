@@ -46,7 +46,7 @@ import java.util.TimeZone;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 42 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public abstract class DefaultContext extends Writer
     implements UtilityContext

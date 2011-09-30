@@ -49,7 +49,7 @@ import org.teatrove.tea.engine.*;
  *
  * @author Reece Wilton, Jonathan Colwell
  * @version
- * <!--$$Revision:--> 17 <!-- $-->, <!--$$JustDate:-->  8/11/04 <!-- $-->
+
  */
 public class ApplicationDepot {
 

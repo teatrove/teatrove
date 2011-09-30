@@ -23,7 +23,7 @@ import java.io.IOException;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 8 <!-- $-->, <!--$$JustDate:--> 02/07/19 <!-- $-->
+
  * @see org.teatrove.tea.compiler.Compiler#getRuntimeReceiver
  */
 public interface OutputReceiver {

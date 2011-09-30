@@ -59,7 +59,7 @@ import java.util.Vector;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  7/10/00 <!-- $-->
+
  */
 public class SampleDirectoryBrowserContext {
 

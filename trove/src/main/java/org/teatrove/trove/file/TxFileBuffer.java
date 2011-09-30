@@ -22,8 +22,6 @@ import java.io.*;
  * TxFileBuffer supports transactions.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 10 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public interface TxFileBuffer extends FileBuffer {
     /**

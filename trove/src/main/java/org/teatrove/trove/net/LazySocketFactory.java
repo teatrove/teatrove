@@ -30,8 +30,6 @@ import java.net.*;
  * is tried again.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:--> 01/10/09 <!-- $-->
  */
 public class LazySocketFactory implements SocketFactory {
     private final SocketFactory mFactory;

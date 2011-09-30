@@ -25,8 +25,6 @@ import java.io.*;
  * that the ConstantPool will only contain one instance of this constant.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public abstract class ConstantInfo {
     final static int TAG_UTF8 = 1;

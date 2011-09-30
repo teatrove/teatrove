@@ -24,8 +24,6 @@ import java.util.EventObject;
  * implementing a {@link UncaughtExceptionListener}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  9/25/00 <!-- $-->
  */
 public class UncaughtExceptionEvent extends EventObject {
     private Thread mThread;

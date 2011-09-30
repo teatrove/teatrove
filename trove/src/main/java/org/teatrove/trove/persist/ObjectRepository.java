@@ -26,8 +26,6 @@ import org.teatrove.trove.file.FileRepository;
  * on the same object doesn't keep hitting the underlying FileRepository.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 23 <!-- $-->, <!--$$JustDate:--> 02/03/06 <!-- $-->
  */
 public interface ObjectRepository extends FileRepository {
     /**

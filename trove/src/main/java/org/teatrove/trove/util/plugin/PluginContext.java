@@ -30,7 +30,6 @@ import java.util.Map;
  * PluginContext.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 2 <!-- $-->-<!--$$JustDate:--> 11/13/03 <!-- $-->
  */
 public class PluginContext {
     

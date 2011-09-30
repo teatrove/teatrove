@@ -23,7 +23,6 @@ import org.teatrove.trove.log.Log;
  * configuring an object.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 1 <!-- $-->-<!--$$JustDate:--> 01/03/23 <!-- $-->
  */
 public interface Config {
     

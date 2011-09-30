@@ -33,8 +33,6 @@ import java.util.*;
  * The iterators may return less entries than the amount reported by size().
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 22 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  * @see Cache
  */
 public class SoftHashMap extends AbstractMap implements Map, Cloneable {

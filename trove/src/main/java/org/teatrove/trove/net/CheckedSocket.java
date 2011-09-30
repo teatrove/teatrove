@@ -32,8 +32,6 @@ import java.util.*;
  * and socket can be obtained from it.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 01/10/09 <!-- $-->
  */
 public class CheckedSocket extends SocketFaceWrapper {
     /**

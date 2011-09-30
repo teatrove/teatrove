@@ -23,8 +23,6 @@ import java.util.*;
  * LogEvents.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public interface LogListener extends EventListener {
     /**

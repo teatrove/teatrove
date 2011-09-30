@@ -28,7 +28,7 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 36 <!-- $-->, <!--$$JustDate:--> 01/01/25 <!-- $-->
+
  */
 public class Expression extends Node {
     private LinkedList mConversions;

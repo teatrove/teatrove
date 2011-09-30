@@ -26,8 +26,6 @@ import java.util.*;
  * logging mechanism.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 16 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  * @see DailyFileLogStream
  */
 public abstract class IntervalLogStream extends OutputStream {

@@ -28,8 +28,6 @@ import java.util.ArrayList;
  * too large to hold in memory.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 17 <!-- $--> 5 <!-- $$JustDate:--> 00/12/05 <!-- $-->
  */
 public class FileByteBuffer implements ByteBuffer {
     private RandomAccessFile mFile;

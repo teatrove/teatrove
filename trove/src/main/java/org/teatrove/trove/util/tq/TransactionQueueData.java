@@ -22,8 +22,6 @@ import java.util.Date;
  * This class contains a snapshot of data from a {@link TransactionQueue}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 18 <!-- $-->, <!--$$JustDate:--> 11/13/03 <!-- $-->
  */
 public class TransactionQueueData implements java.io.Serializable {
     private transient final TransactionQueue mTransactionQueue;

@@ -26,7 +26,7 @@ import java.lang.reflect.*;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 03-08-05 <!-- $-->
+
  */
 public class MethodDescription extends FeatureDescription {
 

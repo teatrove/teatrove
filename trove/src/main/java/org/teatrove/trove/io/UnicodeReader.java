@@ -28,8 +28,6 @@ import java.io.*;
  * from being processed, preceed it with another '\'.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 20 <!-- $-->, <!--$$JustDate:--> 12/11/00 <!-- $-->
  */
 public class UnicodeReader extends EscapeReader {
     /** Just a temporary buffer for holding the four hexadecimal digits. */

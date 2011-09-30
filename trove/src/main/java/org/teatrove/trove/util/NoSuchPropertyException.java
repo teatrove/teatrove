@@ -21,8 +21,6 @@ package org.teatrove.trove.util;
  * found.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 01/10/01 <!-- $-->
  */
 public class NoSuchPropertyException extends RuntimeException {
     public NoSuchPropertyException(String property, boolean forRead) {

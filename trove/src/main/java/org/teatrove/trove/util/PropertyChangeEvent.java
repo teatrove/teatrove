@@ -21,8 +21,6 @@ import org.teatrove.trove.io.SourceInfo;
 /**
  * 
  * @author Sean T. Treat
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class PropertyChangeEvent extends java.util.EventObject {
 

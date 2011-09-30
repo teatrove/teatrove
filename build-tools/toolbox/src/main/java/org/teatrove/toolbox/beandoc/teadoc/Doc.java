@@ -23,7 +23,7 @@ import java.util.StringTokenizer;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  8/11/04 <!-- $-->
+
  */
 public class Doc implements java.io.Serializable, Comparable {
 

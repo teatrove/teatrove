@@ -21,7 +21,7 @@ package org.teatrove.tea.runtime;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 01/05/03 <!-- $-->
+
  */
 public class SubstitutionId extends java.lang.ref.WeakReference {
     private final int mBlockId;

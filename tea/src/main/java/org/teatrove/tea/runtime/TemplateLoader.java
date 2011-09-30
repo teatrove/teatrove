@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 17 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  * @see org.teatrove.tea.util.ClassInjector
  */
 public class TemplateLoader {
@@ -126,7 +126,7 @@ public class TemplateLoader {
      *
      * @author Brian S O'Neill
      * @version
-     * <!--$$Revision:--> 17 <!-- $--> 4 <!-- $$JustDate:--> 11/14/03 <!-- $-->
+
      */
     public static interface Template {
         public TemplateLoader getTemplateLoader();

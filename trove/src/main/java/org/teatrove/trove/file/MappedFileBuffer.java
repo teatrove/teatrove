@@ -23,8 +23,6 @@ import org.teatrove.trove.util.SecureReadWriteLock;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 class MappedFileBuffer implements FileBuffer {
     private long mAddr;

@@ -27,15 +27,18 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.atomic.AtomicLong;
-
 
 /**
  * LRUCache is a specialized Map that is guaranteed to have the most recently 
- * used entries available. Calling "get" or "put" updates the internal MRU list,
- * but calling "containsKey" or "containsValue" will not.
+ * used entries available. Calling "get" or "put" updates the internal ordered
+ * MRU list (LRU expiry), but calling "containsKey" or "containsValue" will not.
  * <p>
  * Unlike Cache, when least recently used items are expired, they are eligible 
  * for garbage collection and NOT backed by a soft reference.
@@ -51,68 +54,63 @@ import java.util.concurrent.atomic.AtomicLong;
  * Briefly stated, LRUCache can be used as a simple bounded Map.
  * <p>
  *
- * @author Alex Vigdor
- * @author Greg Katz
  * @author Guy Molinari
  */
 public class LRUCache implements Map {
 
+    public static final int DEFAULT_TARGET_HIT_RATIO = 97;
+    public static final int DEFAULT_MAX_MEMORY_USED_PERCENT = 90;
+    public static final int DEFAULT_WINDOW_SIZE = 5;
+
+    public static final Executor expireExecutor = Executors.newFixedThreadPool(10, new ThreadFactory() {
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r);
+                thread.setName("LRUCache fireExpireEvent".concat(thread.getName()));
+                thread.setDaemon(true);
+                thread.setPriority(Thread.MIN_PRIORITY);
+                return thread;
+            }
+        });
+
     private Map<Object, Entry> mBackingMap;
 
-    private PriorityBlockingQueue<QueueEntry> mUsageQueue;
+    private ConcurrentLinkedList<Entry> mUsageQueue;
     private int mMaxRecent;
-    private int mTargetHitRatio = 85;   // RMS smoothed target
-    private int mMaxMemoryUsedPercent = 80;
-    private LinkedBlockingQueue<Double> mSampleQueue;
+
+    // RMS smoothed target for cache equilibrium
+    private int mTargetHitRatio;
+    
+    // Re-enable autotune if hit ratio falls below this threshold.
+    private int mMaxMemoryUsedPercent;
+    private boolean mWasAutoTuned = false;
+    private boolean mWasMemorySizeThresholdReached = false;
+    private LinkedBlockingQueue<MutablePair> mSampleQueue;
+    private double mCumTangent = 0;
 
     private AtomicLong mHits;
     private AtomicLong mMisses;
 
-    // In-progress removes
-    private boolean mRemoving = false;
-
     // In-progress puts
-    private boolean mPutting = false;
-    
-    // In-progress clears
-    private boolean mClearing = false;
+    private ReentrantLock mPutLock = new ReentrantLock();
 
     // Manages expireEvent listeners.
     private ArrayList<ExpirationListener> mListeners = new ArrayList();
 
-    /**
-     * Construct a cache with an amount of recently used entries that are
-     * guaranteed to always be in the cache.
-     *
-     * @param maxRecent maximum amount of recently used entries guaranteed to
-     * be in the Cache.
-     * @throws IllegalArgumentException if maxRecent is less than or equal to
-     * zero.
-     */
-    public LRUCache(int maxRecent) {
-        this(new ConcurrentHashMap(maxRecent), maxRecent);
-    }
-
-    
-    public int getTargetHitRatio() {
-        return mTargetHitRatio;
-    }
-
-
+    public int getTargetHitRatio() { return mTargetHitRatio; }
     public void setTargetHitRatio(int target) {
         mTargetHitRatio = target;
     }
 
 
-    public int getMaxMemoryUsedPercent() {
-        return mMaxMemoryUsedPercent;
-    }
-
-
+    public int getMaxMemoryUsedPercent() { return mMaxMemoryUsedPercent; }
     public void setMaxMemoryUsedPercent(int maxMemory) {
         mMaxMemoryUsedPercent = maxMemory;
     }
 
+
+    public boolean wasMemorySizeThresholdReached() { return mWasMemorySizeThresholdReached; }
+
+    public boolean wasAutoTuned() { return mWasAutoTuned; }
 
     public long getHits() {
         return mHits.get();
@@ -124,29 +122,48 @@ public class LRUCache implements Map {
     }
 
 
-    public int getHitRatio() {
-        if (mHits.get() + mMisses.get() == 0 )
+    public double getHitRatio() {
+        if (mHits.get() + mMisses.get() == 0)
             return 0;
-        return (int) ((1 - (mMisses.doubleValue() / (mHits.doubleValue() + mMisses.doubleValue()))) * 100);
+        return (1 - (mMisses.doubleValue() / (mHits.doubleValue() + mMisses.doubleValue()))) * 100;
     }
 
     
     /**
-     * Calculate the RMS smooted hit ratio.
+     * Calculate first order derivative over sliding window.
+     *
+     * deltaX = sampled cache size, deltaY = sampled cumulative hit ratio.
      */
-    public int getRMSHitRatio() {
+    public double getTangent() {
+    
+        MutablePair firstPair = mSampleQueue.size() > 0 ? mSampleQueue.peek() : new MutablePair(0, 0);
+        MutablePair lastPair = null;
+        for (MutablePair p : mSampleQueue)
+            lastPair = p;
+        if (lastPair == null)
+            lastPair = new MutablePair(0, 1);
 
-        if (mSampleQueue.remainingCapacity() != 0)
-            return 0;
+        double deltaY = Math.abs(lastPair.getHitRatio() - firstPair.getHitRatio());
+        int deltaX = Math.abs(lastPair.getCacheSize() - firstPair.getCacheSize());
 
-        int size = mSampleQueue.size();
-        double sum = 0;
-        for (Double sample : mSampleQueue)
-            sum += sample * sample;
-        return (int) Math.sqrt(sum / size);
-
+        // deltaX can't be zero because getTangent() is called inside put()
+        return deltaY / deltaX;
+        
     }
 
+
+    public double getHitRatioTargetDelta() {
+        return getTargetHitRatio() - getHitRatio();
+    }
+
+   
+    /**
+     * Calculate cache estimate (Proportional feedback control using derivative).
+     */
+    public int estimateCacheSize(double tangent) {
+        return (int) (mBackingMap.size() + .9 * getHitRatioTargetDelta() / tangent);
+    }
+    
 
     public int getMemoryUsedPercent() {
         double maxMemory = (double) Runtime.getRuntime().maxMemory();
@@ -165,7 +182,6 @@ public class LRUCache implements Map {
     }
 
 
-
     /**
      * Construct a cache with an amount of recently used entries that are
      * guaranteed to always be in the cache.
@@ -176,29 +192,58 @@ public class LRUCache implements Map {
      * @throws IllegalArgumentException if maxRecent is less than or equal to
      * zero.
      */
-    public LRUCache(Map backingMap, int maxRecent) {
+    public LRUCache(Map backingMap, int maxRecent, int targetHitRatio, 
+            int maxMemoryUsedPercent) {
+
         mMaxRecent = maxRecent;
         mBackingMap = backingMap;
-        mUsageQueue = new PriorityBlockingQueue();
+        mUsageQueue = new ConcurrentLinkedList();
         mHits = new AtomicLong(0L);
         mMisses = new AtomicLong(0L);
-        mSampleQueue = new LinkedBlockingQueue<Double>(100);
+        mSampleQueue = new LinkedBlockingQueue(DEFAULT_WINDOW_SIZE);
+        mTargetHitRatio = targetHitRatio;
+        mMaxMemoryUsedPercent = maxMemoryUsedPercent;
+    }
+
+
+    public LRUCache(Map backingMap, int maxRecent) {
+        this(backingMap, maxRecent, DEFAULT_TARGET_HIT_RATIO,
+            DEFAULT_MAX_MEMORY_USED_PERCENT);
+    }
+
+
+    /**
+     * Construct a cache with an amount of recently used entries that are
+     * guaranteed to always be in the cache.
+     *
+     * @param maxRecent maximum amount of recently used entries guaranteed to
+     * be in the Cache.  A value of -2 enables auto-tune.
+     */
+    public LRUCache(int maxRecent) {
+        this(new ConcurrentHashMap(), maxRecent);
+    }
+
+    
+    public void integrityCheck() {
+        mUsageQueue.integrityCheck();
+        if (mUsageQueue.size() != mBackingMap.size())
+            throw new IllegalArgumentException("Backing map and LRU queue sizes differ! " + 
+                mBackingMap.size() + "/" + mUsageQueue.size());
     }
 
 
     public Object get(Object key) {
-
         Entry e = mBackingMap.get(key);
-        Object value = e != null ? e.getValue() : null;
-        
+      
         if (e != null) {
             e.touch();
             mHits.getAndIncrement();
+            return e.getValue();
         }
-        else
+        else{
             mMisses.getAndIncrement();
-
-        return value;
+            return null;
+        }
     }
 
 
@@ -208,59 +253,72 @@ public class LRUCache implements Map {
 
 
     public Object put(Object key, Object value) {
-        if (value == null) {
+        
+        if (value == null)
             value = new Null();
-        }
 
-        Entry e = new Entry(key, value);
-        QueueEntry qe = e.getQueueEntry();
-
-        synchronized(this) {
-            while(mPutting || mRemoving || mClearing)
-               try { wait(); } catch (InterruptedException ignore) { }
-            mPutting = true;
-        }
-
+        mPutLock.lock();
         try {
+    
+            Entry e = new Entry(key, value);
             Entry old = mBackingMap.put(key, e);
-            if (old != null)
-                mUsageQueue.remove(old.getQueueEntry());
-    
-            mUsageQueue.offer(qe);
-
-            // If mMaxRecent <= 0 then autotune is enabled
-            if (mMaxRecent <= 0) {
-                while (!mSampleQueue.offer(new Double(getHitRatio())))
-                    mSampleQueue.poll();
-
-                if (getMemoryUsedPercent() >= mMaxMemoryUsedPercent)
-                    mMaxRecent = mBackingMap.size();    // Memory max threshold reached
-                if (getRMSHitRatio() >= mTargetHitRatio)
-                    mMaxRecent = mBackingMap.size();    // Target hit ratio reached
-/*
-if (mMaxRecent > 0) {
-System.out.println("***** AUTOTUNE TARGET REACHED max = " + mMaxRecent + " hit ratio = " + getRMSHitRatio() + 
-    "% Memory = " + getMemoryUsedPercent() + "%");
-System.out.println("MAX MEMORY = " + Runtime.getRuntime().maxMemory() + " FREE MEMORY = " + Runtime.getRuntime().freeMemory() +
-    " TOTAL MEMORY = " + Runtime.getRuntime().totalMemory());
-}
-*/
+            if (old != null) {
+                old.dequeue();
             }
-    
-            if (mMaxRecent > 0 && mBackingMap.size() > mMaxRecent) {
-                QueueEntry a = findLRU(mUsageQueue.poll());
+            e.enqueue();
 
-                if (a != null) {
-                    Entry expired = mBackingMap.remove(a.getKey());
+            while (mMaxRecent > 0 && mBackingMap.size() > mMaxRecent) {
+                Entry a = mUsageQueue.poll();           // get the LRU item.
+                if (a == null){
+                    break;
+                }
+                Entry expired = mBackingMap.remove(a.getKey());
+                if (expired != null){
                     fireExpireEvent(expired);
                 }
+            } 
+
+            // If mMaxRecent <= 0 then autotune is enabled
+            if ((mMaxRecent <= 0 || mWasAutoTuned) && !mWasMemorySizeThresholdReached) {
+                mWasAutoTuned = true;
+
+                MutablePair sample = null;
+
+                if (mSampleQueue.remainingCapacity() == 0)
+                    sample = mSampleQueue.poll();
+                else
+                    sample = new MutablePair();
+
+                sample.setHitRatio(getHitRatio());
+                sample.setCacheSize(mBackingMap.size());
+                mSampleQueue.offer(sample);
+
+                double tangent = getTangent();
+                if (tangent != Double.POSITIVE_INFINITY) {
+                    int estimatedSize = estimateCacheSize(tangent);
+                    if (estimatedSize < mBackingMap.size()) {
+                        double sizeDelta = mBackingMap.size() - estimatedSize;
+                        double sizeDeltaPct = sizeDelta / mBackingMap.size() * 100;
+                        if (sizeDeltaPct < 100 - mTargetHitRatio) {  // Must be small downward change.
+                            mMaxRecent = estimateCacheSize(tangent); 
+                        }
+          
+                    }
+                    else
+                        mMaxRecent = estimatedSize;
+                }
+
+                if (getMemoryUsedPercent() >= mMaxMemoryUsedPercent) {
+                    mMaxRecent = mBackingMap.size();    // Memory max threshold reached
+                    mWasMemorySizeThresholdReached = true;
+                }
+
             }
+            
+            
         }
         finally {
-            synchronized(this) {
-                mPutting = false;
-                notifyAll();
-            }
+            mPutLock.unlock();
         }
 
         return value;
@@ -278,25 +336,16 @@ System.out.println("MAX MEMORY = " + Runtime.getRuntime().maxMemory() + " FREE M
 
     public Object remove(Object key) { 
 
-        synchronized(this) {
-            while(mRemoving || mPutting || mClearing)
-               try { wait(); } catch (InterruptedException ignore) { }
-            mRemoving = true;
-        }
-
         Object value = null;
+        mPutLock.lock();
         try {
             Entry e = mBackingMap.remove(key);
-            value = e != null ? e.getValue() : null;
-            QueueEntry qe = e != null ? e.getQueueEntry() : null;
-            if (qe != null)
-                mUsageQueue.remove(qe);
+            if (e != null){
+                e.dequeue();
+            }
         }
         finally {
-            synchronized(this) {
-                mRemoving = false;
-                notifyAll();
-            }
+            mPutLock.unlock();
         }
         return value;
     }
@@ -311,22 +360,14 @@ System.out.println("MAX MEMORY = " + Runtime.getRuntime().maxMemory() + " FREE M
 
 
     public void clear() { 
-        synchronized(this) {
-            while(mClearing || mRemoving || mPutting)
-               try { wait(); } catch (InterruptedException ignore) { }
-            mClearing = true;
-        }
 
+        mPutLock.lock();
         try {
             mBackingMap.clear(); 
             mUsageQueue.clear();
-
         }
         finally {
-            synchronized(this) {
-                mClearing = false;
-                notifyAll();
-            }
+            mPutLock.unlock();
         }
     }
 
@@ -363,46 +404,8 @@ System.out.println("MAX MEMORY = " + Runtime.getRuntime().maxMemory() + " FREE M
 
 
     protected void fireExpireEvent(Entry e) {
-        for (ExpirationListener l : mListeners)
-            new Thread(new NotifyBuffer(l, e)).start();
-    }
-
-
-    /**
-     * Check to see if the timestamp on the queue entry is the same as the
-     * last access timestamp.  If they differ then the item was accessed
-     * "touched" and should be enqueued again with the last access 
-     * timestamp.
-     */
-    private QueueEntry findLRU(QueueEntry e) {
-
-        if (e == null)
-            throw new IllegalArgumentException("QueueEntry must not be null.");
-        if (e.getKey() == null)
-            throw new IllegalArgumentException("QueueEntry.getKey() must not be null.");
-        if (e.getValue() == null)
-            throw new IllegalArgumentException("QueueEntry.getValue() must not be null.");
-
-        Entry check = mBackingMap.get(e.getKey());
-        if (check == null)
-            throw new IllegalArgumentException("QueueEntry.getKey() not found in backing map.");
-
-        // If the timestamps are equal then expire this entry.
-        if (check.getTimeStamp().equals(e.getTimeStamp()))
-            return e; 
-
-        // Timestamps differ so re-enqueue the item and look for another entry.
-        int len = mUsageQueue.size();
-        int count = 0;
-        do {
-            e.setTimeStamp(check.getTimeStamp());
-            mUsageQueue.offer(e);
-            e = mUsageQueue.poll();
-            check = mBackingMap.get(e.getKey());
-            count++;
-        } while ((! check.getTimeStamp().equals(e.getTimeStamp())) && count < len);
-
-        return e;
+      for(int i = 0;i < mListeners.size(); i++)
+            expireExecutor.execute(new NotifyBuffer(mListeners.get(i), e));
     }
 
 
@@ -425,30 +428,26 @@ System.out.println("MAX MEMORY = " + Runtime.getRuntime().maxMemory() + " FREE M
             return "null";
         }
     }
-
+    
 
     /**
-     * The Entry class manages a timestamp that initially represents the
-     * arrival time of the entry in the queue.  When an item is retrieved
-     * via a call to get(), the timestamp is updated (touched) to the
-     * last access time.
+     * The Entry class encapsulates a link between an item in the backing map
+     * and the LRU ordered queue.  When an entry is accessed via get() it is removed
+     * and placed on the tail of the queue via the touch() method.
      */
     class Entry implements Map.Entry {
 
         private Object mKey;
-        private AtomicLong mTimeStamp = null;
         private Object mValue;
-        private QueueEntry mQueueEntry = null;
+        private volatile ConcurrentLinkedList.Node mQueueEntry = null;
 
         public Entry(Object key, Object value) {
             mKey = key;
             mValue = value;
-            mTimeStamp = new AtomicLong(System.nanoTime());
-            mQueueEntry = new QueueEntry(this);
         }
 
-        public QueueEntry getQueueEntry() { return mQueueEntry; }
-        public Long getTimeStamp() { return mTimeStamp.get(); }
+
+        public ConcurrentLinkedList.Node getQueueEntry() { return mQueueEntry; }
         public Object getKey() { return mKey; }
         public Object getValue() { return mValue; }
         public Object setValue(Object value) { 
@@ -456,7 +455,24 @@ System.out.println("MAX MEMORY = " + Runtime.getRuntime().maxMemory() + " FREE M
             mValue = value; 
             return old;
         }
-        public void touch() { mTimeStamp.lazySet(System.nanoTime()); }
+
+
+        public void enqueue() {
+            mQueueEntry = mUsageQueue.offerAndGetNode(this);
+        }
+
+
+        public boolean dequeue() {
+            return mUsageQueue.remove(mQueueEntry);
+        }
+
+
+        /**
+         * Place this entry on the tail of the LRU.
+         */
+        public void touch() { 
+            mUsageQueue.moveToTail(mQueueEntry);
+        }
         public int hashCode() { return mValue != null ? mValue.hashCode() : -1; }
         public boolean equals(Object other) { 
             if (mValue == null && other == null)
@@ -467,45 +483,36 @@ System.out.println("MAX MEMORY = " + Runtime.getRuntime().maxMemory() + " FREE M
     }
 
 
-    /**
-     * The QueueEntry class manages a timestamp that represents the
-     * arrival time of the entry in the queue. 
-     */
-    class QueueEntry implements Comparable {
-
-        Entry mEntry = null;
-        private AtomicLong mTimeStamp = null;
-
-        public QueueEntry(Entry e) {
-            mEntry = e;
-            mTimeStamp = new AtomicLong(e.getTimeStamp());
-        }
-
-        public Long getTimeStamp() { return mTimeStamp.get(); }
-        public void setTimeStamp(Long timeStamp) { mTimeStamp.set(timeStamp); }
-        public Object getKey() { return mEntry.getKey(); }
-        public Object getValue() { return mEntry.getValue(); }
-
-        public int compareTo(Object o) {
-            QueueEntry a = (QueueEntry) o;
-            return getTimeStamp().compareTo(a.getTimeStamp());
-        }
-
-        public int hashCode() { return getTimeStamp() != null ? getTimeStamp().hashCode() : -1; }
-
-        public boolean equals(Object other) {
-            if (getTimeStamp() == null && other != null && ((QueueEntry) other).getTimeStamp() == null)
-                return true;
-            return getTimeStamp() != null ? getTimeStamp().equals(((QueueEntry) other).getTimeStamp()) : false;
-        }
-    }
-
-
     public interface ExpirationListener {
         /**
          * This event occurs when an entry expires (maxRecent reached) based upon an LRU policy.
          */
         public void expireEvent(Entry e);
+    }
+
+
+    // the purpose of this class is to help reduce heap churn when auto-tune is enabled.
+    static class MutablePair {
+        
+        double mHitRatio;
+        int mCacheSize;
+
+        MutablePair () { 
+            mHitRatio = 0; 
+            mCacheSize = 0;
+        }
+
+        MutablePair(double hitRatio, int cacheSize) { 
+            mHitRatio = hitRatio; 
+            mCacheSize = cacheSize;
+        }
+
+        double getHitRatio() { return mHitRatio; }
+        void setHitRatio(double hitRatio) { mHitRatio = hitRatio; }
+
+        int getCacheSize() { return mCacheSize; }
+        void setCacheSize(int cacheSize) { mCacheSize = cacheSize; }
+
     }
 
 }

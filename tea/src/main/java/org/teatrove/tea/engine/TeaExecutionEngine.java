@@ -22,7 +22,7 @@ package org.teatrove.tea.engine;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 10/30/01 <!-- $-->
+
  */
 public interface TeaExecutionEngine {
 

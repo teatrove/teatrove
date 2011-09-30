@@ -92,6 +92,12 @@
     </dependency> 
 
     <dependency>
+      <groupId>com.google.code</groupId>
+      <artifactId>javabi-sizeof</artifactId>
+      <version>0.2</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.jdom</groupId>
       <artifactId>jdom</artifactId>
       <version>1.1</version>
@@ -146,6 +152,13 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.7</version>
         <configuration>
+          <instrumentation>
+	        <excludes>
+	          <exclude>com/**/*BeanInfo.class</exclude>
+	          <exclude>com/**/PackageInfo.class</exclude>
+	        </excludes>
+          </instrumentation>
+          <maxmemory>512m</maxmemory>
         </configuration>
       </plugin>
     </plugins>

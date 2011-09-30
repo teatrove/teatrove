@@ -31,8 +31,6 @@ import java.io.*;
  * Opcode.LDC_W (two-byte index).
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 24 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  * @see CodeAttr
  * @see Opcode
  */

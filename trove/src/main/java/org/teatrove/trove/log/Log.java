@@ -60,8 +60,6 @@ import java.lang.ref.WeakReference;
  * </pre>
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 29 <!-- $-->, <!--$$JustDate:-->  4/19/04 <!-- $-->
  * @see LogScribe
  * @see Syslog
  * @see LogEventParsingWriter

@@ -24,7 +24,7 @@ import java.util.Vector;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public class AppAdminLinks {
     

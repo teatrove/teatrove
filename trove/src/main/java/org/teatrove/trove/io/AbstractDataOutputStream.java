@@ -27,8 +27,6 @@ import java.io.*;
  * multiple threads to write to the same OutputStream.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 02/03/04 <!-- $-->
  */
 public abstract class AbstractDataOutputStream extends OutputStream
     implements DataOutput

@@ -23,8 +23,6 @@ import java.io.UnsupportedEncodingException;
  * A ByteBuffer that accepts characters and Strings as well.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:--> 01/04/18 <!-- $-->
  */
 public interface CharToByteBuffer extends ByteBuffer {
     /**

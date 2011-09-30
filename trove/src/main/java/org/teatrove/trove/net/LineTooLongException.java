@@ -19,8 +19,6 @@ package org.teatrove.trove.net;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 00/12/06 <!-- $-->
  */
 public class LineTooLongException extends java.io.IOException {
     public LineTooLongException(int limit) {

@@ -29,7 +29,6 @@ import java.util.Map;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class DecimalFormat implements Cloneable {
     private static final String[] INT_VALUES = {

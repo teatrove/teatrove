@@ -29,8 +29,6 @@ import org.teatrove.trove.util.SoftHashMap;
  * Java 2, version 1.3. 
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 01/01/23 <!-- $-->
  */
 public class InetAddressResolver {
     // Wait for 10 minutes before trying to resolve again.

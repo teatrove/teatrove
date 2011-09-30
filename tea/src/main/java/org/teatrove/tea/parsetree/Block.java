@@ -27,7 +27,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 20 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class Block extends StatementList {
     private Statement mInitializer;

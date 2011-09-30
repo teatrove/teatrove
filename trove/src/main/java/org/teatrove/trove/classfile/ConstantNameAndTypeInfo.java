@@ -23,8 +23,6 @@ import java.io.*;
  * in section 4.4.6 of <i>The Java Virtual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class ConstantNameAndTypeInfo extends ConstantInfo {
     private String mName;

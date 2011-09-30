@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  * @author Guy Molinari
  * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 01/03/07 <!-- $-->
+
  *
  * This class functions as the mediator for handling all profiler statistics
  * gathering and event handling.

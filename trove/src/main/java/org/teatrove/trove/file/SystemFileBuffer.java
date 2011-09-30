@@ -26,8 +26,6 @@ import org.teatrove.trove.util.SecureReadWriteLock;
  * com_go_trove_file_SystemFileBuffer.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 16 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
  */
 public final class SystemFileBuffer implements FileBuffer {
     public final static int MAP_RO = 1;

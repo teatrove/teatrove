@@ -55,7 +55,7 @@ import java.util.TreeMap;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 16 <!-- $--> 21 <!-- $$JustDate:-->  3/19/04 <!-- $-->
+
  * @see ClassInjector
  */
 public class RemoteCompiler extends AbstractFileCompiler {

@@ -25,8 +25,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * doesn't support the type requested.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:--> 01/12/05 <!-- $-->
  */
 public interface FileBuffer {
     /**

@@ -25,8 +25,6 @@ import java.io.IOException;
  * <i>The Java Virual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 19 <!-- $-->, <!--$$JustDate:--> 00/11/27 <!-- $-->
  */
 class SyntheticAttr extends Attribute {
     public SyntheticAttr(ConstantPool cp) {

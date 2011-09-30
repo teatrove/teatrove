@@ -43,7 +43,7 @@ package org.teatrove.tea.parsetree;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 30 <!-- $-->, <!--$$JustDate:-->  5/31/01 <!-- $-->
+
  * @see Node#accept(NodeVisitor)
  */
 public interface NodeVisitor {

@@ -22,8 +22,6 @@ import java.util.Iterator;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 02/07/18 <!-- $-->
  */
 public class StringReplacer {
     private StringReplacer() {

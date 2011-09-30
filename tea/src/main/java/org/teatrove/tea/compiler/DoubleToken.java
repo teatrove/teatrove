@@ -20,7 +20,7 @@ package org.teatrove.tea.compiler;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 13 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 class DoubleToken extends Token {
     private double mValue;

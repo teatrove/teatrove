@@ -29,7 +29,7 @@ import org.teatrove.trove.log.*;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:-->  5/07/03 <!-- $-->
+
  */
 class HttpResource {
     // Default is 10,000 milliseconds.

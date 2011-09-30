@@ -36,7 +36,7 @@ package org.teatrove.tea.engine;
  *
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 02/01/04 <!-- $-->
+
  */
 public interface DynamicContextSource extends ContextSource {
 

@@ -23,8 +23,6 @@ import java.io.IOException;
  * An OutputStream that writes into a ByteBuffer.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 00/12/05 <!-- $-->
  */
 public class ByteBufferOutputStream extends OutputStream {
     private ByteBuffer mBuffer;

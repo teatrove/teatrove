@@ -20,8 +20,6 @@ package org.teatrove.trove.util.tq;
  * Defines a unit of work to be performed in a {@link TransactionQueue}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 8 <!-- $-->, <!--$$JustDate:-->  9/25/00 <!-- $-->
  */
 public interface Transaction {
     /**

@@ -28,7 +28,7 @@ import java.io.*;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:--> 00/12/13 <!-- $-->
+
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class PositionReader extends org.teatrove.trove.io.PositionReader {

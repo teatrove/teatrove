@@ -30,7 +30,7 @@ import java.util.Arrays;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 23 <!-- $-->, <!--$$JustDate:-->  3/05/04 <!-- $-->
+
  */
 public abstract class CompilationUnit implements ErrorListener {
     private String mName;

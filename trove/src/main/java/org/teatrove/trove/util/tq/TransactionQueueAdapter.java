@@ -21,8 +21,6 @@ package org.teatrove.trove.util.tq;
  * UncaughtExceptionListener that make it easier to implement those listeners.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 8 <!-- $-->, <!--$$JustDate:-->  9/25/00 <!-- $-->
  */
 public abstract class TransactionQueueAdapter 
     implements TransactionQueueListener, UncaughtExceptionListener {

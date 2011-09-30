@@ -26,8 +26,6 @@ import org.teatrove.trove.util.*;
  * thread is available.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 34 <!-- $-->, <!--$$JustDate:-->  8/26/04 <!-- $-->
  */
 public class TransactionQueue {
     private ThreadPool mThreadPool;

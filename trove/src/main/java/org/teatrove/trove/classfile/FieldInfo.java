@@ -26,8 +26,6 @@ import java.lang.reflect.Modifier;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 28 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
- * @see ClassFile
  */
 public class FieldInfo {
     private ClassFile mParent;

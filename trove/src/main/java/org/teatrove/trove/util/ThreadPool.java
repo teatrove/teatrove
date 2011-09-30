@@ -29,8 +29,6 @@ import java.util.logging.Logger;
  * Runnable.run method exits.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 01/09/07 <!-- $-->
  */
 public class ThreadPool extends ThreadGroup {
     private static int cThreadID;
@@ -397,10 +395,6 @@ public class ThreadPool extends ThreadGroup {
                 }
             }
 
-            if (name != null) {
-//                thread.setName(name);
-            }
-            
             if (thread.setTarget(target)) {
                 return thread;
             }
@@ -444,10 +438,6 @@ public class ThreadPool extends ThreadGroup {
             }
         
             thread = (PooledThread)mPool.removeLast();
-            if (name != null) {
-//                thread.setName(name);
-            }
-        
             if (thread.setTarget(target)) {
                 return thread;
             }
@@ -518,10 +508,6 @@ public class ThreadPool extends ThreadGroup {
             thread.setPriority(mPriority);
             thread.setDaemon(mDaemon);
             
-            if (name != null) {
-//                thread.setName(name);
-            }
-
             thread.setTarget(target);
             thread.start();
         }
@@ -572,13 +558,11 @@ public class ThreadPool extends ThreadGroup {
     }
 
     private class PooledThread extends Thread {
-        private String mOriginalName;
         private Runnable mTarget;
         private boolean mExiting;
 
         public PooledThread(String name) {
             super(ThreadPool.this, name);
-            mOriginalName = name;
 
             setInheritedAccessControlContextToNull();
         }
@@ -612,6 +596,7 @@ public class ThreadPool extends ThreadGroup {
             }
             return false;
         }
+
 
         synchronized boolean setTarget(Runnable target) {
             if (mTarget != null) {
@@ -687,7 +672,6 @@ public class ThreadPool extends ThreadGroup {
                     target = null;
 
                     mTarget = null;
-//                    setName(mOriginalName);
                     threadAvailable(this);
                 }
             }

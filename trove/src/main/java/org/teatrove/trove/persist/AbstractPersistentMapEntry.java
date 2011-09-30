@@ -24,8 +24,6 @@ import java.lang.reflect.UndeclaredThrowableException;
  * define new Map entries.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 02/01/03 <!-- $-->
  */
 public abstract class AbstractPersistentMapEntry
     implements PersistentMap.Entry

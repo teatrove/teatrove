@@ -28,8 +28,6 @@ import java.lang.ref.WeakReference;
  * embedded exception.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  4/19/04 <!-- $-->
  */
 public class LogEvent extends EventObject {
     /** Debug type of LogEvent */

@@ -25,8 +25,6 @@ import java.io.*;
  * <i>The Java Virual Machine Specification</i>.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:--> 03-08-04 <!-- $-->
  */
 class InnerClassesAttr extends Attribute {
     private List mInnerClasses = new ArrayList();

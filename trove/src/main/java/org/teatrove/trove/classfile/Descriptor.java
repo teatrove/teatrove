@@ -21,8 +21,6 @@ package org.teatrove.trove.classfile;
  * <i>The Java Virtual Machine Specification</i>.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 20 <!-- $-->, <!--$$JustDate:--> 01/12/31 <!-- $-->
  */
 public abstract class Descriptor {
     /**

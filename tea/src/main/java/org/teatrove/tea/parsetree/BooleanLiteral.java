@@ -24,7 +24,7 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 27 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class BooleanLiteral extends Literal {
     private Boolean mValue;

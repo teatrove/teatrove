@@ -19,10 +19,27 @@ package org.teatrove.trove.classfile;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.MethodDescriptor;
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.teatrove.trove.classfile.generics.GenericTypeFactory;
+import org.teatrove.trove.classfile.generics.TypeVariableDesc;
 
 /**
  * A class used to create Java class files. Call the writeTo method
@@ -32,13 +49,13 @@ import java.util.*;
  * for information on how class files are structured. Section 4.1 describes
  * the ClassFile structure.
  * 
- * @author Brian S O'Neill
+ * @author Brian S O'Neill, Nick Hagan
  */
 public class ClassFile {
     private static final int MAGIC = 0xCAFEBABE;
-    private static final int JDK1_1_MAJOR_VERSION = 45;
-    private static final int JDK1_1_MINOR_VERSION = 3;
-    
+    private static final int JDK1_1_MAJOR_VERSION = 50;
+    private static final int JDK1_1_MINOR_VERSION = 0;
+
     private int mMajorVersion = JDK1_1_MAJOR_VERSION;
     private int mMinorVersion = JDK1_1_MINOR_VERSION;
 
@@ -48,21 +65,21 @@ public class ClassFile {
     private TypeDesc mType;
 
     private ConstantPool mCp;
-    
+
     private Modifiers mModifiers;
 
     private ConstantClassInfo mThisClass;
     private ConstantClassInfo mSuperClass;
-    
+
     // Holds ConstantInfo objects.
     private List mInterfaces = new ArrayList(2);
     private Set mInterfaceSet = new HashSet(7);
-    
+
     // Holds objects.
     private List mFields = new ArrayList();
     private List mMethods = new ArrayList();
     private List mAttributes = new ArrayList();
-    
+
     private SourceFileAttr mSource;
 
     private List mInnerClasses;
@@ -72,7 +89,10 @@ public class ClassFile {
     // Is non-null for inner classes.
     private ClassFile mOuterClass;
 
-    /** 
+    // List of superclass and interface instances
+    private Set<Class<?>> mParentClasses = new HashSet<Class<?>>();
+    
+    /**
      * By default, the ClassFile defines public, non-final, concrete classes.
      * This constructor creates a ClassFile for a class that extends
      * java.lang.Object.
@@ -85,8 +105,8 @@ public class ClassFile {
     public ClassFile(String className) {
         this(className, (String)null);
     }
-    
-    /** 
+
+    /**
      * By default, the ClassFile defines public, non-final, concrete classes.
      * <p>
      * Use the {@link #getModifiers modifiers} to change the default
@@ -97,9 +117,10 @@ public class ClassFile {
      */
     public ClassFile(String className, Class superClass) {
         this(className, superClass.getName());
+        this.mParentClasses.add(superClass);
     }
 
-    /** 
+    /**
      * By default, the ClassFile defines public, non-final, concrete classes.
      * <p>
      * Use the {@link #getModifiers modifiers} to change the default
@@ -347,7 +368,7 @@ public class ClassFile {
     public ConstantPool getConstantPool() {
         return mCp;
     }
-    
+
     /**
      * Add an interface that this class implements.
      *
@@ -359,14 +380,15 @@ public class ClassFile {
             mInterfaceSet.add(interfaceName);
         }
     }
-    
+
     /**
      * Add an interface that this class implements.
      */
     public void addInterface(Class i) {
         addInterface(i.getName());
+        this.mParentClasses.add(i);
     }
-    
+
     /**
      * Add a field to this class.
      */
@@ -377,7 +399,7 @@ public class ClassFile {
         mFields.add(fi);
         return fi;
     }
-    
+
     /**
      * Add a method to this class.
      *
@@ -387,9 +409,18 @@ public class ClassFile {
     public MethodInfo addMethod(Modifiers modifiers,
                                 String methodName,
                                 TypeDesc ret,
+                                TypeDesc... params) {
+        return addMethod(modifiers, methodName, null, ret, params);
+    }
+
+    public MethodInfo addMethod(Modifiers modifiers,
+                                String methodName,
+                                TypeVariableDesc[] typeParams,
+                                TypeDesc ret,
                                 TypeDesc[] params) {
         MethodDesc md = MethodDesc.forArguments(ret, params);
-        return addMethod(modifiers, methodName, md);
+        SignatureDesc sd = SignatureDesc.forMethod(typeParams, ret, params);
+        return addMethod(modifiers, methodName, md, sd);
     }
 
     /**
@@ -403,8 +434,18 @@ public class ClassFile {
                                 TypeDesc ret,
                                 TypeDesc[] params,
                                 String[] paramNames) {
+        return addMethod(modifiers, methodName, null, ret, params, paramNames);
+    }
+
+    public MethodInfo addMethod(Modifiers modifiers,
+                                String methodName,
+                                TypeVariableDesc[] typeParams,
+                                TypeDesc ret,
+                                TypeDesc[] params,
+                                String[] paramNames) {
         MethodDesc md = MethodDesc.forArguments(ret, params, paramNames);
-        return addMethod(modifiers, methodName, md);
+        SignatureDesc sd = SignatureDesc.forMethod(typeParams, ret, params);
+        return addMethod(modifiers, methodName, md, sd);
     }
 
     /**
@@ -412,8 +453,9 @@ public class ClassFile {
      */
     public MethodInfo addMethod(Modifiers modifiers,
                                 String methodName,
-                                MethodDesc md) {
-        MethodInfo mi = new MethodInfo(this, modifiers, methodName, md);
+                                MethodDesc md,
+                                SignatureDesc sd) {
+        MethodInfo mi = new MethodInfo(this, modifiers, methodName, md, sd);
         mMethods.add(mi);
         return mi;
     }
@@ -426,32 +468,137 @@ public class ClassFile {
         Modifiers modifiers = new Modifiers(method.getModifiers());
         modifiers.setAbstract(false);
 
-        TypeDesc ret = TypeDesc.forClass(method.getReturnType());
+        TypeVariableDesc[] typeParams = lookupTypeVariables(method);
+        TypeDesc ret = TypeDesc.forClass(method.getReturnType(),
+                                         method.getGenericReturnType());
 
         MethodDescriptor methodDescriptor = lookupMethodDescriptor(method);
 
         Class[] paramClasses = method.getParameterTypes();
+        Type[] paramTypes = method.getGenericParameterTypes();
         TypeDesc[] params = new TypeDesc[paramClasses.length];
         String[] paramNames = new String[paramClasses.length];
         for (int i = 0; i < paramClasses.length; i++) {
-            params[i] = TypeDesc.forClass(paramClasses[i]);
+            params[i] = TypeDesc.forClass(paramClasses[i], paramTypes[i]);
             if(methodDescriptor != null) {
-                paramNames[i] = methodDescriptor.getParameterDescriptors()[i].getName();
+                paramNames[i] =
+                    methodDescriptor.getParameterDescriptors()[i].getName();
             } else {
                 paramNames[i] = "param$" + i;
             }
         }
 
+        MethodInfo mi = addMethod(modifiers, method.getName(), typeParams,
+                                  ret, params, paramNames);
 
-        MethodInfo mi = addMethod(modifiers, method.getName(), ret, params, paramNames);
-        
         // exception stuff...
+        // TODO: generic exceptions
         Class[] exceptions = method.getExceptionTypes();
         for (int i=0; i<exceptions.length; i++) {
             mi.addException(exceptions[i].getName());
         }
 
         return mi;
+    }
+    
+    /**
+     * Add a method to this class. This method is handy for implementing
+     * methods defined by a pre-existing interface.
+     */
+    public MethodInfo addMethod(Method method, Class<?> returnType,
+                                Class<?>... paramClasses) {
+        Modifiers modifiers = new Modifiers(method.getModifiers());
+        modifiers.setAbstract(false);
+
+        TypeVariableDesc[] typeParams = lookupTypeVariables(method);
+        TypeDesc ret = TypeDesc.forClass(returnType,
+                                         method.getGenericReturnType());
+
+        MethodDescriptor methodDescriptor = lookupMethodDescriptor(method);
+
+        Type[] paramTypes = method.getGenericParameterTypes();
+        TypeDesc[] params = new TypeDesc[paramClasses.length];
+        String[] paramNames = new String[paramClasses.length];
+        for (int i = 0; i < paramClasses.length; i++) {
+            params[i] = TypeDesc.forClass(paramClasses[i], paramTypes[i]);
+            if(methodDescriptor != null) {
+                paramNames[i] =
+                    methodDescriptor.getParameterDescriptors()[i].getName();
+            } else {
+                paramNames[i] = "param$" + i;
+            }
+        }
+
+        MethodInfo mi = addMethod(modifiers, method.getName(), typeParams,
+                                  ret, params, paramNames);
+
+        // exception stuff...
+        // TODO: generic exceptions
+        Class[] exceptions = method.getExceptionTypes();
+        for (int i=0; i<exceptions.length; i++) {
+            mi.addException(exceptions[i].getName());
+        }
+
+        return mi;
+    }
+    
+    private TypeVariableDesc[] lookupTypeVariables(Method method) {
+        Map<String, TypeVariableDesc> args =
+            new LinkedHashMap<String, TypeVariableDesc>();
+
+        
+        // TODO: better handle this by reading each return type and param
+        // type and analyzing for any type variables and attempting to resolve
+        // said type variables into declaring class type variables by looking
+        // up actual tree for the proper root type (ie: GenericType.getRaw):
+        //
+        // per ret type and param
+        // loop through per type variable
+            // if type variable declaring class is this class, do nothing
+            // else if declaring class is parent
+                // per type var of active class
+                    // per interface/super
+                        // if contains same type var
+                            // get class def and associated type var index
+                            // if class equals declaring class
+                                // if type matches, use type var of initial var
+                            // else keep walking
+                // if found, use that type
+                // else, declare
+        
+
+        
+        // check if declaring class of method within immediate hiearchy
+        // and assume class file type parameters match (see TODO above on how
+        // this really should work)
+        boolean valid = false;
+        Class<?> declaringClass = method.getDeclaringClass();
+        for (Class<?> clazz : mParentClasses) {
+            if (declaringClass.isAssignableFrom(clazz)) {
+                valid = true;
+                break;
+            }
+        }
+        
+        // pull in class instances first if not in hiearchy
+        if (!valid) {
+            TypeVariable<?>[] cargs = declaringClass.getTypeParameters();
+            for (TypeVariable<?> carg : cargs) {
+                args.put(carg.getName(),
+                         (TypeVariableDesc) GenericTypeFactory.fromType(carg));
+            }
+        }
+
+        // pull in method instances overriding class level
+        TypeVariable<?>[] cargs = method.getTypeParameters();
+        for (TypeVariable<?> carg : cargs) {
+            args.remove(carg.getName());
+            args.put(carg.getName(),
+                     (TypeVariableDesc) GenericTypeFactory.fromType(carg));
+        }
+
+        // return array
+        return args.values().toArray(new TypeVariableDesc[args.size()]);
     }
 
     private static MethodDescriptor lookupMethodDescriptor(Method method) {
@@ -479,7 +626,7 @@ public class ClassFile {
      * @param params May be null if constructor accepts no parameters.
      */
     public MethodInfo addConstructor(Modifiers modifiers,
-                                     TypeDesc[] params) {
+                                     TypeDesc... params) {
         String[] paramNames = MethodDesc.createGenericParameterNames(params);
         return addConstructor(modifiers, params, paramNames);
     }
@@ -494,7 +641,7 @@ public class ClassFile {
                                      TypeDesc[] params,
                                      String[] paramNames) {
         MethodDesc md = MethodDesc.forArguments(null, params, paramNames);
-        MethodInfo mi = new MethodInfo(this, modifiers, "<init>", md);
+        MethodInfo mi = new MethodInfo(this, modifiers, "<init>", md, null);
         mMethods.add(mi);
         return mi;
     }
@@ -508,7 +655,7 @@ public class ClassFile {
         MethodInfo mi = addConstructor(modifiers, null, null);
         CodeBuilder builder = new CodeBuilder(mi);
         builder.loadThis();
-        builder.invokeSuperConstructor(null);
+        builder.invokeSuperConstructor();
         builder.returnVoid();
         return mi;
     }
@@ -520,7 +667,7 @@ public class ClassFile {
         MethodDesc md = MethodDesc.forArguments(null, null, null);
         Modifiers af = new Modifiers();
         af.setStatic(true);
-        MethodInfo mi = new MethodInfo(this, af, "<clinit>", md);
+        MethodInfo mi = new MethodInfo(this, af, "<clinit>", md, null);
         mMethods.add(mi);
         return mi;
     }
@@ -553,11 +700,11 @@ public class ClassFile {
      * @param innerClassName Optional short inner class name.
      * @param superClassName Full super class name.
      */
-    public ClassFile addInnerClass(String innerClassName, 
+    public ClassFile addInnerClass(String innerClassName,
                                    String superClassName) {
         String fullInnerClassName;
         if (innerClassName == null) {
-            fullInnerClassName = 
+            fullInnerClassName =
                 mClassName + '$' + (++mAnonymousInnerClassCount);
         }
         else {
@@ -576,13 +723,13 @@ public class ClassFile {
         }
 
         mInnerClasses.add(inner);
-        
+
         // Record the inner class in this, the outer class.
         if (mInnerClassesAttr == null) {
             addAttribute(new InnerClassesAttr(mCp));
         }
 
-        mInnerClassesAttr.addInnerClass(fullInnerClassName, mClassName, 
+        mInnerClassesAttr.addInnerClass(fullInnerClassName, mClassName,
                                         innerClassName, access);
 
         // Record the inner class in itself.
@@ -600,6 +747,13 @@ public class ClassFile {
      */
     public void setSourceFile(String fileName) {
         addAttribute(new SourceFileAttr(mCp, fileName));
+    }
+
+    /**
+     * Set the signature of this class file to include generics info per JDK 5.
+     */
+    public void setSignature(String signature) {
+        addAttribute(new SignatureAttr(mCp, signature));
     }
 
     /**
@@ -647,7 +801,7 @@ public class ClassFile {
      *
      * @exception IllegalArgumentException when the version isn't supported
      */
-    public void setVersion(int major, int minor) 
+    public void setVersion(int major, int minor)
         throws IllegalArgumentException {
 
         if (major != JDK1_1_MAJOR_VERSION ||
@@ -671,7 +825,7 @@ public class ClassFile {
         }
 
         writeTo((DataOutput)out);
-        
+
         out.flush();
     }
 
@@ -682,11 +836,19 @@ public class ClassFile {
         dout.writeInt(MAGIC);
         dout.writeShort(mMinorVersion);
         dout.writeShort(mMajorVersion);
-        
+
         mCp.writeTo(dout);
-        
+
         int modifier = mModifiers.getModifier();
-        dout.writeShort(modifier | Modifier.SYNCHRONIZED);
+        if (!mModifiers.isInterface()) {
+            // Set the ACC_SUPER flag for classes only.
+            // NOTE: we use SYNCHRONIZED which is the same value as
+            //       ACC_SUPER, but Java does not have a constant field exposed
+            //       for it, so we use SYNCHRONIZED instead
+            modifier |= Modifier.SYNCHRONIZED;
+        }
+        
+        dout.writeShort(modifier);
 
         dout.writeShort(mThisClass.getIndex());
         if (mSuperClass != null) {
@@ -695,7 +857,7 @@ public class ClassFile {
         else {
             dout.writeShort(0);
         }
-        
+
         int size = mInterfaces.size();
         if (size > 65535) {
             throw new RuntimeException
@@ -706,7 +868,7 @@ public class ClassFile {
             int index = ((ConstantInfo)mInterfaces.get(i)).getIndex();
             dout.writeShort(index);
         }
-        
+
         size = mFields.size();
         if (size > 65535) {
             throw new RuntimeException
@@ -717,7 +879,7 @@ public class ClassFile {
             FieldInfo field = (FieldInfo)mFields.get(i);
             field.writeTo(dout);
         }
-        
+
         size = mMethods.size();
         if (size > 65535) {
             throw new RuntimeException
@@ -728,7 +890,7 @@ public class ClassFile {
             MethodInfo method = (MethodInfo)mMethods.get(i);
             method.writeTo(dout);
         }
-        
+
         size = mAttributes.size();
         if (size > 65535) {
             throw new RuntimeException
@@ -835,15 +997,15 @@ public class ClassFile {
     {
         int magic = din.readInt();
         if (magic != MAGIC) {
-            throw new IOException("Incorrect magic number: 0x" + 
+            throw new IOException("Incorrect magic number: 0x" +
                                   Integer.toHexString(magic));
         }
 
         /*int minor =*/ din.readUnsignedShort();
         /*
         if (minor != JDK1_1_MINOR_VERSION) {
-            throw new IOException("Minor version " + minor + 
-                                  " not supported, version " + 
+            throw new IOException("Minor version " + minor +
+                                  " not supported, version " +
                                   JDK1_1_MINOR_VERSION + " is.");
         }
         */
@@ -851,8 +1013,8 @@ public class ClassFile {
         /*int major =*/ din.readUnsignedShort();
         /*
         if (major != JDK1_1_MAJOR_VERSION) {
-            throw new IOException("Major version " + major + 
-                                  "not supported, version " + 
+            throw new IOException("Major version " + major +
+                                  "not supported, version " +
                                   JDK1_1_MAJOR_VERSION + " is.");
         }
         */
@@ -881,13 +1043,13 @@ public class ClassFile {
             ConstantClassInfo info = (ConstantClassInfo)cp.getConstant(index);
             cf.addInterface(info.getType().getRootName());
         }
-        
+
         // Read fields.
         size = din.readUnsignedShort();
         for (int i=0; i<size; i++) {
             cf.mFields.add(FieldInfo.readFrom(cf, din, attrFactory));
         }
-        
+
         // Read methods.
         size = din.readUnsignedShort();
         for (int i=0; i<size; i++) {
@@ -933,7 +1095,7 @@ public class ClassFile {
                     if (inner != null) {
                         ClassFile innerClass = readInnerClass
                             (inner, loader, attrFactory, loadedClassFiles, cf);
-                        
+
                         if (innerClass != null) {
                             if (innerClass.getInnerClassName() == null) {
                                 innerClass.mInnerClassName =

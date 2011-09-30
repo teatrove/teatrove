@@ -24,8 +24,6 @@ import java.io.OutputStream;
  * This is handy for writing to a file and a class injector at the same time.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 4 <!-- $--> 21 <!-- $$JustDate:--> 12/11/00 <!-- $-->
  * @see ClassInjector
  */
 

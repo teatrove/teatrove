@@ -27,8 +27,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * may be very large.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:--> 02/04/09 <!-- $-->
  */
 public abstract class AbstractPersistentMap implements PersistentMap {
     protected final ReadWriteLock mLock;

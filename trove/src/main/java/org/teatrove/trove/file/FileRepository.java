@@ -26,8 +26,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * createFile.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 17 <!-- $-->, <!--$$JustDate:--> 02/02/05 <!-- $-->
  */
 public interface FileRepository {
     /**

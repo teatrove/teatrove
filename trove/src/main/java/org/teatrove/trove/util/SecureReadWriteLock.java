@@ -39,8 +39,6 @@ package org.teatrove.trove.util;
  * </pre>
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 02-12-10 <!-- $-->
  */
 public final class SecureReadWriteLock implements ReadWriteLock {
     private final long mTimeout;

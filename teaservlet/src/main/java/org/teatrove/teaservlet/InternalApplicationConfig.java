@@ -28,7 +28,7 @@ import org.teatrove.trove.util.plugin.Plugin;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 class InternalApplicationConfig implements ApplicationConfig {  
     private ApplicationConfig mBaseConfig;

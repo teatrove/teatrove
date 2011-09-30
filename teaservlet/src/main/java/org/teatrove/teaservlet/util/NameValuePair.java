@@ -22,7 +22,7 @@ import java.util.Map;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class NameValuePair implements Comparable, java.io.Serializable {
     private String mName;

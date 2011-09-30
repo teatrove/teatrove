@@ -25,8 +25,6 @@ import org.teatrove.trove.io.AbstractDataOutputStream;
  * multiple threads to write to the same OutputStream.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 12 <!-- $-->, <!--$$JustDate:--> 01/12/26 <!-- $-->
  */
 public class FileBufferOutputStream extends AbstractDataOutputStream
     implements DataOutput

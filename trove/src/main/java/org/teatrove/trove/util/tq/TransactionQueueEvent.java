@@ -25,8 +25,6 @@ import java.util.Date;
  * {@link TransactionQueueListener}.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:-->  9/25/00 <!-- $-->
  */
 public class TransactionQueueEvent extends EventObject {
     private Transaction mTransaction;

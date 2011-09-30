@@ -25,8 +25,6 @@ import java.lang.ref.WeakReference;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class CheckedInterruptedIOException extends InterruptedIOException {
     static CheckedInterruptedIOException create

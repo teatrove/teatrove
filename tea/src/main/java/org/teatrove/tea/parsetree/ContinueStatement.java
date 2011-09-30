@@ -22,7 +22,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  * 
  * @author Guy A. Molinari
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  3/19/07 <!-- $-->
+
  */
 public class ContinueStatement extends Statement {
 

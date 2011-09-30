@@ -24,7 +24,7 @@ import javax.servlet.ServletException;
  * 
  * @author Reece Wilton
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public class AbortTemplateException extends ServletException {
     public AbortTemplateException() {

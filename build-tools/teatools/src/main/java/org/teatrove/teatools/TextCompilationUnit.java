@@ -25,7 +25,7 @@ import java.io.*;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class TextCompilationUnit extends CompilationUnit {
     

@@ -26,7 +26,6 @@ import java.util.Collection;
  * A support class the provides a default implementation for the PluginConfig interface.
  *
  * @author Scott Jappinen
- * @version <!--$$Revision:--> 4 <!-- $-->-<!--$$JustDate:--> 11/14/03 <!-- $-->
  */
 public class PluginConfigSupport extends ConfigSupport implements PluginConfig {
     

@@ -24,7 +24,7 @@ import java.lang.reflect.Method;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class MethodMatcher {
     /**

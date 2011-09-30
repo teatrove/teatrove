@@ -29,7 +29,7 @@ import java.lang.reflect.Method;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 5 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class KeyedPropertyDescriptor extends PropertyDescriptor {
     private Class mPropertyType;

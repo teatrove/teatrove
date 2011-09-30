@@ -33,7 +33,7 @@ import org.teatrove.trove.io.LinePositionReader;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 11 <!-- $-->, <!--$$JustDate:--> 00/12/13 <!-- $-->
+
  */
 public class ConsoleErrorReporter implements ErrorListener {
     private PrintStream mOut;

@@ -25,7 +25,7 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 21 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
+
  */
 public class NewArrayExpression extends Expression {
     private ExpressionList mList;

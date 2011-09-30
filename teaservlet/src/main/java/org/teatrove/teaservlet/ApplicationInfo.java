@@ -26,7 +26,7 @@ import org.teatrove.trove.util.BeanComparator;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public class ApplicationInfo extends NameValuePair {
     private Class mContext;

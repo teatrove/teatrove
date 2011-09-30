@@ -34,7 +34,6 @@ import java.util.*;
  *
  * @author Jonathan Yam
  * @author Brian S O'Neill
- * @version
  */
 public class WeakHashSet extends AbstractSet implements Set, Cloneable {
     /**

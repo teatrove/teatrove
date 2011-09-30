@@ -21,7 +21,7 @@ package org.teatrove.teaservlet.io;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:--> 00/12/06 <!-- $-->
+
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class ArrayByteData extends org.teatrove.trove.io.ArrayByteData

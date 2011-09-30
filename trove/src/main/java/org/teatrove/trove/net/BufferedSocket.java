@@ -24,8 +24,6 @@ import org.teatrove.trove.io.*;
  * A convenient class for supporting buffering on socket I/O streams.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:--> 01/10/09 <!-- $-->
  */
 public class BufferedSocket extends SocketFaceWrapper {
     private final int mInBufSize;

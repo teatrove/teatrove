@@ -25,7 +25,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  * 
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 4 <!-- $-->, <!--$$JustDate:--> 01/05/31 <!-- $-->
+
  */
 public class ExceptionGuardStatement extends Statement {
     private Statement mGuarded;

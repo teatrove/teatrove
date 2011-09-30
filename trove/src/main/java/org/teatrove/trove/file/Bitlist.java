@@ -24,8 +24,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * Various utilities for operating on a file at the bit level.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 3 <!-- $-->, <!--$$JustDate:--> 02/02/04 <!-- $-->
  */
 public class Bitlist {
     private static int findSubIndex(byte v) {

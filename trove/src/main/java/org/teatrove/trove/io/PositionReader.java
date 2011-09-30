@@ -27,8 +27,6 @@ import java.io.*;
  * the end of file is reached. Ordinary input streams don't do this.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 15 <!-- $-->, <!--$$JustDate:--> 12/11/00 <!-- $-->
  */
 public class PositionReader extends FilterReader {
     /** Is non-null when this PositionReader is chained to another. */

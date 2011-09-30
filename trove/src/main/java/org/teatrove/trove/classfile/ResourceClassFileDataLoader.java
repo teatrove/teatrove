@@ -23,8 +23,6 @@ import java.io.*;
  * resources from a ClassLoader.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 00/11/27 <!-- $-->
  */
 public class ResourceClassFileDataLoader implements ClassFileDataLoader {
     private final ClassLoader mLoader;

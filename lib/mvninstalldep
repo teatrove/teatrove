@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mvn install:install-file -DgroupId=com.google.code -DartifactId=javabi-sizeof -Dversion=0.2 -Dpackaging=jar -Dfile=./javabi-sizeof-0.2.jar

@@ -22,7 +22,7 @@ import java.util.Arrays;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:-->  3/01/01 <!-- $-->
+
  */
 public class ClassDoc extends ProgramElementDoc {
 

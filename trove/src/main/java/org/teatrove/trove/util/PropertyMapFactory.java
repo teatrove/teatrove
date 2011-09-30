@@ -19,8 +19,6 @@ package org.teatrove.trove.util;
 /**
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:-->  2/07/02 <!-- $-->
  */
 public interface PropertyMapFactory {
     public PropertyMap createProperties() throws java.io.IOException;

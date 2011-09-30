@@ -21,8 +21,6 @@ package org.teatrove.trove.io;
  * the source file.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 17 <!-- $-->, <!--$$JustDate:--> 12/11/00 <!-- $-->
  */
 public class SourceInfo implements Cloneable, java.io.Serializable {
     private int mLine;

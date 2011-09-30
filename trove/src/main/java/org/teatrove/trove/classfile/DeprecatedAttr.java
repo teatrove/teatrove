@@ -24,8 +24,6 @@ import java.io.IOException;
  * no references to its definition can be found.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 14 <!-- $-->, <!--$$JustDate:--> 00/11/27 <!-- $-->
  */
 class DeprecatedAttr extends Attribute {
     public DeprecatedAttr(ConstantPool cp) {

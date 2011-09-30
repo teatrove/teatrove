@@ -21,8 +21,6 @@ package org.teatrove.trove.util;
  * key.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 6 <!-- $-->, <!--$$JustDate:--> 01/09/24 <!-- $-->
  * @see MultiKey
  */
 public class Pair implements Comparable, java.io.Serializable {

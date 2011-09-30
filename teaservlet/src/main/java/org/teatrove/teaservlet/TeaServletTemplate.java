@@ -24,7 +24,7 @@ import org.teatrove.tea.engine.TemplateSource;
  * 
  * @author Jonathan Colwell
  * @version
- * <!--$$Revision:--> 2 <!-- $-->, <!--$$JustDate:-->  1/30/02 <!-- $-->
+
  */
 public class TeaServletTemplate implements TemplateLoader.Template {
 

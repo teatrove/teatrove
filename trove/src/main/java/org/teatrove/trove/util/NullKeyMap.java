@@ -28,8 +28,6 @@ import java.io.Serializable;
  * class.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:-->  9/07/00 <!-- $-->
  */
 public class NullKeyMap extends AbstractMap implements Serializable {
     // Instead of using null as a key, use this placeholder.

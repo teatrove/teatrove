@@ -28,7 +28,7 @@ import org.teatrove.trove.io.SourceReader;
  *
  * @author Brian S O'Neill
  * @version
- * <!--$$Revision:--> 47 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
  */
 public class Scanner {
     private SourceReader mSource;
@@ -889,7 +889,7 @@ public class Scanner {
      * 
      * @author Brian S O'Neill
      * @version
-     * <!--$$Revision:--> 47 <!-- $-->, <!--$$JustDate:--> 11/14/03 <!-- $-->
+
      */
     private static class Tester {
         public static void test(String[] arg) throws Exception {

@@ -26,8 +26,6 @@ import org.teatrove.trove.util.ReadWriteLock;
  * IOExceptions.
  * 
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 9 <!-- $-->, <!--$$JustDate:--> 02/01/03 <!-- $-->
  */
 public abstract class AbstractPersistentSet
     extends AbstractPersistentCollection implements PersistentSet

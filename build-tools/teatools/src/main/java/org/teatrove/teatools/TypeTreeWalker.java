@@ -25,7 +25,7 @@ import org.teatrove.tea.parsetree.*;
  *
  * @author Mark Masse
  * @version
- * <!--$$Revision:--> 1 <!-- $-->, <!--$$JustDate:--> 11/17/00 <!-- $-->
+
  */
 public class TypeTreeWalker extends TreeWalker {
     

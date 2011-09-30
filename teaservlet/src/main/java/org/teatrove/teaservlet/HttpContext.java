@@ -36,7 +36,7 @@ import org.teatrove.tea.runtime.OutputReceiver;
  *
  * @author Reece Wilton, Brian S O'Neill
  * @version
- * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
  */
 public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
 
@@ -352,7 +352,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public interface Request {
 
@@ -515,7 +515,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public interface Parameters {
 
@@ -540,7 +540,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public interface ParameterValues extends List {
 
@@ -566,7 +566,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public interface Parameter {
 
@@ -588,7 +588,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public interface Headers {
 
@@ -613,7 +613,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public interface Header {
 
@@ -640,7 +640,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public interface Cookies {
 
@@ -664,7 +664,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public interface Attributes {
 
@@ -687,7 +687,7 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      *
      * @author Reece Wilton
      * @version
-     * <!--$$Revision:--> 7 <!-- $-->, <!--$$JustDate:-->  3/12/04 <!-- $-->
+
      */
     public static class StringArrayList extends ArrayList {
 

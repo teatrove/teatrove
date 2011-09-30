@@ -20,8 +20,7 @@ package org.teatrove.trove.classfile;
  * An interface that abstracts bytecode from a CodeAttr.
  *
  * @author Brian S O'Neill
- * @version
- * <!--$$Revision:--> 20 <!-- $-->, <!--$$JustDate:--> 11/11/03 <!-- $-->
+ * 
  * @see CodeAttr
  * @see Opcode
  */
