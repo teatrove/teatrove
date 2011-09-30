@@ -23,8 +23,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * Simple structure for holding a error information. 
  *
  * @author Mark Masse
- * @version
-
  */
 public class ErrorRange extends Range {
 

@@ -20,7 +20,7 @@ package org.teatrove.teaservlet.stats;
  * This class keeps track of the raw data for a template
  * invocation.
  * 
- * @author jappy
+ * @author Scott Jappinen
  */
 public class RawData implements Cloneable {
 

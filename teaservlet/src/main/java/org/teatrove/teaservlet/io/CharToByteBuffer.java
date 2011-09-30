@@ -20,8 +20,6 @@ package org.teatrove.teaservlet.io;
  * A ByteBuffer that accepts characters and Strings as well.
  *
  * @author Brian S O'Neill
- * @version
-
  * deprecated Moved to org.teatrove.trove.io package.
  */
 public interface CharToByteBuffer

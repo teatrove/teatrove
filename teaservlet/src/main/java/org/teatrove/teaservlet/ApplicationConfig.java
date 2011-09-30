@@ -28,8 +28,6 @@ import org.teatrove.trove.util.plugin.Plugin;
  * configure itself.
  *
  * @author Reece Wilton
- * @version
-
  */
 public interface ApplicationConfig extends ServletConfig, Config {
     /**

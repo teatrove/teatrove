@@ -22,8 +22,6 @@ import java.rmi.RemoteException;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public interface Clustered extends Remote {
 

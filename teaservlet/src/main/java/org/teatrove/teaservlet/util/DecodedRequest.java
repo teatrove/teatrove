@@ -27,8 +27,6 @@ import javax.servlet.http.HttpServletRequestWrapper;
  * parameters using the provided character encoding.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class DecodedRequest extends HttpServletRequestWrapper {
     private static final byte[] TEST_BYTES = {65};

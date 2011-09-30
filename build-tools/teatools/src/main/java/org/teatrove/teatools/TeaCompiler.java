@@ -30,8 +30,6 @@ import java.util.*;
  * producing various Tea compiler components.
  *
  * @author Mark Masse
- * @version
-
  */
 public class TeaCompiler extends FileCompiler {
 

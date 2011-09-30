@@ -22,8 +22,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * Base class for Directives
  *
  * @author Guy Molinari
- * @version
-
  */
 public abstract class Directive extends Node { 
 

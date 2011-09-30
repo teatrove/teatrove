@@ -32,8 +32,6 @@ import java.lang.reflect.Method;
  * support array lookup on an int typed index.
  * 
  * @author Brian S O'Neill
- * @version
-
  * @see org.teatrove.tea.util.BeanAnalyzer
  */
 public class ArrayLookup extends Expression {

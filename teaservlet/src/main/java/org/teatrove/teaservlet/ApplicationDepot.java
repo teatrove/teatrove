@@ -48,8 +48,6 @@ import org.teatrove.tea.engine.*;
  * depot -- a place for storing goods
  *
  * @author Reece Wilton, Jonathan Colwell
- * @version
-
  */
 public class ApplicationDepot {
 

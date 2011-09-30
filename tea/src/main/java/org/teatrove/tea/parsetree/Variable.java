@@ -24,8 +24,6 @@ import org.teatrove.tea.compiler.Type;
  * reference Variables.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see VariableRef
  */
 public class Variable extends Node {

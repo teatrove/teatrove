@@ -21,8 +21,6 @@ import org.teatrove.trove.util.Config;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public interface TeaEngineConfig extends Config {
     

@@ -21,8 +21,6 @@ import org.teatrove.tea.compiler.SourceInfo;
 /**
  * 
  * @author Guy A. Molinari
- * @version
-
  */
 public class ContinueStatement extends Statement {
 

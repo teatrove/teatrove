@@ -19,8 +19,6 @@ package org.teatrove.toolbox.beandoc.teadoc;
 /**
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class SerialFieldTag extends Tag implements Comparable {
 

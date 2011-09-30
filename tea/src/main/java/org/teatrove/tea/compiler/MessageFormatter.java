@@ -26,8 +26,6 @@ import java.text.MessageFormat;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 class MessageFormatter {
     // Maps Classes to MessageFormatters.

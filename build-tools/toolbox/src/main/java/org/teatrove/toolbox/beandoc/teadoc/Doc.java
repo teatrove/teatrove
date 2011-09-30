@@ -22,8 +22,6 @@ import java.util.StringTokenizer;
 /**
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Doc implements java.io.Serializable, Comparable {
 

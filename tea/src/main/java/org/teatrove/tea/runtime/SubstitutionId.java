@@ -20,8 +20,6 @@ package org.teatrove.tea.runtime;
  * Object used by template substitutions to uniquely identify themselves.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class SubstitutionId extends java.lang.ref.WeakReference {
     private final int mBlockId;

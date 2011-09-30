@@ -36,8 +36,6 @@ import org.teatrove.trove.io.SourceReader;
  * the same merged context interface.
  * 
  * @author Guy A. Molinari
- * @version
-
  */
 public class CompiledTemplate extends CompilationUnit {
     private Template mTree;

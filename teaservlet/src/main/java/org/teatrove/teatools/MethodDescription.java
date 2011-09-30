@@ -25,8 +25,6 @@ import java.lang.reflect.*;
  * Wrapper for a MethodDescriptor object.
  *
  * @author Mark Masse
- * @version
-
  */
 public class MethodDescription extends FeatureDescription {
 

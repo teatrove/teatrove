@@ -30,8 +30,6 @@ import org.teatrove.trove.classfile.TypeDesc;
 /**
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public interface AdminContext extends TeaToolsContext {
 

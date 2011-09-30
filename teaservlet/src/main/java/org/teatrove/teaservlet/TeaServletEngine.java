@@ -41,8 +41,6 @@ import org.teatrove.tea.engine.TemplateSource;
  * a servlet output stream.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public interface TeaServletEngine extends ApplicationConfig {
     /**

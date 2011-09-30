@@ -28,8 +28,6 @@ import java.util.Iterator;
  * which isn't the same as the one passed in, a node can be replaced.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public abstract class TreeMutator implements NodeVisitor {
     public Object visit(Template node) {

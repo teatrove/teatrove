@@ -23,8 +23,6 @@ import java.util.Date;
  * class <i>or</i> <code>java.lang.Package</code> object.
  *
  * @author Mark Masse
- * @version
-
  */
 public class PackageDescriptor {
 

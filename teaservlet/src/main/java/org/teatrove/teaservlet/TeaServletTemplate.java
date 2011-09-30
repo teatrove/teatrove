@@ -23,8 +23,6 @@ import org.teatrove.tea.engine.TemplateSource;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class TeaServletTemplate implements TemplateLoader.Template {
 

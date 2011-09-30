@@ -25,8 +25,6 @@ import org.teatrove.tea.compiler.Type;
  * Number type.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class NegateExpression extends Expression {
     private Expression mExpr;

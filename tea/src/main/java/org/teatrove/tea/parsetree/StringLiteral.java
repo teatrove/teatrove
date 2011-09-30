@@ -24,8 +24,6 @@ import org.teatrove.tea.compiler.Type;
  * by quotes in a source file.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class StringLiteral extends Literal {
     private String mValue;

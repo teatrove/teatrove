@@ -19,8 +19,6 @@ package org.teatrove.tea.compiler;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 class FloatToken extends Token {
     private float mValue;

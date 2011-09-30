@@ -24,8 +24,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * source file. A Parser usually strips most empty statements out.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Statement extends Node {
 

@@ -26,8 +26,6 @@ import java.util.*;
  * ErrorListener that stores the errors reported to it.  
  * 
  * @author Mark Masse
- * @version
-
  */
 public class ErrorCollector implements ErrorListener {
     

@@ -21,8 +21,6 @@ import org.teatrove.tea.compiler.SourceInfo;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public abstract class CallExpression extends Expression {
     private Name mTarget;

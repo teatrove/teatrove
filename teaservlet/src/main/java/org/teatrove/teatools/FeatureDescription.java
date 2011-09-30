@@ -21,8 +21,6 @@ import java.beans.*;
 /**
  * 
  * @author Mark Masse
- * @version
-
  */
 public abstract class FeatureDescription {
 

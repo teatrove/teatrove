@@ -25,8 +25,6 @@ import org.teatrove.tea.compiler.Type;
  * an operator. BinaryExpressions never evaluate to null.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public abstract class BinaryExpression extends Expression {
     private Token mOperator;

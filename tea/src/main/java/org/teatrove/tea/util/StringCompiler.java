@@ -31,8 +31,6 @@ import org.teatrove.tea.compiler.CompilationUnit;
  * supply source code for templates before calling compile.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class StringCompiler extends Compiler {
 

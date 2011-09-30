@@ -50,8 +50,6 @@ import org.teatrove.tea.compiler.TemplateRepository;
  * they are forced to be re-compiled.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see ClassInjector
  */
 public class FileCompiler extends AbstractFileCompiler {

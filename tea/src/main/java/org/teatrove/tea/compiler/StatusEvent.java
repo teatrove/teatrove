@@ -19,8 +19,6 @@ package org.teatrove.tea.compiler;
 /**
  * 
  * @author Sean T. Treat
- * @version
-
  */
 public class StatusEvent extends java.util.EventObject {
 

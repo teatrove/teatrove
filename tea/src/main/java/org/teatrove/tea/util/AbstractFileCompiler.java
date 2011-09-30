@@ -27,8 +27,6 @@ import java.util.Arrays;
 /**
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public abstract class AbstractFileCompiler extends Compiler {
     protected AbstractFileCompiler() {

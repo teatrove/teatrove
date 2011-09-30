@@ -19,8 +19,6 @@ package org.teatrove.tea.compiler;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class SourceDetailedInfo extends SourceInfo {
     private int mDetail;

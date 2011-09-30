@@ -20,8 +20,6 @@ package org.teatrove.teaservlet.io;
  * A Writer that writes into a CharToByteBuffer.
  * 
  * @author Brian S O'Neill
- * @version
-
  * deprecated Moved to org.teatrove.trove.io package.
  */
 public class CharToByteBufferWriter

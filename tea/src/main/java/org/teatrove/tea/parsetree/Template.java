@@ -26,8 +26,6 @@ import org.teatrove.tea.compiler.Type;
  * Template is the main container node for Tea templates.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Template extends Node {
     private Name mName;

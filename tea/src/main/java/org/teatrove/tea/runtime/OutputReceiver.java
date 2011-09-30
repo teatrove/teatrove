@@ -22,8 +22,6 @@ import java.io.IOException;
  * Defines a simple interface for Tea templates to output information. 
  *
  * @author Brian S O'Neill
- * @version
-
  * @see org.teatrove.tea.compiler.Compiler#getRuntimeReceiver
  */
 public interface OutputReceiver {

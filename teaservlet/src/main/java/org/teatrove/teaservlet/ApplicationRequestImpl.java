@@ -25,8 +25,6 @@ import org.teatrove.tea.runtime.TemplateLoader;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 class ApplicationRequestImpl extends HttpServletRequestWrapper
     implements ApplicationRequest

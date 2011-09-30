@@ -47,8 +47,6 @@ import org.teatrove.teaservlet.util.cluster.Restartable;
  * is meant to be used by the Admin page of the TeaServlet.
  *
  * @author Reece Wilton, Brian S O'Neill, Jonathan Colwell
- * @version
-
  */
 public class TeaServletAdmin implements Restartable {
 

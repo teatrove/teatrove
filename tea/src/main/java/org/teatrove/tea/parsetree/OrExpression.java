@@ -25,8 +25,6 @@ import org.teatrove.tea.compiler.Token;
  * on expressions that return Booleans.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class OrExpression extends BinaryLogicalExpression {
     public OrExpression(SourceInfo info,

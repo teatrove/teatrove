@@ -26,8 +26,6 @@ import java.beans.*;
  * procedural design.
  *
  * @author Mark Masse
- * @version
-
  */
 public class TypeDescription extends FeatureDescription {
     

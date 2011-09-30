@@ -26,8 +26,6 @@ import java.util.HashMap;
  * scratch to make documenting JavaBean properties easier.
  *
  * @author Mark Masse
- * @version
-
  */
 public class PropertyDoc extends MemberDoc {
 

@@ -27,8 +27,6 @@ import java.util.Set;
 /**
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class TemplateCompilationResults implements java.io.Serializable {
 

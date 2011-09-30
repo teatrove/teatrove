@@ -16,6 +16,10 @@
 
 package org.teatrove.teaservlet.stats;
 
+/**
+ * 
+ * @author Scott Jappinen
+ */
 public class Milestone {
 	
 	protected String description;

@@ -25,8 +25,6 @@ import java.io.IOException;
  * passed to the append method have been converted before.
  *
  * @author Brian S O'Neill
- * @version
-
  * deprecated Moved to org.teatrove.trove.io package.
  */
 public class InternedCharToByteBuffer

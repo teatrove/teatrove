@@ -45,8 +45,6 @@ import org.teatrove.tea.runtime.Substitution;
  * be sent to the client.
  *
  * @author Reece Wilton, Brian S O'Neill
- * @version
-
  */
 class ApplicationResponseImpl extends HttpServletResponseWrapper
     implements ApplicationResponse

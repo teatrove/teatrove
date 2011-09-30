@@ -56,8 +56,6 @@ import java.util.TreeSet;
  * This class should be created using the {@link TemplateSourceFactory} 
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class TemplateSourceImpl implements TemplateSource {
     /**

@@ -23,8 +23,6 @@ import java.util.Date;
  * other administrators on a server. 
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class ServerNote {
 

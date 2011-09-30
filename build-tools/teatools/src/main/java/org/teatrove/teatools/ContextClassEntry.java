@@ -22,8 +22,6 @@ package org.teatrove.teatools;
  * <code>TeaToolsUtils.createContextClass</code> method.
  * 
  * @author Mark Masse
- * @version
-
  */
 public class ContextClassEntry {
     

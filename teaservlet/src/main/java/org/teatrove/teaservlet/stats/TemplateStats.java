@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * In both cases for raw data and the aggregate intervals when the window
  * size is reached the newest data overwrites the oldest data.
  * 
- * @author jappy
+ * @author Scott Jappinen
  */
 public class TemplateStats {
 	

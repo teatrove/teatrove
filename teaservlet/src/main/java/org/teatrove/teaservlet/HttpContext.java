@@ -35,8 +35,6 @@ import org.teatrove.tea.runtime.OutputReceiver;
  * provides some additional HTTP-specific template functions.
  *
  * @author Reece Wilton, Brian S O'Neill
- * @version
-
  */
 public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
 

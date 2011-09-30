@@ -20,8 +20,6 @@ package org.teatrove.teatools;
  * Provides a set of useful Tea constants.
  *
  * @author Mark Masse
- * @version
-
  */
 public interface TeaToolsConstants {
 

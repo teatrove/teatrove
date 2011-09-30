@@ -22,8 +22,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * A literal is an expression that has a constant value. 
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public abstract class Literal extends Expression {
     protected Literal(SourceInfo info) {

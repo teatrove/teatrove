@@ -23,8 +23,6 @@ import org.teatrove.tea.compiler.Type;
  * A Literal representing the null Object.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class NullLiteral extends Literal {
     public NullLiteral(SourceInfo info) {

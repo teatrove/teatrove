@@ -23,8 +23,6 @@ import org.teatrove.tea.compiler.Type;
  * BooleanLiterals can only have one of two values, true or false. 
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class BooleanLiteral extends Literal {
     private Boolean mValue;

@@ -28,8 +28,6 @@ import java.io.*;
  * from being processed, preceed it with another '\'.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class UnicodeReader extends EscapeReader {

@@ -27,8 +27,6 @@ import java.util.ArrayList;
  * A ContextSource implementation that merges several ContextSources into one.
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class MergedContextSource implements ContextSource {
 

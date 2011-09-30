@@ -33,8 +33,6 @@ import java.util.Set;
  * parent scope.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Scope {
     // Shared variables, maps Variable objects to Variable objects.

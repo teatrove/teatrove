@@ -41,8 +41,6 @@ import org.teatrove.trove.log.Syslog;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class ClusterManager {
 

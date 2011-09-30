@@ -23,8 +23,6 @@ import java.io.PrintStream;
  * produced by a {@link Scanner}.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Token implements java.io.Serializable {
     /** Token ID for an unknown token. */

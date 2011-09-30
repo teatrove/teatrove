@@ -19,8 +19,6 @@ package org.teatrove.teaservlet;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public interface EngineAccess {
 

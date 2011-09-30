@@ -20,8 +20,6 @@ package org.teatrove.teaservlet.io;
  * A ByteData implementation that wraps an array of bytes.
  * 
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class ArrayByteData extends org.teatrove.trove.io.ArrayByteData

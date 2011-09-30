@@ -49,8 +49,6 @@ import javax.servlet.http.HttpServletResponseWrapper;
  * provides some additional HTTP-specific template functions.
  *
  * @author Reece Wilton, Brian S O'Neill
- * @version
-
  */
 class HttpContextImpl extends org.teatrove.tea.runtime.DefaultContext
 implements HttpContext {

@@ -21,8 +21,6 @@ package org.teatrove.teatools;
  * represent a region of text within a document.
  *
  * @author Mark Masse
- * @version
-
  */
 public class Range {
 

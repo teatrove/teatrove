@@ -21,8 +21,6 @@ import org.teatrove.tea.compiler.SourceInfo;
 /**
  * 
  * @author Sean T. Treat
- * @version
-
  */
 public class BreakStatement extends Statement {
 

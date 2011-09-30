@@ -36,8 +36,6 @@ import org.teatrove.trove.util.DeflaterOutputStream;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 class DetachedResponseImpl extends ApplicationResponseImpl {
     // Minimum data size to compress.

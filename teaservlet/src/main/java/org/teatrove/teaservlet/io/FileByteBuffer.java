@@ -25,8 +25,6 @@ import java.io.IOException;
  * too large to hold in memory.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class FileByteBuffer extends org.teatrove.trove.io.FileByteBuffer

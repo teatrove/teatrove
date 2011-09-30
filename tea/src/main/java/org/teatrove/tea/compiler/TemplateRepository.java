@@ -47,8 +47,6 @@ import org.teatrove.trove.log.Syslog;
 /**
  *
  * @author Guy A. Molinari
- * @version
-
  *
  * The TemplateRepository class manages metadata pertaining to the
  * caller/callee hierarchy.  This information is derived from the template

@@ -20,8 +20,6 @@ package org.teatrove.tea.compiler;
  * The listener interface for receiving compilation status events.
  *
  * @author Sean Treat
- * @version
-
  */
 public interface StatusListener extends java.util.EventListener {
     public void statusUpdate(StatusEvent e);

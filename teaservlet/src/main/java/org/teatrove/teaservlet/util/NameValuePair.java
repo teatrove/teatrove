@@ -21,8 +21,6 @@ import java.util.Map;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class NameValuePair implements Comparable, java.io.Serializable {
     private String mName;

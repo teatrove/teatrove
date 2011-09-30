@@ -35,8 +35,6 @@ import org.teatrove.tea.util.KeyedPropertyDescriptor;
  * Immutable representation of an expression's type.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see org.teatrove.tea.parsetree.Expression
  */
 public class Type implements java.io.Serializable {

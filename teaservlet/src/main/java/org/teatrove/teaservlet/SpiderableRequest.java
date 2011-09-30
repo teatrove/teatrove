@@ -28,8 +28,6 @@ import javax.servlet.http.*;
  * preserved.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 class SpiderableRequest extends HttpServletRequestWrapper {
     private final String mQuerySeparator;

@@ -22,8 +22,6 @@ import java.io.*;
  * This reader aids in decoding escapes in a character stream.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public abstract class EscapeReader extends PositionReader {

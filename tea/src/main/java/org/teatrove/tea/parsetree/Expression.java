@@ -27,8 +27,6 @@ import org.teatrove.tea.compiler.Type;
  * All expressions have a type which represents the type of value is produces.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Expression extends Node {
     private LinkedList mConversions;

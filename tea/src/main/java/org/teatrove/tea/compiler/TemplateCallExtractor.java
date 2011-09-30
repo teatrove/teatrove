@@ -36,8 +36,6 @@ import org.teatrove.tea.compiler.JavaClassGenerator;
 /**
  * 
  * @author Guy A. Molinari
- * @version
-
  * 
  * A utility class to facilitate generation of template metadata.
  */

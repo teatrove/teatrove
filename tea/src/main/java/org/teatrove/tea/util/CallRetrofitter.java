@@ -27,8 +27,6 @@ import org.teatrove.tea.runtime.*;
  * in templates compatable with pre 3.x.x versions of Tea.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class CallRetrofitter {
     /**

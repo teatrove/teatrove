@@ -24,8 +24,6 @@ import org.teatrove.trove.util.Depot;
  * change as the RegionCachingApplication evolves.
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class RegionCacheInfo implements Serializable {
         

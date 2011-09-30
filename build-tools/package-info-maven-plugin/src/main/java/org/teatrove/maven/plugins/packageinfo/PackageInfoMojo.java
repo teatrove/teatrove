@@ -30,7 +30,7 @@ import java.net.UnknownHostException;
  * @description creates PackageInfo.java files
  * @phase generate-sources
  *
- * @author eearle, jappy
+ * @author eearle
  */
 public class PackageInfoMojo
     extends AbstractMojo

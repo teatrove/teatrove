@@ -33,8 +33,6 @@ import java.io.*;
  * from a SourceReader is either ENTER_CODE or ENTER_TEXT;
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class SourceReader extends PushbackPositionReader {

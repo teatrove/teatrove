@@ -29,8 +29,6 @@ import java.util.Map;
  * reload templates, create a new TemplateLoader with a new ClassLoader.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see org.teatrove.tea.util.ClassInjector
  */
 public class TemplateLoader {

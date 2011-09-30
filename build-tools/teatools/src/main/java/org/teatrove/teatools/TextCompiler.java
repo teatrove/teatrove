@@ -29,8 +29,6 @@ import java.io.*;
  * of text.
  *
  * @author Mark Masse
- * @version
-
  */
 public class TextCompiler extends TeaCompiler implements TeaToolsConstants {
 

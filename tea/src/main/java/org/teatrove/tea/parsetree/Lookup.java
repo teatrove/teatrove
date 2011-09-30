@@ -29,8 +29,6 @@ import java.lang.reflect.Method;
  * length() method is called.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see java.beans.Introspector
  */
 public class Lookup extends Expression {
