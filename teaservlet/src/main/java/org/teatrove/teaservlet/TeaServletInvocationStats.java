@@ -18,6 +18,8 @@ package org.teatrove.teaservlet;
 
 import org.teatrove.trove.util.MergedClass;
 
+import java.util.Iterator;
+import java.util.Set;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,8 +60,14 @@ public class TeaServletInvocationStats implements MergedClass.InvocationEventObs
     }
     
     public void reset(String caller, String callee) {
-        Stats stats = new Stats(caller, callee);
-        mStatsMap.put(stats, stats);
+        Set keySet = mStatsMap.keySet();
+        Iterator iter = keySet.iterator();
+        while (iter.hasNext()) {
+        	Stats stat = (Stats) iter.next();
+        	if (stat.getCaller().equals(caller)) {
+        		mStatsMap.remove(stat);
+        	}
+        }
     }
 
     public Stats getStatistics(String caller, String callee) {

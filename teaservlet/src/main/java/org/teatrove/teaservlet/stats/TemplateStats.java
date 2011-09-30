@@ -611,5 +611,9 @@ public class TemplateStats {
 			mAggregateIntervals[i] = new AggregateInterval();
 		
 		mMilestones = new ArrayList<Milestone>();
+		
+		mPeakServiceDuration = 0L;
+		mCumulativeServiceTime = 0L;
+		mServicedCount = 0L;
     }
 }
