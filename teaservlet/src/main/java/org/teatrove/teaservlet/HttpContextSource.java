@@ -26,8 +26,6 @@ import org.teatrove.trove.log.Log;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class HttpContextSource implements DynamicContextSource {
 

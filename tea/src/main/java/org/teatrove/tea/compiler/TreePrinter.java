@@ -23,8 +23,6 @@ import org.teatrove.tea.parsetree.*;
  * A class that prints a parse tree. To print, call the writeTo method.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class TreePrinter extends CodeGenerator {
     private String mIndentStr;

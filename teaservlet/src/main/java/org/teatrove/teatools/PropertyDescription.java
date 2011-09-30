@@ -22,8 +22,6 @@ import java.beans.*;
  * Wrapper for a PropertyDescriptor object.
  * 
  * @author Mark Masse
- * @version
-
  */
 public class PropertyDescription extends FeatureDescription {
 

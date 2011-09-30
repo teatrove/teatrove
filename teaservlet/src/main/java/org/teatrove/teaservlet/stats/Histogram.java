@@ -21,7 +21,7 @@ import java.text.DecimalFormat;
 /**
  * <p>Histogram class.</p>
  *
- * @author jappy
+ * @author Scott Jappinen
  */
 public class Histogram {
 	

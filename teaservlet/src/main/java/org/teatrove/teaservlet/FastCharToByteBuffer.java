@@ -23,8 +23,6 @@ import java.io.IOException;
  * TeaServlet I/O classes and the Trove replacements.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 class FastCharToByteBuffer extends org.teatrove.trove.io.FastCharToByteBuffer
     implements org.teatrove.teaservlet.io.CharToByteBuffer

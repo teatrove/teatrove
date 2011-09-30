@@ -22,8 +22,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * VariableRef is used to reference declared Variables.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see Variable
  */
 public class VariableRef extends Expression {

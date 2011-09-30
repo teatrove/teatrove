@@ -27,8 +27,6 @@ import org.teatrove.trove.io.SourceReader;
  * errors detected by the Scanner.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Scanner {
     private SourceReader mSource;

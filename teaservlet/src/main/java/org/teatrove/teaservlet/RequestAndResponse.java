@@ -21,8 +21,6 @@ import org.teatrove.tea.runtime.OutputReceiver;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class RequestAndResponse implements TeaServletTransaction {
 

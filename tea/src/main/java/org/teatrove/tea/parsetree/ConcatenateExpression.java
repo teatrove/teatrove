@@ -25,8 +25,6 @@ import org.teatrove.tea.compiler.Token;
  * The operator should only be Token.CONCAT. 
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class ConcatenateExpression extends BinaryExpression {
     public ConcatenateExpression(SourceInfo info,

@@ -24,8 +24,6 @@ import org.teatrove.tea.compiler.Type;
  * An expression that evaluates to a new array or Map of values.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class NewArrayExpression extends Expression {
     private ExpressionList mList;

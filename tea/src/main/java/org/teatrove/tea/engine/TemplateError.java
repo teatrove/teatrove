@@ -21,8 +21,6 @@ import java.util.Date;
 /**
  * 
  * @author Reece Wilton
- * @version
-
  */
 public class TemplateError implements java.io.Serializable {
 

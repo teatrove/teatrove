@@ -27,8 +27,6 @@ import java.io.*;
  * the end of file is reached. Ordinary input streams don't do this.
  * 
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class PositionReader extends org.teatrove.trove.io.PositionReader {

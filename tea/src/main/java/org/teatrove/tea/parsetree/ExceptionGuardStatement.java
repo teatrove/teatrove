@@ -24,8 +24,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * by a TypeChecker, and does not appear directly in Tea templates.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class ExceptionGuardStatement extends Statement {
     private Statement mGuarded;

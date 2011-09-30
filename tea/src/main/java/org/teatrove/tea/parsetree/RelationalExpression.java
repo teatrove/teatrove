@@ -28,8 +28,6 @@ import org.teatrove.tea.compiler.Token;
  * Token.LE, Token.GE or Token.ISA.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class RelationalExpression extends BinaryLogicalExpression {
     private TypeName mTypeName;

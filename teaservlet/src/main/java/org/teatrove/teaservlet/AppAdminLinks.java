@@ -23,8 +23,6 @@ import java.util.Vector;
  *  
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class AppAdminLinks {
     

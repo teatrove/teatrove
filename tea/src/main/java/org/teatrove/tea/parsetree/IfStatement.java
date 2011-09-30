@@ -25,8 +25,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * the then part never executes, and so eliminates it.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class IfStatement extends Statement {
     private Expression mCondition;

@@ -32,8 +32,6 @@ import java.io.PrintStream;
  * as the source files. Compilation error messages are sent to standard out.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class TestCompiler extends FileCompiler {
     public static void main(String[] args) throws Exception {

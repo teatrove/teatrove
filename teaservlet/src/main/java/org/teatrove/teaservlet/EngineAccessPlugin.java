@@ -23,8 +23,6 @@ import org.teatrove.trove.util.plugin.PluginEvent;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class EngineAccessPlugin implements Plugin, EngineAccess {
 

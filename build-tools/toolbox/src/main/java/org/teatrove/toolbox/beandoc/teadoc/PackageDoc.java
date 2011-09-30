@@ -22,8 +22,6 @@ import java.util.ArrayList;
 /**
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class PackageDoc extends Doc {
 

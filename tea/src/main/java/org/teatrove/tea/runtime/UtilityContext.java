@@ -21,8 +21,6 @@ package org.teatrove.tea.runtime;
  * templates will need to use for formatting.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public interface UtilityContext extends Context {
 

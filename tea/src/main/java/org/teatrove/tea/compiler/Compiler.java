@@ -32,8 +32,6 @@ import org.teatrove.tea.parsetree.*;
  * some information is cached internally like parse trees and error count.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see org.teatrove.tea.util.FileCompiler
  * @see org.teatrove.tea.util.ResourceCompiler
  */

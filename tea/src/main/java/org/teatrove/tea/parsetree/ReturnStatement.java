@@ -23,8 +23,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * execution scope. If the expression is null, then void is returned.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class ReturnStatement extends Statement {
     private Expression mExpr;

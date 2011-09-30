@@ -23,8 +23,6 @@ import java.io.OutputStream;
  * This is handy for writing to a file and a class injector at the same time.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  * @see ClassInjector
  */

@@ -30,8 +30,6 @@ import java.io.Reader;
  * built into Java. The resource name must have the extension ".tea".
  *
  * @author Brian S O'Neill
- * @version
-
  * @see java.lang.Class#getResource
  */
 public class ResourceCompiler extends Compiler {

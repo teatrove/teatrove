@@ -23,8 +23,6 @@ package org.teatrove.tea.parsetree;
  * that the node's children are properly traversed.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public abstract class TreeWalker implements NodeVisitor {
     public Object visit(Template node) {

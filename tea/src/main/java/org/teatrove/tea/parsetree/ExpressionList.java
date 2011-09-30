@@ -23,8 +23,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * call statement or new array expression.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class ExpressionList extends Node {
 

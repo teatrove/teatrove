@@ -24,8 +24,6 @@ import java.lang.reflect.Method;
  * a code generator.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class ExpressionStatement extends Statement {
     private Expression mExpr;

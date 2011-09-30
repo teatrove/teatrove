@@ -40,8 +40,6 @@ import java.text.BreakIterator;
  * possible from Tea.  
  *
  * @author Mark Masse, Sean Treat
- * @version
-
  */
 public class TeaToolsUtils extends DefaultContext 
 implements TeaToolsConstants {

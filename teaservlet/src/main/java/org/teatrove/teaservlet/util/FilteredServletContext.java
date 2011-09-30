@@ -32,8 +32,6 @@ import javax.servlet.RequestDispatcher;
  * hook into the behavior of a ServletContext instance.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class FilteredServletContext implements ServletContext {
     protected final ServletContext mContext;

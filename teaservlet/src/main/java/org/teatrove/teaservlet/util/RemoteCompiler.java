@@ -54,8 +54,6 @@ import java.util.TreeMap;
  * they are forced to be re-compiled.
  *
  * @author Jonathan Colwell
- * @version
-
  * @see ClassInjector
  */
 public class RemoteCompiler extends AbstractFileCompiler {

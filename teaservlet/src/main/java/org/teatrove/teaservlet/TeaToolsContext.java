@@ -31,8 +31,6 @@ import java.beans.*;
  * possible from Tea.  
  *
  * @author Mark Masse
- * @version
-
  */
 public interface TeaToolsContext {
 

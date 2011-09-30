@@ -33,8 +33,6 @@ import javax.servlet.http.*;
  * parameter of the teaservlet.
  *
  * @author Jonathan Colwell
- * @version
-
  * 
  */
 public class TemplateServerServlet extends HttpServlet {

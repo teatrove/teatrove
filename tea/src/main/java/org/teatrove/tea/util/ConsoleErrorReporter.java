@@ -32,8 +32,6 @@ import org.teatrove.trove.io.LinePositionReader;
  * are closed. 
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class ConsoleErrorReporter implements ErrorListener {
     private PrintStream mOut;

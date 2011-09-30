@@ -21,8 +21,6 @@ package org.teatrove.tea.engine;
  * tea in other programs.
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public interface TeaExecutionEngine {
 

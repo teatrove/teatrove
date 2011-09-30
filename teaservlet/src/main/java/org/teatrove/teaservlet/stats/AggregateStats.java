@@ -16,6 +16,10 @@
 
 package org.teatrove.teaservlet.stats;
 
+/**
+ * 
+ * @author Scott Jappinen
+ */
 public class AggregateStats implements Cloneable {
 	
 	protected long sum = 0;

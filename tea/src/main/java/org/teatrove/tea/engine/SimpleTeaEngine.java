@@ -21,8 +21,6 @@ import org.teatrove.tea.runtime.Context;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class SimpleTeaEngine implements TeaExecutionEngine {
 

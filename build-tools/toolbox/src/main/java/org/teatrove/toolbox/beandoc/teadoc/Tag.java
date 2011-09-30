@@ -19,8 +19,6 @@ package org.teatrove.toolbox.beandoc.teadoc;
 /**
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Tag implements java.io.Serializable {
 

@@ -21,8 +21,6 @@ import java.io.*;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
 */
 public class TagReader extends EscapeReader {

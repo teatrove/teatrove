@@ -22,8 +22,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * SubstitutionStatement is represented as '...' in a template.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class SubstitutionStatement extends Statement {
     public SubstitutionStatement(SourceInfo info) {

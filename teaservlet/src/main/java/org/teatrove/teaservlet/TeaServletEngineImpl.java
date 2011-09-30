@@ -37,8 +37,6 @@ import java.util.*;
 /**
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class TeaServletEngineImpl implements TeaServletEngine {
 

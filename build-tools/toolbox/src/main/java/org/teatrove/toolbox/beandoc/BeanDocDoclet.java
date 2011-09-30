@@ -32,8 +32,6 @@ import org.teatrove.tea.runtime.TemplateLoader;
  * for each class.
  *
  * @author Mark Masse
- * @version
-
  */
 public class BeanDocDoclet extends com.sun.javadoc.Doclet {
 

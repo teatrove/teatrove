@@ -24,8 +24,6 @@ import java.io.*;
  * This CompilationUnit is used in conjunction with the TextCompiler
  *
  * @author Mark Masse
- * @version
-
  */
 public class TextCompilationUnit extends CompilationUnit {
     

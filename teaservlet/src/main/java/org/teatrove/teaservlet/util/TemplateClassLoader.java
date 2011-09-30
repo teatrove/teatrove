@@ -23,8 +23,6 @@ import java.util.StringTokenizer;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class TemplateClassLoader extends URLClassLoader {
 

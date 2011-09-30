@@ -24,8 +24,6 @@ import java.io.IOException;
  * into a FileByteBuffer.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class SpilloverByteBuffer extends org.teatrove.trove.io.SpilloverByteBuffer

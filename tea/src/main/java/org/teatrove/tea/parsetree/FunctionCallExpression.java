@@ -23,8 +23,6 @@ import java.lang.reflect.Method;
  * A CallExpression to a function.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see TemplateCallExpression
  */
 public class FunctionCallExpression extends CallExpression {

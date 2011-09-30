@@ -20,8 +20,6 @@ package org.teatrove.teaservlet;
  * Merged interface used by pre-compiled admin templates.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public interface AdminHttpContext extends AdminContext, 
                                           HttpContext,

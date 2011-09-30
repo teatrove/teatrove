@@ -22,8 +22,6 @@ import java.io.File;
  * A ByteData implementation that reads the contents of a file.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class FileByteData extends org.teatrove.trove.io.FileByteData

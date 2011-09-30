@@ -27,8 +27,6 @@ import java.io.*;
  * Context class used by the beandoc Tea templates.
  *
  * @author Mark Masse
- * @version
-
  */
 public class BeanDocContext extends org.teatrove.tea.runtime.DefaultContext {
 

@@ -24,8 +24,6 @@ import org.teatrove.tea.compiler.CompilationUnit;
  * keyword.
  * 
  * @author Brian S O'Neill
- * @version
-
  * @see FunctionCallExpression
  */
 public class TemplateCallExpression extends CallExpression {

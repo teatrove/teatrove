@@ -23,8 +23,6 @@ import java.lang.reflect.Method;
  * will then bind to one of those methods.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class MethodMatcher {
     /**

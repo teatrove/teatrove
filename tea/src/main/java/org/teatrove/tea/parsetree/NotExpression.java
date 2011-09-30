@@ -25,8 +25,6 @@ import org.teatrove.tea.compiler.Type;
  * Boolean type.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class NotExpression extends Expression implements Logical {
     private Expression mExpr;

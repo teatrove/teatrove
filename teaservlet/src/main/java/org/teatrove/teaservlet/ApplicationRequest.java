@@ -25,8 +25,6 @@ import org.teatrove.tea.runtime.TemplateLoader;
  * to the TeaServlet.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public interface ApplicationRequest extends HttpServletRequest {
     /**

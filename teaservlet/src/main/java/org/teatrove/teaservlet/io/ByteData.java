@@ -20,8 +20,6 @@ package org.teatrove.teaservlet.io;
  * Simple interface for writing a list of bytes to an OutputStream.
  *
  * @author Brian S O'Neill
- * @version
-
  * deprecated Moved to org.teatrove.trove.io package.
  */
 public interface ByteData extends org.teatrove.trove.io.ByteData {

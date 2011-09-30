@@ -27,8 +27,6 @@ import java.io.*;
  * a character, the unread operation cannot accept any arbitrary character.
  * 
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  * @see java.io.PushbackReader
  */

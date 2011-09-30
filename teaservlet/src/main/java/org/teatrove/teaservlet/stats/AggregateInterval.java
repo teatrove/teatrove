@@ -22,7 +22,7 @@ import java.util.Arrays;
  * This class represents a compressed statistical representation
  * of many requests to a template for a given interval.
  * 
- * @author jappy
+ * @author Scott Jappinen
  */
 public class AggregateInterval implements Cloneable {
 	

@@ -21,8 +21,6 @@ package org.teatrove.tea.parsetree;
  * operation.
  * 
  * @author Brian S O'Neill
- * @version
-
  *
  * @see NotExpression
  * @see AndExpression

@@ -35,8 +35,6 @@ import org.teatrove.tea.parsetree.*;
  * improve runtime performance.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class BasicOptimizer {
     private Node mTree;

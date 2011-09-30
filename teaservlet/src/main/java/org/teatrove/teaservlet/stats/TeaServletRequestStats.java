@@ -29,7 +29,7 @@ import org.teatrove.trove.util.PropertyMap;
  * This class logs template requests with the TemplateStats object
  * associated with a given template.
  * 
- * @author jappy
+ * @author Scott Jappinen
  */
 public class TeaServletRequestStats {
 

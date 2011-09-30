@@ -27,8 +27,6 @@ import org.teatrove.tea.runtime.TemplateLoader;
  * modified.
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public interface Template extends TemplateLoader.Template {
 

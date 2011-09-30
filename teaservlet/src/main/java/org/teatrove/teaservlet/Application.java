@@ -24,8 +24,6 @@ import javax.servlet.ServletException;
  * templates.
  *
  * @author Reece Wilton
- * @version
-
  */
 public interface Application {
     /**

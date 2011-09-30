@@ -21,8 +21,6 @@ package org.teatrove.teaservlet;
  *  providing links to the TeaservletAdmin Object for use on the admin pages.
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public interface AdminApp extends Application {
     

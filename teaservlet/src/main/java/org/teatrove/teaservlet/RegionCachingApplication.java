@@ -63,8 +63,6 @@ import javax.servlet.ServletException;
  * may be shared between machines to compare cache sizes.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class RegionCachingApplication implements AdminApp {
 

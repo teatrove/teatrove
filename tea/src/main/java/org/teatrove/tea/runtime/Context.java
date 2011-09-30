@@ -22,8 +22,6 @@ package org.teatrove.tea.runtime;
  * 
  * @see org.teatrove.tea.compiler.Compiler#getRuntimeContext
  * @author Brian S O'Neill
- * @version
-
  * @see DefaultContext
  */
 public interface Context extends OutputReceiver {

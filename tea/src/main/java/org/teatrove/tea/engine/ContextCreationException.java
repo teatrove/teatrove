@@ -27,8 +27,6 @@ import java.io.PrintWriter;
  * leaving this class as a transparent wrapper.
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class ContextCreationException extends UndeclaredThrowableException {
 

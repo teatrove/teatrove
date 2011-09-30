@@ -29,8 +29,6 @@ import java.util.Arrays;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public abstract class CompilationUnit implements ErrorListener {
     private String mName;

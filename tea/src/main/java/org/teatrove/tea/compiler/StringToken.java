@@ -19,8 +19,6 @@ package org.teatrove.tea.compiler;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 class StringToken extends Token {
     private String mValue;

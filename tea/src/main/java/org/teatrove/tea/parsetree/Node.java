@@ -23,8 +23,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * information and can accept a NodeVisitor.
  * 
  * @author Brian S O'Neill
- * @version
-
  * @see NodeVisitor
  */
 public abstract class Node implements Cloneable, java.io.Serializable {

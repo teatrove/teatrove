@@ -25,8 +25,6 @@ import java.rmi.server.RMISocketFactory;
 /**
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class BackchannelSocketFactory extends RMISocketFactory {
 

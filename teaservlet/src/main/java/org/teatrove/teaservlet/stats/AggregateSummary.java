@@ -15,7 +15,11 @@
  */
 
 package org.teatrove.teaservlet.stats;
- 
+
+/**
+ * 
+ * @author Scott Jappinen
+ */
 public class AggregateSummary {
 
 	protected int n = 0;

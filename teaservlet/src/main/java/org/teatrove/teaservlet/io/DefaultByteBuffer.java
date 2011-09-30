@@ -22,8 +22,6 @@ import java.io.IOException;
  * A ByteBuffer implementation that keeps byte data in memory.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class DefaultByteBuffer extends org.teatrove.trove.io.DefaultByteBuffer

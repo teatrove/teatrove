@@ -45,8 +45,6 @@ import java.util.TimeZone;
  * more or override existing ones, do so when extending this class.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public abstract class DefaultContext extends Writer
     implements UtilityContext

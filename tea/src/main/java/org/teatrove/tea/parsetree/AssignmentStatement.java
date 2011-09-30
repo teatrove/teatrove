@@ -24,8 +24,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * C or Java, and thus chaining is not allowed. i.e. a = b = c;
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class AssignmentStatement extends Statement {
     private VariableRef mLvalue;

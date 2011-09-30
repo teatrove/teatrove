@@ -20,8 +20,6 @@ package org.teatrove.tea.compiler;
  * The listener interface for receiving error events.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public interface ErrorListener extends java.util.EventListener {
     public void compileError(ErrorEvent e);

@@ -28,8 +28,6 @@ import org.teatrove.tea.compiler.Token;
  * Token.MULT, Token.DIV or Token.MOD.
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public class ArithmeticExpression extends BinaryExpression {
     public ArithmeticExpression(SourceInfo info,

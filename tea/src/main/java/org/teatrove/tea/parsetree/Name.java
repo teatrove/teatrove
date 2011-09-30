@@ -24,8 +24,6 @@ import org.teatrove.tea.compiler.SourceInfo;
  * '.' characters.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Name extends Node {
     private String mName;

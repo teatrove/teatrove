@@ -30,8 +30,6 @@ import java.util.Map;
  * provided.
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public interface TemplateSource {
 

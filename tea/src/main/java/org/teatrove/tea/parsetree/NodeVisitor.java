@@ -42,8 +42,6 @@ package org.teatrove.tea.parsetree;
  * returned Object to pass around newly created Nodes.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see Node#accept(NodeVisitor)
  */
 public interface NodeVisitor {

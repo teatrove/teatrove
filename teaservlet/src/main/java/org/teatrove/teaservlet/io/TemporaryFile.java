@@ -23,8 +23,6 @@ import java.io.*;
  * closed, finalized, or when the system exits.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class TemporaryFile extends RandomAccessFile {

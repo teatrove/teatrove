@@ -29,8 +29,6 @@ import java.util.Vector;
  * share information and call methods across a cluster.
  *
  * @author Jonathan Colwell
- * @version
-
  */
 public class ClusterHook extends UnicastRemoteObject 
     implements Clustered {

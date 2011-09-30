@@ -23,8 +23,6 @@ import org.teatrove.tea.compiler.Type;
  * An import directive allows for a shorthand name qualifier for type names
  *
  * @author Guy Molinari
- * @version
-
  */
 public class ImportDirective extends Directive {
     private String mName;

@@ -27,8 +27,6 @@ import org.teatrove.trove.util.IdentityMap;
  * The JavaBean Introspector for Tea.
  *
  * @author Brian S O'Neill
- * @version
-
  *
  * @see java.beans.Introspector
  */

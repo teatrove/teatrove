@@ -23,8 +23,6 @@ import org.teatrove.tea.runtime.OutputReceiver;
  * servlet may directly invoke templates and applications.
  *
  * @author Brian S O'Neill
- * @version
-
  * @see TeaServletEngine
  */
 public interface TeaServletTransaction {

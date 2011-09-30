@@ -24,8 +24,6 @@ import com.sun.javadoc.SourcePosition;
 /**
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class RootDoc extends Doc implements com.sun.javadoc.DocErrorReporter {
 

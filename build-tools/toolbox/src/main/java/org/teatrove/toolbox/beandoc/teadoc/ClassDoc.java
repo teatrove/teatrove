@@ -21,8 +21,6 @@ import java.util.Arrays;
 /**
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class ClassDoc extends ProgramElementDoc {
 

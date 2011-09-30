@@ -21,8 +21,6 @@ import org.teatrove.tea.runtime.Substitution;
 /**
  * 
  * @author Brian S O'Neill
- * @version
-
  */
 public interface RegionCachingContext {
 

@@ -20,8 +20,6 @@ package org.teatrove.teaservlet.io;
  * An OutputStream that writes into a ByteBuffer.
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class ByteBufferOutputStream

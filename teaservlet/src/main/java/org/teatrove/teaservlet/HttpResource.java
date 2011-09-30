@@ -28,8 +28,6 @@ import org.teatrove.trove.log.*;
  * HttpContextImpl.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 class HttpResource {
     // Default is 10,000 milliseconds.

@@ -22,8 +22,6 @@ import java.io.IOException;
  * ByteBuffer extends ByteData such that bytes can be added to it.
  *
  * @author Brian S O'Neill
- * @version
-
  * deprecated Moved to org.teatrove.trove.io package.
  */
 public interface ByteBuffer extends org.teatrove.trove.io.ByteBuffer, ByteData {

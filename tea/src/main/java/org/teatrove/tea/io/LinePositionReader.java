@@ -22,8 +22,6 @@ import java.io.*;
  * LinePositionReader aids in printing line numbers for error reporting. 
  *
  * @author Brian S O'Neill
- * @version
-
  * @deprecated Moved to org.teatrove.trove.io package.
  */
 public class LinePositionReader extends PositionReader {

@@ -21,8 +21,6 @@ import org.teatrove.trove.util.IntegerFactory;
 /**
  * 
  * @author Guy A. Molinari
- * @version
-
  */
 
 public class WrapperTypeConversionUtil {

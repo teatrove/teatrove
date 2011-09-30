@@ -22,8 +22,6 @@ import org.teatrove.tea.engine.DynamicContextSource;
  * Allows an Application into masquerade as a ContextSource.
  * 
  * @author Jonathan Colwell
- * @version
-
  */
 public class ApplicationContextSource implements DynamicContextSource {
 

@@ -29,8 +29,6 @@ import org.teatrove.trove.io.SourceReader;
  * to capture any syntax errors detected by the Parser.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class Parser {
     private Scanner mScanner;

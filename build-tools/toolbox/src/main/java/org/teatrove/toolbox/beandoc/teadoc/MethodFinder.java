@@ -20,8 +20,6 @@ package org.teatrove.toolbox.beandoc.teadoc;
  * Interface that can be used with the ClassDoc's method finding methods.
  *
  * @author Mark Masse
- * @version
-
  */
 public interface MethodFinder {
 

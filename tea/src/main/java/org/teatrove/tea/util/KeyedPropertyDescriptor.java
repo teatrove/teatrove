@@ -28,8 +28,6 @@ import java.lang.reflect.Method;
  * type of int.
  *
  * @author Brian S O'Neill
- * @version
-
  */
 public class KeyedPropertyDescriptor extends PropertyDescriptor {
     private Class mPropertyType;

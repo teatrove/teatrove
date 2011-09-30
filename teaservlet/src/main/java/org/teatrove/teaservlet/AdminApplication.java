@@ -52,8 +52,6 @@ import org.teatrove.teaservlet.util.cluster.TeaServletClusterHook;
  * The Admin application defines functions for administering the TeaServlet.
  *
  * @author Reece Wilton, Brian S O'Neill, Jonathan Colwell
- * @version
-
  */
 public class AdminApplication implements AdminApp {
     protected ApplicationConfig mConfig;

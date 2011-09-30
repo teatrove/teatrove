@@ -21,8 +21,6 @@ package org.teatrove.tea.engine;
  * instances as well as the context type.
  *
  * @author Jonathan Colwell
- * @version
-
  * @see org.teatrove.tea.runtime.Context
  */
 public interface ContextSource {
