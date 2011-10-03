@@ -18,10 +18,12 @@ package org.teatrove.tea.compiler;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.FileReader;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -40,6 +42,7 @@ import java.util.zip.ZipException;
 
 import org.teatrove.trove.util.PropertyMap;
 import org.teatrove.trove.util.PropertyParser;
+
 import org.teatrove.trove.classfile.TypeDesc;
 import org.teatrove.trove.classfile.MethodInfo;
 import org.teatrove.trove.log.Syslog;
@@ -409,7 +412,7 @@ public class TemplateRepository {
 
     }
 
-    
+
 
     /**
      * Persist the current state of the repository to disk.
@@ -445,8 +448,8 @@ public class TemplateRepository {
         boolean isWindows = System.getProperty("os.name").startsWith("Windows");
         long lastModified = mDateFmt.parse((String) m.get("lastModified")).
             getTime();
-        if ((isWindows && repositoryFile.lastModified() != lastModified) || 
-                (!isWindows && Math.max(repositoryFile.lastModified(), lastModified) - 
+        if ((isWindows && repositoryFile.lastModified() != lastModified) ||
+                (!isWindows && Math.max(repositoryFile.lastModified(), lastModified) -
                 Math.min(repositoryFile.lastModified(), lastModified) >= 1000L)) {
             String corruptMsg = "Repository corrupt.  Rebuild Needed.";
             Syslog.error(corruptMsg);
@@ -469,6 +472,10 @@ public class TemplateRepository {
      * JoshY 12/28/04 - Due to a bug in the 1.4.2_05 server VM, it's important that you not
      * use the TemplateCallExtractor.AppMethodInfo as a map key.  We're using a String
      * representation here as a workaround.
+     * 
+     * tliaw 12/2/10 - Since getMethodCallers has been broken due to the aforementioned workaround and
+     * that no one is using 1.4.2 JVM, I reverted to use TemplateCallExtractor.AppMethodInfo as
+     * the map key to fix getMethodCallers (kudos to Hagen, Nicholas for first pointing this out).
      */
     private void buildAncestorMap() {
         mAncestorMap = new HashMap();
@@ -485,12 +492,12 @@ public class TemplateRepository {
                 mAncestorMap.put(t.getDependents()[j], parentMap);
             }
             for (int j = 0; j < t.getAppMethodsCalled().length; j++) {
-				String sKey = t.getAppMethodsCalled()[j].toString();
-                HashMap callMap = (HashMap) mFunctionMap.get(sKey);
+				TemplateCallExtractor.AppMethodInfo mi = t.getAppMethodsCalled()[j];
+                HashMap callMap = (HashMap) mFunctionMap.get(mi);
                 if (callMap == null) {
                     callMap = new HashMap();
-                    mFunctionMap.put(sKey, callMap);
-				}
+                    mFunctionMap.put(mi, callMap);
+                }
                 if (!callMap.containsKey(t.getName()))
                     callMap.put(t.getName(), t);
             }
@@ -526,11 +533,15 @@ public class TemplateRepository {
      * @return TemplateInfo[] The callers (consumers).
      */
     public TemplateInfo[] getMethodCallers(MethodDescriptor methodDesc) {
-        TypeDesc[] params = new TypeDesc[methodDesc.getMethod().getParameterTypes().length];
+        Method method = methodDesc.getMethod();
+        Class[] paramClasses = method.getParameterTypes();
+        java.lang.reflect.Type[] paramTypes = method.getGenericParameterTypes();
+
+        TypeDesc[] params = new TypeDesc[paramClasses.length];
         for (int i = 0; i < params.length; i++)
-            params[i] = TypeDesc.forClass(methodDesc.getMethod().getParameterTypes()[i]);
+            params[i] = TypeDesc.forClass(paramClasses[i], paramTypes[i]);
         TemplateCallExtractor.AppMethodInfo mi =
-            new TemplateCallExtractor.AppMethodInfo(methodDesc.getMethod().getName(), params);
+            new TemplateCallExtractor.AppMethodInfo(method.getName(), params);
 
         if (mFunctionMap.containsKey(mi)) {
             Collection callers = ((HashMap) mFunctionMap.get(mi)).values();
@@ -554,7 +565,7 @@ public class TemplateRepository {
             getFullyQualifiedTemplateName(templateName) : templateName;
         return (TemplateInfo) mTemplateInfoMap.get(templateName);
     }
-    
+
     /**
      * Retrieve the metadata for all templates.
      * @return TemplateInfo[] The metadata.

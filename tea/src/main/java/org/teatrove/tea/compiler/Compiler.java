@@ -38,37 +38,40 @@ import org.teatrove.tea.parsetree.*;
 public abstract class Compiler {
     // Maps qualified names to ParseTrees.
     final Map mParseTreeMap;
-    
+
     // Maps qualified names to CompilationUnits.
     private final Map mCompilationUnitMap = new HashMap();
-    
+
     // Set of names for CompilationUnits that have already been compiled.
     private final Set mCompiled = new HashSet();
-    
+
     private Set mPreserveTree;
-    
+
     private Class mContextClass = org.teatrove.tea.runtime.UtilityContext.class;
     private Method[] mRuntimeMethods;
     private Method[] mStringConverters;
-    
+
     private ErrorListener mErrorListener;
-    
+
     private Vector mErrorListeners = new Vector(4);
     private int mErrorCount = 0;
-    
+
     private Vector mStatusListeners = new Vector();
-    
+
     private boolean mGenerateCode = true;
     private boolean mExceptionGuardian = false;
-    
+
     private ClassLoader mClassLoader;
-    
+
     private MessageFormatter mFormatter;
-    
+
+    private Set<String> mImports = new HashSet<String>();
+    { mImports.add("java.lang"); mImports.add("java.util"); }
+
     public Compiler() {
         this(Collections.synchronizedMap(new HashMap()));
     }
-    
+
     /**
      * This constructor allows template signatures to be shared among compiler
      * instances. This is useful in interactive environments, where compilation
@@ -90,7 +93,7 @@ public abstract class Compiler {
         };
         mFormatter = MessageFormatter.lookup(this);
     }
-    
+
     /**
      * Add an ErrorListener in order receive events of compile-time errors.
      * @see org.teatrove.tea.util.ConsoleErrorReporter
@@ -98,33 +101,33 @@ public abstract class Compiler {
     public void addErrorListener(ErrorListener listener) {
         mErrorListeners.addElement(listener);
     }
-    
+
     public void removeErrorListener(ErrorListener listener) {
         mErrorListeners.removeElement(listener);
     }
-    
+
     private void dispatchCompileError(ErrorEvent e) {
         mErrorCount++;
-        
+
         synchronized (mErrorListeners) {
             for (int i = 0; i < mErrorListeners.size(); i++) {
                 ((ErrorListener)mErrorListeners.elementAt(i)).compileError(e);
             }
         }
     }
-    
-    
+
+
     /**
      * Add a StatusListener in order to receive events of compilation progress.
      */
     public void addStatusListener(StatusListener listener) {
         mStatusListeners.addElement(listener);
     }
-    
+
     public void removeStatusListener(StatusListener listener) {
         mStatusListeners.removeElement(listener);
     }
-    
+
     private void dispatchCompileStatus(StatusEvent e) {
         synchronized (mStatusListeners) {
             for(int i = 0; i < mStatusListeners.size(); i++) {
@@ -133,12 +136,12 @@ public abstract class Compiler {
             }
         }
     }
-    
-    private void uncaughtException(Exception e) {
+
+    private void uncaughtException(Throwable e) {
         Thread t = Thread.currentThread();
         t.getThreadGroup().uncaughtException(t, e);
     }
-    
+
     /**
      * By default, code generation is enabled. Passing false disables the
      * code generation phase of the compiler.
@@ -146,18 +149,18 @@ public abstract class Compiler {
     public void setCodeGenerationEnabled(boolean flag) {
         mGenerateCode = flag;
     }
-    
+
     /**
      * Returns true if code generation is enabled. The default setting is true.
      */
     public boolean isCodeGenerationEnabled() {
         return mGenerateCode;
     }
-    
+
     public void setExceptionGuardianEnabled(boolean flag) {
         mExceptionGuardian = flag;
     }
-    
+
     /**
      * Returns true if the exception guardian is enabled. The default setting
      * is false.
@@ -165,7 +168,7 @@ public abstract class Compiler {
     public boolean isExceptionGuardianEnabled() {
         return mExceptionGuardian;
     }
-    
+
     /**
      * Sets the ClassLoader to use to load classes with. If set to null,
      * then classes are loaded using Class.forName.
@@ -173,14 +176,14 @@ public abstract class Compiler {
     public void setClassLoader(ClassLoader loader) {
         mClassLoader = loader;
     }
-    
+
     /**
      * Returns the ClassLoader used by the Compiler, or null if none set.
      */
     public ClassLoader getClassLoader() {
         return mClassLoader;
     }
-    
+
     /**
      * Loads and returns a class by the fully qualified name given. If a
      * ClassLoader is specified, it is used to load the class. Otherwise,
@@ -201,14 +204,14 @@ public abstract class Compiler {
                 if (index < 0) {
                     throw e;
                 }
-                
+
                 // Search for inner class.
                 name = name.substring(0, index) + '$' +
                         name.substring(index + 1);
             }
         }
     }
-    
+
     /**
      * After a template is compiled, all but the root node of its parse tree
      * is clipped, in order to save memory. Applications that wish to traverse
@@ -225,7 +228,7 @@ public abstract class Compiler {
         }
         mPreserveTree.add(name);
     }
-    
+
     /**
      * Compile a single compilation unit. This method can be called multiple
      * times, but it will not compile compilation units that have already been
@@ -239,7 +242,7 @@ public abstract class Compiler {
     public String[] compile(String name) throws IOException {
         return compile(new String[] {name});
     }
-    
+
     /**
      * Compile a list of compilation units. This method can be called multiple
      * times, but it will not compile compilation units that have already been
@@ -270,21 +273,21 @@ public abstract class Compiler {
                 }
             }
         }
-        
+
         names = new String[mCompiled.size()];
         Iterator it = mCompiled.iterator();
         int i = 0;
         while (it.hasNext()) {
             names[i++] = (String)it.next();
         }
-        
+
         return names;
     }
-    
+
     public int getErrorCount() {
         return mErrorCount;
     }
-    
+
     /**
      * Returns a compilation unit associated with the given name, or null if
      * not found or the compilation unit is .
@@ -296,7 +299,7 @@ public abstract class Compiler {
     public CompilationUnit getCompilationUnit(String name,
             CompilationUnit from) {
         String fqName = determineQualifiedName(name, from);
-        
+
         // Templates with source will always override compiled templates
         boolean compiled = false;
         if (fqName == null && (compiled = CompiledTemplate.exists(this, name, from))) {
@@ -304,7 +307,7 @@ public abstract class Compiler {
         }
         if (fqName == null)
             return null;
-        
+
         CompilationUnit unit = (CompilationUnit)mCompilationUnitMap.get(fqName);
         if (unit == null) {
             if (!compiled) {
@@ -319,22 +322,43 @@ public abstract class Compiler {
                 } else {
                     // TODO:  flag the template class for removal
                     unit = null;
-                } 
+                }
             }
         }
-        
+
         return unit;
     }
-    
+
     /**
-     * Returns the list of imported packages that all templates have. This
-     * always returns "java.lang" and "java.util". Template parameters can
-     * abbreviate the names of all classes in java.lang and java.util.
+     * Returns the list of imported packages that all templates have. Template
+     * parameters can abbreviate the names of all classes in these packages.
      */
-    public static final String[] getImportedPackages() {
-        return new String[] {"java.lang", "java.util"};
+    public String[] getImportedPackages() {
+        return mImports.toArray(new String[mImports.size()]);
     }
-    
+
+    /**
+     * Add an imported package that all templates will have.
+     *
+     * @param imported  The fully-qualified package name
+     */
+    public void addImportedPackage(String imported) {
+        this.mImports.add(imported);
+    }
+
+    /**
+     * Add all imported packages that all templates will have.
+     *
+     * @param imports  The fully-qualified package name
+     */
+    public void addImportedPackages(String[] imports) {
+        if (imports == null) { return; }
+
+        for (String imported : imports) {
+            this.mImports.add(imported);
+        }
+    }
+
     /**
      * Return a class that defines a template's runtime context. The runtime
      * context contains methods that are callable by templates. A template
@@ -349,7 +373,7 @@ public abstract class Compiler {
     public Class getRuntimeContext() {
         return mContextClass;
     }
-    
+
     /**
      * Call to override the default runtime context class that a template is
      * compiled to use.
@@ -361,7 +385,7 @@ public abstract class Compiler {
         mRuntimeMethods = null;
         mStringConverters = null;
     }
-    
+
     /**
      * Returns all the methods available in the runtime context.
      */
@@ -369,10 +393,10 @@ public abstract class Compiler {
         if (mRuntimeMethods == null) {
             mRuntimeMethods = getRuntimeContext().getMethods();
         }
-        
+
         return (Method[])mRuntimeMethods.clone();
     }
-    
+
     /**
      * Return the name of a method in the runtime context to bind to for
      * receiving objects emitted by templates. The compiler will bind to the
@@ -384,7 +408,7 @@ public abstract class Compiler {
     public String getRuntimeReceiver() {
         return "print";
     }
-    
+
     /**
      * Return the name of a method in the runtime context to bind to for
      * converting objects and primitives to strings. The compiler will bind to
@@ -397,7 +421,7 @@ public abstract class Compiler {
     public String getRuntimeStringConverter() {
         return "toString";
     }
-    
+
     /**
      * Returns the set of methods that are used to perform conversion to
      * strings. The compiler will bind to the closest matching method based
@@ -406,9 +430,9 @@ public abstract class Compiler {
     public final Method[] getStringConverterMethods() {
         if (mStringConverters == null) {
             String name = getRuntimeStringConverter();
-            
+
             Vector methods = new Vector();
-            
+
             if (name != null) {
                 Method[] contextMethods = getRuntimeContextMethods();
                 for (int i=0; i<contextMethods.length; i++) {
@@ -416,14 +440,14 @@ public abstract class Compiler {
                     if (m.getName().equals(name) &&
                             m.getReturnType() == String.class &&
                             m.getParameterTypes().length == 1) {
-                        
+
                         methods.addElement(m);
                     }
                 }
             }
-            
+
             int customSize = methods.size();
-            
+
             Method[] stringMethods = String.class.getMethods();
             for (int i=0; i<stringMethods.length; i++) {
                 Method m = stringMethods[i];
@@ -431,7 +455,7 @@ public abstract class Compiler {
                         m.getReturnType() == String.class &&
                         m.getParameterTypes().length == 1 &&
                         Modifier.isStatic(m.getModifiers())) {
-                    
+
                     // Don't add to list if a custom converter already handles
                     // this method's parameter type.
                     Class type = m.getParameterTypes()[0];
@@ -442,20 +466,20 @@ public abstract class Compiler {
                             break;
                         }
                     }
-                    
+
                     if (j == customSize) {
                         methods.addElement(m);
                     }
                 }
             }
-            
+
             mStringConverters = new Method[methods.size()];
             methods.copyInto(mStringConverters);
         }
-        
+
         return (Method[])mStringConverters.clone();
     }
-    
+
     /**
      * Given a name, as requested by the given CompilationUnit, return a
      * fully qualified name or null if the name could not be found.
@@ -466,7 +490,7 @@ public abstract class Compiler {
     private String determineQualifiedName(String name, CompilationUnit from) {
         if (from != null) {
             // Determine qualified name as being relative to "from"
-            
+
             String fromName = from.getName();
             int index = fromName.lastIndexOf('.');
             if (index >= 0) {
@@ -476,51 +500,51 @@ public abstract class Compiler {
                 }
             }
         }
-        
+
         if (sourceExists(name)) {
             return name;
         }
-        
+
         return null;
     }
-    
+
     /**
      * @return true if source exists for the given qualified name
      */
     public abstract boolean sourceExists(String name);
-    
+
     protected abstract CompilationUnit createCompilationUnit(String name);
-    
+
     /**
      * Default implementation returns a SourceReader that uses "<%" and "%>"
      * as code delimiters.
      */
     protected SourceReader createSourceReader(CompilationUnit unit)
     throws IOException {
-        
+
         Reader r = new BufferedReader(unit.getReader());
         return new SourceReader(r, "<%", "%>");
     }
-    
+
     protected Scanner createScanner(SourceReader reader, CompilationUnit unit)
     throws IOException {
-        
+
         return new Scanner(reader, unit);
     }
-    
+
     protected Parser createParser(Scanner scanner, CompilationUnit unit)
     throws IOException {
-        
+
         return new Parser(scanner, unit);
     }
-    
+
     protected TypeChecker createTypeChecker(CompilationUnit unit) {
         TypeChecker tc = new TypeChecker(unit);
         tc.setClassLoader(getClassLoader());
         tc.setExceptionGuardianEnabled(isExceptionGuardianEnabled());
         return tc;
     }
-    
+
     /**
      * Default implementation returns a new JavaClassGenerator.
      *
@@ -528,10 +552,10 @@ public abstract class Compiler {
      */
     protected CodeGenerator createCodeGenerator(CompilationUnit unit)
     throws IOException {
-        
+
         return new JavaClassGenerator(unit);
     }
-    
+
     /**
      * Called by the Compiler or by a CompilationUnit when its parse tree is
      * requested. Requesting a parse tree may cause template code to be
@@ -542,22 +566,22 @@ public abstract class Compiler {
             return getParseTree0(unit);
         }
     }
-    
+
     private Template getParseTree0(CompilationUnit unit) {
         String name = unit.getName();
         Template tree = (Template)mParseTreeMap.get(name);
         if (tree != null) {
             return tree;
         }
-        
+
         try {
             // Parse and type check the parse tree.
-            
+
             // Direct all compile errors into the CompilationUnit.
             // Remove the unit as an ErrorListener in the finally block
             // at the end of this method.
             addErrorListener(unit);
-            
+
             try {
                 Scanner s = createScanner(createSourceReader(unit), unit);
                 s.addErrorListener(mErrorListener);
@@ -573,35 +597,52 @@ public abstract class Compiler {
                         (new ErrorEvent(this, msg, (SourceInfo)null, unit));
                 return tree;
             }
-            
+
             TypeChecker tc = createTypeChecker(unit);
             tc.setClassLoader(getClassLoader());
             tc.addErrorListener(mErrorListener);
             tc.typeCheck();
-            
+
             if (mCompiled.contains(name) || !unit.shouldCompile()) {
                 return tree;
             } else {
                 mCompiled.add(name);
             }
-            
+
             // Code generate the CompilationUnit only if no errors and
             // the code generate option is enabled.
-            
+
             if (unit.getErrorCount() == 0 && mGenerateCode) {
+                OutputStream out = null;
                 try {
-                    OutputStream out = unit.getOutputStream();
-                    
+                    out = unit.getOutputStream();
                     if (out != null) {
                         tree = (Template)new BasicOptimizer(tree).optimize();
                         mParseTreeMap.put(name, tree);
-                        
+
                         CodeGenerator codegen = createCodeGenerator(unit);
                         codegen.writeTo(out);
                         out.flush();
                         out.close();
                     }
-                } catch (IOException e) {
+                } catch (Throwable e) {
+                    // attempt to close stream
+                    // NOTE: we must call this here as well as in the try block
+                    //       above rather than solely in a finally block since
+                    //       the unit.resetOutputStream expects the stream to
+                    //       already be closed.  For example, if the unit uses
+                    //       ClassInjector.getStream, then close must be called
+                    //       on that stream to ensure it is defined so that
+                    //       the reset method can undefine it.
+                    if (out != null) {
+                        try { out.close(); }
+                        catch (Throwable err) { uncaughtException(err); }
+                    }
+
+                    // reset the output stream
+                    unit.resetOutputStream();
+
+                    // output error
                     uncaughtException(e);
                     String msg = mFormatter.format
                             ("write.error", e.toString());
@@ -610,7 +651,7 @@ public abstract class Compiler {
                     return tree;
                 }
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             uncaughtException(e);
             String msg = mFormatter.format("internal.error", e.toString());
             dispatchCompileError
@@ -625,8 +666,8 @@ public abstract class Compiler {
                 tree.setStatement(null);
             }
         }
-        
+
         return tree;
     }
-    
+
 }

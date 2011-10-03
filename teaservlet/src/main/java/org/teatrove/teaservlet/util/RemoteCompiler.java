@@ -54,6 +54,8 @@ import java.util.TreeMap;
  * they are forced to be re-compiled.
  *
  * @author Jonathan Colwell
+ * @version
+ * <!--$$Revision:--> 16 <!-- $--> 21 <!-- $$JustDate:-->  3/19/04 <!-- $-->
  * @see ClassInjector
  */
 public class RemoteCompiler extends AbstractFileCompiler {
@@ -456,6 +458,26 @@ public class RemoteCompiler extends AbstractFileCompiler {
             }
 
             return new BufferedOutputStream(out);
+        }
+        
+        public void resetOutputStream() {
+            if (mDestFile != null) {
+                mDestFile.delete();
+            }
+
+            if (mInjector != null) {
+                mInjector.resetStream(getClassName());
+            }
+        }
+        
+        protected String getClassName() {
+            String className = getName();
+            String pack = getTargetPackage();
+            if (pack != null && pack.length() > 0) {
+                className = pack + '.' + className;
+            }
+
+            return className;
         }
         
         /**

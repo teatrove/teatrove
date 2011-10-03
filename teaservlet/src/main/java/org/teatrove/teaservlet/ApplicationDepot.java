@@ -16,27 +16,10 @@
 
 package org.teatrove.teaservlet;
 
-import java.io.*;
-import java.lang.reflect.*;
 import java.util.*;
 import javax.servlet.*;
-import javax.servlet.http.*;
-import org.teatrove.teaservlet.util.FilteredServletContext;
 import org.teatrove.trove.log.*;
-import org.teatrove.trove.util.Utils;
-import org.teatrove.trove.util.ClassInjector;
-import org.teatrove.trove.util.Config;
-import org.teatrove.trove.util.ConfigSupport;
 import org.teatrove.trove.util.PropertyMap;
-import org.teatrove.trove.util.PropertyParser;
-import org.teatrove.trove.util.plugin.Plugin;
-import org.teatrove.trove.util.plugin.PluginContext;
-import org.teatrove.trove.util.plugin.PluginFactory;
-import org.teatrove.trove.util.plugin.PluginFactoryConfig;
-import org.teatrove.trove.util.plugin.PluginFactoryConfigSupport;
-import org.teatrove.trove.util.plugin.PluginFactoryException;
-import org.teatrove.trove.io.ByteBuffer;
-import org.teatrove.tea.runtime.TemplateLoader;
 
 import org.teatrove.tea.engine.*;
 

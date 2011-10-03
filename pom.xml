@@ -6,7 +6,7 @@
 
     <groupId>org.teatrove</groupId>
     <artifactId>teatrove</artifactId>
-    <version>3.9-SNAPSHOT</version>
+    <version>4.0-SNAPSHOT</version>
 
     <modules>
         <module>tea</module>
@@ -33,13 +33,13 @@
            when you update the <version> of that child pom, you only need to update it one other place, here,
            and all references to the child artifact will be updated accordingly.
        -->
-      <package-info-maven-plugin.version>3.9-SNAPSHOT</package-info-maven-plugin.version>
-      <teacompiler.version>3.9-SNAPSHOT</teacompiler.version>
-      <teatools.version>3.9-SNAPSHOT</teatools.version>
-      <toolbox.version>3.9-SNAPSHOT</toolbox.version>
-      <tea.version>3.9-SNAPSHOT</tea.version>
-      <teaservlet.version>3.9-SNAPSHOT</teaservlet.version>
-      <trove.version>3.9-SNAPSHOT</trove.version>
+      <package-info-maven-plugin.version>4.0-SNAPSHOT</package-info-maven-plugin.version>
+      <teacompiler.version>4.0-SNAPSHOT</teacompiler.version>
+      <teatools.version>4.0-SNAPSHOT</teatools.version>
+      <toolbox.version>4.0-SNAPSHOT</toolbox.version>
+      <tea.version>4.0-SNAPSHOT</tea.version>
+      <teaservlet.version>4.0-SNAPSHOT</teaservlet.version>
+      <trove.version>4.0-SNAPSHOT</trove.version>
     </properties>
 
     <prerequisites>

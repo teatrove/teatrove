@@ -120,6 +120,7 @@ public class TemplateServerServlet extends HttpServlet {
 	                else {
 	                    mConfig.getServletContext().log(path
 	                     + " doesn't map to an existing template or directory.");
+                        resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
 	                }
 	            }
             }

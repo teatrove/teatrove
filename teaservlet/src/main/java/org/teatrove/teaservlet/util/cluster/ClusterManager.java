@@ -60,6 +60,7 @@ public class ClusterManager {
      *     multicast {
      *         port = 1099
      *         group = 224.0.1.20
+     *         ttl = 64
      *     }
      * }</pre>
      *
@@ -110,6 +111,8 @@ public class ClusterManager {
                                                  rmiPort,
                                                  netInterface,
                                                  servers);
+
+                    manager.setMulticastTtl(properties.getInt("multicast.ttl", 1));
                 }
                 else if (servers != null) {
                     manager = new ClusterManager(clusterObj,
@@ -381,6 +384,20 @@ public class ClusterManager {
 
     public InetAddress getMulticastGroup() {
         return mMultiGroup;
+    }
+
+    public int getMulticastTtl() throws IOException {
+        if(mSock==null) {
+            return 1;
+        }
+        
+        return mSock.getTimeToLive();
+    }
+
+    public void setMulticastTtl(int ttl) throws IOException {
+        if(mSock!=null) {
+            mSock.setTimeToLive(ttl);
+        }
     }
 
     public void send(byte[] msg) throws IOException {

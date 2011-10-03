@@ -65,7 +65,7 @@ public class MergedContextSource implements ContextSource {
             if (type != null) {
                 contextList.add(type);
                 ClassLoader scout = type.getClassLoader();
-                if (scout != null) {
+                if (scout != null && !delegateList.contains(scout)) {
                     delegateList.add(scout);
                 }
             }

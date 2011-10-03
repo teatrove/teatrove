@@ -16,8 +16,11 @@
 
 package org.teatrove.tea.parsetree;
 
+import java.lang.reflect.ParameterizedType;
+
 import org.teatrove.tea.compiler.SourceInfo;
 import org.teatrove.tea.compiler.Type;
+import org.teatrove.trove.generics.GenericType;
 
 /**
  * A Variable represents a variable declaration. A VariableRef is used to
@@ -62,7 +65,7 @@ public class Variable extends Node {
         super(info);
 
         mName = name;
-        mTypeName = new TypeName(info, type);
+        mTypeName = createTypeName(info, type);
         mType = type;
     }
 
@@ -70,7 +73,7 @@ public class Variable extends Node {
         super(info);
 
         mName = name;
-        mTypeName = new TypeName(info, type);
+        mTypeName = createTypeName(info, type);
         mType = type;
         mStaticallyTyped = staticallyTyped;
     }
@@ -99,13 +102,23 @@ public class Variable extends Node {
     }
 
     public void setType(Type type) {
-        mTypeName = new TypeName(getSourceInfo(), type);
-        mType = type;
+        mType = Type.preserveType(mType, type);
+        if (mTypeName == null) {
+            mTypeName = createTypeName(getSourceInfo(), type);
+        } else {
+            mTypeName = createTypeName(mTypeName.getSourceInfo(), type);
+            // TODO: do we need to check which is better for generics?
+            // - if type has generics, createTypeName
+            // - else if genericTypes exists, create instnace
+            // - else ignore
+            //mTypeName = new TypeName(mTypeName.getSourceInfo(),
+            //                         mTypeName.getGenericTypes(), type);
+        }
     }
 
     /**
      * @return true if this variable is a field instead of a local variable.
-     */   
+     */
     public boolean isField() {
         return mField;
     }
@@ -165,5 +178,26 @@ public class Variable extends Node {
         else {
             return false;
         }
+    }
+
+    private TypeName createTypeName(SourceInfo info, Type type) {
+        TypeName[] genericTypes = null;
+        // TODO: is there a better to handle this?
+        // for whatever reason, the type checker ends up running through
+        // nodes twice (once with a TypeName and then once without so that
+        // a new one gets created)...this helps to ensure that the generic
+        // types are passed through when the type checker re-checks.
+        // this mimics the functionality in TypeChecker check(TypeName)
+        if (type.getGenericClass() instanceof ParameterizedType) {
+            ParameterizedType ptype =
+                (ParameterizedType) type.getGenericClass();
+            genericTypes = new TypeName[ptype.getActualTypeArguments().length];
+            for (int i = 0; i < ptype.getActualTypeArguments().length; i++) {
+                java.lang.reflect.Type gtype = ptype.getActualTypeArguments()[i];
+                genericTypes[i] = createTypeName(getSourceInfo(), new Type(new GenericType(gtype)));
+            }
+        }
+
+        return new TypeName(info, genericTypes, type);
     }
 }

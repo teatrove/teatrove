@@ -20,13 +20,9 @@ import java.io.*;
 import java.net.*;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Collection;
-import java.util.ArrayList;
 import java.util.AbstractList;
-import java.util.Iterator;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,7 +36,6 @@ import org.teatrove.teaservlet.util.DecodedRequest;
 
 import org.teatrove.tea.runtime.Substitution;
 import org.teatrove.tea.runtime.OutputReceiver;
-import java.util.Set;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponseWrapper;
 

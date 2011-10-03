@@ -108,8 +108,8 @@ public interface UtilityContext extends Context {
     /**
      * Finds the index of the last occurrence of the given search string in the
      * source string, or -1 if not found.
-     * 
-     * @param str the source string 
+     *
+     * @param str the source string
      * @param search the string to search for
      *
      * @return the start index of the found string or -1 if not found
@@ -120,7 +120,7 @@ public interface UtilityContext extends Context {
      * Finds the index of the last occurrence of the given search string in the
      * source string, starting from the given index, or -1 if not found.
      *
-     * @param str the source string 
+     * @param str the source string
      * @param search the string to search for
      * @param fromIndex optional index to start the find
      *
@@ -133,8 +133,8 @@ public interface UtilityContext extends Context {
      * index.
      *
      * @param str the source string
-     * @param startIndex the start index, inclusive 
-     * 
+     * @param startIndex the start index, inclusive
+     *
      * @return the specified substring.
      */
     public String substring(String str, int startIndex);
@@ -144,9 +144,9 @@ public interface UtilityContext extends Context {
      * or after the starting index, and are before the end index.
      *
      * @param str the source string
-     * @param startIndex the start index, inclusive 
+     * @param startIndex the start index, inclusive
      * @param endIndex the ending index, exclusive
-     * 
+     *
      * @return the specified substring.
      */
     public String substring(String str, int startIndex, int endIndex);
@@ -155,7 +155,7 @@ public interface UtilityContext extends Context {
      * Converts all the characters in the given string to lowercase.
      *
      * @param str the string to convert
-     * 
+     *
      * @return the string converted to lowercase
      */
     public String toLowerCase(String str);
@@ -164,7 +164,7 @@ public interface UtilityContext extends Context {
      * Converts all the characters in the given string to uppercase.
      *
      * @param str the string to convert
-     * 
+     *
      * @return the string converted to uppercase
      */
     public String toUpperCase(String str);
@@ -173,7 +173,7 @@ public interface UtilityContext extends Context {
      * Trims all leading and trailing whitespace characters from the given
      * string.
      *
-     * @param str the string to trim 
+     * @param str the string to trim
      *
      * @return the trimmed string
      */
@@ -182,7 +182,7 @@ public interface UtilityContext extends Context {
     /**
      * Trims all leading whitespace characters from the given string.
      *
-     * @param str the string to trim 
+     * @param str the string to trim
      *
      * @return the trimmed string
      */
@@ -191,16 +191,16 @@ public interface UtilityContext extends Context {
     /**
      * Trims all trailing whitespace characters from the given string.
      *
-     * @param str the string to trim 
+     * @param str the string to trim
      *
      * @return the trimmed string
      */
     public String trimTrailing(String str);
 
     /**
-     * Replaces all exact matches of the given pattern in the source string 
+     * Replaces all exact matches of the given pattern in the source string
      * with the provided replacement.
-     * 
+     *
      * @param source the source string
      * @param pattern the simple string pattern to search for
      * @param replacement the string to use for replacing matched patterns.
@@ -210,9 +210,9 @@ public interface UtilityContext extends Context {
     public String replace(String source, String pattern, String replacement);
 
     /**
-     * Replaces all exact matches of the given pattern in the source string 
+     * Replaces all exact matches of the given pattern in the source string
      * with the provided replacement, starting from the given index.
-     * 
+     *
      * @param source the source string
      * @param pattern the simple string pattern to search for
      * @param replacement the string to use for replacing matched patterns.
@@ -240,7 +240,7 @@ public interface UtilityContext extends Context {
      * @param source the source string
      * @param pattern the simple string pattern to search for
      * @param replacement the string to use for replacing matched patterns
-     * 
+     *
      * @return the string with any replacements applied
      */
     public String replaceFirst(String source, String pattern,
@@ -254,7 +254,7 @@ public interface UtilityContext extends Context {
      * @param pattern the simple string pattern to search for
      * @param replacement the string to use for replacing matched patterns
      * @param fromIndex index to start the replace
-     * 
+     *
      * @return the string with any replacements applied
      */
     public String replaceFirst(String source, String pattern,
@@ -267,7 +267,7 @@ public interface UtilityContext extends Context {
      * @param source the source string
      * @param pattern the simple string pattern to search for
      * @param replacement the string to use for replacing matched patterns
-     * 
+     *
      * @return the string with any replacements applied
      */
     public String replaceLast(String source, String pattern,
@@ -281,33 +281,33 @@ public interface UtilityContext extends Context {
      * @param pattern the simple string pattern to search for
      * @param replacement the string to use for replacing matched patterns
      * @param fromIndex index to start the replace
-     * 
+     *
      * @return the string with any replacements applied
      */
     public String replaceLast(String source, String pattern,
                               String replacement, int fromIndex);
 
     /**
-     * A function that converts an integer to a short ordinal value. 
+     * A function that converts an integer to a short ordinal value.
      * i.e. 1st, 2nd, 3rd etc.
      *
      * @param n the number to convert
-     * 
-     * @return a String containing the short ordinal value of the specified 
+     *
+     * @return a String containing the short ordinal value of the specified
      * number
      */
     public String shortOrdinal(Long n);
 
     /**
-     * A function that converts an integer to a short ordinal value. 
+     * A function that converts an integer to a short ordinal value.
      * i.e. 1st, 2nd, 3rd etc.
      *
      * @param n the number to convert
-     * 
-     * @return a String containing the short ordinal value of the specified 
+     *
+     * @return a String containing the short ordinal value of the specified
      * number
      *
-     * @hidden       
+     * @hidden
      */
     public String shortOrdinal(long n);
 
@@ -316,7 +316,7 @@ public interface UtilityContext extends Context {
      * second, third etc.
      *
      * @param n the number to convert
-     * 
+     *
      * @return a String containing the ordinal value of the specified number
      */
     public String ordinal(Long n);
@@ -326,10 +326,10 @@ public interface UtilityContext extends Context {
      * second, third etc.
      *
      * @param n the number to convert
-     * 
+     *
      * @return a String containing the ordinal value of the specified number
      *
-     * @hidden       
+     * @hidden
      */
     public String ordinal(long n);
 
@@ -338,7 +338,7 @@ public interface UtilityContext extends Context {
      * two, three etc.
      *
      * @param n the number to convert
-     * 
+     *
      * @return a String containing the cardinal value of the specified number
      */
     public String cardinal(Long n);
@@ -351,19 +351,19 @@ public interface UtilityContext extends Context {
      * 
      * @return a String containing the cardinal value of the specified number
      *
-     * @hidden       
+     * @hidden
      */
     public String cardinal(long n);
-    
+
     /**
       * A function that checks if an object is an Array
-      * 
+      *
       * @param o the Object to check
-      * 
+      *
       * @return true if the object is an Array, false otherwise
       */
     public boolean isArray(Object o);
-     
+
     public void sort(Object[] array, String onColumn, boolean reverse);
      
     public void sort(Object[] array, String[] onColumns,  boolean[] reverse);
@@ -385,4 +385,57 @@ public interface UtilityContext extends Context {
     public void sortAscending(short[] array);
      
     public void sortAscending(long[] array);
+
+    public String[] split(String str, String regex);
+
+    /**
+     * A function that creates a string builder to allow programs to perform
+     * concatenation and pass around strings.
+     *
+     * @return the created string builder
+     */
+    public StringBuilder createStringBuilder();
+
+    /**
+     * A function that creates a string builder to allow programs to perform
+     * concatenation and pass around strings.
+     *
+     * @param size the initial size of the buffer
+     *
+     * @return the created string builder
+     */
+    public StringBuilder createStringBuilder(int size);
+
+    /**
+     * A function to append a value to an existing buffer.
+     *
+     * @param buffer  the buffer to append to
+     * @param value  the value to append
+     */
+    public void append(StringBuilder buffer, Object value);
+
+    /**
+     * A function to prepend a value to an existing buffer.
+     *
+     * @param buffer  the buffer to prepend to
+     * @param value  the value to prepend
+     */
+    public void prepend(StringBuilder buffer, Object value);
+
+    /**
+     * A function to insert a value into an existing buffer.
+     *
+     * @param buffer  the buffer to insert into
+     * @param value  the value to insert
+     * @param index  the index of the position to insert at
+     */
+    public void insert(StringBuilder buffer, Object value, int index);
+    /**
+     * A function to convert the buffer into a standard string.
+     *
+     * @param buffer  the buffer to convert
+     *
+     * @return  the converted buffer as a string
+     */
+    public String toString(StringBuilder buffer);
 }

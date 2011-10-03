@@ -65,6 +65,11 @@ public interface AdminContext extends TeaToolsContext {
     public Class getClassForName(String classname);
   
     /**
+     * Returns a list of class objects for each known subclass.
+     */
+    public String[] getSubclassesForName(String classname);
+
+    /**
      * Streams the structural bytes of the named class via the HttpResponse.
      */
     public void streamClassBytes(String className) throws ServletException;

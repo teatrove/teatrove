@@ -36,7 +36,7 @@ public class ResourceCompiler extends Compiler {
 
     private ClassInjector mInjector;
     private String mPackagePrefix;
-    
+
     /**
      * @param injector ClassInjector to feed generated classes into
      */
@@ -95,7 +95,7 @@ public class ResourceCompiler extends Compiler {
         public String getSourceFileName() {
             return mSourceFileName;
         }
-        
+
         public Reader getReader() throws IOException {
             String resName = '/' + getSourceFileName();
             return new InputStreamReader
@@ -105,15 +105,23 @@ public class ResourceCompiler extends Compiler {
         public String getTargetPackage() {
             return mPackagePrefix;
         }
-        
+
         public OutputStream getOutputStream() throws IOException {
+            return mInjector.getStream(getClassName());
+        }
+
+        public void resetOutputStream() {
+            mInjector.resetStream(getClassName());
+        }
+
+        protected String getClassName() {
             String className = getName();
             String pack = getTargetPackage();
             if (pack != null && pack.length() > 0) {
                 className = pack + '.' + className;
             }
 
-            return mInjector.getStream(className);
+            return className;
         }
     }
 }

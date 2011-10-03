@@ -16,20 +16,26 @@
 
 package org.teatrove.tea.compiler;
 
+import java.beans.IntrospectionException;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.beans.IntrospectionException;
+
 import org.teatrove.tea.TypedElement;
 import org.teatrove.tea.util.BeanAnalyzer;
 import org.teatrove.tea.util.KeyedPropertyDescriptor;
+import org.teatrove.trove.generics.GenericType;
+
+// TODO: update w/ generic support and ensure full compatibility
 
 /**
  * Immutable representation of an expression's type.
@@ -78,6 +84,7 @@ public class Type implements java.io.Serializable {
 
     private final Class mObjectClass;
     private final Class mNaturalClass;
+    private final GenericType mGenericType;
     private final boolean mPrimitive;
 
     private transient boolean mCheckedForArrayLookup;
@@ -89,25 +96,67 @@ public class Type implements java.io.Serializable {
 
     public Type(Class type) {
         if (type.isPrimitive()) {
+            mPrimitive = true;
             mNaturalClass = type;
             mObjectClass = convertToObject(type);
-            mPrimitive = true;
+            mGenericType = new GenericType(mNaturalClass);
         }
         else {
-            mObjectClass = mNaturalClass = type;
             mPrimitive = false;
+            mNaturalClass = mObjectClass = type;
+            mGenericType = new GenericType(mNaturalClass);
+        }
+    }
+
+    public Type(Class type, java.lang.reflect.Type generic) {
+        if (type.isPrimitive()) {
+            mPrimitive = true;
+            mNaturalClass = type;
+            mObjectClass = convertToObject(type);
+            mGenericType = new GenericType(mNaturalClass, generic);
+        }
+        else {
+            mPrimitive = false;
+            mNaturalClass = mObjectClass = type;
+            mGenericType = new GenericType(mNaturalClass, generic);
+        }
+    }
+
+    public Type(GenericType type) {
+        Class<?> natural = type.getRawType().getType();
+        if (natural.isPrimitive()) {
+            mPrimitive = true;
+            mNaturalClass = natural;
+            mObjectClass = convertToObject(natural);
+            mGenericType = type;
+        }
+        else {
+            mPrimitive = false;
+            mNaturalClass = mObjectClass = natural;
+            mGenericType = type;
         }
     }
 
     private Type(Class object, Class natural) {
-        mObjectClass = object;
         mNaturalClass = natural;
-        if (natural.isPrimitive()) {
-            mPrimitive = true;
-        }
-        else {
-            mPrimitive = false;
-        }
+        mObjectClass = object;
+        mGenericType = new GenericType(mNaturalClass);
+        mPrimitive = natural.isPrimitive();
+    }
+
+    private Type(Class object, Class natural,
+                 java.lang.reflect.Type generic) {
+        mNaturalClass = natural;
+        mObjectClass = object;
+        mGenericType = new GenericType(mNaturalClass, generic);
+        mPrimitive = natural.isPrimitive();
+    }
+
+    private Type(GenericType type, Class natural) {
+        mGenericType = type;
+        mObjectClass = type.getRawType().getType();
+        mNaturalClass = natural;
+        mPrimitive = natural.isPrimitive();
     }
 
     public Type(Class type, TypedElement te) {
@@ -115,11 +164,22 @@ public class Type implements java.io.Serializable {
         mIterationElementType = new Type(te.value());
     }
 
+    public Type(Class type, java.lang.reflect.Type generic, TypedElement te) {
+        this(type, generic);
+        mIterationElementType = new Type(te.value());
+    }
+
+    public Type(GenericType type, TypedElement te) {
+        this(type);
+        mIterationElementType = new Type(te.value());
+    }
+
     Type(Type type) {
+        mGenericType = type.mGenericType;
         mObjectClass = type.mObjectClass;
         mNaturalClass = type.mNaturalClass;
         mPrimitive = type.mPrimitive;
-        
+
         mCheckedForArrayLookup = type.mCheckedForArrayLookup;
         mArrayElementType = type.mArrayElementType;
         mArrayIndexTypes = type.mArrayIndexTypes;
@@ -133,6 +193,17 @@ public class Type implements java.io.Serializable {
      */
     public Class getObjectClass() {
         return mObjectClass;
+    }
+
+    public GenericType getGenericType() {
+        return mGenericType;
+    }
+
+    /**
+     * Returns the JDK 5 generic type associated with this type.
+     */
+    public java.lang.reflect.Type getGenericClass() {
+        return mGenericType.getGenericType();
     }
 
     /**
@@ -151,7 +222,7 @@ public class Type implements java.io.Serializable {
     }
 
     /**
-     * Returns true if this type is not primitive, but it has a primitive 
+     * Returns true if this type is not primitive, but it has a primitive
      * type peer.
      */
     public boolean hasPrimitivePeer() {
@@ -164,7 +235,7 @@ public class Type implements java.io.Serializable {
             mObjectClass == Float.class ||
             mObjectClass == Double.class ||
             mObjectClass == Void.class) {
-            
+
             return true;
         }
 
@@ -181,7 +252,9 @@ public class Type implements java.io.Serializable {
             return this;
         }
         else {
-            return new Type(mObjectClass, convertToPrimitive(mObjectClass));
+            Class<?> primitive = convertToPrimitive(mObjectClass);
+            if (primitive.isPrimitive()) { return new Type(primitive); }
+            else { return new Type(mGenericType, primitive); }
         }
     }
 
@@ -228,7 +301,7 @@ public class Type implements java.io.Serializable {
                 public boolean isNonNull() {
                     return true;
                 }
-                
+
                 public boolean isNullable() {
                     return false;
                 }
@@ -248,8 +321,11 @@ public class Type implements java.io.Serializable {
         if (!isNonNull()) {
             return this;
         }
-        else {
+        else if (isPrimitive()) {
             return new Type(mObjectClass);
+        }
+        else {
+            return new Type(mGenericType);
         }
     }
 
@@ -261,7 +337,7 @@ public class Type implements java.io.Serializable {
         if (!mCheckedForArrayLookup) {
             checkForArrayLookup();
         }
-        
+
         return mArrayElementType;
     }
 
@@ -290,7 +366,7 @@ public class Type implements java.io.Serializable {
             checkForArrayLookup();
         }
 
-        return mArrayAccessMethods == null ? null : 
+        return mArrayAccessMethods == null ? null :
             (Method[])mArrayAccessMethods.clone();
     }
 
@@ -310,34 +386,72 @@ public class Type implements java.io.Serializable {
             }
             else if (Collection.class.isAssignableFrom(mNaturalClass) ||
                     Map.class.isAssignableFrom(mNaturalClass)) {
-                mIterationElementType = OBJECT_TYPE;
+                GenericType[] args = mGenericType.getTypeArguments();
+                if (args != null && args.length >= 1) {
+                    mIterationElementType = new Type(args[0]);
+                }
 
-                try {
-                    Field field = 
-                        mNaturalClass.getField
-                        (BeanAnalyzer.ELEMENT_TYPE_FIELD_NAME);
-                    if (field.getType() == Class.class &&
-                        Modifier.isStatic(field.getModifiers())) {
-                        
-                        mIterationElementType = 
-                            new Type((Class)field.get(null));
+                if (mIterationElementType == null ||
+                    Object.class.equals(mIterationElementType.getObjectClass())) {
+                    try {
+                        Field field =
+                            mNaturalClass.getField
+                            (BeanAnalyzer.ELEMENT_TYPE_FIELD_NAME);
+                        if (field.getType() == Class.class &&
+                            Modifier.isStatic(field.getModifiers())) {
+
+                            mIterationElementType =
+                                new Type((Class)field.get(null));
+                        }
+                    }
+                    catch (NoSuchFieldException e) {
+                        // nothing to do
+                    }
+                    catch (IllegalAccessException e) {
+                        // nothing to do
                     }
                 }
-                catch (NoSuchFieldException e) {
-                }
-                catch (IllegalAccessException e) {
-                }
+            }
+
+            if (mIterationElementType == null) {
+                mIterationElementType = Type.OBJECT_TYPE;
             }
         }
 
         return mIterationElementType;
     }
 
+    public Type getKeyElementType() throws IntrospectionException {
+        // TODO: cache result
+        if (Collection.class.isAssignableFrom(mNaturalClass) ||
+            Map.class.isAssignableFrom(mNaturalClass)) {
+            GenericType[] args = mGenericType.getTypeArguments();
+            if (args != null && args.length >= 2) {
+                return new Type(args[0]);
+            }
+        }
+
+        return null;
+    }
+
+    public Type getValueElementType() throws IntrospectionException {
+        // TODO: cache result
+        if (Collection.class.isAssignableFrom(mNaturalClass) ||
+            Map.class.isAssignableFrom(mNaturalClass)) {
+            GenericType[] args = mGenericType.getTypeArguments();
+            if (args != null && args.length >= 2) {
+                return new Type(args[1]);
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Returns true if this type supports iteration in the reverse direction.
      */
     public boolean isReverseIterationSupported() {
-        return mNaturalClass.isArray() || 
+        return mNaturalClass.isArray() ||
             List.class.isAssignableFrom(mNaturalClass) ||
             Set.class.isAssignableFrom(mNaturalClass) ||
             Map.class.isAssignableFrom(mNaturalClass) ;
@@ -346,25 +460,26 @@ public class Type implements java.io.Serializable {
     private void checkForArrayLookup() throws IntrospectionException {
         mCheckedForArrayLookup = true;
 
-        if (mObjectClass.isArray()) {
-            mArrayElementType = new Type(mObjectClass.getComponentType());
+        if (mGenericType.isArray()) {
+            mArrayElementType = new Type(mGenericType.getComponentType());
             mArrayAccessMethods = EMPTY_METHOD_ARRAY;
             mArrayIndexTypes = new Type[] {INT_TYPE};
             return;
         }
 
         try {
-            Map properties = BeanAnalyzer.getAllProperties(mObjectClass);
-            
-            KeyedPropertyDescriptor keyed = 
+            Map properties = BeanAnalyzer.getAllProperties(mGenericType);
+
+            KeyedPropertyDescriptor keyed =
                 (KeyedPropertyDescriptor)properties.get
                 (BeanAnalyzer.KEYED_PROPERTY_NAME);
-            
+
             if (keyed == null) {
                 return;
             }
-            
-            mArrayElementType = new Type(keyed.getKeyedPropertyType());
+
+            mArrayElementType =
+                new Type(keyed.getKeyedPropertyType().getRawType());
             mArrayAccessMethods = keyed.getKeyedReadMethods();
         }
         catch (ClassCastException e) {
@@ -375,15 +490,18 @@ public class Type implements java.io.Serializable {
         mArrayIndexTypes = new Type[length];
         for (int i=0; i<length; i++) {
             Method m = mArrayAccessMethods[i];
-            mArrayIndexTypes[i] = new Type(m.getReturnType());
+            // TODO: what is this? pass in root type?
+            mArrayIndexTypes[i] =
+                new Type(m.getReturnType(), m.getGenericReturnType());
         }
     }
 
     /**
      * Accessed by the TypeChecker, to override the default.
      */
-    Type setArrayElementType(Type elementType) throws IntrospectionException {
-        Type type = new Type(mObjectClass, mNaturalClass);
+    public Type setArrayElementType(Type elementType)
+        throws IntrospectionException {
+        Type type = new Type(mGenericType, mNaturalClass);
         type.checkForArrayLookup();
         type.mArrayElementType = elementType;
         return type;
@@ -406,7 +524,7 @@ public class Type implements java.io.Serializable {
             }
 
             String baseName = baseType.getSimpleName();
-            StringBuffer nameBuf = 
+            StringBuffer nameBuf =
                 new StringBuffer(baseName.length() + dim * 2);
             nameBuf.append(baseName);
 
@@ -487,7 +605,7 @@ public class Type implements java.io.Serializable {
         if (this == another) {
             return true;
         }
-        
+
         if (another instanceof Type) {
             Type t = (Type)another;
 
@@ -508,7 +626,7 @@ public class Type implements java.io.Serializable {
                 try {
                     Type thisArrayType = getArrayElementType();
                     Type otherArrayType = t.getArrayElementType();
-                    
+
                     if (thisArrayType != null) {
                         if (thisArrayType.equals(otherArrayType)) {
                             return true;
@@ -524,7 +642,7 @@ public class Type implements java.io.Serializable {
                 }
             }
         }
-        
+
         return false;
     }
 
@@ -533,7 +651,7 @@ public class Type implements java.io.Serializable {
      * The type returned is selected using a best-fit algorithm.
      *
      * <p>If the type passed in represents a primitive type, but this type is
-     * not, the type returned is an object (or a subclass of), but never a 
+     * not, the type returned is an object (or a subclass of), but never a
      * primitive type. Compatible primitive types are returned when both this
      * and the parameter type were already primitive types.
      *
@@ -598,16 +716,38 @@ public class Type implements java.io.Serializable {
 
         return compat;
     }
-    
+
     /**
-     * Returns the most specific common superclass or interface that can be 
+     * Preserve the current type's generic information with the specified new
+     * type if they have the same class.
+     */
+    public static Type preserveType(Type currentType, Type newType) {
+        Type result = newType;
+        if (newType != null && currentType != null &&
+            currentType.getObjectClass() == newType.getObjectClass()) {
+            if (newType.getGenericType().getGenericType() instanceof Class &&
+                !(currentType.getGenericType().getGenericType() instanceof Class)) {
+                if (newType.isNonNull() && !currentType.isNonNull()) {
+                    result = currentType.toNonNull();
+                }
+                else if (!newType.isNonNull() && currentType.isNonNull()) {
+                    result = currentType.toNullable();
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns the most specific common superclass or interface that can be
      * used to represent both of the specified classes. Null is only returned
-     * if either class refers to a primitive type and isn't the same as the 
+     * if either class refers to a primitive type and isn't the same as the
      * other class.
      */
     public static Class findCommonBaseClass(Class a, Class b) {
         Class clazz = findCommonBaseClass0(a, b);
-        
+
         if (clazz != null && clazz.isInterface()) {
             // Only return interface if it actually defines something.
             if (clazz.getMethods().length <= 0) {
@@ -617,7 +757,7 @@ public class Type implements java.io.Serializable {
 
         return clazz;
     }
-    
+
     private static Class findCommonBaseClass0(Class a, Class b) {
         if (a == b) {
             return a;
@@ -628,7 +768,7 @@ public class Type implements java.io.Serializable {
         }
 
         if (a.isArray() && b.isArray()) {
-            Class clazz = findCommonBaseClass(a.getComponentType(), 
+            Class clazz = findCommonBaseClass(a.getComponentType(),
                                               b.getComponentType());
 
             if (clazz == null) {
@@ -638,7 +778,7 @@ public class Type implements java.io.Serializable {
             return Array.newInstance(clazz, 0).getClass();
         }
 
-        // Determine the intersection set of all the classes, superclasses and 
+        // Determine the intersection set of all the classes, superclasses and
         // interfaces from the passed in classes.
         Set set = new HashSet(19);
         addToClassSet(set, a);
@@ -655,7 +795,7 @@ public class Type implements java.io.Serializable {
         else if (size == 0) {
             return Object.class;
         }
-        
+
         // Reduce the set by removing classes/interfaces that are extended and
         // interfaces that are implemented by other classes.
         Iterator i = set.iterator();
@@ -709,10 +849,10 @@ public class Type implements java.io.Serializable {
 
     private static Class compatibleNumber(Class classA, Class classB) {
         if (classA == Integer.class) {
-            
+
             if (classB == Integer.class ||
                 classB == Byte.class || classB == Short.class) {
-                
+
                 return Integer.class;
             }
 
@@ -723,7 +863,7 @@ public class Type implements java.io.Serializable {
         else if (classA == Byte.class || classA == Short.class) {
             if (classB == Integer.class ||
                 classB == Byte.class || classB == Short.class) {
-                
+
                 return Integer.class;
             }
 
@@ -739,7 +879,7 @@ public class Type implements java.io.Serializable {
             if (classB == Float.class) {
                 return classB;
             }
-            
+
             if (classB == Byte.class || classB == Short.class) {
                 return Float.class;
             }
@@ -748,7 +888,7 @@ public class Type implements java.io.Serializable {
             if (classB == Integer.class ||
                 classB == Byte.class || classB == Short.class ||
                 classB == Long.class) {
-                
+
                 return Long.class;
             }
         }
@@ -833,9 +973,9 @@ public class Type implements java.io.Serializable {
     /**
      * Returns the conversion cost of assigning the given type to this type.
      * Conversions are allowed between arrays as well if they have the
-     * same dimensions. If no legal conversion exists, -1 is returned. 
+     * same dimensions. If no legal conversion exists, -1 is returned.
      * The conversion costs are as follows:
-     * 
+     *
      * <ol>
      * <li>any type is assignable by its own type
      * <li>any superclass type is assignable by a subclass type
@@ -1013,30 +1153,30 @@ public class Type implements java.io.Serializable {
     // 19 by 19 two dimensional byte array. [from][to]
     private static byte[][] mCostTable =
     {
-        //0  1   2  3  4  5  6  7   8  9  10 11 12 13 14 15  16  17 18        
-                                                                              
+        //0  1   2  3  4  5  6  7   8  9  10 11 12 13 14 15  16  17 18
+
         { 1,-1, -1,-1,-1,-1,-1,-1,  4,-1, -1,-1,-1,-1,-1,-1, -1, 37,40}, //  0
         {-1, 1, -1,-1,-1,-1,-1,-1, -1, 4, -1,-1,-1,-1,-1,-1, -1, 37,40}, //  1
-                                                                              
+
         {-1,-1,  1, 5, 5, 7, 6, 8, -1,-1,  4,11,11,11,11,11, 10, 37,40}, //  2
         {-1,-1, 33, 1, 5, 7, 6, 8, -1,-1, 35, 4,11,11,11,11, 10, 37,40}, //  3
         {-1,-1, 33,29, 1,21, 6, 8, -1,-1, 35,31, 4,23,11,11, 10, 37,40}, //  4
         {-1,-1, 33,29,25, 1,17, 8, -1,-1, 35,31,27, 4,19,11, 10, 37,40}, //  5
         {-1,-1, 33,29,25,21, 1,13, -1,-1, 35,31,27,23, 4,15, 10, 37,40}, //  6
         {-1,-1, 33,29,25,21,17, 1, -1,-1, 35,31,27,23,19, 4, 10, 37,40}, //  7
-                                                                              
+
         { 3,-1, -1,-1,-1,-1,-1,-1,  1,-1, -1,-1,-1,-1,-1,-1, -1,  2,40}, //  8
         {-1, 3, -1,-1,-1,-1,-1,-1, -1, 1, -1,-1,-1,-1,-1,-1, -1,  2,40}, //  9
-                                                                              
+
         {-1,-1,  3, 9, 9, 9, 9, 9, -1,-1,  1,12,12,12,12,12,  2,  2,40}, // 10
         {-1,-1, 34, 3, 9, 9, 9, 9, -1,-1, 36, 1,12,12,12,12,  2,  2,40}, // 11
         {-1,-1, 34,30, 3,22, 9, 9, -1,-1, 36,32, 1,24,12,12,  2,  2,40}, // 12
         {-1,-1, 34,30,26, 3,18, 9, -1,-1, 36,32,28, 1,20,12,  2,  2,40}, // 13
         {-1,-1, 34,30,26,22, 3,14, -1,-1, 36,32,28,24, 1,16,  2,  2,40}, // 14
         {-1,-1, 34,30,26,22,18, 3, -1,-1, 36,32,28,24,20, 1,  2,  2,40}, // 15
-                                                                              
+
         {-1,-1, 34,30,26,22,18,14, -1,-1, 36,32,28,24,20,16,  1,  2,40}, // 16
-                                                                              
+
         {-1,-1, -1,-1,-1,-1,-1,-1, -1,-1, -1,-1,-1,-1,-1,-1, -1,  1,40}, // 17
         {-1,-1, -1,-1,-1,-1,-1,-1, -1,-1, -1,-1,-1,-1,-1,-1, -1,  2, 1}, // 18
         {66,82, 73,65,78,32,83,32, 79,39, 78,69,73,76,76,-1, -1, -1,-1}  // 19

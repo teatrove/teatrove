@@ -54,14 +54,14 @@ public class CompiledTemplate extends CompilationUnit {
      * exists.  Further verification of the template signature occurs during the
      * call to <b>getParseTree</b>.
      */
-    public CompiledTemplate(String name, Compiler compiler, 
+    public CompiledTemplate(String name, Compiler compiler,
             CompilationUnit caller) {
         super(name, compiler);
         mCaller = caller;
         try {
             if (caller != null && caller.getReader() instanceof SourceReader) {
                 SourceReader r = (SourceReader) caller.getReader();
-                mCallerInfo = new SourceInfo(r.getLineNumber(), 
+                mCallerInfo = new SourceInfo(r.getLineNumber(),
                     r.getStartPosition(), r.getEndPosition());
             }
         }
@@ -78,8 +78,8 @@ public class CompiledTemplate extends CompilationUnit {
         return name;
     }
 
-    
-    /** 
+
+    /**
      * Load the template.
      */
     private Class getTemplateClass() {
@@ -87,12 +87,12 @@ public class CompiledTemplate extends CompilationUnit {
         try {
             mTemplateClass = getCompiler().loadClass(fqName);
         }
-        catch (ClassNotFoundException nx) { 
+        catch (ClassNotFoundException nx) {
             try {
                 mTemplateClass = getCompiler().loadClass(getName());  // Try standard path as a last resort
             }
-            catch (ClassNotFoundException nx2) { 
-                return null; 
+            catch (ClassNotFoundException nx2) {
+                return null;
             }
         }
         return mTemplateClass;
@@ -104,10 +104,10 @@ public class CompiledTemplate extends CompilationUnit {
     }
 
     /**
-     * Checks if the compiled template class is a precomiled 
+     * Checks if the compiled template class is a precomiled
      *  template (i.e. it's runtime context is an interface, not a generated MergedContext)
-     * 
-     * @return true if the template class is found, has the proper template execute method, 
+     *
+     * @return true if the template class is found, has the proper template execute method,
      * and the first parameter to the execute method (the runtime context for the template) is an interface
      */
     public boolean isValid() {
@@ -120,7 +120,7 @@ public class CompiledTemplate extends CompilationUnit {
          return mRuntimeContext.isInterface();
     }
 
-    /** 
+    /**
      * Test to see of the template can be loaded before CompiledTemplate can be
      * constructed.
      */
@@ -130,12 +130,12 @@ public class CompiledTemplate extends CompilationUnit {
             c.loadClass(fqName);
             return true;
         }
-        catch (ClassNotFoundException nx) { 
+        catch (ClassNotFoundException nx) {
             try {
                 c.loadClass(resolveName(name, from));  // Try standard path as a last resort
                 return true;
             }
-            catch (ClassNotFoundException nx2) { 
+            catch (ClassNotFoundException nx2) {
                 return false;
             }
         }
@@ -148,14 +148,14 @@ public class CompiledTemplate extends CompilationUnit {
 
 
     /**
-     * Get the runtime context of the compiled template.   This is an interface for 
+     * Get the runtime context of the compiled template.   This is an interface for
      * compiled templates.
      */
     public Class getRuntimeContext() { return mRuntimeContext; }
 
 
     /**
-     * This method is called by JavaClassGenerator during the compile phase. It overrides the 
+     * This method is called by JavaClassGenerator during the compile phase. It overrides the
      * method in CompilationUnit and returns just the reflected template signature.
      */
     public Template getParseTree() {
@@ -166,8 +166,9 @@ public class CompiledTemplate extends CompilationUnit {
 
         mTree = new Template(mCallerInfo, new Name(mCallerInfo, getName()),
             mParameters, mSubParam, null, null);
-        mTree.setReturnType(new Type(mExecuteMethod.getReturnType()));
-        
+        mTree.setReturnType(new Type(mExecuteMethod.getReturnType(),
+                                     mExecuteMethod.getGenericReturnType()));
+
         return mTree;
     }
 
@@ -184,6 +185,7 @@ public class CompiledTemplate extends CompilationUnit {
 
     private void reflectParameters() {
          Class[] p = mExecuteMethod.getParameterTypes();
+         java.lang.reflect.Type[] t = mExecuteMethod.getGenericParameterTypes();
          ArrayList list = new ArrayList();
          mSubParam = false;
          mRuntimeContext = p[0];
@@ -194,10 +196,10 @@ public class CompiledTemplate extends CompilationUnit {
                  mSubParam = true;
                  continue;
              }
-             list.add(new Variable(mCallerInfo, null, new Type(p[i])));
+             list.add(new Variable(mCallerInfo, null, new Type(p[i], t[i])));
          }
          mParameters = (Variable[]) list.toArray(new Variable[list.size()]);
-     
+
     }
 
 
@@ -230,6 +232,14 @@ public class CompiledTemplate extends CompilationUnit {
         return mCaller != null ? mCaller.getOutputStream() : null;
     }
 
+    /**
+     * Delegate to calling template.
+     */
+    public void resetOutputStream() {
+        if (mCaller != null) {
+            mCaller.resetOutputStream();
+        }
+    }
 
     /**
      * Delegate to calling template.

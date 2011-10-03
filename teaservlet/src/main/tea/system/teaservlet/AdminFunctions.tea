@@ -11,16 +11,16 @@ admin = getTeaServletAdmin()
 <%
     foreach (function in admin.functions) {
         '<tr><td valign="top" align="right"><font face="Arial" size="-1">'
-        call PrintClassLink(function.descriptor.method.returnType, true)
+        call PrintClassLink(function.descriptor.method.genericReturnType, true)
         '</font></td><td valign="top" align="left">'
         '<font face="Arial" size="2"><B>'
         call PrintMethodLink(function.descriptor,1)'</B>('
-        call PrintParameterDescriptors(function.descriptor.method.parameterTypes, function.descriptor.parameterDescriptors, false) ')'
+        call PrintParameterDescriptors(function.descriptor.method.genericParameterTypes, function.descriptor.parameterDescriptors, false) ')'
         '</font><br>&nbsp;&nbsp;&nbsp;'
         if (function.provider != null) {
             '<font size="-1">also accessible by ' function.provider.contextPrefixName '.' replace(function.name,"$",".")'</font>'
         }
-        
+
         /*
         if (function.descriptor.shortDescription != function.descriptor.displayName) {
                 getFirstSentence(function.descriptor.shortDescription)

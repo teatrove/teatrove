@@ -54,16 +54,16 @@ public abstract class DefaultContext extends Writer
     // Although the Integer.toString method keeps getting more optimized
     // with each release, it still isn't very fast at converting small values.
     private static final String[] INT_VALUES = {
-         "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9", 
-        "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", 
-        "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", 
-        "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", 
-        "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", 
-        "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", 
-        "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", 
-        "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", 
-        "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", 
-        "90", "91", "92", "93", "94", "95", "96", "97", "98", "99", 
+         "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",
+        "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+        "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
+        "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
+        "40", "41", "42", "43", "44", "45", "46", "47", "48", "49",
+        "50", "51", "52", "53", "54", "55", "56", "57", "58", "59",
+        "60", "61", "62", "63", "64", "65", "66", "67", "68", "69",
+        "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
+        "80", "81", "82", "83", "84", "85", "86", "87", "88", "89",
+        "90", "91", "92", "93", "94", "95", "96", "97", "98", "99",
     };
 
     private static final int FIRST_INT_VALUE = 0;
@@ -391,7 +391,7 @@ public abstract class DefaultContext extends Writer
                     locale = cached;
                 }
             }
-            
+
             mLocale = locale;
             dateFormat(null);
             numberFormat(null);
@@ -444,7 +444,7 @@ public abstract class DefaultContext extends Writer
         else {
             dtFormat = DateTimeFormat.getInstance(zone, mLocale);
         }
-    
+
         if (format == null) {
             format = dtFormat.getPatternForStyle("LL"); --orig
         }*/
@@ -511,12 +511,12 @@ public abstract class DefaultContext extends Writer
             key = new Pair(key, infinity);
             key = new Pair(key, NaN);
         }
-        
-        if ((mDecimalFormat = 
+
+        if ((mDecimalFormat =
              (DecimalFormat)cDecimalFormatCache.get(key)) == null) {
 
             mDecimalFormat = DecimalFormat.getInstance(format, mLocale);
-            
+
             if (infinity != null) {
                 mDecimalFormat = mDecimalFormat.setInfinity(infinity);
             }
@@ -693,7 +693,7 @@ public abstract class DefaultContext extends Writer
         }
         else {
             if (n > 20) n %= 10;
-            
+
             switch ((int)n) {
             case 1:
                 str += "st"; break;
@@ -720,7 +720,7 @@ public abstract class DefaultContext extends Writer
         if (n == 0) {
             return "zeroth";
         }
-        
+
         StringBuffer buf = new StringBuffer(20);
 
         if (n < 0) {
@@ -756,7 +756,7 @@ public abstract class DefaultContext extends Writer
         if (n == 0) {
             return "zero";
         }
-        
+
         StringBuffer buf = new StringBuffer(20);
 
         if (n < 0) {
@@ -776,7 +776,7 @@ public abstract class DefaultContext extends Writer
         return buf.toString();
     }
 
-    private static long cardinalGroup(StringBuffer buf, long n, 
+    private static long cardinalGroup(StringBuffer buf, long n,
                                       long threshold, String groupName) {
         if (n >= threshold) {
             cardinal999(buf, n / threshold, false);
@@ -794,7 +794,7 @@ public abstract class DefaultContext extends Writer
         return n;
     }
 
-    private static void cardinal999(StringBuffer buf, long n, 
+    private static void cardinal999(StringBuffer buf, long n,
                                     boolean ordinal) {
         n = cardinalGroup(buf, n, 100L, "hundred");
 
@@ -846,7 +846,7 @@ public abstract class DefaultContext extends Writer
                 }
             }
         }
-        
+
         switch ((int)n) {
         case 1:
             if (!ordinal) {
@@ -999,7 +999,7 @@ public abstract class DefaultContext extends Writer
         Iterator it = patternReplacements.entrySet().iterator();
         for (int i=0; it.hasNext(); i++) {
             Map.Entry entry = (Map.Entry)it.next();
-            
+
             patterns[i] = toString(entry.getKey());
             replacements[i] = toString(entry.getValue());
         }
@@ -1038,7 +1038,7 @@ public abstract class DefaultContext extends Writer
         }
         return StringReplacer.replaceLast(source, pattern, replacement, fromIndex);
     }
-    
+
     public boolean isArray(Object o) {
         return o!=null && o.getClass().isArray();
     }
@@ -1132,6 +1132,51 @@ public abstract class DefaultContext extends Writer
         }
         Arrays.sort(array, comparator);
     }
+    
+    public String[] split(String str, String regex) {
+    	return str.split(regex);
+    }
+
+    public StringBuilder createStringBuilder() {
+        return new StringBuilder();
+    }
+
+    public StringBuilder createStringBuilder(int size) {
+        return new StringBuilder(size);
+    }
+
+    public void append(StringBuilder buffer, Object value) {
+        if (buffer == null) {
+            throw new NullPointerException("buffer");
+        }
+
+        buffer.append(value);
+    }
+
+    public void prepend(StringBuilder buffer, Object value) {
+        if (buffer == null) {
+            throw new NullPointerException("buffer");
+        }
+
+        buffer.insert(0, value);
+    }
+
+    public void insert(StringBuilder buffer, Object value, int index) {
+        if (buffer == null) {
+            throw new NullPointerException("buffer");
+        }
+
+        buffer.insert(index, value);
+    }
+
+    public String toString(StringBuilder buffer) {
+        if (buffer == null) {
+            throw new NullPointerException("buffer");
+        }
+
+        return buffer.toString();
+    }
+
 
     private static Class getObjectClass(Object[] array) {
         Class result = null;

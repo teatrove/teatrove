@@ -1,0 +1,57 @@
+<% template GetGenericTypeAsString(java.lang.reflect.Type type, StringBuilder result, Boolean showLink, Boolean showVariables, Boolean resolveVariables)
+
+if (type isa java.lang.Class)
+{
+    info = getHandyClassInfo(type)
+
+    name = info.fullName
+    if (name == "org.teatrove.tea.runtime.Substitution") {
+        name = '<b>...</b>'
+    }
+    else if (startsWith(name, "java.lang.")) {
+        name = substring(name, "java.lang.".length)
+    }
+    else if (startsWith(name, "java.util.")) {
+        name = substring(name, "java.util.".length)
+    }
+    name = replace(name, "$", ".")
+
+    // these are not classes or are classes we don't want
+    // to display properties of
+    unlinked = ##(
+                  "void", "",
+                  "char", "",
+                  "int", "",
+                  "byte", "",
+                  "long", "",
+                  "float", "",
+                  "boolean", "",
+                  "org.teatrove.tea.runtime.Substitution", ""
+                  )
+    if ((not showLink) or (unlinked[type.name] != null)) {
+        append(result, name)
+    }
+    else {
+        append(result, '<a href="Admin?subTemplate=system.teaservlet.BeanProperties&bean=' & type.name & '">')
+        append(result, name)
+        append(result, '</a>')
+    }
+}
+else if (type isa java.lang.reflect.ParameterizedType)
+{
+    call GetParameterizedTypeAsString(type, result, showLink, showVariables, resolveVariables)
+}
+else if (type isa java.lang.reflect.WildcardType)
+{
+    call GetWildcardTypeAsString(type, result, showLink, showVariables, resolveVariables)
+}
+else if (type isa java.lang.reflect.TypeVariable)
+{
+    call GetTypeVariableAsString(type, result, showLink, showVariables, resolveVariables)
+}
+else if (type isa java.lang.reflect.GenericArrayType)
+{
+    call GetGenericArrayTypeAsString(type, result, showLink, showVariables, resolveVariables)
+}
+
+%>

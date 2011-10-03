@@ -122,22 +122,21 @@ SERVER STATS SECTION
 
     path = request.requestURI
     extension = ""
-    
+    // all this fuss is to manage the difference in how barista and a spec compliant container populate the request data
     if (request.pathInfo != null) {
         index = findFirst(path, request.pathInfo)
-    }
-    else { 
+        path = substring(path, 0, index)
+
+    } else if(request.contextPath!=null and findFirst(path, request.contextPath)==0) {
+        path = request.contextPath
+
+    } else { 
         // look for any extensions like ".tea"
         index = findLast(path, ".") 
         if (index >= 0) {
             extension = substring(path, index)
             path = substring(path, 0, index)        
         }
-        index = 0 
-    }
-         
-    if (index >= 0) {
-        path = substring(path, 0, index)
     }
     path = path & '/'
 

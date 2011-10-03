@@ -32,7 +32,7 @@ public class Expression extends Node {
     private LinkedList mConversions;
     private boolean mPrimitive;
     private boolean mExceptionPossible;
-    
+
     public Expression(SourceInfo info) {
         super(info);
         mConversions = new LinkedList();
@@ -109,8 +109,9 @@ public class Expression extends Node {
      */
     public void convertTo(Type toType, boolean preferCast) {
         Type fromType = getType();
+        Type actual = Type.preserveType(fromType, toType);
 
-        if (toType.equals(fromType)) {
+        if (actual.equals(fromType)) {
             return;
         }
 
@@ -124,27 +125,27 @@ public class Expression extends Node {
             legal = true;
         }
         else if (fromType.isPrimitive()) {
-            if (toType.isPrimitive()) {
-                if (toType.getNaturalClass() != void.class) {
+            if (actual.isPrimitive()) {
+                if (actual.getNaturalClass() != void.class) {
                     legal = true;
                 }
             }
             else {
                 Class fromObj = fromType.getObjectClass();
-                Class toObj = toType.getObjectClass();
+                Class toObj = actual.getObjectClass();
 
                 if (toObj.isAssignableFrom(fromObj)) {
                     legal = true;
                     if (fromObj != toObj) {
-                        toType = fromType.toNonPrimitive();
+                        actual = fromType.toNonPrimitive();
                     }
                 }
                 else if (Number.class.isAssignableFrom(fromObj) &&
-                         toType.hasPrimitivePeer()) {
+                    actual.hasPrimitivePeer()) {
 
                     if (Number.class.isAssignableFrom(toObj)) {
                         legal = true;
-                        convertTo(toType.toPrimitive());
+                        convertTo(actual.toPrimitive());
                     }
                     else if (Character.class.isAssignableFrom(toObj)) {
                         legal = true;
@@ -155,7 +156,7 @@ public class Expression extends Node {
         }
         else {
             // From non-primitive...
-            if (toType.isPrimitive()) {
+            if (actual.isPrimitive()) {
                 if (fromType.hasPrimitivePeer()) {
                     legal = true;
                     if (fromType.isNullable()) {
@@ -166,15 +167,15 @@ public class Expression extends Node {
                     Type fromPrim = fromType.toPrimitive();
 
                     if (fromPrim.getNaturalClass() !=
-                        toType.getNaturalClass()) {
+                        actual.getNaturalClass()) {
 
                         convertTo(fromPrim);
                     }
                 }
                 else {
                     Class fromObj = fromType.getObjectClass();
-                    Class toObj = toType.getObjectClass();
-                    
+                    Class toObj = actual.getObjectClass();
+
                     if (Number.class.isAssignableFrom(fromObj) &&
                         Number.class.isAssignableFrom(toObj)) {
                         legal = true;
@@ -185,15 +186,22 @@ public class Expression extends Node {
                     }
                     else if (preferCast) {
                         legal = true;
-                        convertTo(toType.toNonPrimitive(), true);
+                        convertTo(actual.toNonPrimitive(), true);
                     }
                 }
             }
             else {
                 Class fromObj = fromType.getObjectClass();
-                Class toObj = toType.getObjectClass();
+                Class toObj = actual.getObjectClass();
 
-                if (fromObj.isAssignableFrom(toObj)) {
+                if (fromObj.equals(toObj)) {
+                    legal = true;
+                    if (fromType.isNonNull() || !actual.isNonNull()) {
+                        // No useful conversion applied, bail out.
+                        return;
+                    }
+                }
+                else if (fromObj.isAssignableFrom(toObj)) {
                     // Downcast.
                     if (preferCast) {
                         legal = true;
@@ -202,24 +210,24 @@ public class Expression extends Node {
                 else if (toObj.isAssignableFrom(fromObj)) {
                     // Upcast.
                     legal = true;
-                    if (fromType.isNonNull() || !toType.isNonNull()) {
+                    if (fromType.isNonNull() || !actual.isNonNull()) {
                         // No useful conversion applied, bail out.
                         return;
                     }
                 }
                 else if (Number.class.isAssignableFrom(fromObj) &&
                          Number.class.isAssignableFrom(toObj) &&
-                         toType.hasPrimitivePeer()) {
+                         actual.hasPrimitivePeer()) {
                     // Conversion like Integer -> Double.
                     legal = true;
                     if (fromType.isNonNull()) {
-                        convertTo(toType.toPrimitive(), true);
+                        convertTo(actual.toPrimitive(), true);
                     }
                 }
                 // This test only captures array conversions.
                 else if (fromObj.getComponentType() != null &&
                          toObj.getComponentType() != null &&
-                         toType.convertableFrom(fromType) >= 0) {
+                         actual.convertableFrom(fromType) >= 0) {
                     legal = true;
                     if (fromType.isNullable()) {
                         // NullPointerException is possible.
@@ -231,9 +239,9 @@ public class Expression extends Node {
 
         if (!legal) {
             // Try String conversion.
-            if (toType.getNaturalClass().isAssignableFrom(String.class)) {
+            if (actual.getNaturalClass().isAssignableFrom(String.class)) {
                 legal = true;
-                if (toType.isNonNull()) {
+                if (actual.isNonNull()) {
                     addConversion(Type.NON_NULL_STRING_TYPE, false);
                 }
                 else {
@@ -243,13 +251,13 @@ public class Expression extends Node {
         }
 
         if (!legal && !preferCast &&
-            !fromType.isPrimitive() && !toType.isPrimitive()) {
+            !fromType.isPrimitive() && !actual.isPrimitive()) {
 
             // Even though a cast isn't preferred, its the last available
             // option.
-            
+
             Class fromObj = fromType.getObjectClass();
-            Class toObj = toType.getObjectClass();
+            Class toObj = actual.getObjectClass();
 
             if (fromObj.isAssignableFrom(toObj)) {
                 // Downcast.
@@ -262,7 +270,7 @@ public class Expression extends Node {
         }
 
         if (legal) {
-            addConversion(toType, preferCast);
+            addConversion(actual, preferCast);
         }
         else {
             throw new IllegalArgumentException("Can't convert " + fromType +
@@ -270,11 +278,19 @@ public class Expression extends Node {
         }
     }
 
+    public void forceConversion(Type toType, boolean preferCast) {
+        Type fromType = getType();
+        Type convType = Type.preserveType(fromType, toType);
+
+        mConversions.add(new Conversion(fromType, convType, preferCast));
+    }
+
     private void addConversion(Type toType, boolean preferCast) {
         Type fromType = getType();
+        Type convType = Type.preserveType(fromType, toType);
 
-        if (!toType.equals(fromType)) {
-            mConversions.add(new Conversion(fromType, toType, preferCast));
+        if (!convType.equals(fromType)) {
+            mConversions.add(new Conversion(fromType, convType, preferCast));
         }
     }
 
@@ -293,13 +309,15 @@ public class Expression extends Node {
      * Sets the type of this expression, clearing the conversion chain.
      */
     public void setType(Type type) {
+        Type actual = Type.preserveType(this.getType(), type);
+
         mConversions.clear();
         mExceptionPossible = false;
-        if (type != null) {
+        if (actual != null) {
             // Prefer cast for initial type for correct operation of
             // setInitialType if a conversion needs to be inserted at the
             // beginning.
-            mConversions.add(new Conversion(null, type, true));
+            mConversions.add(new Conversion(null, actual, true));
         }
     }
 
@@ -309,9 +327,10 @@ public class Expression extends Node {
      */
     public void setInitialType(Type type) {
         Type initial = getInitialType();
-        if (type != null && !type.equals(initial)) {
+        Type actual = Type.preserveType(initial, type);
+        if (actual != null && !actual.equals(initial)) {
             if (initial == null) {
-                setType(type);
+                setType(actual);
             }
             else {
                 Iterator it = mConversions.iterator();
@@ -319,7 +338,7 @@ public class Expression extends Node {
                 // Prefer cast for initial type for correct operation of
                 // setInitialType if a conversion needs to be inserted at the
                 // beginning.
-                mConversions.add(new Conversion(null, type, true));
+                mConversions.add(new Conversion(null, actual, true));
                 while (it.hasNext()) {
                     Conversion conv = (Conversion)it.next();
                     convertTo(conv.getToType(), conv.isCastPreferred());
@@ -356,7 +375,7 @@ public class Expression extends Node {
             while (fromIterator.hasNext()) {
                 int fromIndex = fromIterator.nextIndex();
                 Type from = ((Conversion)fromIterator.next()).getToType();
-                
+
                 ListIterator toIterator =
                     conversions.listIterator(fromIndex + 1);
 
@@ -438,7 +457,7 @@ public class Expression extends Node {
             if (!(other instanceof Conversion)) {
                 return false;
             }
-            
+
             Conversion conv = (Conversion)other;
 
             if (mFromType == null) {
@@ -461,7 +480,7 @@ public class Expression extends Node {
                 return "Convert to " + mToType.getFullName();
             }
             else {
-                return "Convert from " + mFromType.getFullName() + 
+                return "Convert from " + mFromType.getFullName() +
                     " to " + mToType.getFullName();
             }
         }

@@ -16,18 +16,30 @@
 
 package org.teatrove.tea.util;
 
-import java.beans.*;
-import java.util.*;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+
+import org.teatrove.trove.generics.GenericType;
 import org.teatrove.trove.util.IdentityMap;
 
 /**
  * The JavaBean Introspector for Tea.
  *
  * @author Brian S O'Neill
- *
  * @see java.beans.Introspector
  */
 public class BeanAnalyzer {
@@ -37,8 +49,8 @@ public class BeanAnalyzer {
     /** The name given to keyed properties: "[]" */
     public static final String KEYED_PROPERTY_NAME = "[]";
 
-    /** 
-     * The name of the special field that specializes a 
+    /**
+     * The name of the special field that specializes a
      * keyed property type: "ELEMENT_TYPE"
      */
     public static final String ELEMENT_TYPE_FIELD_NAME = "ELEMENT_TYPE";
@@ -48,14 +60,14 @@ public class BeanAnalyzer {
 
     static {
         Introspector.setBeanInfoSearchPath(new String[0]);
-        cPropertiesCache = new IdentityMap();
+        cPropertiesCache = Collections.synchronizedMap(new IdentityMap(32768));
     }
 
     /**
      * Test program.
      */
     public static void main(String[] args) throws Exception {
-        Map map = getAllProperties(Class.forName(args[0]));
+        Map map = getAllProperties(new GenericType(Class.forName(args[0])));
         Iterator keys = map.keySet().iterator();
         while (keys.hasNext()) {
             String key = (String)keys.next();
@@ -67,11 +79,11 @@ public class BeanAnalyzer {
     /**
      * A function that returns a Map of all the available properties on
      * a given class including write-only properties. The properties returned
-     * is mostly a superset of those returned from the standard JavaBeans 
+     * is mostly a superset of those returned from the standard JavaBeans
      * Introspector except pure indexed properties are discarded.
      *
-     * <p>Interfaces receive all the properties available in Object. Arrays, 
-     * Strings and Collections all receive a "length" property. An array's 
+     * <p>Interfaces receive all the properties available in Object. Arrays,
+     * Strings and Collections all receive a "length" property. An array's
      * "length" PropertyDescriptor has no read or write methods.
      *
      * <p>Instead of indexed properties, there may be keyed properties in the
@@ -82,34 +94,42 @@ public class BeanAnalyzer {
      * specific than the method signature describes (such is often the case
      * with collections), a bean class can contain a special field that
      * indicates what that specific type should be. The signature of this field
-     * is as follows: 
+     * is as follows:
      * <tt>public&nbsp;static&nbsp;final&nbsp;Class&nbsp;ELEMENT_TYPE&nbsp;=&nbsp;&lt;type&gt;.class;</tt>.
-     * 
+     *
      * @return an unmodifiable mapping of property names (Strings) to
      * PropertyDescriptor objects.
      *
      */
-    public static Map getAllProperties(Class clazz)
+    public static Map getAllProperties(GenericType root)
         throws IntrospectionException {
-        
-        Map properties = (Map)cPropertiesCache.get(clazz);
+
+        Map properties = (Map)cPropertiesCache.get(root);
         if (properties == null) {
-            properties = Collections.unmodifiableMap(createProperties(clazz));
-            cPropertiesCache.put(clazz, properties);
+            GenericType rootType = root.getRootType();
+            if (rootType == null) {
+                rootType = root;
+            }
+            properties = Collections.unmodifiableMap
+            (
+                createProperties(rootType, root)
+            );
+            cPropertiesCache.put(root, properties);
         }
 
         return properties;
     }
 
-    private static Map createProperties(Class clazz)
+    private static Map createProperties(GenericType root, GenericType type)
         throws IntrospectionException {
 
         Map properties = new HashMap();
 
+        Class<?> clazz = type.getRawType().getType();
         if (clazz == null || clazz.isPrimitive()) {
             return properties;
         }
-        
+
         BeanInfo info;
         try {
             info = Introspector.getBeanInfo(clazz);
@@ -120,7 +140,7 @@ public class BeanAnalyzer {
 
         if (info != null) {
             PropertyDescriptor[] pdArray = info.getPropertyDescriptors();
-            
+
             // Standard properties.
             int length = pdArray.length;
             for (int i=0; i<length; i++) {
@@ -134,13 +154,20 @@ public class BeanAnalyzer {
 
         // Properties defined in Object are also available to interfaces.
         if (clazz.isInterface()) {
-            properties.putAll(getAllProperties(Object.class));
+            properties.putAll(getAllProperties(new GenericType(Object.class)));
         }
 
         // Ensure that all implemented interfaces are properly analyzed.
         Class[] interfaces = clazz.getInterfaces();
+        Type[] generics = clazz.getGenericInterfaces();
         for (int i=0; i<interfaces.length; i++) {
-            properties.putAll(getAllProperties(interfaces[i]));
+            properties.putAll
+            (
+                getAllProperties
+                (
+                    new GenericType(interfaces[i], generics[i])
+                )
+            );
         }
 
         // All arrays have a "length" property and a keyed property.
@@ -175,24 +202,24 @@ public class BeanAnalyzer {
                 throw new LinkageError(e.toString());
             }
         }
-        
+
         // Analyze design patterns for keyed properties.
 
         KeyedPropertyDescriptor keyed = new KeyedPropertyDescriptor();
         List keyedMethods = new ArrayList();
 
-        if (clazz.isArray()) {
-            keyed.setKeyedPropertyType(clazz.getComponentType());
+        if (type.isArray()) {
+            keyed.setKeyedPropertyType(type.getComponentType());
             keyedMethods.add(null);
         }
 
         // Get index types and access methods.
 
-        // Extract all the public "get" methods that have a return type and 
+        // Extract all the public "get" methods that have a return type and
         // one parameter.
-        
+
         Method[] methods = clazz.getMethods();
-        
+
         for (int i=0; i<methods.length; i++) {
             Method m = methods[i];
             if (Modifier.isPublic(m.getModifiers()) &&
@@ -202,23 +229,33 @@ public class BeanAnalyzer {
                 if (ret != null && ret != void.class) {
                     Class[] params = m.getParameterTypes();
                     if (params.length == 1) {
+                        GenericType retType =
+                            new GenericType(root, m.getReturnType(),
+                                            m.getGenericReturnType());
+
                         // Found a method that fits the requirements.
-                        keyed.setKeyedPropertyType(ret);
+                        keyed.setKeyedPropertyType(retType);
                         keyedMethods.add(m);
                     }
                 }
             }
         }
-        
+
         if (keyedMethods.size() == 0) {
             // If no "get" methods found, but this type is a Vector or
             // String, use elementAt or charAt as substitutes.
-            
+
             if (Vector.class.isAssignableFrom(clazz)) {
-                keyed.setKeyedPropertyType(Object.class);
                 try {
                     Method m = Vector.class.getMethod
                         ("elementAt", new Class[] {int.class});
+
+                    keyed.setKeyedPropertyType
+                    (
+                        new GenericType(root, m.getReturnType(),
+                                        m.getGenericReturnType())
+                    );
+
                     keyedMethods.add(m);
                 }
                 catch (NoSuchMethodException e) {
@@ -226,10 +263,15 @@ public class BeanAnalyzer {
                 }
             }
             else if (String.class.isAssignableFrom(clazz)) {
-                keyed.setKeyedPropertyType(char.class);
                 try {
                     Method m = String.class.getMethod
                         ("charAt", new Class[] {int.class});
+
+                    keyed.setKeyedPropertyType
+                    (
+                        new GenericType(root, m.getReturnType(),
+                                        m.getGenericReturnType())
+                    );
                     keyedMethods.add(m);
                 }
                 catch (NoSuchMethodException e) {
@@ -244,12 +286,12 @@ public class BeanAnalyzer {
                 Field field = clazz.getField(ELEMENT_TYPE_FIELD_NAME);
                 if (field.getType() == Class.class &&
                     Modifier.isStatic(field.getModifiers())) {
-                    
+
                     Class elementType = (Class)field.get(null);
-                    if (keyed.getKeyedPropertyType()
+                    if (keyed.getKeyedPropertyType().getRawType().getType()
                         .isAssignableFrom(elementType)) {
-                        
-                        keyed.setKeyedPropertyType(elementType);
+
+                        keyed.setKeyedPropertyType(new GenericType(elementType));
                     }
                 }
             }
@@ -257,7 +299,7 @@ public class BeanAnalyzer {
             }
             catch (IllegalAccessException e) {
             }
-        
+
             properties.put(KEYED_PROPERTY_NAME, keyed);
             int size = keyedMethods.size();
             keyed.setKeyedReadMethods
@@ -280,7 +322,7 @@ public class BeanAnalyzer {
         public ArrayLengthProperty(Class clazz) throws IntrospectionException {
             super(LENGTH_PROPERTY_NAME, clazz, null, null);
         }
-        
+
         public Class getPropertyType() {
             return int.class;
         }

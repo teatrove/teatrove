@@ -4,18 +4,18 @@ value = encodeParameter(md.method.name)
 foreach (param in md.parameterDescriptors) {
     value = value & "-" & param.displayName
 }
-'<A '
+'<a '
 if (target == 0) {
-    text = "<!-- -->" 
+    text = "<!-- -->"
     'name="#' value '" id="' value '" '
 }
 else if (target == 1){
-    text = replace(md.name,"$",".") 
-    'href=Admin?subTemplate=system.teaservlet.ContextDetail&context='md.method.declaringClass.name 
+    text = replace(md.name,"$",".")
+    'href=Admin?subTemplate=system.teaservlet.ContextDetail&context='md.method.declaringClass.name
     '#'value
 }
-else { 
-    text = replace(md.name,"$",".") 
+else {
+    text = replace(md.name,"$",".")
     'href=#' value
 }
-'>'text'</A>'
+'>'text'</a>'

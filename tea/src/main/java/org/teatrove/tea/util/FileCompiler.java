@@ -16,27 +16,34 @@
 
 package org.teatrove.tea.util;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.Reader;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
+import java.io.Reader;
+import java.net.JarURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.ArrayList;
-import java.util.TreeSet;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Collections;
-import org.teatrove.trove.util.ClassInjector;
-import org.teatrove.trove.io.DualOutput;
-import org.teatrove.tea.compiler.Compiler;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
 import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.TemplateRepository;
+import org.teatrove.trove.io.DualOutput;
+import org.teatrove.trove.util.ClassInjector;
 
 /**
  * FileCompiler compiles tea source files by reading them from a file or a
@@ -211,6 +218,7 @@ public class FileCompiler extends AbstractFileCompiler {
     private ClassInjector mInjector;
     private String mEncoding;
     private boolean mForce = false;
+    private Map<File, JarOfTemplates> mSrcJars;
     
     /**
      * @param rootSourceDir Required root source directory
@@ -289,6 +297,23 @@ public class FileCompiler extends AbstractFileCompiler {
         init(rootSourceDirs, rootPackage, rootDestDir, injector, encoding);
     }
 
+    private JarOfTemplates getJarOfTemplates(File file) throws IOException {
+
+        if(mSrcJars==null) {
+            mSrcJars = Collections.synchronizedMap(new HashMap());
+        }
+
+        //TODO change the value of the map to a weak ref
+        JarOfTemplates j = mSrcJars.get(file);
+
+        if(j==null) {
+            j = new JarOfTemplates(file);
+            mSrcJars.put(file, j);
+        }
+
+        return j;
+    }
+
     private void init(File[] rootSourceDirs,
                       String rootPackage,
                       File rootDestDir,
@@ -300,12 +325,15 @@ public class FileCompiler extends AbstractFileCompiler {
         mInjector = injector;
         mEncoding = encoding;
 
-        for (int i=0; i<rootSourceDirs.length; i++) {
-            if (!rootSourceDirs[i].isDirectory()) {
-                throw new IllegalArgumentException
-                    ("Source location is not a directory: " + 
+        rootSourceLoop:for (int i=0; i<rootSourceDirs.length; i++) {
+
+            if(rootSourceDirs[i].isDirectory()) continue rootSourceLoop;
+
+            if( isJarUrl( rootSourceDirs[i] ) ) continue rootSourceLoop;
+
+            throw new IllegalArgumentException
+                    ("Source location is not a directory or a jar URL: " +
                      rootSourceDirs[i]);
-            }
         }
 
         if (rootDestDir != null && 
@@ -337,15 +365,22 @@ public class FileCompiler extends AbstractFileCompiler {
     }
 
     public String[] compile(String[] names) throws IOException {
-        ArrayList nameList = new ArrayList();
-        String[] allNames = getAllTemplateNames();
-        Arrays.sort(allNames);
-        for (int i = 0; i < names.length; i++) {
-            if(Arrays.binarySearch(allNames, names[i]) >= 0) {
-                nameList.add(names[i]);
+
+        try {
+            ArrayList nameList = new ArrayList();
+            String[] allNames = getAllTemplateNames();
+            Arrays.sort(allNames);
+            for (int i = 0; i < names.length; i++) {
+                if(Arrays.binarySearch(allNames, names[i]) >= 0) {
+                    nameList.add(names[i]);
+                }
+            }
+            return super.compile((String[])nameList.toArray(new String[nameList.size()]));
+        } finally {
+            if(mSrcJars!=null) for(File f:mSrcJars.keySet()) {
+                mSrcJars.remove(f).close();
             }
         }
-        return super.compile((String[])nameList.toArray(new String[nameList.size()]));
     }
    
     public String[] getAllTemplateNames() throws IOException {
@@ -357,14 +392,31 @@ public class FileCompiler extends AbstractFileCompiler {
         Collection sources = new TreeSet();
 
         for (int i=0; i<mRootSourceDirs.length; i++) {
-            gatherSources(sources, mRootSourceDirs[i], recurse);
+            if( isJarUrl(mRootSourceDirs[i] ) ) {
+                JarOfTemplates j = getJarOfTemplates(mRootSourceDirs[i]);
+                gatherJarSources(sources, j);
+            } else {
+                gatherSources(sources, mRootSourceDirs[i], recurse);
+            }
         }
 
         return (String[])sources.toArray(new String[sources.size()]);
     }
     
     public boolean sourceExists(String name) {
-        return findRootSourceDir(name) != null;
+        return findRootSourceDir(name) != null || findJarSrc(name)!=null;
+    }
+
+    private void gatherJarSources(Collection sources, JarOfTemplates j) throws IOException {
+
+        for(Enumeration<JarEntry> entries = j.getEntries(); entries.hasMoreElements(); ) {
+            String name = entries.nextElement().getName();
+            if(name.endsWith(".tea")) {
+                name = name.substring(0, name.lastIndexOf(".tea"));
+                name = name.replace('/', '.');
+                if(!sources.contains(name)) sources.add(name);
+            }
+        }
     }
 
     /**
@@ -439,6 +491,15 @@ public class FileCompiler extends AbstractFileCompiler {
      * @see FileCompiler.Unit#getSourceFile
      */
     protected CompilationUnit createCompilationUnit(String name) {
+        File jarFile = findJarSrc(name);
+        try {
+            if(jarFile!=null) {
+                return new JarredUnit(jarFile, name, this);
+            }
+        } catch (IOException ex) {
+            // if error default to normal file loading behavoir
+            throw new RuntimeException(ex);
+        }
         return new Unit(name, this);
     }
 
@@ -446,6 +507,9 @@ public class FileCompiler extends AbstractFileCompiler {
         String fileName = name.replace('.', File.separatorChar) + ".tea";
 
         for (int i=0; i<mRootSourceDirs.length; i++) {
+            if(mRootSourceDirs[i].isFile() && mRootSourceDirs[i].getPath().endsWith(".jar")) {
+                continue;
+            }
             File file = new File(mRootSourceDirs[i], fileName);
             if (file.exists()) {
                 return mRootSourceDirs[i];
@@ -453,6 +517,30 @@ public class FileCompiler extends AbstractFileCompiler {
         }
 
         return null;
+    }
+
+    private File findJarSrc(String name) {
+        String fileName = name.replace('.', '/') + ".tea";
+
+        for (File file : mRootSourceDirs) {
+            if(isJarUrl(file)) {
+                try {
+                    JarOfTemplates jot = getJarOfTemplates(file);
+                    if(jot.getEntry(fileName)!=null) {
+                        return file;
+                    }
+                } catch(IOException ex) {
+                    throw new RuntimeException("opening jar file: "+file, ex);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isJarUrl(File file) {
+        String path = file.toString();
+        return (path.startsWith("jar:") && path.endsWith("!"));
     }
 
     public class Unit extends CompilationUnit {
@@ -537,12 +625,7 @@ public class FileCompiler extends AbstractFileCompiler {
             }
 
             if (mInjector != null) {
-                String className = getName();
-                String pack = getTargetPackage();
-                if (pack != null && pack.length() > 0) {
-                    className = pack + '.' + className;
-                }
-                out2 = mInjector.getStream(className);
+                out2 = mInjector.getStream(getClassName());
             }
 
             OutputStream out;
@@ -567,5 +650,237 @@ public class FileCompiler extends AbstractFileCompiler {
 
             return new BufferedOutputStream(out);
         }
+        
+        public void resetOutputStream() {
+            if (mDestFile != null) {
+                mDestFile.delete();
+            }
+
+            if (mInjector != null) {
+                mInjector.resetStream(getClassName());
+            }
+        }
+
+        protected String getClassName() {
+            String className = getName();
+            String pack = getTargetPackage();
+            if (pack != null && pack.length() > 0) {
+                className = pack + '.' + className;
+            }
+
+            return className;
+        }
+    }
+
+/////////////////////////////////
+    public class JarredUnit extends CompilationUnit {
+
+        private File mDestFile;
+        private String mSourceFileName;
+        private JarOfTemplates mJarOfTemlates;
+        private URL mUrl;
+
+        public JarredUnit(File file, String name, Compiler compiler) throws IOException {
+            super(name, compiler);
+
+            mJarOfTemlates = getJarOfTemplates(file);
+
+            mSourceFileName = name.replace('.', '/') + ".tea";
+
+            mUrl = new URL(mJarOfTemlates.getUrl(), mJarOfTemlates.getEntry(mSourceFileName).toString());
+
+            if(mRootDestDir!=null) {
+                String filePath = name.replace('.', '/') + ".class";
+                mDestFile = new File(mRootDestDir, filePath);
+            }
+        }
+
+        @Override
+        public String getSourceFileName() {
+
+            return getJarEntry().getName();
+        }
+
+        public JarEntry getJarEntry() {
+            return (JarEntry) mJarOfTemlates.getEntry(mSourceFileName);
+        }
+
+        @Override
+        public String getTargetPackage() {
+            return mRootPackage;
+        }
+
+        public URL getSourceUrl() {
+            return mUrl;
+        }
+
+        @Override
+        public Reader getReader() throws IOException {
+
+            InputStream in = mJarOfTemlates.getInputStream(getJarEntry());
+            if (mEncoding == null) {
+                return new InputStreamReader(in);
+            }
+            else {
+                return new InputStreamReader(in, mEncoding);
+            }
+        }
+
+        @Override
+        public boolean shouldCompile() {
+            if(getJarEntry()==null) {
+                return false;
+            }
+
+            if (!mForce &&
+                mDestFile != null &&
+                mDestFile.exists() &&
+                mDestFile.lastModified() >= getJarEntry().getTime()) {
+
+                return false;
+            }
+
+            return true;
+        }
+
+        public void syncTimes() {
+            if(mDestFile!=null) {
+                mDestFile.setLastModified(getJarEntry().getTime());
+            }
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            OutputStream out1 = null;
+            OutputStream out2 = null;
+
+            if (mDestFile != null) {
+                File dir = mDestFile.getParentFile();
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+                out1 = new FileOutputStream(mDestFile);
+            }
+
+            if (mInjector != null) {
+                out2 = mInjector.getStream(getClassName());
+            }
+
+            OutputStream out;
+
+            if (out1 != null) {
+                if (out2 != null) {
+                    out = new DualOutput(out1, out2);
+                }
+                else {
+                    out = out1;
+                }
+            }
+            else if (out2 != null) {
+                out = out2;
+            }
+            else {
+                out = new OutputStream() {
+                    @Override
+                    public void write(int b) {}
+                    @Override
+                    public void write(byte[] b, int off, int len) {}
+                };
+            }
+
+            return new BufferedOutputStream(out);
+        }
+
+        private File getDestinationFile() {
+            return mDestFile;
+        }
+
+        public void resetOutputStream() {
+            if (mDestFile != null) {
+                mDestFile.delete();
+            }
+
+            if (mInjector != null) {
+                mInjector.resetStream(getClassName());
+            }
+        }
+
+        protected String getClassName() {
+            String className = getName();
+            String pack = getTargetPackage();
+            if (pack != null && pack.length() > 0) {
+                className = pack + '.' + className;
+            }
+
+            return className;
+        }
+    }
+
+    class JarOfTemplates {
+        private JarFile mJarFile;
+        private JarURLConnection mConn;
+        private URL mUrl;
+
+        public JarOfTemplates(File file) throws IOException {
+            mUrl = makeJarUrlFromFile(file);
+            mConn = (JarURLConnection)mUrl.openConnection();
+            mJarFile = mConn.getJarFile();
+        }
+
+        public JarEntry getEntry(JarEntry jarEntry) {
+            return getEntry(jarEntry.getName());
+        }
+
+        public JarEntry getEntry(String name) {
+            return mJarFile.getJarEntry(name);
+        }
+
+        public Enumeration<JarEntry> getEntries() {
+            // TODO cache with weak ref and check url headers for changes
+            return mJarFile.entries();
+        }
+
+        public InputStream getInputStream(JarEntry jarEntry) throws IOException {
+            return mJarFile.getInputStream(jarEntry);
+        }
+
+        public URL getUrl() {
+            return mUrl;
+        }
+
+        public void close() throws IOException {
+            if(mJarFile!=null) mJarFile.close();
+            mJarFile = null;
+            mConn = null;
+        }
+
+        URL makeJarUrlFromFile(File path) {
+            String urlStr = path.toString();
+
+            urlStr = urlStr.replace("\\", "/");
+            if(urlStr.startsWith("jar:file:")) {
+                urlStr = urlStr.replaceFirst("/", "///");
+            } else {
+                if(urlStr.indexOf("//")<0) {
+                    urlStr = urlStr.replaceFirst("/", "//");
+                }
+            }
+
+            if(!urlStr.endsWith("/")) urlStr = urlStr+ "/";
+
+            try {
+                return new URL(urlStr);
+            } catch(MalformedURLException ex) {
+                throw new RuntimeException("not a jar url: "+urlStr, ex);
+            }
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            this.close();
+            super.finalize();
+        }
+
+
     }
 }

@@ -74,6 +74,8 @@ import javax.servlet.http.HttpServletResponse;
  * <li>template.default - the default name for templates
  * <li>template.file.encoding - character encoding of template source files
  * <li>template.exception.guardian - when true, runtime exceptions during template execution don't abort page output
+ * <li>autocompile - when true, will compile the template when it is requested if the template has been updated (just like JSP!)
+ * <li>autocompile.recurse - when true (default), will compile any sub-template that has changed regardless of if the requested template has changed.  Only meaningful if autocompile=true
  * <li>separator.query - override the query separator of '?'
  * <li>separator.parameter - override the parameter separator of '&'
  * <li>separator.value - override the parameter separator of '='
@@ -129,6 +131,8 @@ public class TeaServlet extends HttpServlet {
      * @param config  the servlet config
      */
     public void init(ServletConfig config) throws ServletException {
+        config.getServletContext().log("Starting TeaServlet...");
+
         super.init(config);
 
         String ver = System.getProperty("java.version");
@@ -160,15 +164,10 @@ public class TeaServlet extends HttpServlet {
         // simple hack to determine if the admin applications have even 
         // been mentioned in the file.
         //
-        if (!mProperties.containsValue("org.teatrove.teaservlet.AdminApplication") &&
-            !mProperties.containsValue("org.teatrove.barista.admin.TQAdminApplication")) {
+        if (!mProperties.containsValue("org.teatrove.teaservlet.AdminApplication")) {
             mLog.warn("org.teatrove.teaservlet.AdminApplication: not properly configured");
         }
 
-        if (!mProperties.containsValue(
-            "org.teatrove.barista.admin.BaristaAdminApplication")) {
-            mLog.warn("org.teatrove.barista.admin.BaristaAdminApplication: not properly configured");
-        }
 
         PluginContext pluginContext = loadPlugins(mProperties, mLog);
 
@@ -206,6 +205,8 @@ public class TeaServlet extends HttpServlet {
             (!"?".equals(mQuerySeparator)) ||
             (!"&".equals(mParameterSeparator)) ||
             (!"=".equals(mValueSeparator));
+
+        config.getServletContext().log("TeaServlet complete...");
 
     }
 
@@ -282,7 +283,12 @@ public class TeaServlet extends HttpServlet {
     private TeaServletEngine createTeaServletEngine()
         throws ServletException {
 
-        TeaServletEngineImpl engine = new TeaServletEngineImpl();
+        TeaServletEngineImpl engine;
+        if (mProperties.getBoolean("autocompile", false)) {
+            engine = new TeaServletEngineImplDev();
+        } else {
+            engine = new TeaServletEngineImpl();             
+        }
 
         Object tsea = mServletContext.getAttribute(ENGINE_ATTR);
         
@@ -421,7 +427,7 @@ public class TeaServlet extends HttpServlet {
         }
     }
 
-    private void loadDefaults(PropertyMap properties) {
+    private void loadDefaults(PropertyMap properties) throws ServletException {
         try {
             loadDefaults(properties, new HashSet(), null);
         }
@@ -432,7 +438,7 @@ public class TeaServlet extends HttpServlet {
     }
 
     private void loadDefaults(PropertyMap properties, Set files, Reader reader)
-        throws IOException
+        throws IOException, ServletException
     {
         String fileName;
 
@@ -477,14 +483,11 @@ public class TeaServlet extends HttpServlet {
                         if (in != null)
                             loadDefaults(properties, files, new InputStreamReader(in));
                         else
-                            mLog.error("Cannot locate properties at path : " + fileName);
+                            throw new ServletException("Cannot locate properties at path : " + fileName);
                     }
                 }
                 catch (IOException ioe) {
-                    mLog.warn("Error reading properties file: " 
-                              + fileName);
-                    mLog.warn(e.toString());
-                    mLog.warn(ioe.toString());
+                     throw new ServletException("Error reading properties file: " + fileName, ioe);
                 }
             }
         }
@@ -508,7 +511,7 @@ public class TeaServlet extends HttpServlet {
                 }
             }
             catch (Exception e) {
-                mLog.warn(e);
+                throw new ServletException(e);
             }
         }
     }
@@ -749,8 +752,8 @@ public class TeaServlet extends HttpServlet {
                     classname.substring(0,classname.lastIndexOf('.'))
                     + ".PackageInfo");
                 java.lang.reflect.Method mo = packinf.getMethod(
-                    "getProductVersion",null);
-                version = mo.invoke(null,null).toString();
+                    "getProductVersion");
+                version = mo.invoke(null).toString();
             }
             catch (Exception pie) {
                 log.info("PackageInfo not found");

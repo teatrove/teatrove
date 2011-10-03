@@ -120,6 +120,8 @@ public class NonRegionCachingApplication implements AdminApp {
 
                         public long getCacheMisses() { return 0L; }
 
+                        public int getAvgEntrySizeInBytes() { return 0; }
+            
                         public void resetDepotStats() { }
 	}
 }

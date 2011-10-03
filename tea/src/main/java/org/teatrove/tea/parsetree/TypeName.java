@@ -21,14 +21,20 @@ import org.teatrove.tea.compiler.Type;
 
 /**
  * 
- * @author Brian S O'Neill
+ * @author Brian S O'Neill, Nick Hagan
  */
 public class TypeName extends Name {
     private int mDimensions;
     private Type mType;
+    private TypeName[] mGenericTypes;
 
     public TypeName(SourceInfo info, String name) {
         super(info, name);
+    }
+
+    public TypeName(SourceInfo info, String name, TypeName[] genericTypes) {
+        super(info, name);
+        this.mGenericTypes = genericTypes;
     }
 
     public TypeName(SourceInfo info, String name, int dimensions) {
@@ -36,8 +42,20 @@ public class TypeName extends Name {
         mDimensions = dimensions;
     }
 
+    public TypeName(SourceInfo info, String name,
+                    TypeName[] genericTypes, int dimensions) {
+        super(info, name);
+        mGenericTypes = genericTypes;
+        mDimensions = dimensions;
+    }
+
     public TypeName(SourceInfo info, Name name) {
         super(info, name.getName());
+    }
+
+    public TypeName(SourceInfo info, Name name, TypeName[] genericTypes) {
+        super(info, name.getName());
+        mGenericTypes = genericTypes;
     }
 
     public TypeName(SourceInfo info, Name name, int dimensions) {
@@ -45,14 +63,32 @@ public class TypeName extends Name {
         mDimensions = dimensions;
     }
 
+    public TypeName(SourceInfo info, Name name,
+                    TypeName[] genericTypes, int dimensions) {
+        super(info, name.getName());
+        mDimensions = dimensions;
+        mGenericTypes = genericTypes;
+    }
+
     public TypeName(SourceInfo info, Type type) {
         super(info, type == null ? "" : type.getNaturalClass().getName());
         mType = type;
         mDimensions = -1;
     }
-    
+
+    public TypeName(SourceInfo info, TypeName[] genericTypes, Type type) {
+        super(info, type == null ? "" : type.getNaturalClass().getName());
+        mType = type;
+        mDimensions = -1;
+        mGenericTypes = genericTypes;
+    }
+
     public Object accept(NodeVisitor visitor) {
         return visitor.visit(this);
+    }
+
+    public TypeName[] getGenericTypes() {
+        return mGenericTypes;
     }
 
     public int getDimensions() {
@@ -84,12 +120,38 @@ public class TypeName extends Name {
     public boolean equals(Object other) {
         if (other instanceof TypeName) {
             if (super.equals(other)) {
+                // check types
+                boolean valid = false;
                 if (mType == null) {
-                    return null == ((TypeName)other).getType();
+                    valid = (null == ((TypeName)other).getType());
                 }
                 else {
-                    return mType.equals(((TypeName)other).getType());
+                    valid = mType.equals(((TypeName)other).getType());
                 }
+
+                if (!valid) { return false; }
+
+                // check generics
+                TypeName[] genericTypes = ((TypeName)other).getGenericTypes();
+                if (mGenericTypes == null) {
+                    valid = (null == genericTypes);
+                }
+                else if (genericTypes == null) {
+                    valid = false;
+                }
+                else if (genericTypes.length != mGenericTypes.length) {
+                    valid = false;
+                }
+                else {
+                    valid = true;
+                    for (int i = 0; i < genericTypes.length; i++) {
+                        valid = mGenericTypes[i].equals(genericTypes[i]);
+                        if (!valid) { break; }
+                    }
+                }
+
+                // return state
+                return valid;
             }
         }
 

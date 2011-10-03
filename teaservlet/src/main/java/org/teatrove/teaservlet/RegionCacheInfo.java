@@ -33,6 +33,7 @@ public class RegionCacheInfo implements Serializable {
     private long gets;
     private long hits;
     private long misses;
+    private int avgBytes;
 
     RegionCacheInfo(Depot depot) {
         //mDepot = depot;
@@ -42,6 +43,7 @@ public class RegionCacheInfo implements Serializable {
         gets = depot.getCacheGets();
         hits = depot.getCacheHits();
         misses = depot.getCacheMisses();
+        avgBytes = depot.calculateAvgPerEntrySize();
     }
 
     public int getSize() {
@@ -66,5 +68,9 @@ public class RegionCacheInfo implements Serializable {
 
     public long getCacheMisses() {
         return misses;
+    }
+
+    public int getAvgEntrySizeInBytes() {
+        return avgBytes;
     }
 }

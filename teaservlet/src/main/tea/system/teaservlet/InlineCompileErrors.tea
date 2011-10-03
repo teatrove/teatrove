@@ -1,0 +1,58 @@
+<% template InlineCompileErrors() 
+
+reloadResult = getRequest().attributes["inline.reload.result"]
+
+if (reloadResult isa org.teatrove.tea.engine.TemplateCompilationResults) {
+
+    if (reloadResult != null) {
+        alreadyLoading = reloadResult.alreadyReloading
+        errors = reloadResult.allTemplateErrors
+    }
+    else {
+        alreadyLoading = false
+        errors = null
+    }
+
+
+    if (alreadyLoading) {
+        '<font face="Arial" size="2">Reload already in progress, retry.</font><p>'
+    } else {
+
+        if (errors != null and errors.length > 0) {
+
+            '<br><br><table width="100%" border="1" cellpadding="2" cellspacing="1">'
+            '<tr>'
+            '<td align="center" bgcolor="#FF0000"><font color="#FFFF00" face="Arial" size="3"><b>Template Errors</b></font></td>'
+            '</tr>'
+        
+            foreach(e in errors) {
+                if (e isa org.teatrove.tea.engine.TemplateError) {
+                    '<tr>'
+                    '<td><font face="Arial" size="2">'
+                    '<b>' e.sourcePath' ( line ' e.lineNumber ' )</b>: ' e.errorMessage '</font><br><tt>'
+                    call Clean(trimLeading(e.lineStart))
+                    '<b>'
+                    call Clean(e.errorStart)
+                    '<u>'
+                    call Clean(e.detail)
+                    '</u>'
+                    call Clean(e.errorEnd) 
+                    '</b>'
+                    call Clean(trimTrailing(e.lineEnd))
+                    '</tt>'
+                    '</td>'
+                    '</tr>'
+                }
+            }
+            '</table>'
+        }
+    }
+}
+%>
+<br>
+<hr>
+<br>
+<%
+call About(null)
+%>
+

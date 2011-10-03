@@ -203,8 +203,15 @@ class HttpResource {
         HttpClient.Response response = client.getResponse();
 
         int statusCode = response.getStatusCode();
+
         switch (statusCode) {
         case 200: // OK
+        case 201: // Created
+        case 202: // Accepted
+        case 203: // Non-Authoritative INformation
+        case 204: // No Content
+        case 205: // Reset Content
+        case 206: // Parital Content
             return response;
 
         case 404: // Not Found

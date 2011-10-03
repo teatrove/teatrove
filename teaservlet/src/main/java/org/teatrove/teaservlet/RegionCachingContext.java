@@ -98,6 +98,8 @@ public interface RegionCachingContext {
 
     public long getCacheMisses();
 
+    public int getAvgEntrySizeInBytes();
+
     public void resetDepotStats();
 
 }

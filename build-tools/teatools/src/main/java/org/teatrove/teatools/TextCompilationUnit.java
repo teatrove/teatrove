@@ -71,4 +71,6 @@ public class TextCompilationUnit extends CompilationUnit {
         // No code generation needed
         return null;
     }
+    
+    public void resetOutputStream() {}
 }

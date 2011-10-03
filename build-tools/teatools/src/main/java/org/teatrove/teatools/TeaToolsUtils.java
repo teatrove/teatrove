@@ -20,6 +20,7 @@ import org.teatrove.tea.runtime.*;
 import org.teatrove.tea.util.*;
 
 import org.teatrove.trove.classfile.Modifiers;
+import org.teatrove.trove.generics.GenericType;
 import org.teatrove.trove.util.*;
 
 
@@ -978,8 +979,6 @@ implements TeaToolsConstants {
         return methodDescriptors;
     }
 
-    
-
     /**
      * A function that returns an array of all the available properties on
      * a given class.
@@ -991,8 +990,7 @@ implements TeaToolsConstants {
      *
      * @return an array of all the available properties on the specified class.
      */
-    public PropertyDescriptor[] getTeaBeanPropertyDescriptors(
-                                                           Class beanClass) {
+    public PropertyDescriptor[] getTeaBeanPropertyDescriptors(Class beanClass) {
 
         // Code taken from KettleUtilities.getPropertyDescriptors(Class)
         
@@ -1004,7 +1002,7 @@ implements TeaToolsConstants {
 
         Map allProps = null;
         try {
-            allProps = BeanAnalyzer.getAllProperties(beanClass);
+            allProps = BeanAnalyzer.getAllProperties(new GenericType(beanClass));
         }
         catch (Throwable t) {
             return NO_PROPERTIES;           
@@ -1027,7 +1025,7 @@ implements TeaToolsConstants {
             if (desc instanceof KeyedPropertyDescriptor) {
 
                 KeyedPropertyDescriptor keyed = (KeyedPropertyDescriptor) desc;
-                Class type = keyed.getKeyedPropertyType();                
+                Class type = keyed.getKeyedPropertyType().getRawType().getType();
 
                 try {
                     // Convert the KeyedPropertyDescriptor to a 

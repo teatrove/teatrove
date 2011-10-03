@@ -88,10 +88,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.logging.Logger;
-import java.util.logging.Level;
 
-/**
+/******************************************************************************
  * The JavaClassGenerator compiles a template into a single Java class file.
  * A template is compiled such that it has two static methods, execute and
  * getTemplateParameterNames. The signatures are:
@@ -101,13 +99,12 @@ import java.util.logging.Level;
  *
  *     public static String[] getTemplateParameterNames();
  * </pre>
- * 
+ *
  * @author Brian S O'Neill
+ * @version
+ * <!--$$Revision:--> 117 <!-- $-->, <!--$$JustDate:-->  4/01/04 <!-- $-->
  */
 public class JavaClassGenerator extends CodeGenerator {
-
-    private static final Logger LOGGER = Logger.getLogger(JavaClassGenerator.class.getName());
-
     public static final String EXECUTE_METHOD_NAME =
         "execute";
     public static final String PARAMETER_METHOD_NAME =
@@ -161,7 +158,7 @@ public class JavaClassGenerator extends CodeGenerator {
      *     }
      * }
      *
-     * When mSubBlockCount is greater than zero, the generated class looks 
+     * When mSubBlockCount is greater than zero, the generated class looks
      * like this:
      *
      * public final class a.b.c.Template implements Substitution {
@@ -178,7 +175,7 @@ public class JavaClassGenerator extends CodeGenerator {
      *         this.context = Context;
      *         this.params = params;
      *     }
-     *     
+     *
      *     public void substitute() throws Exception {
      *         if (this.context == null) {
      *             throw new UnsupportedOperationException();
@@ -216,7 +213,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
     // Maps Variable names to variable object fields that need to be defined.
     private Map mFields = new HashMap();
-    
+
     // A list of Statements that need to be put into a static initializer.
     private List mInitializerStatements = new ArrayList();
 
@@ -267,6 +264,47 @@ public class JavaClassGenerator extends CodeGenerator {
             }
         });
 
+        generateTemplate(t, className, classFile);
+
+        classFile.writeTo(out);
+        out.flush();
+    }
+
+    protected void generateTemplateParameters(Template t, ClassFile classFile) {
+
+        // Build the static getTemplateParameterNames method.
+
+        Variable[] params = t.getParams();
+        int paramCount = params.length;
+
+        Modifiers pubstat = new Modifiers();
+        pubstat.setPublic(true);
+        pubstat.setStatic(true);
+
+        TypeDesc stringArrayDesc = TypeDesc.STRING.toArrayType();
+
+        MethodInfo mi = classFile.addMethod
+            (pubstat, PARAMETER_METHOD_NAME, stringArrayDesc, null);
+
+        CodeBuilder builder = new CodeBuilder(mi);
+        builder.loadConstant(paramCount);
+        builder.newObject(stringArrayDesc);
+
+        // Populate the array.
+        for (int i=0; i<paramCount; i++) {
+            builder.dup();
+            builder.loadConstant(i);
+            builder.loadConstant(params[i].getName());
+            builder.storeToArray(TypeDesc.STRING);
+        }
+
+        builder.returnValue(TypeDesc.OBJECT);
+
+        // Done building the static getTemplateParameterNames method.
+    }
+
+    protected void generateTemplate(Template t, String className,
+                                    ClassFile classFile) {
         Class subClass;
         Method subMethod, subContextMethod, subIdMethod, subDetachMethod;
         if (mGenerateSubFormat) {
@@ -298,32 +336,15 @@ public class JavaClassGenerator extends CodeGenerator {
         Variable[] params = t.getParams();
         int paramCount = params.length;
 
-        Modifiers pubstat = new Modifiers();
-        pubstat.setPublic(true);
-        pubstat.setStatic(true);
-
-        TypeDesc stringArrayDesc = TypeDesc.STRING.toArrayType();
-
-        MethodInfo mi = classFile.addMethod
-            (pubstat, PARAMETER_METHOD_NAME, stringArrayDesc, null);
-
-        CodeBuilder builder = new CodeBuilder(mi);
-        builder.loadConstant(paramCount);
-        builder.newObject(stringArrayDesc);
-
-        // Populate the array.
-        for (int i=0; i<paramCount; i++) {
-            builder.dup();
-            builder.loadConstant(i);
-            builder.loadConstant(params[i].getName());
-            builder.storeToArray(TypeDesc.STRING);
-        }
-
-        builder.returnValue(TypeDesc.OBJECT);
+        generateTemplateParameters(t, classFile);
 
         // Done building the static getTemplateParameterNames method.
 
         // Build the static execute method.
+
+        Modifiers pubstat = new Modifiers();
+        pubstat.setPublic(true);
+        pubstat.setStatic(true);
 
         Variable[] allParams;
         if (t.hasSubstitutionParam()) {
@@ -362,13 +383,11 @@ public class JavaClassGenerator extends CodeGenerator {
             returnTypeDesc = makeDesc(returnType.getNaturalClass());
         }
 
-        mi = classFile.addMethod(pubstat, EXECUTE_METHOD_NAME,
-                                 returnTypeDesc, paramTypes);
+        MethodInfo mi = classFile.addMethod(pubstat, EXECUTE_METHOD_NAME,
+                                            returnTypeDesc, paramTypes);
 
         mi.addException("java.lang.Exception");
-        builder = new CodeBuilder(mi);
-
-
+        CodeBuilder builder = new CodeBuilder(mi);
 
         LocalVariable[] localVars = builder.getParameters();
         // Apply names to the passed in parameters, even though this step
@@ -382,13 +401,13 @@ public class JavaClassGenerator extends CodeGenerator {
         boolean profilingEnabled = isProfilingEnabled();
         if (profilingEnabled) {
             mGlobalTime = builder.createLocalVariable("startTime", makeDesc(long.class));
-            builder.invokeStatic(mUnit.getRuntimeContext().getName(), 
+            builder.invokeStatic(mUnit.getRuntimeContext().getName(),
                 "getInvocationObserver", methodObserverType, null);
-            builder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+            builder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                TypeDesc.forClass(long.class), null);
             builder.storeLocal(mGlobalTime);
         }
- 
+
         if (!mGenerateSubFormat) {
             Visitor gen = new Visitor(allParams, builder.getParameters());
             gen.allowInitializerStatements();
@@ -443,13 +462,13 @@ public class JavaClassGenerator extends CodeGenerator {
 
             // inject template body profiling bytecode - end and generate event
             if (profilingEnabled) {
-                builder.invokeStatic(mUnit.getRuntimeContext().getName(), 
+                builder.invokeStatic(mUnit.getRuntimeContext().getName(),
                     "getInvocationObserver", methodObserverType, null);
                 builder.loadConstant(mUnit.getName());
                 builder.loadConstant(null);
-                builder.invokeStatic(mUnit.getRuntimeContext().getName(), 
+                builder.invokeStatic(mUnit.getRuntimeContext().getName(),
                     "getInvocationObserver", methodObserverType, null);
-                builder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+                builder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                     makeDesc(long.class), null);
                 builder.loadLocal(mGlobalTime);
                 builder.math(Opcode.LSUB);
@@ -472,7 +491,7 @@ public class JavaClassGenerator extends CodeGenerator {
             // Generate getIdentifier method.
             mi = classFile.addMethod(subIdMethod);
             subBuilder = new CodeBuilder(mi);
-            
+
             TypeDesc td = makeDesc(SubstitutionId.class);
             subBuilder.newObject(td);
             subBuilder.dup();
@@ -572,9 +591,6 @@ public class JavaClassGenerator extends CodeGenerator {
             TypeDesc td = makeDesc(v.getType().getNaturalClass());
             classFile.addField(flags, v.getName(), td).markSynthetic();
         }
-
-        classFile.writeTo(out);
-        out.flush();
     }
 
     private class Visitor implements NodeVisitor {
@@ -627,7 +643,7 @@ public class JavaClassGenerator extends CodeGenerator {
             // Declare parameter variables.
             for (int i=0; i<params.length; i++) {
                 Variable param = params[i];
-                
+
                 if (param.isField()) {
                     declareVariable(param);
                 }
@@ -636,7 +652,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 }
             }
         }
-        
+
         /**
          * Calling this grants the ability to create or move certain
          * statements to a static initializer. The only time this is usually
@@ -688,7 +704,7 @@ public class JavaClassGenerator extends CodeGenerator {
             // Create ReturnValue field if template returns a value.
             Type returnType = node.getReturnType();
             if (!(Type.VOID_TYPE.equals(returnType))) {
-                Variable returnValue = 
+                Variable returnValue =
                     new Variable(null, "returnValue", returnType);
                 returnValue.setField(true);
                 declareVariable(returnValue);
@@ -702,10 +718,10 @@ public class JavaClassGenerator extends CodeGenerator {
             Variable blockId = new Variable(null, "blockId", blockIdType);
             blockId.setField(true);
             declareVariable(blockId);
-            
+
             mBlockId = new VariableRef(null, blockId.getName());
             mBlockId.setVariable(blockId);
-            
+
             // switch (blockId) {...
             mBuilder.loadThis();
             mBuilder.loadField(blockId.getName(), TypeDesc.INT);
@@ -735,19 +751,19 @@ public class JavaClassGenerator extends CodeGenerator {
                     switchLabels[size].setLocation();
 
                     // Inject pre-call profiling bytecode.
-                    TypeDesc methodObserverType = 
+                    TypeDesc methodObserverType =
                         TypeDesc.forClass(MergedClass.InvocationEventObserver.class);
                     LocalVariable retVal = null;
                     TypeDesc returnTypeDesc = null;
-        
+
                     boolean profilingEnabled = isProfilingEnabled();
-        
-                    LocalVariable startTime = mBuilder.createLocalVariable("blockTime", 
+
+                    LocalVariable startTime = mBuilder.createLocalVariable("blockTime",
                         TypeDesc.forClass(long.class));
                     if (profilingEnabled && size > 0) {
-                        mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                        mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                             "getInvocationObserver", methodObserverType, null);
-                        mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+                        mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                            TypeDesc.forClass(long.class), null);
                         mBuilder.storeLocal(startTime);
                     }
@@ -756,13 +772,13 @@ public class JavaClassGenerator extends CodeGenerator {
 
                     // Inject post-call profiling bytecode.
                     if (profilingEnabled && size > 0) {
-                        mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                        mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                             "getInvocationObserver", methodObserverType, null);
                         mBuilder.loadConstant(mUnit.getName());
                         mBuilder.loadConstant((String) mCallerToSubNoList.get(size - 1));
-                        mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                        mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                             "getInvocationObserver", methodObserverType, null);
-                        mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+                        mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                             TypeDesc.forClass(long.class), null);
                         mBuilder.loadLocal(startTime);
                         mBuilder.math(Opcode.LSUB);
@@ -992,14 +1008,14 @@ public class JavaClassGenerator extends CodeGenerator {
                     Expression left = arith.getLeftExpression();
                     Expression right = arith.getRightExpression();
                     Integer amount = null;
-                    if (left instanceof VariableRef && 
+                    if (left instanceof VariableRef &&
                         right.isValueKnown()) {
                         if ( ((VariableRef)left).getVariable() == v ) {
                             amount = (Integer)right.getValue();
                         }
                     }
-                    else if (right instanceof VariableRef && 
-                             left.isValueKnown() && 
+                    else if (right instanceof VariableRef &&
+                             left.isValueKnown() &&
                              ID != Token.MINUS) {
                         if ( ((VariableRef)right).getVariable() == v ) {
                             amount = (Integer)left.getValue();
@@ -1121,7 +1137,7 @@ public class JavaClassGenerator extends CodeGenerator {
         public Object visit(SubstitutionStatement node) {
 
             // Inject pre-call profiling bytecode.
-            TypeDesc methodObserverType = 
+            TypeDesc methodObserverType =
                 TypeDesc.forClass(MergedClass.InvocationEventObserver.class);
             LocalVariable retVal = null;
             String calleeName = null;
@@ -1131,11 +1147,11 @@ public class JavaClassGenerator extends CodeGenerator {
 
             if (profilingEnabled) {
                 if (mSubTime == null)
-                    mSubTime = mBuilder.createLocalVariable("subTime", 
+                    mSubTime = mBuilder.createLocalVariable("subTime",
                         TypeDesc.forClass(long.class));
-                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                     "getInvocationObserver", methodObserverType, null);
-                mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+                mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                    TypeDesc.forClass(long.class), null);
                 mBuilder.storeLocal(mSubTime);
             }
@@ -1152,21 +1168,21 @@ public class JavaClassGenerator extends CodeGenerator {
             catch (NoSuchMethodException e) {
                 throw new RuntimeException(e.toString());
             }
-            
+
             generate(mSubParam);
             generateContext();
             mBuilder.invoke(subMethod);
 
-        
+
             // Inject post-call profiling bytecode.
             if (profilingEnabled) {
-                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                     "getInvocationObserver", methodObserverType, null);
                 mBuilder.loadConstant(mUnit.getName());
                 mBuilder.loadConstant("__substitution");
-                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                     "getInvocationObserver", methodObserverType, null);
-                mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+                mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                     TypeDesc.forClass(long.class), null);
                 mBuilder.loadLocal(mSubTime);
                 mBuilder.math(Opcode.LSUB);
@@ -1190,7 +1206,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
             if (receiver != null) {
                 mBuilder.invoke(receiver);
-                
+
                 Class retType = receiver.getReturnType();
                 if (retType != null && retType != void.class) {
                     if (makeDesc(retType).isDoubleWord()) {
@@ -1219,7 +1235,7 @@ public class JavaClassGenerator extends CodeGenerator {
                         // store result in a field for later retrieval.
                         mBuilder.loadThis();
                         generate(node.getExpression());
-                        TypeDesc td = 
+                        TypeDesc td =
                             makeDesc(mReturnValue.getType().getNaturalClass());
                         mBuilder.storeField(mReturnValue.getName(), td);
                     }
@@ -1248,13 +1264,13 @@ public class JavaClassGenerator extends CodeGenerator {
 
             // inject template body profiling bytecode - end and generate event
             TypeDesc methodObserverType = makeDesc(MergedClass.InvocationEventObserver.class);
-            mBuilder.invokeStatic(mUnit.getRuntimeContext().getName(), 
+            mBuilder.invokeStatic(mUnit.getRuntimeContext().getName(),
                 "getInvocationObserver", methodObserverType, null);
             mBuilder.loadConstant(mUnit.getName());
             mBuilder.loadConstant(null);
-            mBuilder.invokeStatic(mUnit.getRuntimeContext().getName(), 
+            mBuilder.invokeStatic(mUnit.getRuntimeContext().getName(),
                 "getInvocationObserver", methodObserverType, null);
-            mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+            mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                 makeDesc(long.class), null);
             mBuilder.loadLocal(mGlobalTime);
             mBuilder.math(Opcode.LSUB);
@@ -1314,7 +1330,7 @@ public class JavaClassGenerator extends CodeGenerator {
             // it in a static initializer.
             if (mAllowInitializerStatements && node.isAllConstant()) {
                 SourceInfo info = node.getSourceInfo();
-                
+
                 // Create a variable...
                 Variable var = new Variable(info, "array", initialType);
                 var.setStatic(true);
@@ -1329,12 +1345,12 @@ public class JavaClassGenerator extends CodeGenerator {
                 Expression clonedNode = (Expression)node.clone();
                 clonedNode.setType(initialType);
 
-                AssignmentStatement assn = 
+                AssignmentStatement assn =
                     new AssignmentStatement(info, ref, clonedNode);
-                
+
                 // Move this statement into the static initializer
                 mInitializerStatements.add(assn);
-                
+
                 // Substitute a field access for a NewArrayExpression
                 TypeDesc td = makeDesc(initialClass);
                 mBuilder.loadStaticField(var.getName(), td);
@@ -1344,7 +1360,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 TypeDesc td = makeDesc(LinkedHashMap.class);
                 mBuilder.newObject(td);
                 mBuilder.dup();
-                
+
                 int capacity = exprs.length;
                 if (capacity == 0) {
                     // Should probably use a JDK1.3 EMPTY_MAP, and not wrap
@@ -1408,7 +1424,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
                 mBuilder.loadConstant(exprs.length);
                 mBuilder.newObject(componentType.toArrayType());
-                
+
                 // Populate the array.
                 for (int i=0; i<exprs.length; i++) {
                     Expression expr = exprs[i];
@@ -1470,7 +1486,7 @@ public class JavaClassGenerator extends CodeGenerator {
             generate(expr);
             setLineNumber(node.getDot().getSourceInfo());
 
-            if (expr.getType().getObjectClass().isArray() && 
+            if (expr.getType().getObjectClass().isArray() &&
                 lookupName.equals("length")) {
 
                 mBuilder.arrayLength();
@@ -1506,7 +1522,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
             generate(expr);
 
-            if (!doArrayLookup && 
+            if (!doArrayLookup &&
                 Modifier.isStatic(readMethod.getModifiers())) {
 
                 // Discard the object to call method on.
@@ -1560,7 +1576,7 @@ public class JavaClassGenerator extends CodeGenerator {
             }
 
             mBuilder.math(opcode);
-            
+
             return null;
         }
 
@@ -1805,7 +1821,7 @@ public class JavaClassGenerator extends CodeGenerator {
             }
         }
 
-        private void generateBranch(Expression expr, 
+        private void generateBranch(Expression expr,
                                     Label label, boolean whenTrue) {
             if (expr instanceof Logical) {
                 // What follows is something that the visitor design pattern
@@ -1838,7 +1854,7 @@ public class JavaClassGenerator extends CodeGenerator {
             }
         }
 
-        private void generateBranch(RelationalExpression expr, 
+        private void generateBranch(RelationalExpression expr,
                                     Label label, boolean whenTrue) {
             // RelationalExpressions produce different comparision instructions
             // based on the type of the expression.
@@ -1904,7 +1920,7 @@ public class JavaClassGenerator extends CodeGenerator {
                                 generate(left);
                             }
                             setLineNumber(operator.getSourceInfo());
-                            mBuilder.invokeVirtual(className, methodName, ret, 
+                            mBuilder.invokeVirtual(className, methodName, ret,
                                                    cObjectParam);
                             mBuilder.ifZeroComparisonBranch
                                 (label, (choice == "==") ? "!=" : "==");
@@ -1913,7 +1929,7 @@ public class JavaClassGenerator extends CodeGenerator {
                             // This is a little bit complicated. The results
                             // of the left expression are tested against null
                             // before the equals method is invoked on it.
-                
+
                             generate(left);
                             mBuilder.dup();
                             Label leftNotNull = mBuilder.createLabel();
@@ -1935,15 +1951,15 @@ public class JavaClassGenerator extends CodeGenerator {
                                 mBuilder.ifNullBranch(label, choice == "==");
                                 mBuilder.branch(fallThrough);
                             }
-                            
+
                             leftNotNull.setLocation();
                             generate(right);
                             setLineNumber(operator.getSourceInfo());
-                            mBuilder.invokeVirtual(className, methodName, ret, 
+                            mBuilder.invokeVirtual(className, methodName, ret,
                                                    cObjectParam);
                             mBuilder.ifZeroComparisonBranch
                                 (label, (choice == "==") ? "!=" : "==");
-                            
+
                             fallThrough.setLocation();
                         }
                     }
@@ -1955,7 +1971,7 @@ public class JavaClassGenerator extends CodeGenerator {
                     generate(right);
                     setLineNumber(operator.getSourceInfo());
 
-                    mBuilder.invokeVirtual("java.lang.String", "compareTo", 
+                    mBuilder.invokeVirtual("java.lang.String", "compareTo",
                                            TypeDesc.INT, cStringParam);
                     mBuilder.ifZeroComparisonBranch(label, choice);
                 }
@@ -1966,8 +1982,8 @@ public class JavaClassGenerator extends CodeGenerator {
                     generate(right);
                     setLineNumber(operator.getSourceInfo());
 
-                    mBuilder.invokeInterface("java.lang.Comparable", 
-                                             "compareTo", 
+                    mBuilder.invokeInterface("java.lang.Comparable",
+                                             "compareTo",
                                              TypeDesc.INT, cObjectParam);
                     mBuilder.ifZeroComparisonBranch(label, choice);
                 }
@@ -2052,14 +2068,14 @@ public class JavaClassGenerator extends CodeGenerator {
 
         // "not", "and" and "or" have short circuit semantics.
 
-        private void generateBranch(NotExpression expr, 
+        private void generateBranch(NotExpression expr,
                                     Label label, boolean whenTrue) {
-            // If someone is branching based on the result of this not 
+            // If someone is branching based on the result of this not
             // expression, just invert the branch condition.
             generateBranch(expr.getExpression(), label, !whenTrue);
         }
 
-        private void generateBranch(AndExpression expr, 
+        private void generateBranch(AndExpression expr,
                                     Label label, boolean whenTrue) {
             if (whenTrue) {
                 Label falseLabel = mBuilder.createLabel();
@@ -2073,7 +2089,7 @@ public class JavaClassGenerator extends CodeGenerator {
             }
         }
 
-        private void generateBranch(OrExpression expr, 
+        private void generateBranch(OrExpression expr,
                                     Label label, boolean whenTrue) {
             if (whenTrue) {
                 generateBranch(expr.getLeftExpression(), label, true);
@@ -2148,7 +2164,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
             Type leftType = left.getType();
             Type rightType = right.getType();
-            
+
             if (left instanceof ConcatenateExpression) {
                 generateAppend(left, estimate);
             }
@@ -2157,7 +2173,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 // its initial capacity.
                 mBuilder.newObject(cStringBufferDesc);
                 mBuilder.dup();
-                
+
                 if (left.isValueKnown()) {
                     // If the value of left is known, don't adjust estimate
                     // at runtime. Construct the StringBuffer immediately.
@@ -2220,7 +2236,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 // the stack, so perform first append operation.
                 append(leftType);
             }
-            
+
             if (right instanceof StringLiteral) {
                 String val = (String)((StringLiteral)right).getValue();
                 if (val.length() == 1) {
@@ -2236,13 +2252,13 @@ public class JavaClassGenerator extends CodeGenerator {
             }
 
             setLineNumber(concat.getOperator().getSourceInfo());
-            
+
             append(rightType);
         }
 
         private void append(Type type) {
             Class clazz = type.getNaturalClass();
-            
+
             TypeDesc[] param;
             if (type.isPrimitive()) {
                 if (clazz == byte.class || clazz == short.class) {
@@ -2256,7 +2272,7 @@ public class JavaClassGenerator extends CodeGenerator {
             else {
                 param = cObjectParam;
             }
-            
+
             mBuilder.invokeVirtual("java.lang.StringBuffer", "append",
                                    cStringBufferDesc, param);
         }
@@ -2271,7 +2287,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
             if (expr.isValueKnown() &&
                 (value = expr.getValue()) instanceof String) {
-                
+
                 return ((String)value).length();
             }
             else if (expr instanceof ConcatenateExpression) {
@@ -2354,7 +2370,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 // Do nothing at all for upcast.
                 return;
             }
-            
+
             boolean canCast = fromNat.isAssignableFrom(toNat);
             boolean canConvertToString = toNat.isAssignableFrom(String.class);
 
@@ -2426,11 +2442,11 @@ public class JavaClassGenerator extends CodeGenerator {
                             Label falseLabel = mBuilder.createLabel();
                             Label endLabel = mBuilder.createLabel();
                             mBuilder.ifZeroComparisonBranch(falseLabel, "==");
-                            mBuilder.loadStaticField("java.lang.Boolean", 
+                            mBuilder.loadStaticField("java.lang.Boolean",
                                                      "TRUE", td);
                             mBuilder.branch(endLabel);
                             falseLabel.setLocation();
-                            mBuilder.loadStaticField("java.lang.Boolean", 
+                            mBuilder.loadStaticField("java.lang.Boolean",
                                                      "FALSE", td);
                             endLabel.setLocation();
                         }
@@ -2454,7 +2470,7 @@ public class JavaClassGenerator extends CodeGenerator {
                     // Assume using primitive peer for object.
                     if (Number.class.isAssignableFrom(from.getObjectClass()) &&
                         Number.class.isAssignableFrom(to.getObjectClass())) {
-                        
+
                         String methodName = null;
                         if (toNat == int.class) {
                             methodName = "intValue";
@@ -2471,15 +2487,15 @@ public class JavaClassGenerator extends CodeGenerator {
 
                         if (methodName != null) {
                             mBuilder.invokeVirtual("java.lang.Number",
-                                                   methodName, 
+                                                   methodName,
                                                    makeDesc(toNat), null);
                             return;
                         }
                     }
-                    else if (from.getObjectClass() == Boolean.class && 
+                    else if (from.getObjectClass() == Boolean.class &&
                              toNat == boolean.class) {
 
-                        mBuilder.invokeVirtual("java.lang.Boolean", 
+                        mBuilder.invokeVirtual("java.lang.Boolean",
                                                "booleanValue",
                                                makeDesc(toNat), null);
                         return;
@@ -2487,7 +2503,7 @@ public class JavaClassGenerator extends CodeGenerator {
                     else if (from.getObjectClass() == Character.class &&
                              toNat == char.class) {
 
-                        mBuilder.invokeVirtual("java.lang.Character", 
+                        mBuilder.invokeVirtual("java.lang.Character",
                                                "charValue",
                                                makeDesc(toNat), null);
                         return;
@@ -2502,8 +2518,8 @@ public class JavaClassGenerator extends CodeGenerator {
                         }
 
                         mBuilder.loadStaticField(toNat.getName(), "TYPE", makeDesc(Class.class));
-                        mBuilder.invokeStatic("org.teatrove.tea.runtime.WrapperTypeConversionUtil", 
-                            "convert", makeDesc(Number.class), new TypeDesc[] { 
+                        mBuilder.invokeStatic("org.teatrove.tea.runtime.WrapperTypeConversionUtil",
+                            "convert", makeDesc(Number.class), new TypeDesc[] {
                             makeDesc(Number.class), makeDesc(Class.class) });
                         mBuilder.checkCast(makeDesc(toNat));
                         return;
@@ -2521,7 +2537,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 // Do nothing at all for upcast.
                 return;
             }
-            
+
             boolean canCast = fromNat.isAssignableFrom(toNat);
             boolean canConvertToString = toNat.isAssignableFrom(String.class);
 
@@ -2540,7 +2556,7 @@ public class JavaClassGenerator extends CodeGenerator {
                     mBuilder.dup();
                     Label nonNullLabel = mBuilder.createLabel();
                     mBuilder.ifNullBranch(nonNullLabel, false);
-                    
+
                     if (!Modifier.isStatic(converter.getModifiers())) {
                         // Push instance of Context onto stack and
                         // swap it into the correct place.
@@ -2548,7 +2564,7 @@ public class JavaClassGenerator extends CodeGenerator {
                         mBuilder.swap();
                     }
                     mBuilder.invoke(converter);
-                    
+
                     nonNullLabel.setLocation();
                 }
                 else if (to.isNullable() &&
@@ -2607,12 +2623,12 @@ public class JavaClassGenerator extends CodeGenerator {
 
         private Method stringConversionMethod(Type from) {
             Compiler c = mUnit.getCompiler();
-            
+
             Method[] methods = c.getStringConverterMethods();
             Type[] param = new Type[] {from};
-            
+
             int cnt = MethodMatcher.match(methods, null, param);
-            
+
             if (cnt >= 1) {
                 return methods[0];
             }
@@ -2640,9 +2656,9 @@ public class JavaClassGenerator extends CodeGenerator {
             //     store to array (convert (originalArray[length]));
             // }
 
-            Type fromElement; 
+            Type fromElement;
             Type toElement;
-            
+
             try {
                 fromElement = from.getArrayElementType();
                 toElement = to.getArrayElementType();
@@ -2653,14 +2669,14 @@ public class JavaClassGenerator extends CodeGenerator {
 
             TypeDesc originalType = makeDesc(from.getNaturalClass());
 
-            LocalVariable originalArray = 
+            LocalVariable originalArray =
                 mBuilder.createLocalVariable("originalArray", originalType);
 
             LocalVariable length =
                 mBuilder.createLocalVariable("length", TypeDesc.INT);
 
             mBuilder.storeLocal(originalArray);
-            
+
             Label endLabel;
             if (from.isNonNull()) {
                 endLabel = null;
@@ -2696,7 +2712,7 @@ public class JavaClassGenerator extends CodeGenerator {
             mBuilder.integerIncrement(length, -1);
             mBuilder.loadLocal(length);
             mBuilder.ifZeroComparisonBranch(loopLabel, ">=");
-            
+
             if (endLabel != null) {
                 endLabel.setLocation();
             }
@@ -2715,12 +2731,12 @@ public class JavaClassGenerator extends CodeGenerator {
             Statement body = node.getBody();
 
             // Holds the loop index value.
-            final LocalVariable indexLocal = 
+            final LocalVariable indexLocal =
                 mBuilder.createLocalVariable(null, TypeDesc.INT);
-            
+
             TypeDesc rangeDesc = makeDesc(range.getType().getObjectClass());
             // Holds the array to extract from.
-            final LocalVariable rangeLocal = 
+            final LocalVariable rangeLocal =
                 mBuilder.createLocalVariable(null, rangeDesc);
             generate(range);
             mBuilder.storeLocal(rangeLocal);
@@ -2740,16 +2756,16 @@ public class JavaClassGenerator extends CodeGenerator {
             }
 
             mBuilder.loadLocal(rangeLocal);
-            
+
             // Put the end index value onto the stack.
             mBuilder.arrayLength();
-            
+
             // Holds the value to compare against for when the index has
             // reached the end and looping should stop.
             LocalVariable endIndexLocal = null;
 
             if (!node.isReverse()) {
-                endIndexLocal = 
+                endIndexLocal =
                     mBuilder.createLocalVariable(null, TypeDesc.INT);
                 mBuilder.storeLocal(endIndexLocal);
                 mBuilder.loadConstant(0);
@@ -2767,7 +2783,7 @@ public class JavaClassGenerator extends CodeGenerator {
             Label startLabel = mBuilder.createLabel().setLocation();
             Label continueLabel = mBuilder.createLabel();
             saveContinueLabel(continueLabel);
-            
+
 
             // Feed the loop variable with a value.
             final VariableRef loopVarRef = node.getLoopVariable();
@@ -2822,7 +2838,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
             // Allow Maps and Sets to be reverse iterable - Wrap it in an ArrayList
             // This is a stack optimization to avoid creating a local variable
-            if (! "java.util.List".equals(range.getType().getNaturalClass().getName()) && 
+            if (! "java.util.List".equals(range.getType().getNaturalClass().getName()) &&
                     node.isReverse()) {
                 mBuilder.newObject(makeDesc(java.util.ArrayList.class));
                 mBuilder.dup();
@@ -2830,18 +2846,18 @@ public class JavaClassGenerator extends CodeGenerator {
 
             // Put the range onto the stack
             generate(range);
-            
+
             // Convert the Map to a Set
             if ("java.util.Map".equals(range.getType().getNaturalClass().getName()))
-                mBuilder.invokeInterface("java.util.Map", "keySet", 
+                mBuilder.invokeInterface("java.util.Map", "keySet",
                     makeDesc(java.util.Set.class), null);
 
-           
+
             // Allow Maps and Sets to be reverse iterable - invoke constructor on ArrayList.
             // The overall cost for this is only incurred for Sets/Maps
             if (! "java.util.List".equals(range.getType().getNaturalClass().getName()) &&
                     node.isReverse()) {
-                mBuilder.invokeConstructor("java.util.ArrayList", 
+                mBuilder.invokeConstructor("java.util.ArrayList",
                     new TypeDesc[] { makeDesc(java.util.Collection.class) });
             }
 
@@ -2868,7 +2884,7 @@ public class JavaClassGenerator extends CodeGenerator {
             if (!node.isReverse()) {
                 td = makeDesc(Iterator.class);
                 mBuilder.invokeInterface
-                    ("java.util.Collection", "iterator", td, null);
+                    ("java.lang.Iterable", "iterator", td, null);
             }
             else {
                 mBuilder.dup();
@@ -2879,7 +2895,7 @@ public class JavaClassGenerator extends CodeGenerator {
                     ("java.util.List", "listIterator", td, cIntParam);
             }
 
-            final LocalVariable iteratorLocal = 
+            final LocalVariable iteratorLocal =
                 mBuilder.createLocalVariable(null, td);
             mBuilder.storeLocal(iteratorLocal);
 
@@ -2899,12 +2915,12 @@ public class JavaClassGenerator extends CodeGenerator {
                 public void run() {
                     mBuilder.loadLocal(iteratorLocal);
                     if (!node.isReverse()) {
-                        mBuilder.invokeInterface("java.util.Iterator", "next", 
+                        mBuilder.invokeInterface("java.util.Iterator", "next",
                                                  TypeDesc.OBJECT, null);
                     }
                     else {
-                        mBuilder.invokeInterface("java.util.ListIterator", 
-                                                 "previous", 
+                        mBuilder.invokeInterface("java.util.ListIterator",
+                                                 "previous",
                                                  TypeDesc.OBJECT, null);
                     }
                     if (loopVarClass != Object.class) {
@@ -2916,7 +2932,7 @@ public class JavaClassGenerator extends CodeGenerator {
             if (body != null) {
                 generate(body);
             }
-          
+
             // set entry point for continue
             continueLabel.setLocation();
 
@@ -2926,11 +2942,11 @@ public class JavaClassGenerator extends CodeGenerator {
             td = TypeDesc.BOOLEAN;
 
             if (!node.isReverse()) {
-                mBuilder.invokeInterface("java.util.Iterator", 
+                mBuilder.invokeInterface("java.util.Iterator",
                                          "hasNext", td, null);
             }
             else {
-                mBuilder.invokeInterface("java.util.ListIterator", 
+                mBuilder.invokeInterface("java.util.ListIterator",
                                          "hasPrevious", td, null);
             }
 
@@ -2956,7 +2972,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
             final Expression indexExpr;
             Expression endIndexExpr;
-            
+
             if (!node.isReverse()) {
                 indexExpr = range;
                 endIndexExpr = endRange;
@@ -2965,7 +2981,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 indexExpr = endRange;
                 endIndexExpr = range;
             }
-            
+
             // Feed the loop variable with a value.
             VariableRef loopVarRef = node.getLoopVariable();
             Variable loopVar = loopVarRef.getVariable();
@@ -2993,7 +3009,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 }
                 mBuilder.storeLocal(endIndexLocal);
             }
-        
+
             // Generate init right before the loop entry point.
             if (init != null) {
                 generate(init);
@@ -3013,7 +3029,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
             // entry point for continue
             continueLabel.setLocation();
- 
+
 
             // Build index adjustment and determine choice comparison.
             String choice;
@@ -3080,7 +3096,7 @@ public class JavaClassGenerator extends CodeGenerator {
             }
 
             // Inject pre-call profiling bytecode.
-            TypeDesc methodObserverType = 
+            TypeDesc methodObserverType =
                 TypeDesc.forClass(MergedClass.InvocationEventObserver.class);
             LocalVariable retVal = null;
             String calleeName = null;
@@ -3090,11 +3106,11 @@ public class JavaClassGenerator extends CodeGenerator {
 
             if (profilingEnabled) {
                 if (mStartTime == null)
-                    mStartTime = mBuilder.createLocalVariable("startTime", 
+                    mStartTime = mBuilder.createLocalVariable("startTime",
                         TypeDesc.forClass(long.class));
-                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                     "getInvocationObserver", methodObserverType, null);
-                mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+                mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                    TypeDesc.forClass(long.class), null);
                 mBuilder.storeLocal(mStartTime);
             }
@@ -3107,11 +3123,11 @@ public class JavaClassGenerator extends CodeGenerator {
                     // Push instance of Context onto stack.
                     generateContext();
                 }
-                
+
                 for (int i=0; i<exprs.length; i++) {
                     generate(exprs[i]);
                 }
-                
+
                 if (subParam != null) {
                     // Put this onto the stack as a substitution parameter.
                     mBuilder.loadThis();
@@ -3121,7 +3137,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 if (init != null) {
                     generate(init);
                 }
-                
+
                 if (call.getReturnType() != null) {
                     returnTypeDesc = makeDesc(call.getReturnType());
                     retVal = mBuilder.createLocalVariable("retVal", returnTypeDesc);
@@ -3132,7 +3148,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 calleeName = call.getName();
             }
             else if (node instanceof TemplateCallExpression) {
-                CompilationUnit unit = 
+                CompilationUnit unit =
                     ((TemplateCallExpression) node).getCalledTemplate();
 
                 // Push instance of Context onto stack as first parameter.
@@ -3172,15 +3188,14 @@ public class JavaClassGenerator extends CodeGenerator {
                 }
 
                 Compiler c = mUnit.getCompiler();
-                // try and find the signature for the actual template, otherwise guess
-                params[0] = makeDesc(getContextType(unit, className));
+                params[0] = makeDesc(unit.getRuntimeContext());
 
                 for (int i=0; i<length; i++) {
                     Type type = formals[i].getType();
                     params[i + 1] = makeDesc(type.getNaturalClass());
                 }
 
-                
+
                 if (tree.getReturnType() != null) {
                     returnTypeDesc =
                         makeDesc(tree.getReturnType().getNaturalClass());
@@ -3195,16 +3210,16 @@ public class JavaClassGenerator extends CodeGenerator {
 
             if (returnTypeDesc != null && ! TypeDesc.VOID.equals(returnTypeDesc))
                 mBuilder.storeLocal(retVal);
-        
+
             // Inject post-call profiling bytecode.
             if (profilingEnabled) {
-                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                     "getInvocationObserver", methodObserverType, null);
                 mBuilder.loadConstant(mUnit.getName());
                 mBuilder.loadConstant(calleeName);
-                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(), 
+                mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                     "getInvocationObserver", methodObserverType, null);
-                mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime", 
+                mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
                     TypeDesc.forClass(long.class), null);
                 mBuilder.loadLocal(mStartTime);
                 mBuilder.math(Opcode.LSUB);
@@ -3223,62 +3238,6 @@ public class JavaClassGenerator extends CodeGenerator {
             }
         }
 
-        /**
-         * Find the type for the Context.
-         * @param unit
-         * @param className
-         * @return
-         */
-        private Class<Context> getContextType(CompilationUnit unit, String className) {
-
-            Class<Context> contextType = null;
-
-            Class<?> templateClass = null;
-            try {
-                templateClass = Class.forName(className, false, unit.getCompiler().getClassLoader());
-
-                // For each method the template class declares...
-                for (Method method : templateClass.getDeclaredMethods()) {
-
-                    // If this method...
-                    //  ...is named 'execute'
-                    //  ...and is static
-                    //  ...and has one or more parameters
-                    //  ...and the first parameter type implements Context...
-                    if(EXECUTE_METHOD_NAME.equals(method.getName()) &&
-                            Modifiers.isStatic(method.getModifiers()) &&
-                            method.getParameterTypes() != null &&
-                            method.getParameterTypes().length > 0 &&
-                            Context.class.isAssignableFrom(method.getParameterTypes()[0]))
-                    {
-                        //noinspection unchecked
-                        contextType = (Class<Context>) method.getParameterTypes()[0];
-                    }
-                }
-
-            } catch (ClassNotFoundException e) {
-                // todo: I want this information recorded during the compilation, but its JUL the right logger to use?
-                //       I think sl4j would be better so Tea is easier to embed but that would complicate running
-                //       FileCompiler standalone (users would need to add sl4j-simple.jar to their classpath)
-                //       JUL requires no dependency change to Tea but client projects (TeaServlet?) will need
-                //       to capture JUL log events properly to get this message.
-                if(LOGGER.isLoggable(Level.WARNING)) {
-                    LOGGER.log(Level.WARNING,
-                        "Template '"+ unit.getSourceFileName() +"' was called from '" + mUnit.getSourceFileName() +
-                                "' and it's Context type was unable to be determined.  Defaulting to the current runtime's" +
-                                " context type '" + unit.getRuntimeContext().getName() + "'.", e);
-                }
-            }
-
-            if(contextType == null) {
-                //noinspection unchecked
-                contextType = unit.getRuntimeContext();
-            }
-
-            //noinspection unchecked
-            return contextType;
-        }
-
         /*
          * The code generated by the logical expressions manipulate labels
          * and branches. To generate a value, they all branch to instructions
@@ -3287,9 +3246,9 @@ public class JavaClassGenerator extends CodeGenerator {
         private void generateLogical(Expression expr) {
             Label trueLabel = mBuilder.createLabel();
             Label endLabel = mBuilder.createLabel();
-            
+
             generateBranch(expr, trueLabel, true);
-            
+
             Type type = expr.getInitialType();
             Class clazz = type.getNaturalClass();
 
@@ -3327,7 +3286,7 @@ public class JavaClassGenerator extends CodeGenerator {
 
         private void declareVariable(Variable var, LocalVariable localVar) {
             String name = var.getName();
-                
+
             if (name == CONTEXT_PARAM_NAME) {
                 mContextParam = new VariableRef(null, name);
                 mContextParam.setVariable(var);
@@ -3352,7 +3311,7 @@ public class JavaClassGenerator extends CodeGenerator {
             }
             else {
                 if (localVar == null) {
-                    TypeDesc desc = 
+                    TypeDesc desc =
                         makeDesc(var.getType().getNaturalClass());
                     localVar = mBuilder.createLocalVariable
                         (var.getName(), desc);
@@ -3406,7 +3365,7 @@ public class JavaClassGenerator extends CodeGenerator {
             }
 
             callback.run();
-            
+
             if (var.isField()) {
                 if (!mVariableMap.containsKey(var)) {
                     declareVariable(var, null);
@@ -3486,7 +3445,7 @@ public class JavaClassGenerator extends CodeGenerator {
             }
         }
     }
-  
+
     /*
      * Check context to see if profiling is enabled by checking
      * the observer mode in the context.  Generate inline profiling
@@ -3496,7 +3455,7 @@ public class JavaClassGenerator extends CodeGenerator {
     private boolean isProfilingEnabled() {
         Class mergedClass = mUnit.getRuntimeContext();
         boolean profilingEnabled = true;
-           
+
         try {
             Method a = mergedClass.getDeclaredMethod("getObserverMode", null);
             int observerMode = ((Integer) a.invoke(null, null)).intValue();
@@ -3528,19 +3487,19 @@ public class JavaClassGenerator extends CodeGenerator {
             super(e.getMessage() + ' ' + detail);
             mException = e;
         }
-        
+
         public String toString() {
             return mException.getClass().getName() + ": " + getMessage();
         }
-        
+
         public void printStackTrace() {
             mException.printStackTrace();
         }
-        
+
         public void printStackTrace(java.io.PrintStream ps) {
             mException.printStackTrace(ps);
         }
-        
+
         public void printStackTrace(java.io.PrintWriter pw) {
             mException.printStackTrace(pw);
         }

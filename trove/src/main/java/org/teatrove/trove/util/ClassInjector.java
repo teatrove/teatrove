@@ -71,13 +71,13 @@ public class ClassInjector extends ClassLoader {
 
     // Parent ClassLoader, used to load classes that aren't defined by this.
     private ClassLoader mSuperLoader;
-    
+
     private File[] mRootClassDirs;
     private String mRootPackage;
 
     // A set of all the classes defined by the ClassInjector.
     private Map mDefined = Collections.synchronizedMap(new HashMap());
-    
+
     // A map to store raw bytecode for future use in getResourceAsStream().
     private Map mGZippedBytecode;
 
@@ -113,19 +113,19 @@ public class ClassInjector extends ClassLoader {
         this(null, (rootClassDir == null) ? null : new File[]{rootClassDir},
              rootPackage);
     }
-    
+
     /**
      * @param parent optional parent ClassLoader to default to when a class
      * cannot be loaded with this ClassInjector.
      * @param rootClassDir optional directory to look for non-injected classes
      * @param rootPackage optional package name for the root directory
      */
-    public ClassInjector(ClassLoader parent, 
+    public ClassInjector(ClassLoader parent,
                          File rootClassDir, String rootPackage) {
         this(parent, (rootClassDir == null) ? null : new File[]{rootClassDir},
              rootPackage);
     }
-    
+
     /**
      * Construct a ClassInjector that uses the ClassLoader that loaded this
      * class as a parent.
@@ -137,7 +137,7 @@ public class ClassInjector extends ClassLoader {
     public ClassInjector(File[] rootClassDirs, String rootPackage) {
         this(null, rootClassDirs, rootPackage);
     }
-    
+
     /**
      * @param parent optional parent ClassLoader to default to when a class
      * cannot be loaded with this ClassInjector.
@@ -145,8 +145,8 @@ public class ClassInjector extends ClassLoader {
      * classes
      * @param rootPackage optional package name for the root directory
      */
-    public ClassInjector(ClassLoader parent, 
-                         File[] rootClassDirs, 
+    public ClassInjector(ClassLoader parent,
+                         File[] rootClassDirs,
                          String rootPackage) {
         this(parent, rootClassDirs, rootPackage, false);
     }
@@ -160,8 +160,8 @@ public class ClassInjector extends ClassLoader {
      * @param keepRawBytecode if true, will cause the ClassInjector to store
      * the raw bytecode of defined classes.
      */
-    public ClassInjector(ClassLoader parent, 
-                         File[] rootClassDirs, 
+    public ClassInjector(ClassLoader parent,
+                         File[] rootClassDirs,
                          String rootPackage,
                          boolean keepRawBytecode) {
         super();
@@ -181,7 +181,7 @@ public class ClassInjector extends ClassLoader {
             mGZippedBytecode = Collections.synchronizedMap(new HashMap());
         }
     }
-    
+
     /**
      * Get a stream used to define a class. Close the stream to finish the
      * definition.
@@ -192,8 +192,19 @@ public class ClassInjector extends ClassLoader {
         return new Stream(name);
     }
 
+    /**
+     * Reset a stream removing any created definition.
+     *
+     * @param name the fully qualified name of the class to be undefined
+     */
+    public void resetStream(String name) {
+        synchronized (mDefined) {
+            mDefined.remove(name);
+        }
+    }
+
     public URL getResource(String name) {
-        
+
         if (mGZippedBytecode != null) {
             if (mGZippedBytecode.containsKey(name)) {
                 try {
@@ -242,14 +253,14 @@ public class ClassInjector extends ClassLoader {
                 }
             }
         }
-        
+
         if (resolve) {
             resolveClass(clazz);
         }
-        
+
         return clazz;
     }
-    
+
     protected void define(String name, byte[] data) {
         defineClass(name, data, 0, data.length);
         if (mGZippedBytecode != null) {
@@ -266,14 +277,14 @@ public class ClassInjector extends ClassLoader {
             }
         }
     }
-    
+
     private Class loadFromFile(String name) throws ClassNotFoundException {
         if (mRootClassDirs == null) {
             return null;
         }
 
         String fileName = name;
-        
+
         if (mRootPackage != null) {
             if (fileName.startsWith(mRootPackage)) {
                 fileName = fileName.substring(mRootPackage.length());
@@ -288,18 +299,18 @@ public class ClassInjector extends ClassLoader {
 
         for (int i=0; i<mRootClassDirs.length; i++) {
             File file = new File(mRootClassDirs[i], fileName + ".class");
-            
+
             if (file.exists()) {
                 try {
                     byte[] buffer = new byte[(int)file.length()];
                     int avail = buffer.length;
                     int offset = 0;
                     InputStream in = new FileInputStream(file);
-                    
+
                     int len = -1;
                     while ( (len = in.read(buffer, offset, avail)) > 0 ) {
                         offset += len;
-                        
+
                         if ( (avail -= len) <= 0 ) {
                             avail = buffer.length;
                             byte[] newBuffer = new byte[avail * 2];
@@ -307,9 +318,9 @@ public class ClassInjector extends ClassLoader {
                             buffer = newBuffer;
                         }
                     }
-                    
+
                     in.close();
-                    
+
                     try {
                         return defineClass(name, buffer, 0, offset);
                     }
@@ -337,12 +348,12 @@ public class ClassInjector extends ClassLoader {
 
     private class Stream extends ByteArrayOutputStream {
         private String mName;
-        
+
         public Stream(String name) {
             super(1024);
             mName = name;
         }
-        
+
         public void close() {
             synchronized (mDefined) {
                 if (mDefined.get(mName) == null) {
@@ -354,7 +365,7 @@ public class ClassInjector extends ClassLoader {
     }
 
     private class URLFaker extends URLStreamHandler {
-        
+
         protected URLConnection openConnection(URL u) throws IOException {
             return new ClassInjector.ResourceConnection(u);
         }
@@ -367,15 +378,15 @@ public class ClassInjector extends ClassLoader {
             super(u);
             resourceName = u.getFile();
         }
-                    
+
         // not really needed here but it was abstract.
         public void connect() {}
-                    
+
         public InputStream getInputStream() throws IOException {
 
             try {
                 if (mGZippedBytecode != null) {
-                                
+
                     if (mGZippedBytecode.get(resourceName) != null) {
                         return new GZIPInputStream(new ByteArrayInputStream
                                 ((byte[])mGZippedBytecode.get(resourceName)));
@@ -391,7 +402,7 @@ public class ClassInjector extends ClassLoader {
             catch (Exception e) {
                 e.printStackTrace();
             }
-     
+
             return null;
         }
     }

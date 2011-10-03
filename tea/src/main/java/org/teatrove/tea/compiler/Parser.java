@@ -16,10 +16,49 @@
 
 package org.teatrove.tea.compiler;
 
-import java.io.*;
-import java.util.Vector;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
-import org.teatrove.tea.parsetree.*;
+import java.util.List;
+import java.util.Vector;
+
+import org.teatrove.tea.parsetree.AndExpression;
+import org.teatrove.tea.parsetree.ArithmeticExpression;
+import org.teatrove.tea.parsetree.ArrayLookup;
+import org.teatrove.tea.parsetree.AssignmentStatement;
+import org.teatrove.tea.parsetree.Block;
+import org.teatrove.tea.parsetree.BooleanLiteral;
+import org.teatrove.tea.parsetree.BreakStatement;
+import org.teatrove.tea.parsetree.ConcatenateExpression;
+import org.teatrove.tea.parsetree.ContinueStatement;
+import org.teatrove.tea.parsetree.Expression;
+import org.teatrove.tea.parsetree.ExpressionList;
+import org.teatrove.tea.parsetree.ExpressionStatement;
+import org.teatrove.tea.parsetree.ForeachStatement;
+import org.teatrove.tea.parsetree.FunctionCallExpression;
+import org.teatrove.tea.parsetree.IfStatement;
+import org.teatrove.tea.parsetree.ImportDirective;
+import org.teatrove.tea.parsetree.Lookup;
+import org.teatrove.tea.parsetree.Name;
+import org.teatrove.tea.parsetree.NegateExpression;
+import org.teatrove.tea.parsetree.NewArrayExpression;
+import org.teatrove.tea.parsetree.NotExpression;
+import org.teatrove.tea.parsetree.NullLiteral;
+import org.teatrove.tea.parsetree.NumberLiteral;
+import org.teatrove.tea.parsetree.OrExpression;
+import org.teatrove.tea.parsetree.ParenExpression;
+import org.teatrove.tea.parsetree.RelationalExpression;
+import org.teatrove.tea.parsetree.Statement;
+import org.teatrove.tea.parsetree.StatementList;
+import org.teatrove.tea.parsetree.StringLiteral;
+import org.teatrove.tea.parsetree.SubstitutionStatement;
+import org.teatrove.tea.parsetree.Template;
+import org.teatrove.tea.parsetree.TemplateCallExpression;
+import org.teatrove.tea.parsetree.TypeName;
+import org.teatrove.tea.parsetree.Variable;
+import org.teatrove.tea.parsetree.VariableRef;
 import org.teatrove.trove.io.SourceReader;
 
 /**
@@ -109,13 +148,13 @@ public class Parser {
      * parsing are delivered by dispatching an event. Add an error listener
      * in order to capture parse errors.
      *
-     * @return Non-null template node, even if there were errors during 
+     * @return Non-null template node, even if there were errors during
      * parsing.
      * @see Parser#addErrorListener
      */
     public Template parse() throws IOException {
         Template t = parseTemplate();
-        
+
         if (t != null) {
             return t;
         }
@@ -142,10 +181,10 @@ public class Parser {
     private Template parseTemplate() throws IOException {
         Name name;
         Variable[] params = null;
-        
+
         Token token = read();
         SourceInfo directiveInfo = token.getSourceInfo();
-        
+
         // Process directives
         ArrayList directiveList = new ArrayList();
         while (token.getID() == Token.IMPORT) {
@@ -153,15 +192,15 @@ public class Parser {
             token = read();
             if (token.getID() == Token.SEMI)
                 token = read();
- 
+
         }
 
         SourceInfo templateInfo = token.getSourceInfo();
 
         if (token.getID() != Token.TEMPLATE) {
-            if (token.getID() == Token.STRING && 
+            if (token.getID() == Token.STRING &&
                 peek().getID() == Token.TEMPLATE) {
-                
+
                 error("template.start", token);
                 token = read();
             }
@@ -210,7 +249,7 @@ public class Parser {
         // Parse statements until end of file is reached.
         StatementList statementList;
         Vector v = new Vector(10, 0);
-        
+
         SourceInfo info = peek().getSourceInfo();
         Statement statement = null;
         while (peek().getID() != Token.EOF) {
@@ -227,16 +266,16 @@ public class Parser {
         if (statement != null) {
             info = info.setEndPosition(statement.getSourceInfo());
         }
-        
+
         Statement[] statements = new Statement[v.size()];
         v.copyInto(statements);
-        
+
         statementList = new StatementList(info, statements);
 
-        templateInfo = 
+        templateInfo =
             templateInfo.setEndPosition(statementList.getSourceInfo());
 
-        return new Template(templateInfo, name, params, subParam, 
+        return new Template(templateInfo, name, params, subParam,
                             statementList, directiveList);
     }
 
@@ -304,11 +343,32 @@ public class Parser {
     }
 
     private TypeName parseTypeName() throws IOException {
+        // parse class name
         Name name = parseName();
-
         SourceInfo info = name.getSourceInfo();
-        int dim = 0;
 
+        // parse generics
+        List<TypeName> genericTypes = null;
+        if (peek().getID() == Token.LT) {
+            read();
+            genericTypes = new ArrayList<TypeName>();
+            while (true) {
+                genericTypes.add(parseTypeName());
+
+                Token token = read();
+                if (token.getID() != Token.COMMA) {
+                    if (token.getID() != Token.GT) {
+                        error("name.generics.gt", token);
+                    }
+
+                    info = info.setEndPosition(token.getSourceInfo());
+                    break;
+                }
+            }
+        }
+
+        // parse dimensions
+        int dim = 0;
         while (peek().getID() == Token.LBRACK) {
             dim++;
             Token token = read(); // read the left bracket
@@ -321,7 +381,14 @@ public class Parser {
             info = info.setEndPosition(token.getSourceInfo());
         }
 
-        return new TypeName(info, name, dim);
+        if (genericTypes == null) {
+            return new TypeName(info, name, dim);
+        }
+        else {
+            TypeName[] generics =
+                genericTypes.toArray(new TypeName[genericTypes.size()]);
+            return new TypeName(info, name, generics, dim);
+        }
     }
 
     private Variable parseVariableDeclaration(boolean isStaticallyTyped) throws IOException {
@@ -335,7 +402,7 @@ public class Parser {
 
     private Variable[] parseFormalParameters() throws IOException {
         Token token = peek();
-        
+
         if (token.getID() == Token.LPAREN) {
             read(); // read the left paren
             token = peek();
@@ -376,14 +443,14 @@ public class Parser {
 
         Variable[] variables = new Variable[vars.size()];
         vars.copyInto(variables);
-        
+
         return variables;
     }
 
     private VariableRef parseLValue() throws IOException {
         return parseLValue(read());
     }
-    
+
     private VariableRef parseLValue(Token token) throws IOException {
         String loopVarName;
         if (token.getID() != Token.IDENT) {
@@ -402,7 +469,7 @@ public class Parser {
 
         return new VariableRef(token.getSourceInfo(), loopVarName);
     }
-    
+
     private Block parseBlock() throws IOException {
         Token token = peek();
         SourceInfo info = token.getSourceInfo();
@@ -417,7 +484,7 @@ public class Parser {
         else {
             token = read(); // read the left brace
         }
-        
+
         Vector v = new Vector(10, 0);
         Token p;
         while ((p = peek()).getID() != Token.RBRACE) {
@@ -450,7 +517,7 @@ public class Parser {
                 // can't properly parse a right brace. Instead, return
                 // an empty placeholder statement. The parseBlock method
                 // will then be able to parse the right brace properly.
-                
+
                 int ID = peek().getID();
                 if (ID == Token.RBRACE || ID == Token.EOF) {
                     st = new Statement(token.getSourceInfo());
@@ -477,7 +544,7 @@ public class Parser {
                 VariableRef lvalue = new VariableRef(info, v.getName());
                 lvalue.setVariable(v);
                 Expression rvalue = new NullLiteral(info);   // Empty expression is null assignment
-                
+
                 if (peek().getID() == Token.ASSIGN) {
                     read();
                     rvalue = parseExpression();
@@ -497,12 +564,12 @@ public class Parser {
             case Token.ELLIPSIS:
                 st = new SubstitutionStatement(token.getSourceInfo());
                 break;
-                
+
             case Token.EOF:
                 error("statement.expected", token);
                 st = new Statement(token.getSourceInfo());
                 break;
-                
+
                 // Handle some error cases in a specialized way so that
                 // the error message produced is more meaningful.
             case Token.ELSE:
@@ -518,7 +585,7 @@ public class Parser {
                 error("statement.misuse.reverse", token);
                 st = new ExpressionStatement(parseExpression(token));
                 break;
-                
+
             default:
                 st = new ExpressionStatement(parseExpression(token));
                 break;
@@ -529,13 +596,13 @@ public class Parser {
     }
 
     // When this is called, the keyword "break" has already been read.
-    private BreakStatement parseBreakStatement(Token token) 
+    private BreakStatement parseBreakStatement(Token token)
         throws IOException {
         return new BreakStatement(token.getSourceInfo());
     }
 
     // When this is called, the keyword "continue" has already been read.
-    private ContinueStatement parseContinueStatement(Token token) 
+    private ContinueStatement parseContinueStatement(Token token)
         throws IOException {
         return new ContinueStatement(token.getSourceInfo());
     }
@@ -574,7 +641,7 @@ public class Parser {
     }
 
     // When this is called, the keyword "foreach" has already been read.
-    private ForeachStatement parseForeachStatement(Token token) 
+    private ForeachStatement parseForeachStatement(Token token)
         throws IOException {
 
         SourceInfo info = token.getSourceInfo();
@@ -611,7 +678,7 @@ public class Parser {
 
         Expression range = parseExpression();
         Expression endRange = null;
-        
+
         token = peek();
         if (token.getID() == Token.DOTDOT) {
             read();
@@ -659,7 +726,7 @@ public class Parser {
         }
 
         Expression rvalue = parseExpression();
-        
+
         info = info.setEndPosition(rvalue.getSourceInfo());
 
         // Start mod for 'as' keyword for declarative typing
@@ -694,7 +761,7 @@ public class Parser {
 
         Token token = peek();
         SourceInfo info = token.getSourceInfo();
-        
+
         if (token.getID() == leftID) {
             read(); // read the left paren
             token = peek();
@@ -749,7 +816,7 @@ public class Parser {
 
         if (!done) {
             token = peek();
-            
+
             if (token.getID() == rightID) {
                 token = read(); // read the right paren
                 info = info.setEndPosition(token.getSourceInfo());
@@ -766,7 +833,7 @@ public class Parser {
 
         Expression[] elements = new Expression[exprs.size()];
         exprs.copyInto(elements);
-        
+
         return new ExpressionList(info, elements);
     }
 
@@ -781,7 +848,7 @@ public class Parser {
     private Expression parseOrExpression(Token token) throws IOException {
         SourceInfo info = token.getSourceInfo();
         Expression expr = parseAndExpression(token);
-        
+
     loop:
         while (true) {
             token = peek();
@@ -803,7 +870,7 @@ public class Parser {
     private Expression parseAndExpression(Token token) throws IOException {
         SourceInfo info = token.getSourceInfo();
         Expression expr = parseEqualityExpression(token);
-        
+
     loop:
         while (true) {
             token = peek();
@@ -822,12 +889,12 @@ public class Parser {
         return expr;
     }
 
-    private Expression parseEqualityExpression(Token token) 
+    private Expression parseEqualityExpression(Token token)
         throws IOException {
 
         SourceInfo info = token.getSourceInfo();
         Expression expr = parseRelationalExpression(token);
-        
+
     loop:
         while (true) {
             token = peek();
@@ -851,12 +918,12 @@ public class Parser {
         return expr;
     }
 
-    private Expression parseRelationalExpression(Token token) 
+    private Expression parseRelationalExpression(Token token)
         throws IOException {
 
         SourceInfo info = token.getSourceInfo();
         Expression expr = parseConcatenateExpression(token);
-        
+
     loop:
         while (true) {
             token = peek();
@@ -885,12 +952,12 @@ public class Parser {
         return expr;
     }
 
-    private Expression parseConcatenateExpression(Token token) 
+    private Expression parseConcatenateExpression(Token token)
         throws IOException {
 
         SourceInfo info = token.getSourceInfo();
         Expression expr = parseAdditiveExpression(token);
-        
+
     loop:
         while (true) {
             token = peek();
@@ -909,12 +976,12 @@ public class Parser {
         return expr;
     }
 
-    private Expression parseAdditiveExpression(Token token) 
+    private Expression parseAdditiveExpression(Token token)
         throws IOException {
 
         SourceInfo info = token.getSourceInfo();
         Expression expr = parseMultiplicativeExpression(token);
-        
+
     loop:
         while (true) {
             token = peek();
@@ -935,12 +1002,12 @@ public class Parser {
         return expr;
     }
 
-    private Expression parseMultiplicativeExpression(Token token) 
+    private Expression parseMultiplicativeExpression(Token token)
         throws IOException {
 
         SourceInfo info = token.getSourceInfo();
         Expression expr = parseUnaryExpression(token);
-        
+
     loop:
         while (true) {
             token = peek();
@@ -986,7 +1053,7 @@ public class Parser {
 
         SourceInfo info = token.getSourceInfo();
         Expression expr = parseFactor(token);
-        
+
         while (true) {
             token = peek();
 
@@ -994,9 +1061,9 @@ public class Parser {
                 // "dot" lookup i.e.: a.b
 
                 Token dot = read(); // read the dot
-                
+
                 token = read();
-                
+
                 Name lookupName;
                 SourceInfo nameInfo = token.getSourceInfo();
                 if (token.getID() != Token.IDENT) {
@@ -1013,7 +1080,7 @@ public class Parser {
                     lookupName = new Name(nameInfo, token.getStringValue());
                     info = info.setEndPosition(nameInfo);
                 }
-                
+
                 expr = new Lookup(info, expr, dot, lookupName);
             }
             else if (token.getID() == Token.LBRACK) {
@@ -1022,22 +1089,22 @@ public class Parser {
                 Token lbrack = read(); // read the left bracket
 
                 token = read();
-                
+
                 if (token.getID() == Token.RBRACK) {
                     info = info.setEndPosition(token.getSourceInfo());
 
                     error("lookup.empty.brackets", token);
 
-                    expr = new ArrayLookup(info, expr, lbrack, 
+                    expr = new ArrayLookup(info, expr, lbrack,
                                            new Expression(info));
-                    
+
                     continue;
                 }
-                
+
                 Expression arrayLookup = parseExpression(token);
-                
+
                 token = peek();
-                
+
                 if (token.getID() == Token.RBRACK) {
                     read(); // read the right bracket
                     info = info.setEndPosition(token.getSourceInfo());
@@ -1064,7 +1131,7 @@ public class Parser {
         case Token.HASH:
         case Token.DOUBLE_HASH:
             return parseNewArrayExpression(token);
-            
+
         case Token.LPAREN:
             Expression expr;
 
@@ -1122,7 +1189,7 @@ public class Parser {
             if (token.getNumericType() == 0) {
                 error("factor.number.invalid", token);
             }
-            
+
             switch (token.getNumericType()) {
             case 1:
                 return new NumberLiteral(info, token.getIntValue());
@@ -1166,7 +1233,7 @@ public class Parser {
         case Token.ASSIGN:
             error("factor.illegal.assignment", token);
             break;
-            
+
         case Token.DOTDOT:
             error("factor.misuse.dotdot", token);
             break;
@@ -1184,7 +1251,7 @@ public class Parser {
         return new Expression(token.getSourceInfo());
     }
 
-    private Expression parseNewArrayExpression(Token token) 
+    private Expression parseNewArrayExpression(Token token)
         throws IOException {
 
         boolean associative = (token.getID() == Token.DOUBLE_HASH);
@@ -1197,9 +1264,9 @@ public class Parser {
 
     // Special parse method in that it may return null if it couldn't parse
     // a FunctionCallExpression. Token passed in must be an identifier.
-    private FunctionCallExpression parseFunctionCallExpression(Token token) 
+    private FunctionCallExpression parseFunctionCallExpression(Token token)
         throws IOException {
-        
+
         SourceInfo info = token.getSourceInfo();
 
         // Search for pattern <ident> {<dot> <ident>} <lparen>
@@ -1262,11 +1329,11 @@ public class Parser {
         Tester.test(arg);
     }
 
-    /**
-     * 
+    /**************************************************************************
+     *
      * @author Brian S O'Neill
      * @version
-
+     * <!--$$Revision:--> 66 <!-- $--> 36 <!-- $$JustDate:--> 11/14/03 <!-- $-->
      */
     private static class Tester implements ErrorListener {
         String mFilename;

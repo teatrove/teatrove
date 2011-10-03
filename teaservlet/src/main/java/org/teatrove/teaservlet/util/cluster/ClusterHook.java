@@ -51,8 +51,16 @@ public class ClusterHook extends UnicastRemoteObject
 
         if (mServerName == null) {
             try {
-                mServerName = InetAddress.getLocalHost()
-                    .getHostName().toLowerCase();
+                InetAddress localHost = InetAddress.getLocalHost();
+                String hostname = localHost.getCanonicalHostName();
+                if (hostname == null || hostname.length() == 0) {
+                    hostname = localHost.getHostName();
+                    if (hostname == null || hostname.length() == 0) {
+                        hostname = localHost.getHostAddress();
+                    }
+                }
+                
+                mServerName = hostname.toLowerCase();
             }
             catch (UnknownHostException uhe) {
                 uhe.printStackTrace();

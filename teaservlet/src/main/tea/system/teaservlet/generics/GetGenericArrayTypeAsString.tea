@@ -1,0 +1,21 @@
+<% template GetGenericArrayTypeAsString(java.lang.reflect.GenericArrayType type, StringBuilder result, Boolean showLink, Boolean showVariables, Boolean resolveVariables)
+
+count = 0
+component = type
+foreach (i in 1..100)
+{
+    if (component isa java.lang.reflect.GenericArrayType)
+    {
+        count = count + 1
+        component = component.genericComponentType
+    }
+    else { break }
+}
+
+call GetGenericTypeAsString(component, result, showLink, showVariables, resolveVariables)
+foreach (i in 0..count-1)
+{
+    append(result, '[]')
+}
+
+%>

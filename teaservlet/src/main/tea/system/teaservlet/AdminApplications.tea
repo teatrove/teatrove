@@ -20,9 +20,9 @@ admin = getTeaServletAdmin()
     info = getHandyClassInfo(httpContext)
     descriptions = info.teaContextMethodDescriptors
     foreach (metDesc in descriptions) {
-        call PrintClassLink(metDesc.method.returnType, false)
-        '&nbsp;<b>'call PrintMethodLink(metDesc,1)'</b>(' 
-        call PrintParameterDescriptors(metDesc.method.parameterTypes, metDesc.parameterDescriptors,false)
+        call PrintClassLink(metDesc.method.genericReturnType, false)
+        '&nbsp;<b>'call PrintMethodLink(metDesc,1)'</b>('
+        call PrintParameterDescriptors(metDesc.method.genericParameterTypes, metDesc.parameterDescriptors,false)
         ') '
         '<br>'
     }
@@ -43,9 +43,9 @@ admin = getTeaServletAdmin()
         }
         else if (app.contextFunctions != null) {
             foreach (metDesc in app.contextFunctions) {
-                call PrintClassLink(metDesc.method.returnType, false)
-                '&nbsp;<b>'call PrintMethodLink(metDesc,1)'</b>(' 
-                call PrintParameterDescriptors(metDesc.method.parameterTypes, metDesc.parameterDescriptors,false)
+                call PrintClassLink(metDesc.method.genericReturnType, false)
+                '&nbsp;<b>'call PrintMethodLink(metDesc,1)'</b>('
+                call PrintParameterDescriptors(metDesc.method.genericParameterTypes, metDesc.parameterDescriptors,false)
                 ') '
                 '<br>'
             }

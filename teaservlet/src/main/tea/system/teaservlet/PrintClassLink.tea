@@ -1,36 +1,3 @@
-<% template PrintClassLink(Class class, Boolean showLink)
-    info = getHandyClassInfo(class)
-
-    name = info.fullName
-    if (name == "org.teatrove.tea.runtime.Substitution") {
-        name = '<b>...</b>'
-    }
-	else if (startsWith(name, "java.lang.")) {
-		name = substring(name, "java.lang.".length)
-	}
-	else if (startsWith(name, "java.util.")) {
-		name = substring(name, "java.util.".length)
-	}
-    name = replace(name, "$", ".")
-    
-    // these are not classes or are classes we don't want
-    // to display properties of
-    unlinked = ##(
-                  "void", "",
-                  "char", "",
-                  "int", "",
-                  "byte", "",
-                  "long", "",
-                  "float", "",
-                  "boolean", "",
-                  "org.teatrove.tea.runtime.Substitution", ""
-                  )
-    if ((not showLink) or (unlinked[class.name] != null)) {
-        name
-    }
-    else {
-        '<a href="Admin?subTemplate=system.teaservlet.BeanProperties&bean=' class.name '">'
-        name
-        '</a>'
-    }
+<% template PrintClassLink(java.lang.reflect.Type type, Boolean showLink)
+    call generics.GetTypeAsString(type, showLink, true, false)
 %>

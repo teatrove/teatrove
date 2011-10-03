@@ -14,7 +14,56 @@ if (info.package != null) {
     '<FONT SIZE="-1">'info.package'</FONT><BR>'
 }
 info.name
+
+typeParams = info.type.typeParameters
+if (typeParams != null and typeParams.length > 0) {
+    ' &nbsp; '
+    '<FONT SIZE="-1">'
+    '&lt;'
+
+    first = true
+    foreach (typeParam in typeParams) {
+        if (not first) { ', ' }
+        first = false
+
+        call generics.GetTypeAsString(typeParam, true, true, true)
+    }
+
+    '&gt;'
+    '</FONT>'
+}
+
 %></H2>
+
+<%
+
+superclass = info.type.genericSuperclass
+if (superclass != null) {
+    '<H3>extends<BR>'
+    ' &nbsp; &nbsp; &nbsp; '
+    '<FONT SIZE="-1">'
+    call generics.GetTypeAsString(superclass, true, true, false)
+    '</FONT>'
+    '<BR>'
+    '</H3>'
+}
+
+interfaces = info.type.genericInterfaces
+if (interfaces != null and interfaces.length > 0) {
+    '<H3>implements<BR>'
+    foreach (interface in interfaces) {
+        ' &nbsp; &nbsp; &nbsp; '
+        '<FONT SIZE="-1">'
+        call generics.GetTypeAsString(interface, true, true, false)
+        '</FONT>'
+        '<BR>'
+    }
+    '</FONT>'
+    '</H3>'
+}
+
+%>
+
 <%info.descriptionFirstSentence
 %>
 <!-- ========== METHOD SUMMARY =========== -->
@@ -32,19 +81,19 @@ info.name
 </TR> 
 
     <%descriptions = info.teaContextMethodDescriptors
-    
+
     foreach (metDesc in descriptions) {
         if (metDesc isa java.beans.MethodDescriptor) {
-         
+
             '<TR BGCOLOR="white" >'
             '<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">'
-            '<CODE>&nbsp;' call PrintClassLink(metDesc.method.returnType, true)'</CODE></FONT></TD>'
-            '<TD><CODE><B>'call PrintMethodLink(metDesc,-1)'</B>(' 
-            call PrintParameterDescriptors(metDesc.method.parameterTypes, metDesc.parameterDescriptors,true)')</CODE><BR>'
+            '<CODE>&nbsp;' call PrintClassLink(metDesc.method.genericReturnType, true)'</CODE></FONT></TD>'
+            '<TD><CODE><B>'call PrintMethodLink(metDesc,-1)'</B>('
+            call PrintParameterDescriptors(metDesc.method.genericParameterTypes, metDesc.parameterDescriptors,true)')</CODE><BR>'
             '&nbsp;&nbsp;&nbsp;&nbsp;'
 
           getFirstSentence(metDesc.shortDescription)
-            
+
             '<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
           templateInfo = getMethodCallers(metDesc)
           if (templateInfo.length > 0) {
@@ -82,8 +131,8 @@ info.name
         if (metDesc isa java.beans.MethodDescriptor) {
 
             '<B><H3>'call PrintMethodLink(metDesc,0) metDesc.method.name '</H3></B>'
-            '<CODE>' call PrintClassLink(metDesc.method.returnType, true)'<B>&nbsp;' metDesc.method.name '</B>(' 
-            call PrintParameterDescriptors(metDesc.method.parameterTypes, metDesc.parameterDescriptors,true)')</CODE>'
+            '<CODE>' call PrintClassLink(metDesc.method.genericReturnType, true)'<B>&nbsp;' metDesc.method.name '</B>('
+            call PrintParameterDescriptors(metDesc.method.genericParameterTypes, metDesc.parameterDescriptors,true)')</CODE>'
             if (metDesc.shortDescription != metDesc.displayName) {
                 '<blockquote>'metDesc.shortDescription
                     if (metDesc.parameterDescriptors.length > 0) {
@@ -94,7 +143,7 @@ info.name
                         '</CODE></blockquote>'
                     }
                     '<blockquote><B>Returns:</B><BR>&nbsp;&nbsp;&nbsp;&nbsp;<CODE>'
-                        call PrintClassLink(metDesc.method.returnType, false)
+                        call PrintClassLink(metDesc.method.genericReturnType, false)
                     '</CODE></blockquote>'
                     '<blockquote><B>Declared in:</B><BR>&nbsp;&nbsp;&nbsp;&nbsp;<CODE>'
                         call PrintClassLink(metDesc.method.declaringClass, false)
@@ -103,7 +152,7 @@ info.name
                     templateInfo = getMethodCallers(metDesc)
                     if (templateInfo.length > 0) {
                         '<blockquote><B>Calling Templates:</B><BR>&nbsp;&nbsp;&nbsp;&nbsp;<CODE>'
-                    
+
 
                         x = 0
                         foreach (t in templateInfo) {
@@ -121,7 +170,7 @@ info.name
             '</blockquote>'}
             '<hr>'}
 
-     
+
     }%>
 
 

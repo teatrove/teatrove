@@ -1,0 +1,19 @@
+<% template PrintSubclasses(String clazz, int idx)
+
+if (clazz != null) {
+    foreach (i in 0..idx) {
+        ' &nbsp;&nbsp;&nbsp; '
+    }
+
+    '<FONT SIZE="-1">'
+    call generics.GetTypeAsString(getClassForName(clazz), true, true, false)
+    '</FONT>'
+    '<BR>'
+
+    subclasses = getSubclassesForName(clazz)
+    if (subclasses != null and subclasses.length > 0) {
+        foreach (subclass in subclasses) {
+            call PrintSubclasses(subclass, idx + 1)
+        }
+    }
+}

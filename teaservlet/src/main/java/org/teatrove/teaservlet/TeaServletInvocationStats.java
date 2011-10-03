@@ -80,7 +80,7 @@ public class TeaServletInvocationStats implements MergedClass.InvocationEventObs
             stats = l;
             mStatsMap.put(stats, stats);
         }
-        stats.setCumServiceTime(stats.getCumServiceTime() + elapsedTime);
+        stats.addCumServiceTime(elapsedTime);
         if (elapsedTime > stats.getPeakServiceDuration())
             stats.setPeakServiceDuration(elapsedTime);
         stats.incServicedCount();
@@ -91,7 +91,7 @@ public class TeaServletInvocationStats implements MergedClass.InvocationEventObs
         return System.nanoTime();
     }
 
-    
+
     public class Stats {
         private AtomicLong mPeakServiceDuration = new AtomicLong(0L);
         private AtomicLong mCumServiceTime = new AtomicLong(0L);
@@ -108,6 +108,7 @@ public class TeaServletInvocationStats implements MergedClass.InvocationEventObs
         public void incServicedCount() { mServicedCount.getAndIncrement(); }
         public void setServicedCount(long servicedCount) { mServicedCount.set(servicedCount); }
         public long getCumServiceTime() { return mCumServiceTime.get(); }
+        public long addCumServiceTime(long elapsedTime) { return mCumServiceTime.getAndAdd(elapsedTime); }
         public void setCumServiceTime(long cumServiceTime) { mCumServiceTime.set(cumServiceTime); }
         public double getAverageServiceDuration() { 
             double avg = mServicedCount.get() == 0L ? (double) mCumServiceTime.get() : 

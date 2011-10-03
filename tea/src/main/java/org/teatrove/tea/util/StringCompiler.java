@@ -15,7 +15,6 @@
  */
 
 package org.teatrove.tea.util;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -37,7 +36,7 @@ public class StringCompiler extends Compiler {
     private ClassInjector mInjector;
     private String mPackagePrefix;
     private Hashtable mTemplateSources;
-    
+
     /**
      * @param injector ClassInjector to feed generated classes into
      */
@@ -78,31 +77,39 @@ public class StringCompiler extends Compiler {
         public Unit(String name, Compiler compiler) {
             super(name, compiler);
 
-            mSourceFileName = 
+            mSourceFileName =
                 name.substring(name.lastIndexOf('.') + 1) + ".tea";
         }
 
         public String getSourceFileName() {
             return mSourceFileName;
         }
-        
+
         public String getTargetPackage() {
             return mPackagePrefix;
         }
-        
+
         public Reader getReader() throws IOException {
             String source = (String)mTemplateSources.get(getName());
             return new StringReader(source);
         }
-        
+
         public OutputStream getOutputStream() throws IOException {
+            return mInjector.getStream(getClassName());
+        }
+
+        public void resetOutputStream() {
+            mInjector.resetStream(getClassName());
+        }
+
+        protected String getClassName() {
             String className = getName();
             String pack = getTargetPackage();
             if (pack != null && pack.length() > 0) {
                 className = pack + '.' + className;
             }
 
-            return mInjector.getStream(className);
+            return className;
         }
     }
 }

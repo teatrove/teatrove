@@ -48,14 +48,25 @@ public class MethodMatcher {
         matchCount = 0;
         for (int i=0; i < length; i++) {
             m = methods[i];
+            
+            // ignore bridge methods
+            if (m.isBridge()) { continue; }
+            
+            // check if match
             if (name == null || m.getName().equals(name)) {
                 Class[] methodParams = m.getParameterTypes();
+                java.lang.reflect.Type[] methodTypes = null;
+                try { methodTypes = m.getGenericParameterTypes(); }
+                catch (Throwable re) {
+                    throw new RuntimeException(re);
+                }
+
                 if (methodParams.length == paramCount) {
 
                     int total = 0;
                     int j;
                     for (j=0; j<paramCount; j++) {
-                        int cost = new Type(methodParams[j])
+                        int cost = new Type(methodParams[j], methodTypes[j])
                             .convertableFrom(params[j]);
                         if (cost < 0) {
                             break;
@@ -109,6 +120,9 @@ public class MethodMatcher {
                     bestFit = m;
                 }
                 Class methodParam = m.getParameterTypes()[j];
+                java.lang.reflect.Type methodType =
+                    m.getGenericParameterTypes()[j];
+
                 Class param = params[j].getNaturalClass();
                 if (methodParam.isAssignableFrom(param)) {
                     if (lastMatch == null ||

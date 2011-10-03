@@ -1,58 +1,192 @@
 <% template BeanProperties(String bean)
     info = getHandyClassInfo(bean)
-    
+
     if ((info == null) or (info.type == null)) {
         'Bean class not found: ' bean
     }
-    else {        
+    else {
         props = info.teaBeanPropertyDescriptors
-        
+
+        '<H2>'
+
+        packaged = false
+        if (info.package != null) {
+            packaged = true
+            '<FONT SIZE="-1">'info.package'</FONT><BR>'
+        }
+        info.name
+
+        typeParams = info.type.typeParameters
+        if (typeParams != null and typeParams.length > 0) {
+            ' &nbsp; '
+            '<FONT SIZE="-1">'
+            '&lt;'
+
+            first = true
+            foreach (typeParam in typeParams) {
+                if (not first) { ', ' }
+                first = false
+
+                call generics.GetTypeAsString(typeParam, true, true, true)
+            }
+
+            '&gt;'
+            '</FONT>'
+        }
+
+        '</H2>'
+
+        superclass = info.type.genericSuperclass
+        if (superclass != null) {
+            '<H3>extends<BR>'
+            ' &nbsp; &nbsp; &nbsp; '
+            '<FONT SIZE="-1">'
+            call generics.GetTypeAsString(superclass, true, true, false)
+            '</FONT>'
+            '<BR>'
+            '</H3>'
+        }
+
+        interfaces = info.type.genericInterfaces
+        if (interfaces != null and interfaces.length > 0) {
+            '<H3>implements<BR>'
+            foreach (interface in interfaces) {
+                ' &nbsp; &nbsp; &nbsp; '
+                '<FONT SIZE="-1">'
+                call generics.GetTypeAsString(interface, true, true, false)
+                '</FONT>'
+                '<BR>'
+            }
+            '</H3>'
+        }
+
+        subclasses = getSubclassesForName(info.type.name)
+        if (subclasses != null and subclasses.length > 0) {
+            '<H3>known subclasses<BR>'
+            foreach (subclass in subclasses) {
+                ' &nbsp; &nbsp; &nbsp; '
+                '<FONT SIZE="-1">'
+                call generics.GetTypeAsString(getClassForName(subclass), true, true, false)
+                '</FONT>'
+                '<BR>'
+            }
+            '</H3>'
+        }
+
+        '<H3>hiearchy<BR>'
+        idx = 0
+        buffer = createStringBuilder()
+        parent = info.type.superclass
+        foreach (i in 1..10) {
+            if (parent == null) { break; }
+
+            idx = idx + 1
+            foreach (j in 0..idx) {
+                ' &nbsp;&nbsp;&nbsp; '
+            }
+
+            value = ''
+            value = value & '<FONT SIZE="-1">'
+            value = value & call generics.GetTypeAsString(parent, true, true, false)
+            value = value & '</FONT>'
+            value = value & '<BR>'
+            prepend(buffer, value)
+
+            parent = parent.superclass
+        }
+
+        toString(buffer)
+
+        call PrintSubclasses(info.type.name, idx + 1)
+
+        '</H3>'
+
+        '<BR>'
+
         '<table border="1" cellpadding="2" cellspacing="1">'
         '<tr><td bgcolor="#737398" colspan="3">'
         '<font size="2" face="Arial" color="#FFFFFF">'
         'Properties of <b>' info.fullName '</font></td></tr>'
 
-        
+
         if (info.description != "") {
             '<tr><td bgcolor="#C2C8D1" colspan="3" align="left"><font color="#000000" face="Arial" size="2">'
             'Description </font></td></tr>'
             '<tr><td bgcolor="#FFFFFF" colspan="3" align="left"><font color="#000000" face="Arial" size="2">'
             info.description
             '</font></td></tr>'
-        }        
-        
+        }
+
         '<tr><td bgcolor="#C2C8D1" align="center"><font color="#000000" face="Arial" size="2">Type</font></td><td bgcolor="#C2C8D1" align="center"><font color="#000000" face="Arial" size="2">Name</font></td><td bgcolor="#C2C8D1" align="center"><font color="#000000" face="Arial" size="2">Description</font></td></tr>'
         foreach (property in props) {
             if(property isa java.beans.PropertyDescriptor) {
-                
+
+                propertyType = null as java.lang.reflect.Type
+
+                // handled keyed properties
+
                 if (property isa org.teatrove.tea.util.KeyedPropertyDescriptor) {
-                    propertyType = property.keyedPropertyType;
+                    if (property.keyedPropertyType != null) {
+                        propertyType = property.keyedPropertyType.genericType;
+                    }
                 }
-                else {
-                    propertyType = property.propertyType;
+
+                // check read method
+
+                if (propertyType == null) {
+                    readMethod = property.readMethod
+                    if (readMethod != null) {
+                        propertyType = readMethod.genericReturnType
+                    }
                 }
-                
+
+                // check write method
+
+                if (propertyType == null) {
+                    writeMethod = property.writeMethod
+                    if (writeMethod != null) {
+                        paramTypes = writeMethod.genericParameterTypes
+                        if (paramTypes != null and paramTypes.length >= 1) {
+                            propertyType = paramTypes[0]
+                        }
+                    }
+                }
+
+                // fallback to property type
+                // TODO: why can't convert from class to type?
+                propertyClass = null
+                if (propertyType == null) {
+                    propertyClass = property.propertyType
+                }
+
+                // print resulting type
+
                 if (propertyType != null) {
                     descriptions = call BeanDescriptions()
-                    descName = info.fullName & "-" & property.name                                     
+                    descName = info.fullName & "-" & property.name
                     if (descriptions[descName] != null) {
                         description = descriptions[descName]
-                    }                                                         
+                    }
                     else {
                         description = property.shortDescription
                     }
                     if (description == property.name) {
                         description = "&nbsp;"
                     }
-                    
+
                     '<tr><td align="right"><font color="#000000" face="Arial" size="2">'
-                    call PrintClassLink(propertyType, true) '</font></td>'
+                    if (propertyType != null) {
+                        call PrintClassLink(propertyType, true)
+                    } else if (propertyClass != null) {
+                        call PrintClassLink(propertyClass, true)
+                    }
+                    '</font></td>'
                     '<td><font color="#000000" face="Arial" size="2">'
                     property.name '</font></td>'
                     '<td><font color="#000000" face="Arial" size="2">'
                     description'</font></td></tr>'
                 }
-                
+
             }
         }
         '</table>'

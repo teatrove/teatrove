@@ -267,9 +267,10 @@ public class TemplateCallExtractor {
 
         public AppMethodInfo(Method method) {
             Class[] pTypes = method.getParameterTypes();
+            java.lang.reflect.Type[] gTypes = method.getGenericParameterTypes();
             mParams = new TypeDesc[pTypes.length];
             for (int i = 0; i < mParams.length; i++)
-                mParams[i] = TypeDesc.forClass(pTypes[i]);
+                mParams[i] = TypeDesc.forClass(pTypes[i], gTypes[i]);
             mCallCount = 1;
             mName = method.getName();
         }

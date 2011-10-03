@@ -62,7 +62,7 @@ public abstract class CompilationUnit implements ErrorListener {
 
     /**
      * The retrieves the runtime context.  The default behavior is to delegate
-     * this call to the compiler.  This is overriden to implement compiled 
+     * this call to the compiler.  This is overriden to implement compiled
      * templates.
      */
     public Class getRuntimeContext() { return mCompiler.getRuntimeContext(); }
@@ -101,7 +101,7 @@ public abstract class CompilationUnit implements ErrorListener {
     public final String[] getImportedPackages() {
         return mCompiler.getImportedPackages();
     }
-   
+
     /**
      * Return the package name that this CompilationUnit should be compiled
      * into. Default implementation returns null, or no package.
@@ -128,9 +128,9 @@ public abstract class CompilationUnit implements ErrorListener {
         if(!getName().equals(templateName)) {
             return false;
         }
-        
+
         Reader r = new BufferedReader(getReader());
-        SourceReader srcReader = new SourceReader(r, "<%", "%>");        
+        SourceReader srcReader = new SourceReader(r, "<%", "%>");
         Template tree = null;
         try {
             Scanner s = new Scanner(srcReader, this);
@@ -142,12 +142,12 @@ public abstract class CompilationUnit implements ErrorListener {
 
         } finally {
             r.close();
-        }        
-        
+        }
+
         // fill sourceParams
         Variable[] vars = tree.getParams();
         TypeDesc[] sourceParams = new TypeDesc[vars.length];
-        
+
         for (int i = 0; i < vars.length; i++) {
             String type = classNameFromVariable(
                     vars[i].getTypeName().getName(), vars[i].getTypeName().getDimensions());
@@ -157,25 +157,25 @@ public abstract class CompilationUnit implements ErrorListener {
         // strip off merged class since it may be different for remote compiler
         TypeDesc[] temp = new TypeDesc[params.length-1];
         System.arraycopy(params, 1, temp, 0, temp.length);
-        
+
         // compare params
-        if(! Arrays.equals(temp, sourceParams)) {
+        if (! Arrays.equals(temp, sourceParams)) {
             return false;
         }
 
         // compare return types (null is default from Template.getReturnType())
-        if(null!=tree.getReturnType()) {
+        if (null!=tree.getReturnType()) {
             TypeDesc srcReturnType = TypeDesc.forClass(tree.getReturnType().getSimpleName());
             if(! returnType.equals(srcReturnType) ) {
                 return false;
             }
         }
-        
+
         return true;
     }
 
     private String classNameFromVariable(String type, int dimensions) {
-        
+
         if("short".equals(type)
         || "long".equals(type)
         || "double".equals(type)) {
@@ -199,10 +199,17 @@ public abstract class CompilationUnit implements ErrorListener {
         }
         return type;
     }
-    
+
     /**
      * @return An OutputStream to write compiled code to. Returning null is
      * disables code generation for this CompilationUnit.
      */
     public abstract OutputStream getOutputStream() throws IOException;
+
+    /**
+     * Reset the output stream cleaning up or removing any files created as
+     * part of the output stream.  This is generally used when an exception
+     * occurs during code generation to the output stream.
+     */
+    public abstract void resetOutputStream();
 }

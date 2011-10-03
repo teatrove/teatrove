@@ -42,7 +42,7 @@ public abstract class BeanPropertyAccessor {
 
     static {
         DEBUG = Boolean.getBoolean
-            ("com.go.trove.util.BeanPropertyAccessor.DEBUG");
+            ("org.teatrove.trove.util.BeanPropertyAccessor.DEBUG");
     }
 
     /**

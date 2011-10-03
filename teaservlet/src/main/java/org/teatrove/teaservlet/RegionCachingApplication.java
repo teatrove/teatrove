@@ -669,6 +669,11 @@ public class RegionCachingApplication implements AdminApp {
             return mApp.getDepot(mRequest.getTemplate()).getCacheMisses();
         }
 
+        public int getAvgEntrySizeInBytes() {
+            return mApp.getDepot(mRequest.getTemplate()).calculateAvgPerEntrySize();
+        }
+
+
     }
 
     public interface ClusterCacheInfo extends Clustered {

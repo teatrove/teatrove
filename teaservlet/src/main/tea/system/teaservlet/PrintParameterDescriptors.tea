@@ -1,5 +1,5 @@
-<% template PrintParameterDescriptors(Class[] types, java.beans.ParameterDescriptor[] names, Boolean link)
-if (types == null or types.length == 0) {    
+<% template PrintParameterDescriptors(java.lang.reflect.Type[] types, java.beans.ParameterDescriptor[] names, Boolean link)
+if (types == null or types.length == 0) {
     if (names != null) {
          foreach (index in 0..names.length - 1) {
             if (index > 0) {
@@ -9,11 +9,11 @@ if (types == null or types.length == 0) {
             name = names[index]
             if (name != null) {
                 call PrintClassLink(getClassForName(name.displayName), link)
-                    
+
                 '&nbsp;' name.name
             }
         }
-    }    
+    }
 }
 else {
     foreach (index in 0..types.length - 1) {

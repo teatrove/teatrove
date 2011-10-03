@@ -20,33 +20,33 @@ import java.beans.*;
 import java.io.*;
 import java.util.*;
 import java.net.*;
-import javax.servlet.ServletConfig;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 
 import org.teatrove.trove.log.Log;
+
+import org.teatrove.teaservlet.util.ClassDB;
 import org.teatrove.trove.util.BeanComparator;
 import org.teatrove.trove.util.PropertyMap;
-import org.teatrove.trove.io.CharToByteBuffer;
+
 import org.teatrove.trove.io.ByteBuffer;
 import org.teatrove.trove.classfile.TypeDesc;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
-import org.teatrove.tea.engine.TemplateError;
+
 import org.teatrove.tea.compiler.TemplateRepository;
-import org.teatrove.tea.util.BeanAnalyzer;
+
 import org.teatrove.teatools.*;
 import org.teatrove.teaservlet.util.ServerNote;
 //REMOTE stuff
 import java.rmi.RemoteException;
 
-import org.teatrove.teaservlet.TeaServletAdmin.TemplateWrapper;
 import org.teatrove.teaservlet.stats.*;
 import org.teatrove.teaservlet.util.cluster.Restartable;
 import org.teatrove.teaservlet.util.cluster.Clustered;
 import org.teatrove.teaservlet.util.cluster.ClusterManager;
-import org.teatrove.teaservlet.util.cluster.TeaServletClusterHook;
 
 /**
  * The Admin application defines functions for administering the TeaServlet.
@@ -63,6 +63,7 @@ public class AdminApplication implements AdminApp {
     protected Map mNotes;
     protected int mMaxNotes;
     protected int mNoteAge;
+    protected ClassDB mClassDB;
 
     // REMOTE stuff
     TeaServletAdmin mAdmin;
@@ -92,6 +93,34 @@ public class AdminApplication implements AdminApp {
         mAdminValue = props.getString("admin.value");
         mMaxNotes = props.getInt("notes.max", 20);
         mNoteAge = props.getInt("notes.age", 60 * 60 * 24 * 7);
+
+        mClassDB = null;
+        if (props.getBoolean("classdb.enabled")) {
+            mClassDB = new ClassDB();
+
+            String ignoredPackages = props.getString("classdb.ignored");
+            if (ignoredPackages != null) {
+                String[] pkgs = ignoredPackages.split("[\\s,;\r\n]+");
+                for (String pkg : pkgs) {
+                    mClassDB.addIgnoredPackages(pkg.trim());
+                }
+            }
+
+            String allowedPackages = props.getString("classdb.allowed");
+            if (allowedPackages != null) {
+                String[] pkgs = allowedPackages.split("[\\s,;\r\n]+");
+                for (String pkg : pkgs) {
+                    mClassDB.addAllowedPackages(pkg.trim());
+                }
+            }
+
+            try { mClassDB.scanAll(config.getServletContext()); }
+            catch (IOException ioe) {
+                mClassDB = null;
+                mLog.error("unable to scan class index");
+                mLog.error(ioe);
+            }
+        }
 
         List serverList = new ArrayList();
 
@@ -148,9 +177,22 @@ public class AdminApplication implements AdminApp {
                                      .getInitParameter("cluster.multicast.group"));
 
                 }
-                catch (NumberFormatException nfe) {}
-                catch (UnknownHostException uhe) {}
+                catch (NumberFormatException nfe) { mLog.debug(nfe); }
+                catch (UnknownHostException uhe) { mLog.warn(uhe); }
                 if (multicastGroup != null) {
+
+                    int multicastTtl = 1;
+                    String ttlStr = config.getInitParameter("cluster.multicast.ttl");
+                    if(ttlStr!=null && ttlStr.trim().length()>0) {
+                        try {
+                            multicastTtl = Integer.parseInt(ttlStr);
+                        } catch(NumberFormatException ex) {
+                            mLog.warn("using default for cluster.multicast.ttl: "+multicastTtl
+                                    +" because of error parsing configured value: "+ttlStr);
+                            mLog.warn(ex);
+                        }
+                    }
+
                     mClusterManager = new ClusterManager(getAdmin(),
                                                          clusterName,
                                                          null,
@@ -159,8 +201,13 @@ public class AdminApplication implements AdminApp {
                                                          rmiPort,
                                                          netInterface,
                                                          servers);
+
+                    mLog.info("setting multicast ttl to: "+multicastTtl);
+                    mClusterManager.setMulticastTtl(multicastTtl);
+
                     mClusterManager.joinCluster();
                     mClusterManager.launchAuto();
+
                 }
                 else if (servers != null) {
                     mClusterManager = new ClusterManager(getAdmin(),
@@ -256,13 +303,23 @@ public class AdminApplication implements AdminApp {
     public AppAdminLinks getAdminLinks() {
 
         AppAdminLinks links = new AppAdminLinks(mConfig.getName());
-
-        links.addAdminLink("Templates","/system/teaservlet/AdminTemplates");
-        links.addAdminLink("Functions","/system/teaservlet/AdminFunctions");
-        links.addAdminLink("Applications",
+        links.addAdminLink("Instrumentation","/system/console?page=instrumentation");
+        links.addAdminLink("Dashboard","/system/console?page=dashboard");
+        links.addAdminLink("Janitor","/system/console?page=janitor");
+        links.addAdminLink("Compile","/system/console?page=compile");
+        links.addAdminLink("Templates","/system/console?page=templates");
+        links.addAdminLink("Functions","/system/console?page=functions");
+        links.addAdminLink("Applications", "/system/console?page=applications");
+        links.addAdminLink("Logs","/system/console?page=logs");
+        links.addAdminLink("Servlet Engine", "/system/console?page=servlet_engine");
+        links.addAdminLink("Echo Request", "/system/console?page=echo_request");
+        
+        links.addAdminLink("Classic Templates","/system/teaservlet/AdminTemplates");
+        links.addAdminLink("Classic Functions","/system/teaservlet/AdminFunctions");
+        links.addAdminLink("Classic Applications",
                            "/system/teaservlet/AdminApplications");
-        links.addAdminLink("Logs","/system/teaservlet/LogViewer");
-        links.addAdminLink("Servlet Engine",
+        links.addAdminLink("Classic Logs","/system/teaservlet/LogViewer");
+        links.addAdminLink("Classic Servlet Engine",
                            "/system/teaservlet/AdminServletEngine");
         return links;
     }
@@ -359,7 +416,7 @@ public class AdminApplication implements AdminApp {
                 try {
                     if (mRequest.getParameter("cluster") != null
                         && mClusterManager != null) {
-                        
+
                         if(command==TeaServletAdmin.RELOAD_SELECTED_TEMPLATE_CHANGES) {
                             String[] selectedTemplates = mRequest.getParameterValues("selectedTemplates");
                             mCompilationResults = clusterReload(new Object[] { all, selectedTemplates });
@@ -406,6 +463,20 @@ public class AdminApplication implements AdminApp {
                 mLog.warn(cpe);
                 return null;
             }
+        }
+
+        /**
+         * Returns a list of class objects for each known subclass.
+         */
+        public String[] getSubclassesForName(String classname) {
+            if (mClassDB == null) {
+                return null;
+            }
+
+            Set<String> subclasses = mClassDB.getSubclasses(classname);
+            return (subclasses == null
+                        ? new String[0]
+                        : subclasses.toArray(new String[subclasses.size()]));
         }
 
         /**
@@ -530,6 +601,11 @@ public class AdminApplication implements AdminApp {
                                                      (TeaServletTemplateSource)
                                                      currentTemplate
                                                      .getTemplateSource());
+
+            if (td==null) {
+                throw new ServletException("dynamicTemplateCall() could not find template: " + templateName
+                        +" called from template: " + currentTemplate.getSourceFile());
+            }
 
             // make sure we have the right number and types of parameters
             String[] paramNames = td.getParameterNames();
@@ -969,7 +1045,7 @@ public class AdminApplication implements AdminApp {
                         if ((i = fb.indexOf(";")) != -1)
                             fb.deleteCharAt(i);
                     }
-    
+
                     Class clazz = getClassForName(fb.toString());
                     if (clazz != null) {
                         return getHandyClassInfo(clazz);
@@ -1042,7 +1118,7 @@ public class AdminApplication implements AdminApp {
                              Integer all) {
             this(cont, res, peer, (Object)all);
         }
-        
+
         public ClusterThread(ContextImpl cont,
                              TemplateCompilationResults res,
                              Clustered peer,
