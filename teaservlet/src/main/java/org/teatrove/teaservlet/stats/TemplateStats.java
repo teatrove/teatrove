@@ -601,7 +601,7 @@ public class TemplateStats {
     	return result;
     }
     
-    public void reset() {
+    public synchronized void reset() {
 		mRawData = new RawData[mRawWindowSize];
 		for (int i=0; i < mRawData.length; i++) 
 			mRawData[i] = new RawData();
@@ -615,5 +615,8 @@ public class TemplateStats {
 		mPeakServiceDuration = 0L;
 		mCumulativeServiceTime = 0L;
 		mServicedCount = 0L;
+		
+		mCurrentRawIndex = 0;
+		mCurrentAggregateIndex = 0;
     }
 }
