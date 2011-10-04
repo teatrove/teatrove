@@ -167,15 +167,23 @@ public class AdminApplication implements AdminApp {
                     .getInitParameter("cluster.localNet");
 
                 try {
-                    rmiPort = Integer.parseInt(config
-                                     .getInitParameter("cluster.rmi.port"));
+                    String rmiPortStr = 
+                        config.getInitParameter("cluster.rmi.port");
+                    if (rmiPortStr != null) {
+                        rmiPort = Integer.parseInt(rmiPortStr);
+                    }
 
-                    multicastPort = Integer.parseInt(config
-                                     .getInitParameter("cluster.multicast.port"));
+                    String multicastPortStr = 
+                        config.getInitParameter("cluster.multicast.port");
+                    if (multicastPortStr != null) {
+                        multicastPort = Integer.parseInt(multicastPortStr);
+                    }
 
-                    multicastGroup = InetAddress.getByName(config
-                                     .getInitParameter("cluster.multicast.group"));
-
+                    String multicastGroupStr =
+                        config.getInitParameter("cluster.multicast.group");
+                    if (multicastGroupStr != null) {
+                        multicastGroup = InetAddress.getByName(multicastGroupStr);
+                    }
                 }
                 catch (NumberFormatException nfe) { mLog.debug(nfe); }
                 catch (UnknownHostException uhe) { mLog.warn(uhe); }
@@ -564,7 +572,7 @@ public class AdminApplication implements AdminApp {
         public TeaServletInvocationStats.Stats getStatistics(String caller, String callee) {
             return TeaServletInvocationStats.getInstance().getStatistics(caller, callee);
         }
-        
+
         public void resetStatistics() {
             TeaServletInvocationStats.getInstance().reset();
         }

@@ -62,66 +62,67 @@ public class NonRegionCachingApplication implements AdminApp {
 		
 	public static class NonRegionCachingContext implements RegionCachingContext {
 			
-			private ApplicationRequest m_request;
-			private ApplicationResponse m_response;
+		private ApplicationRequest m_request;
+		private ApplicationResponse m_response;
 			
-			public NonRegionCachingContext(ApplicationRequest request, ApplicationResponse response) {
-				m_request = request;
-				m_response = response;
-			}
+		public NonRegionCachingContext(ApplicationRequest request, ApplicationResponse response) {
+			m_request = request;
+			m_response = response;
+		}
 		
-			public void cache(Substitution s) throws Exception {
-				s.substitute(m_response.getHttpContext());
-			}
+		public void cache(Substitution s) throws Exception {
+			s.substitute(m_response.getHttpContext());
+		}
 		
-			public void cache(Object key, Substitution s) throws Exception {
-				cache(s);
-			}
+		public void cache(Object key, Substitution s) throws Exception {
+			cache(s);
+		}
 		
 		
-			public void cache(long ttlMillis, Substitution s) throws Exception {
-				cache(s);
-			}
+		public void cache(long ttlMillis, Substitution s) throws Exception {
+			cache(s);
+		}
 		
-			public void cache(long ttlMillis, Object key, Substitution s) throws Exception {
-				cache(s);
-			}
+		public void cache(long ttlMillis, Object key, Substitution s) throws Exception {
+			cache(s);
+		}
 		
-			public void cache(long ttlMillis, Object key, boolean useCustomKeyOnly, Substitution s) throws Exception {
-				cache(s);
-			}
+		public void cache(long ttlMillis, Object key, boolean useCustomKeyOnly, Substitution s) throws Exception {
+			cache(s);
+		}
 		
-			public void nocache(Substitution s) throws Exception {
-				s.substitute(m_response.getHttpContext());
-			}
+		public void nocache(Substitution s) throws Exception {
+			s.substitute(m_response.getHttpContext());
+		}
 		
-			public RegionCacheInfo getRegionCacheInfo() {
-				return null;
-			}
+		public RegionCacheInfo getRegionCacheInfo() {
+			return null;
+		}
 		
-			public ClusterCacheInfo getClusterCacheInfo() {
-				return null;
-			}
+		public ClusterCacheInfo getClusterCacheInfo() {
+			return null;
+		}
 		
-			public int getCacheSize() {
-				return 0;
-			}
+		public int getCacheSize() {
+			return 0;
+		}
 		
-			public int getValidEntryCount() {
-				return 0;
-			}
+		public int getValidEntryCount() {
+			return 0;
+		}
 		
-			public int getInvalidEntryCount() {
-				return 0;
-			}
-                        public long getCacheGets() { return 0L; }
+		public int getInvalidEntryCount() {
+			return 0;
+		}
 
-                        public long getCacheHits() { return 0L; }
+        public long getCacheGets() { return 0L; }
 
-                        public long getCacheMisses() { return 0L; }
+        public long getCacheHits() { return 0L; }
 
-                        public int getAvgEntrySizeInBytes() { return 0; }
+        public long getCacheMisses() { return 0L; }
+
+        public int getAvgEntrySizeInBytes() { return 0; }
             
-                        public void resetDepotStats() { }
+        public void resetDepotStats() { }
 	}
 }

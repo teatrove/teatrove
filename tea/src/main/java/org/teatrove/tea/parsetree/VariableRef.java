@@ -24,9 +24,12 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  * @see Variable
  */
-public class VariableRef extends Expression {
+public class VariableRef extends Expression implements NullSafe {
+    private static final long serialVersionUID = 1L;
+
     private String mName;
     private Variable mVariable;
+    private boolean mNullSafe;
 
     public VariableRef(SourceInfo info, String name) {
         super(info);
@@ -53,5 +56,27 @@ public class VariableRef extends Expression {
     public void setVariable(Variable var) {
         mVariable = var;
         setInitialType(var.getType());
+    }
+    
+    public int hashCode() {
+        return mName.hashCode();
+    }
+    
+    public boolean equals(Object other) {
+        if (other instanceof VariableRef) {
+            VariableRef ref = (VariableRef)other;
+            return mName.equals(ref.mName);
+        }
+        else {
+            return false;
+        }
+    }
+    
+    public boolean isNullSafe() {
+        return mNullSafe;
+    }
+    
+    public void setNullSafe(boolean nullSafe) {
+        mNullSafe = nullSafe;
     }
 }

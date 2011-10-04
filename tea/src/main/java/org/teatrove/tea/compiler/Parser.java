@@ -31,8 +31,11 @@ import org.teatrove.tea.parsetree.AssignmentStatement;
 import org.teatrove.tea.parsetree.Block;
 import org.teatrove.tea.parsetree.BooleanLiteral;
 import org.teatrove.tea.parsetree.BreakStatement;
+import org.teatrove.tea.parsetree.CallExpression;
+import org.teatrove.tea.parsetree.CompareExpression;
 import org.teatrove.tea.parsetree.ConcatenateExpression;
 import org.teatrove.tea.parsetree.ContinueStatement;
+import org.teatrove.tea.parsetree.Directive;
 import org.teatrove.tea.parsetree.Expression;
 import org.teatrove.tea.parsetree.ExpressionList;
 import org.teatrove.tea.parsetree.ExpressionStatement;
@@ -44,18 +47,23 @@ import org.teatrove.tea.parsetree.Lookup;
 import org.teatrove.tea.parsetree.Name;
 import org.teatrove.tea.parsetree.NegateExpression;
 import org.teatrove.tea.parsetree.NewArrayExpression;
+import org.teatrove.tea.parsetree.NoOpExpression;
+import org.teatrove.tea.parsetree.Node;
 import org.teatrove.tea.parsetree.NotExpression;
 import org.teatrove.tea.parsetree.NullLiteral;
+import org.teatrove.tea.parsetree.NullSafe;
 import org.teatrove.tea.parsetree.NumberLiteral;
 import org.teatrove.tea.parsetree.OrExpression;
 import org.teatrove.tea.parsetree.ParenExpression;
 import org.teatrove.tea.parsetree.RelationalExpression;
+import org.teatrove.tea.parsetree.SpreadExpression;
 import org.teatrove.tea.parsetree.Statement;
 import org.teatrove.tea.parsetree.StatementList;
 import org.teatrove.tea.parsetree.StringLiteral;
 import org.teatrove.tea.parsetree.SubstitutionStatement;
 import org.teatrove.tea.parsetree.Template;
 import org.teatrove.tea.parsetree.TemplateCallExpression;
+import org.teatrove.tea.parsetree.TernaryExpression;
 import org.teatrove.tea.parsetree.TypeName;
 import org.teatrove.tea.parsetree.Variable;
 import org.teatrove.tea.parsetree.VariableRef;
@@ -73,7 +81,7 @@ public class Parser {
     private Scanner mScanner;
     private CompilationUnit mUnit;
 
-    private Vector mListeners = new Vector(1);
+    private Vector<ErrorListener> mListeners = new Vector<ErrorListener> (1);
     private int mErrorCount = 0;
     private int mEOFErrorCount = 0;
 
@@ -186,9 +194,11 @@ public class Parser {
         SourceInfo directiveInfo = token.getSourceInfo();
 
         // Process directives
-        ArrayList directiveList = new ArrayList();
+        ArrayList<Directive> directiveList = new ArrayList<Directive>();
         while (token.getID() == Token.IMPORT) {
-            directiveList.add(new ImportDirective(directiveInfo, parseTypeName().getName()));
+            directiveList.add(
+                new ImportDirective(directiveInfo, parseTypeName().getName())
+            );
             token = read();
             if (token.getID() == Token.SEMI)
                 token = read();
@@ -248,7 +258,7 @@ public class Parser {
 
         // Parse statements until end of file is reached.
         StatementList statementList;
-        Vector v = new Vector(10, 0);
+        Vector<Statement> v = new Vector<Statement>(10, 0);
 
         SourceInfo info = peek().getSourceInfo();
         Statement statement = null;
@@ -411,7 +421,7 @@ public class Parser {
             error("params.lparen", token);
         }
 
-        Vector vars = new Vector(10, 0);
+        Vector<Variable> vars = new Vector<Variable>(10, 0);
 
         if (token.getID() == Token.RPAREN) {
             // Empty list detected.
@@ -485,7 +495,7 @@ public class Parser {
             token = read(); // read the left brace
         }
 
-        Vector v = new Vector(10, 0);
+        Vector<Statement> v = new Vector<Statement>(10, 0);
         Token p;
         while ((p = peek()).getID() != Token.RBRACE) {
             if (p.getID() == Token.EOF) {
@@ -715,6 +725,14 @@ public class Parser {
     private AssignmentStatement parseAssignmentStatement(Token token)
         throws IOException {
 
+        // TODO: allow lvalue to support dot notations
+        // ie: field = x (store local variable)
+        //     obj.field = x (obj.setField)
+        //     obj.field.field = x (obj.getField().setField)
+        //     array[idx] = x (array[idx])
+        //     list[idx] = x (list.set(idx, x))
+        //     map[key] = x (map.put(key, x))
+        //     map[obj.name] = x (map.put(obj.getName(), x)
         SourceInfo info = token.getSourceInfo();
         VariableRef lvalue = parseLValue(token);
 
@@ -746,18 +764,12 @@ public class Parser {
      * parenthesis.
      * @param associative True if the list declares associative array values.
      */
-    private ExpressionList parseList(boolean bracketed, boolean associative) throws IOException {
-        int leftID;
-        int rightID;
+    private ExpressionList parseList(int lbracket, int rbracket,
+                                     boolean associative)
+        throws IOException {
 
-        if (!bracketed) {
-            leftID = Token.LPAREN;
-            rightID = Token.RPAREN;
-        }
-        else {
-            leftID = Token.LBRACK;
-            rightID = Token.RBRACK;
-        }
+        int leftID = lbracket;
+        int rightID = rbracket;
 
         Token token = peek();
         SourceInfo info = token.getSourceInfo();
@@ -767,15 +779,21 @@ public class Parser {
             token = peek();
         }
         else {
-            if (!bracketed) {
+            if (lbracket == Token.LPAREN) {
                 error("list.lparen.expected", token);
             }
-            else {
+            else if (lbracket == Token.LBRACK) {
                 error("list.lbracket.expected", token);
+            }
+            else if (lbracket == Token.LBRACE) {
+                error("list.lbrace.expected", token);
+            }
+            else {
+                error("list.expected", token);
             }
         }
 
-        Vector exprs = new Vector(10, 0);
+        Vector<Expression> exprs = new Vector<Expression>(10, 0);
         boolean done = false;
 
         if (token.getID() == rightID) {
@@ -798,10 +816,9 @@ public class Parser {
 
                 token = peek();
 
-                if (!associative && token.getID() == Token.EQUAL_GREATER)
-                    error("list.not.associative", token);
-
-                if (token.getID() != Token.COMMA && token.getID() != Token.EQUAL_GREATER) {
+                if (token.getID() != Token.COMMA &&
+                    token.getID() != Token.EQUAL_GREATER &&
+                    token.getID() != Token.COLON) {
                     break;
                 }
                 else {
@@ -822,11 +839,17 @@ public class Parser {
                 info = info.setEndPosition(token.getSourceInfo());
             }
             else {
-                if (!bracketed) {
+                if (rbracket == Token.RPAREN) {
                     error("list.rparen.expected", token);
                 }
-                else {
+                else if (rbracket == Token.RBRACK) {
                     error("list.rbracket.expected", token);
+                }
+                else if (rbracket == Token.RBRACE) {
+                    error("list.rbrace.expected", token);
+                }
+                else {
+                    error("list.expected", token);
                 }
             }
         }
@@ -842,7 +865,42 @@ public class Parser {
     }
 
     private Expression parseExpression(Token token) throws IOException {
-        return parseOrExpression(token);
+        return parseTernaryExpression(token);
+    }
+
+    private Expression parseTernaryExpression(Token token) throws IOException {
+        SourceInfo info = token.getSourceInfo();
+        Expression expr = parseOrExpression(token);
+
+        token = peek();
+        if (token.getID() == Token.QUESTION) {
+            read();
+            token = peek();
+            if (token.getID() == Token.COLON) {
+                read();
+
+                Expression thenExpr = expr;
+                Expression elseExpr = parseTernaryExpression(read());
+                info = info.setEndPosition(elseExpr.getSourceInfo());
+                expr = new TernaryExpression(info, expr, thenExpr, elseExpr);
+            }
+            else {
+                Expression thenExpr = parseTernaryExpression(read());
+
+                token = peek();
+                if (token.getID() != Token.COLON) {
+                    error("ternary.colon.expected", token);
+                }
+
+                read();
+
+                Expression elseExpr = parseTernaryExpression(read());
+                info = info.setEndPosition(elseExpr.getSourceInfo());
+                expr = new TernaryExpression(info, expr, thenExpr, elseExpr);
+            }
+        }
+
+        return expr;
     }
 
     private Expression parseOrExpression(Token token) throws IOException {
@@ -922,7 +980,7 @@ public class Parser {
         throws IOException {
 
         SourceInfo info = token.getSourceInfo();
-        Expression expr = parseConcatenateExpression(token);
+        Expression expr = parseCompareExpression(token);
 
     loop:
         while (true) {
@@ -934,7 +992,7 @@ public class Parser {
             case Token.LE:
             case Token.GE:
                 read();
-                Expression right = parseConcatenateExpression(read());
+                Expression right = parseCompareExpression(read());
                 info = info.setEndPosition(right.getSourceInfo());
                 expr = new RelationalExpression(info, token, expr, right);
                 break;
@@ -945,6 +1003,30 @@ public class Parser {
                 expr = new RelationalExpression(info, token, expr, typeName);
                 break;
             default:
+                break loop;
+            }
+        }
+
+        return expr;
+    }
+
+    private Expression parseCompareExpression(Token token)
+        throws IOException {
+        
+        SourceInfo info = token.getSourceInfo();
+        Expression expr = parseConcatenateExpression(token);
+
+    loop:
+        while (true) {
+            token = peek();
+
+            if (token.getID() == Token.SPACESHIP) {
+                read();
+                Expression right = parseConcatenateExpression(read());
+                info = info.setEndPosition(right.getSourceInfo());
+                expr = new CompareExpression(info, token, expr, right);
+            }
+            else {
                 break loop;
             }
         }
@@ -1056,8 +1138,65 @@ public class Parser {
 
         while (true) {
             token = peek();
+            boolean nullsafe = false;
 
-            if (token.getID() == Token.DOT) {
+            // check for null-safe or spread operators
+            Token prefix = null;
+            if (token.getID() == Token.QUESTION) {
+                
+                prefix = read();
+                token = peek();
+                if (token.getID() == Token.DOT || 
+                    token.getID() == Token.LBRACK) {
+                    
+                    nullsafe = true;
+                }
+                else {
+                    unread(prefix);
+                }
+            }
+
+            if (!nullsafe && token.getID() == Token.SPREAD) {
+                // "spread" lookup i.e.: a*.b
+                
+                Token spread = read(); // read the spread operator
+                
+                token = read();
+
+                Name lookupName;
+                SourceInfo nameInfo = token.getSourceInfo();
+                if (token.getID() != Token.IDENT) {
+                    if (token.isReservedWord()) {
+                        error("lookup.reserved.word", token.getImage(), token);
+                        lookupName = new Name(nameInfo, token.getImage());
+                    }
+                    else {
+                        error("lookup.identifier.expected", token);
+                        lookupName = new Name(nameInfo, null);
+                    }
+                }
+                else {
+                    lookupName = new Name(nameInfo, token.getStringValue());
+                    info = info.setEndPosition(nameInfo);
+                }
+
+                // check if function call rather than purely lookup
+                Expression operation = null;
+                Expression noop = new NoOpExpression(info);
+                if (peek().getID() == Token.LPAREN) {
+                    operation = parseCallExpression
+                    (
+                        FunctionCallExpression.class, noop, lookupName, info
+                    );
+                }
+                else {
+                    operation = new Lookup(info, noop, spread, lookupName);
+                }
+                
+                // create spread expression
+                expr = new SpreadExpression(info, expr, operation);
+            }
+            else if (token.getID() == Token.DOT) {
                 // "dot" lookup i.e.: a.b
 
                 Token dot = read(); // read the dot
@@ -1081,7 +1220,14 @@ public class Parser {
                     info = info.setEndPosition(nameInfo);
                 }
 
-                expr = new Lookup(info, expr, dot, lookupName);
+                // check if function call rather than purely lookup
+                if (peek().getID() == Token.LPAREN) {
+                    expr = parseCallExpression(FunctionCallExpression.class,
+                                               expr, lookupName, info);
+                }
+                else {
+                    expr = new Lookup(info, expr, dot, lookupName);
+                }
             }
             else if (token.getID() == Token.LBRACK) {
                 // array lookup i.e.: a[b]
@@ -1118,6 +1264,10 @@ public class Parser {
             }
             else {
                 break;
+            }
+            
+            if (expr instanceof NullSafe) {
+                ((NullSafe) expr).setNullSafe(nullsafe);
             }
         }
 
@@ -1170,20 +1320,10 @@ public class Parser {
             return new BooleanLiteral(info, false);
 
         case Token.CALL:
-            Name target = parseName();
-            info.setEndPosition(target.getSourceInfo());
+            return parseTemplateCallExpression(token);
+            
 
-            ExpressionList list = parseList(false, false);
-            info = info.setEndPosition(list.getSourceInfo());
 
-            // Check if a block is being passed in the call.
-            Block subParam = null;
-            if (peek().getID() == Token.LBRACE) {
-                subParam = parseBlock();
-                info = info.setEndPosition(subParam.getSourceInfo());
-            }
-
-            return new TemplateCallExpression(info, target, list, subParam);
 
         case Token.NUMBER:
             if (token.getNumericType() == 0) {
@@ -1257,11 +1397,24 @@ public class Parser {
         boolean associative = (token.getID() == Token.DOUBLE_HASH);
 
         SourceInfo info = token.getSourceInfo();
-        ExpressionList list = parseList(false, associative);
+        ExpressionList list = parseList(Token.LPAREN, Token.RPAREN, associative);
         info = info.setEndPosition(list.getSourceInfo());
         return new NewArrayExpression(info, list, associative);
     }
 
+    private TemplateCallExpression parseTemplateCallExpression(Token token)
+        throws IOException {
+        
+        SourceInfo info = token.getSourceInfo();
+        
+        Name target = parseName();
+        info.setEndPosition(target.getSourceInfo());
+
+        // parse remainder of call expression
+        return parseCallExpression(TemplateCallExpression.class, 
+                                   null, target, info);
+    }
+    
     // Special parse method in that it may return null if it couldn't parse
     // a FunctionCallExpression. Token passed in must be an identifier.
     private FunctionCallExpression parseFunctionCallExpression(Token token)
@@ -1270,7 +1423,7 @@ public class Parser {
         SourceInfo info = token.getSourceInfo();
 
         // Search for pattern <ident> {<dot> <ident>} <lparen>
-        Vector lookahead = new Vector();
+        Vector<Token> lookahead = new Vector<Token>();
         StringBuffer name = new StringBuffer(token.getStringValue());
         Name target = null;
 
@@ -1310,8 +1463,19 @@ public class Parser {
             }
             return null;
         }
+        
+        // parse remainder of call expression
+        return parseCallExpression(FunctionCallExpression.class, 
+                                   null, target, info);
+    }
 
-        ExpressionList list = parseList(false, false);
+    private <T extends CallExpression> 
+    T parseCallExpression(Class<T> clazz, Expression expression, Node target, 
+                          SourceInfo info)
+        throws IOException {
+        
+        ExpressionList list =
+            parseList(Token.LPAREN, Token.RPAREN, false);
         info = info.setEndPosition(list.getSourceInfo());
 
         // Check if a block is being passed in the call.
@@ -1321,7 +1485,15 @@ public class Parser {
             info = info.setEndPosition(subParam.getSourceInfo());
         }
 
-        return new FunctionCallExpression(info, target, list, subParam);
+        try {
+            return clazz.getConstructor(SourceInfo.class, Expression.class,
+                                        Name.class, ExpressionList.class, 
+                                        Block.class)
+                        .newInstance(info, expression, target, list, subParam);
+        }
+        catch (Exception exception) {
+            throw new IOException("unable to create ctor", exception);
+        }
     }
 
     /** Test program */
@@ -1329,21 +1501,16 @@ public class Parser {
         Tester.test(arg);
     }
 
-    /**************************************************************************
+    /**
      *
      * @author Brian S O'Neill
-     * @version
-     * <!--$$Revision:--> 66 <!-- $--> 36 <!-- $$JustDate:--> 11/14/03 <!-- $-->
      */
     private static class Tester implements ErrorListener {
-        String mFilename;
-
         public static void test(String[] arg) throws Exception {
             new Tester(arg[0]);
         }
 
         public Tester(String filename) throws Exception {
-            mFilename = filename;
             Reader file = new BufferedReader(new FileReader(filename));
             Scanner scanner = new Scanner(new SourceReader(file, "<%", "%>"));
             scanner.addErrorListener(this);

@@ -27,6 +27,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public abstract class BinaryExpression extends Expression {
+    private static final long serialVersionUID = 1L;
+
     private Token mOperator;
     private Expression mLeft;
     private Expression mRight;
@@ -41,7 +43,7 @@ public abstract class BinaryExpression extends Expression {
         mLeft = left;
         mRight = right;
     }
-    
+
     public Object clone() {
         BinaryExpression be = (BinaryExpression)super.clone();
         be.mLeft = (Expression)mLeft.clone();

@@ -20,6 +20,7 @@ import javax.servlet.ServletContext;
 
 import org.teatrove.tea.runtime.OutputReceiver;
 import org.teatrove.tea.engine.DynamicContextSource;
+import org.teatrove.teaservlet.management.HttpContextManagement;
 import org.teatrove.trove.io.CharToByteBuffer;
 import org.teatrove.trove.log.Log;
 
@@ -31,10 +32,12 @@ public class HttpContextSource implements DynamicContextSource {
 
     private ServletContext mServletContext;
     private Log mLog;
+    private HttpContextManagement mHttpContextMBean;    
 
-    HttpContextSource(ServletContext servletContext, Log log) {
+    HttpContextSource(ServletContext servletContext, Log log, HttpContextManagement contextMBean) {
         mLog = log;
         mServletContext = servletContext;
+        mHttpContextMBean = contextMBean;
     }
 
     public Class getContextType() {
@@ -70,7 +73,6 @@ public class HttpContextSource implements DynamicContextSource {
         else if (obj instanceof OutputReceiver) {
             outRec = (OutputReceiver)obj;
         }
-        return new HttpContextImpl(mServletContext, mLog, req, 
-                                   resp, buf, outRec);
+        return new HttpContextImpl(mServletContext, mLog, req, resp, buf, outRec, mHttpContextMBean);
     }
 }

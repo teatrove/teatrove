@@ -16,18 +16,19 @@
 
 package org.teatrove.tea.compiler;
 
-import org.teatrove.trove.io.SourceReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.util.Arrays;
+
 import org.teatrove.tea.parsetree.Template;
 import org.teatrove.tea.parsetree.Variable;
 import org.teatrove.trove.classfile.TypeDesc;
-import java.io.BufferedReader;
-import java.io.Reader;
-import java.io.OutputStream;
-import java.io.IOException;
-import java.util.Arrays;
+import org.teatrove.trove.io.SourceReader;
 
 /**
- * 
+ *
  * @author Brian S O'Neill
  */
 public abstract class CompilationUnit implements ErrorListener {
@@ -65,7 +66,9 @@ public abstract class CompilationUnit implements ErrorListener {
      * this call to the compiler.  This is overriden to implement compiled
      * templates.
      */
-    public Class getRuntimeContext() { return mCompiler.getRuntimeContext(); }
+    public Class<?> getRuntimeContext() {
+        return mCompiler.getRuntimeContext();
+    }
 
     /**
      * Called when there is an error when compiling this CompilationUnit.
@@ -159,12 +162,12 @@ public abstract class CompilationUnit implements ErrorListener {
         System.arraycopy(params, 1, temp, 0, temp.length);
 
         // compare params
-        if (! Arrays.equals(temp, sourceParams)) {
+        if(! Arrays.equals(temp, sourceParams)) {
             return false;
         }
 
         // compare return types (null is default from Template.getReturnType())
-        if (null!=tree.getReturnType()) {
+        if(null!=tree.getReturnType()) {
             TypeDesc srcReturnType = TypeDesc.forClass(tree.getReturnType().getSimpleName());
             if(! returnType.equals(srcReturnType) ) {
                 return false;

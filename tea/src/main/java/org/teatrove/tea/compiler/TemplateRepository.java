@@ -16,36 +16,34 @@
 
 package org.teatrove.tea.compiler;
 
+import java.beans.MethodDescriptor;
 import java.io.File;
-import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.FileReader;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Date;
-import java.util.StringTokenizer;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.text.SimpleDateFormat;
 import java.text.ParseException;
-import java.beans.MethodDescriptor;
-
-import java.util.jar.JarFile;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarException;
+import java.util.jar.JarFile;
 import java.util.zip.ZipException;
-
-import org.teatrove.trove.util.PropertyMap;
-import org.teatrove.trove.util.PropertyParser;
 
 import org.teatrove.trove.classfile.TypeDesc;
 import org.teatrove.trove.classfile.MethodInfo;
 import org.teatrove.trove.log.Syslog;
+import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.PropertyParser;
 
 /**
  *
@@ -62,11 +60,14 @@ import org.teatrove.trove.log.Syslog;
 public class TemplateRepository {
 
     private File mRootClassesDir;
-    private File mRepositoryFile;
+    // private File mRepositoryFile;
     private String mRootPackage;
-    private HashMap mTemplateInfoMap = new HashMap();
-    private HashMap mAncestorMap = null;
-    private HashMap mFunctionMap = null;
+
+    private HashMap<String, TemplateInfo> mTemplateInfoMap =
+        new HashMap<String, TemplateInfo>();
+
+    private HashMap<String, Map<String, TemplateInfo>> mAncestorMap = null;
+    private HashMap<String, Map<String, TemplateInfo>> mFunctionMap = null;
     private static final SimpleDateFormat mDateFmt = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss(S) a z");
     private static TemplateRepository mInstance = null;
 
@@ -198,7 +199,7 @@ public class TemplateRepository {
             }
             catch (ParseException ignore) { }
             mReturnType = TypeDesc.forDescriptor((String) p.get("returnType"));
-            ArrayList paramList = new ArrayList();
+            ArrayList<TypeDesc> paramList = new ArrayList<TypeDesc>();
             if (p.get("parameterTypes") != null) {
                 StringTokenizer params = new StringTokenizer(
                     (String) p.get("parameterTypes"), ",", false);
@@ -208,7 +209,7 @@ public class TemplateRepository {
             }
             mParameterTypes = (TypeDesc[]) paramList.toArray(
                 new TypeDesc[paramList.size()]);
-            ArrayList depList = new ArrayList();
+            ArrayList<String> depList = new ArrayList<String>();
             if (p.get("dependents") != null) {
                 StringTokenizer deps = new StringTokenizer(
                     (String) p.get("dependents"), ",", false);
@@ -217,7 +218,8 @@ public class TemplateRepository {
             }
             mDependents = (String[]) depList.toArray(
                 new String[depList.size()]);
-            ArrayList methodList = new ArrayList();
+            ArrayList<TemplateCallExtractor.AppMethodInfo> methodList =
+                new ArrayList<TemplateCallExtractor.AppMethodInfo>();
             if (p.get("methodsCalled") != null) {
                 StringTokenizer meths = new StringTokenizer(
                     (String) p.get("methodsCalled"), ",", false);
@@ -388,8 +390,8 @@ public class TemplateRepository {
                     Syslog.warn("The jar file " + name + " is in the classpath but does not exist or is unreadable.");
                     continue;
                 }
-                for (Enumeration e = jar.entries(); e.hasMoreElements(); ) {
-                    JarEntry entry = (JarEntry) e.nextElement();
+                for (Enumeration<JarEntry> e = jar.entries(); e.hasMoreElements(); ) {
+                    JarEntry entry = e.nextElement();
                     if (! entry.getName().startsWith(TemplateCallExtractor.TEMPLATE_PACKAGE.replace('.', '/')) ||
                             ! entry.getName().endsWith(".class"))
                         continue;
@@ -423,9 +425,9 @@ public class TemplateRepository {
         buf.append("lastModified = ").append(
             mDateFmt.format(new Date(lastModified))).append("\n");
         buf.append("templates {\n");
-        for (Iterator i = mTemplateInfoMap.keySet().iterator(); i.hasNext(); )
+        for (Iterator<String> i = mTemplateInfoMap.keySet().iterator(); i.hasNext(); )
             buf.append(((TemplateInfo) mTemplateInfoMap.get(
-                (String) i.next())).toString());
+                i.next())).toString());
         buf.append("}\n");
         File repositoryFile = new File(mRootClassesDir,
             REPOSITORY_FILENAME);
@@ -458,7 +460,7 @@ public class TemplateRepository {
         PropertyMap templateMap = m.subMap("templates");
 
         // Merge the TemplateInfos into existing mTemplateInfoMap
-        for (Iterator i = templateMap.subMapKeySet().iterator(); i.hasNext();) {
+        for (Iterator<?> i = templateMap.subMapKeySet().iterator(); i.hasNext();) {
             String key = (String) i.next();
             mTemplateInfoMap.put(key, new TemplateInfo(key,
                 templateMap.subMap(key)));
@@ -472,31 +474,27 @@ public class TemplateRepository {
      * JoshY 12/28/04 - Due to a bug in the 1.4.2_05 server VM, it's important that you not
      * use the TemplateCallExtractor.AppMethodInfo as a map key.  We're using a String
      * representation here as a workaround.
-     * 
-     * tliaw 12/2/10 - Since getMethodCallers has been broken due to the aforementioned workaround and
-     * that no one is using 1.4.2 JVM, I reverted to use TemplateCallExtractor.AppMethodInfo as
-     * the map key to fix getMethodCallers (kudos to Hagen, Nicholas for first pointing this out).
      */
     private void buildAncestorMap() {
-        mAncestorMap = new HashMap();
-        mFunctionMap = new HashMap();
-        for (Iterator i = mTemplateInfoMap.values().iterator(); i.hasNext();) {
-            TemplateInfo t = (TemplateInfo) i.next();
+        mAncestorMap = new HashMap<String, Map<String, TemplateInfo>>();
+        mFunctionMap = new HashMap<String, Map<String, TemplateInfo>>();
+        for (Iterator<TemplateInfo> i = mTemplateInfoMap.values().iterator(); i.hasNext();) {
+            TemplateInfo t = i.next();
             for (int j = 0; j < t.getDependents().length; j++) {
-                HashMap parentMap = (HashMap) mAncestorMap.get(
-                    t.getDependents()[j]);
+                Map<String, TemplateInfo> parentMap =
+                    mAncestorMap.get(t.getDependents()[j]);
                 if (parentMap == null)
-                    parentMap = new HashMap();
+                    parentMap = new HashMap<String, TemplateInfo>();
                 if (!parentMap.containsKey(t.getName()))
                     parentMap.put(t.getName(), t);
                 mAncestorMap.put(t.getDependents()[j], parentMap);
             }
             for (int j = 0; j < t.getAppMethodsCalled().length; j++) {
-				TemplateCallExtractor.AppMethodInfo mi = t.getAppMethodsCalled()[j];
-                HashMap callMap = (HashMap) mFunctionMap.get(mi);
+                String sKey = t.getAppMethodsCalled()[j].toString();
+                Map<String, TemplateInfo> callMap = mFunctionMap.get(sKey);
                 if (callMap == null) {
-                    callMap = new HashMap();
-                    mFunctionMap.put(mi, callMap);
+                    callMap = new HashMap<String, TemplateInfo>();
+                    mFunctionMap.put(sKey, callMap);
                 }
                 if (!callMap.containsKey(t.getName()))
                     callMap.put(t.getName(), t);
@@ -516,10 +514,8 @@ public class TemplateRepository {
         templateName = !templateName.startsWith(mRootPackage) ?
             getFullyQualifiedTemplateName(templateName) : templateName;
         if (mAncestorMap.containsKey(templateName)) {
-            Collection parents = ((HashMap) mAncestorMap.get(
-                templateName)).values();
-            return (TemplateInfo[]) parents.toArray(
-                new TemplateInfo[parents.size()]);
+            Collection<TemplateInfo> parents = mAncestorMap.get(templateName).values();
+            return parents.toArray(new TemplateInfo[parents.size()]);
         }
         else
             return new TemplateInfo[0];
@@ -534,7 +530,7 @@ public class TemplateRepository {
      */
     public TemplateInfo[] getMethodCallers(MethodDescriptor methodDesc) {
         Method method = methodDesc.getMethod();
-        Class[] paramClasses = method.getParameterTypes();
+        Class<?>[] paramClasses = method.getParameterTypes();
         java.lang.reflect.Type[] paramTypes = method.getGenericParameterTypes();
 
         TypeDesc[] params = new TypeDesc[paramClasses.length];
@@ -544,9 +540,8 @@ public class TemplateRepository {
             new TemplateCallExtractor.AppMethodInfo(method.getName(), params);
 
         if (mFunctionMap.containsKey(mi)) {
-            Collection callers = ((HashMap) mFunctionMap.get(mi)).values();
-            return (TemplateInfo[]) callers.toArray(
-                new TemplateInfo[callers.size()]);
+            Collection<TemplateInfo> callers = mFunctionMap.get(mi).values();
+            return callers.toArray(new TemplateInfo[callers.size()]);
         }
         else
             return new TemplateInfo[0];
@@ -591,7 +586,9 @@ public class TemplateRepository {
      * @return String[] The caller templates needing recompilation.
      */
     public String[] getCallersNeedingRecompile(String[] names, Compiler compiler) throws IOException {
-        HashMap needsCompile = new HashMap();
+        HashMap<String, TemplateInfo> needsCompile =
+            new HashMap<String, TemplateInfo>();
+
         for (int i = 0; i < names.length; i++) {
             String templateName = getFullyQualifiedTemplateName(names[i]);
             TemplateInfo tNew = getTemplateInfoForClassFile(getClassFileForName(templateName));
@@ -613,7 +610,7 @@ public class TemplateRepository {
                 }
             }
         }
-        return (String[]) needsCompile.keySet().toArray(new String[needsCompile.size()]);
+        return needsCompile.keySet().toArray(new String[needsCompile.size()]);
     }
 
     /**
@@ -624,7 +621,7 @@ public class TemplateRepository {
      * @param templatesChanged The templates to update.
      */
     public synchronized void update(String[] templatesChanged) throws IOException {
-        HashMap updated = new HashMap();
+        HashMap<String, String> updated = new HashMap<String, String>();
         for (int i = 0; i < templatesChanged.length; i++) {
             String templateName = getFullyQualifiedTemplateName(templatesChanged[i]);
             if (!updated.containsKey(templateName)) {

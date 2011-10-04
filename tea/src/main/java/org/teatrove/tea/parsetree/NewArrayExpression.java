@@ -26,6 +26,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public class NewArrayExpression extends Expression {
+    private static final long serialVersionUID = 1L;
+
     private ExpressionList mList;
     private boolean mAssociative;
 
@@ -37,7 +39,7 @@ public class NewArrayExpression extends Expression {
         mList = list;
         mAssociative = associative;
     }
-    
+
     public Object clone() {
         NewArrayExpression nae = (NewArrayExpression)super.clone();
         nae.mList = (ExpressionList)mList.clone();
@@ -145,7 +147,7 @@ public class NewArrayExpression extends Expression {
                 return false;
             }
         }
-        
+
         return true;
     }
 }

@@ -21,15 +21,17 @@ import org.teatrove.tea.compiler.Token;
 
 /**
  * ArithmeticExpression defines addition, subtraction, multiplication,
- * division or remainder operations. The type of an ArithmeticExpression is a 
+ * division or remainder operations. The type of an ArithmeticExpression is a
  * Number, set by a type checker if there are no errors.
  *
  * <p>Operator returned is one of Token.PLUS, Token.MINUS,
  * Token.MULT, Token.DIV or Token.MOD.
- * 
+ *
  * @author Brian S O'Neill
  */
 public class ArithmeticExpression extends BinaryExpression {
+    private static final long serialVersionUID = 1L;
+
     public ArithmeticExpression(SourceInfo info,
                                 Token operator,
                                 Expression left,

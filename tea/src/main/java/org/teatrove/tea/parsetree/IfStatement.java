@@ -27,6 +27,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  */
 public class IfStatement extends Statement {
+    private static final long serialVersionUID = 1L;
+
     private Expression mCondition;
     private Block mThenPart;
     private Block mElsePart;
@@ -43,7 +45,7 @@ public class IfStatement extends Statement {
                        Block thenPart,
                        Block elsePart) {
         super(info);
-        
+
         mCondition = condition;
         mThenPart = thenPart;
         mElsePart = elsePart;
@@ -81,7 +83,7 @@ public class IfStatement extends Statement {
         return mCondition;
     }
 
-    /** 
+    /**
      * @return Null if no then part.
      */
     public Block getThenPart() {

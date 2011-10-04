@@ -23,6 +23,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Sean T. Treat
  */
 public class BreakStatement extends Statement {
+    private static final long serialVersionUID = 1L;
 
     public BreakStatement(SourceInfo info) {
         super(info);

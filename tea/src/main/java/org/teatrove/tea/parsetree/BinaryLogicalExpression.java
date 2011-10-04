@@ -27,6 +27,8 @@ import org.teatrove.tea.compiler.Type;
 public abstract class BinaryLogicalExpression extends BinaryExpression
     implements Logical
 {
+    private static final long serialVersionUID = 1L;
+
     public BinaryLogicalExpression(SourceInfo info,
                                    Token operator,
                                    Expression left,
@@ -35,7 +37,7 @@ public abstract class BinaryLogicalExpression extends BinaryExpression
     }
 
     public void convertTo(Type type, boolean preferCast) {
-        Class clazz = type.getObjectClass();
+        Class<?> clazz = type.getObjectClass();
 
         // For these types, a Logical can simply generate a literal, skipping
         // a conversion.
@@ -47,5 +49,5 @@ public abstract class BinaryLogicalExpression extends BinaryExpression
         else {
             super.convertTo(type, preferCast);
         }
-    }   
+    }
 }

@@ -26,6 +26,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  */
 public class Name extends Node {
+    private static final long serialVersionUID = 1L;
+
     private String mName;
 
     public Name(SourceInfo info, String name) {

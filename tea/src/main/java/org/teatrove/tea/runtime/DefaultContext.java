@@ -69,12 +69,15 @@ public abstract class DefaultContext extends Writer
     private static final int FIRST_INT_VALUE = 0;
     private static final int LAST_INT_VALUE = 99;
 
-    private static Map cLocaleCache;
-    private static Map cDecimalFormatCache;
+    private static Map<Locale, Locale> cLocaleCache;
+    private static Map<Object, DecimalFormat> cDecimalFormatCache;
 
     static {
-        cLocaleCache = Collections.synchronizedMap(new HashMap(7));
-        cDecimalFormatCache = Collections.synchronizedMap(new HashMap(47));
+        cLocaleCache =
+            Collections.synchronizedMap(new HashMap<Locale, Locale>(7));
+
+        cDecimalFormatCache =
+            Collections.synchronizedMap(new HashMap<Object, DecimalFormat>(47));
     }
 
     private Locale mLocale;
@@ -146,7 +149,7 @@ public abstract class DefaultContext extends Writer
      * Method that is the runtime receiver. Implementations should call one
      * of the toString methods when converting this object to a string.
      * <p>
-     * NOTE:  This method should <b>not</b> be called directly within a 
+     * NOTE:  This method should <b>not</b> be called directly within a
      * template.
      *
      * @see org.teatrove.tea.compiler.Compiler#getRuntimeReceiver
@@ -987,7 +990,8 @@ public abstract class DefaultContext extends Writer
         return StringReplacer.replace(source, pattern, replacement, fromIndex);
     }
 
-    public String replace(String source, Map patternReplacements) {
+    public <K, V> String replace(String source,
+                                 Map<K, V> patternReplacements) {
         if (source == null) {
             return null;
         }
@@ -996,10 +1000,11 @@ public abstract class DefaultContext extends Writer
         String[] patterns = new String[mapSize];
         String[] replacements = new String[mapSize];
 
-        Iterator it = patternReplacements.entrySet().iterator();
-        for (int i=0; it.hasNext(); i++) {
-            Map.Entry entry = (Map.Entry)it.next();
+        Iterator<Map.Entry<K, V>> it =
+            patternReplacements.entrySet().iterator();
 
+        for (int i=0; it.hasNext(); i++) {
+            Map.Entry<?, ?> entry = it.next();
             patterns[i] = toString(entry.getKey());
             replacements[i] = toString(entry.getValue());
         }

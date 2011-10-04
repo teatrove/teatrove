@@ -21,12 +21,14 @@ package org.teatrove.tea.compiler;
  * @author Brian S O'Neill
  */
 class IntToken extends Token {
+    private static final long serialVersionUID = 1L;
+
     private int mValue;
 
     IntToken(int sourceLine,
-             int sourceStartPos, 
+             int sourceStartPos,
              int sourceEndPos,
-             int value) 
+             int value)
     {
         super(sourceLine, sourceStartPos, sourceEndPos, Token.NUMBER);
         mValue = value;

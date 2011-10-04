@@ -34,6 +34,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  */
 public class ForeachStatement extends Statement {
+    private static final long serialVersionUID = 1L;
+
     private VariableRef mLoopVar;
     private Expression mRange;
     private Expression mEndRange;
@@ -48,7 +50,7 @@ public class ForeachStatement extends Statement {
                             boolean reverse,
                             Block body) {
         super(info);
-        
+
         mLoopVar = loopVar;
         mRange = range;
         mEndRange = endRange;
@@ -107,11 +109,11 @@ public class ForeachStatement extends Statement {
 
     public void setRange(Expression range) {
         mRange = range;
-    } 
+    }
 
     public void setEndRange(Expression endRange) {
         mEndRange = endRange;
-    } 
+    }
 
     public void setInitializer(Statement stmt) {
         mInitializer = stmt;

@@ -16,10 +16,59 @@
 
 package org.teatrove.tea.compiler;
 
-import java.io.*;
-import org.teatrove.tea.parsetree.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 
-/**
+import org.teatrove.tea.parsetree.AndExpression;
+import org.teatrove.tea.parsetree.ArithmeticExpression;
+import org.teatrove.tea.parsetree.ArrayLookup;
+import org.teatrove.tea.parsetree.AssignmentStatement;
+import org.teatrove.tea.parsetree.BinaryExpression;
+import org.teatrove.tea.parsetree.Block;
+import org.teatrove.tea.parsetree.BooleanLiteral;
+import org.teatrove.tea.parsetree.BreakStatement;
+import org.teatrove.tea.parsetree.CallExpression;
+import org.teatrove.tea.parsetree.CompareExpression;
+import org.teatrove.tea.parsetree.ConcatenateExpression;
+import org.teatrove.tea.parsetree.ContinueStatement;
+import org.teatrove.tea.parsetree.ExceptionGuardStatement;
+import org.teatrove.tea.parsetree.Expression;
+import org.teatrove.tea.parsetree.ExpressionList;
+import org.teatrove.tea.parsetree.ExpressionStatement;
+import org.teatrove.tea.parsetree.ForeachStatement;
+import org.teatrove.tea.parsetree.FunctionCallExpression;
+import org.teatrove.tea.parsetree.IfStatement;
+import org.teatrove.tea.parsetree.ImportDirective;
+import org.teatrove.tea.parsetree.Lookup;
+import org.teatrove.tea.parsetree.Name;
+import org.teatrove.tea.parsetree.NegateExpression;
+import org.teatrove.tea.parsetree.NewArrayExpression;
+import org.teatrove.tea.parsetree.NoOpExpression;
+import org.teatrove.tea.parsetree.Node;
+import org.teatrove.tea.parsetree.NodeVisitor;
+import org.teatrove.tea.parsetree.NotExpression;
+import org.teatrove.tea.parsetree.NullLiteral;
+import org.teatrove.tea.parsetree.NumberLiteral;
+import org.teatrove.tea.parsetree.OrExpression;
+import org.teatrove.tea.parsetree.ParenExpression;
+import org.teatrove.tea.parsetree.RelationalExpression;
+import org.teatrove.tea.parsetree.ReturnStatement;
+import org.teatrove.tea.parsetree.SpreadExpression;
+import org.teatrove.tea.parsetree.Statement;
+import org.teatrove.tea.parsetree.StatementList;
+import org.teatrove.tea.parsetree.StringLiteral;
+import org.teatrove.tea.parsetree.SubstitutionStatement;
+import org.teatrove.tea.parsetree.Template;
+import org.teatrove.tea.parsetree.TemplateCallExpression;
+import org.teatrove.tea.parsetree.TernaryExpression;
+import org.teatrove.tea.parsetree.TypeName;
+import org.teatrove.tea.parsetree.Variable;
+import org.teatrove.tea.parsetree.VariableRef;
+
+/******************************************************************************
  * A class that prints a parse tree. To print, call the writeTo method.
  * 
  * @author Brian S O'Neill
@@ -86,6 +135,8 @@ public class TreePrinter extends CodeGenerator {
     }
 
     private static class IOError extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
         private IOException mException;
         
         public IOError(IOException e) {
@@ -412,12 +463,17 @@ public class TreePrinter extends CodeGenerator {
             if (mExtraParens) {
                 print("(");
                 node.getExpression().accept(this);
-                print(").");
+                print(")");
             }
             else {
                 node.getExpression().accept(this);
-                print(".");
             }
+            
+            if (node.isNullSafe()) {
+                print("?");
+            }
+            
+            print(".");
             print(node.getLookupName().getName());
 
             return null;
@@ -427,12 +483,17 @@ public class TreePrinter extends CodeGenerator {
             if (mExtraParens) {
                 print("(");
                 node.getExpression().accept(this);
-                print(")[");
+                print(")");
             }
             else {
                 node.getExpression().accept(this);
-                print("[");
             }
+            
+            if (node.isNullSafe()) {
+                print("?");
+            }
+            
+            print("[");
             node.getLookupIndex().accept(this);
             print("]");
 
@@ -512,6 +573,40 @@ public class TreePrinter extends CodeGenerator {
             return visit((BinaryExpression)node);
         }
 
+        public Object visit(TernaryExpression node) {
+            Expression condition = node.getCondition();
+            Expression thenPart = node.getCondition();
+            Expression elsePart = node.getCondition();
+
+            condition.accept(this);
+            print(" ? ");
+            thenPart.accept(this);
+            print(" : ");
+            elsePart.accept(this);
+
+            return null;
+        }
+        
+        public Object visit(CompareExpression node) {
+            node.getLeftExpression().accept(this);
+            print(" <=> ");
+            node.getRightExpression().accept(this);
+            
+            return null;
+        }
+        
+        public Object visit(NoOpExpression node) {
+            return null;
+        }
+        
+        public Object visit(SpreadExpression node) {
+            node.getExpression().accept(this);
+            print("*.");
+            node.getOperation().accept(this);
+            
+            return null;
+        }
+        
         public Object visit(NullLiteral node) {
             print(String.valueOf(node.getValue()));
             return null;

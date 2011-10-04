@@ -16,9 +16,10 @@
 
 package org.teatrove.tea.parsetree;
 
-import java.util.LinkedList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.ListIterator;
+
 import org.teatrove.tea.compiler.SourceInfo;
 import org.teatrove.tea.compiler.Type;
 
@@ -29,22 +30,24 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public class Expression extends Node {
-    private LinkedList mConversions;
-    private boolean mPrimitive;
+    private static final long serialVersionUID = 1L;
+
+    private LinkedList<Conversion> mConversions;
     private boolean mExceptionPossible;
 
     public Expression(SourceInfo info) {
         super(info);
-        mConversions = new LinkedList();
+        mConversions = new LinkedList<Conversion>();
     }
 
     public Object accept(NodeVisitor visitor) {
         return visitor.visit(this);
     }
 
+    @SuppressWarnings("unchecked")
     public Object clone() {
-        Expression e = (Expression)super.clone();
-        e.mConversions = (LinkedList)mConversions.clone();
+        Expression e = (Expression) super.clone();
+        e.mConversions = (LinkedList<Conversion>) mConversions.clone();
         return e;
     }
 
@@ -131,8 +134,8 @@ public class Expression extends Node {
                 }
             }
             else {
-                Class fromObj = fromType.getObjectClass();
-                Class toObj = actual.getObjectClass();
+                Class<?> fromObj = fromType.getObjectClass();
+                Class<?> toObj = actual.getObjectClass();
 
                 if (toObj.isAssignableFrom(fromObj)) {
                     legal = true;
@@ -173,8 +176,8 @@ public class Expression extends Node {
                     }
                 }
                 else {
-                    Class fromObj = fromType.getObjectClass();
-                    Class toObj = actual.getObjectClass();
+                    Class<?> fromObj = fromType.getObjectClass();
+                    Class<?> toObj = actual.getObjectClass();
 
                     if (Number.class.isAssignableFrom(fromObj) &&
                         Number.class.isAssignableFrom(toObj)) {
@@ -191,8 +194,8 @@ public class Expression extends Node {
                 }
             }
             else {
-                Class fromObj = fromType.getObjectClass();
-                Class toObj = actual.getObjectClass();
+                Class<?> fromObj = fromType.getObjectClass();
+                Class<?> toObj = actual.getObjectClass();
 
                 if (fromObj.equals(toObj)) {
                     legal = true;
@@ -256,8 +259,8 @@ public class Expression extends Node {
             // Even though a cast isn't preferred, its the last available
             // option.
 
-            Class fromObj = fromType.getObjectClass();
-            Class toObj = actual.getObjectClass();
+            Class<?> fromObj = fromType.getObjectClass();
+            Class<?> toObj = actual.getObjectClass();
 
             if (fromObj.isAssignableFrom(toObj)) {
                 // Downcast.
@@ -301,7 +304,7 @@ public class Expression extends Node {
      * chain may be reduced or expanded, so its length doesn't necessarily
      * represent the exact sequence of calls to {@link #convertTo}.
      */
-    public LinkedList getConversionChain() {
+    public LinkedList<Conversion> getConversionChain() {
         return reduce(mConversions);
     }
 
@@ -333,8 +336,8 @@ public class Expression extends Node {
                 setType(actual);
             }
             else {
-                Iterator it = mConversions.iterator();
-                mConversions = new LinkedList();
+                Iterator<Conversion> it = mConversions.iterator();
+                mConversions = new LinkedList<Conversion>();
                 // Prefer cast for initial type for correct operation of
                 // setInitialType if a conversion needs to be inserted at the
                 // beginning.
@@ -366,17 +369,17 @@ public class Expression extends Node {
         return null;
     }
 
-    private LinkedList reduce(LinkedList conversions) {
+    private LinkedList<Conversion> reduce(LinkedList<Conversion> conversions) {
     outer:
         while (true) {
             // Eliminate conversions that cancel each other out.
 
-            ListIterator fromIterator = conversions.listIterator();
+            ListIterator<Conversion> fromIterator = conversions.listIterator();
             while (fromIterator.hasNext()) {
                 int fromIndex = fromIterator.nextIndex();
                 Type from = ((Conversion)fromIterator.next()).getToType();
 
-                ListIterator toIterator =
+                ListIterator<Conversion> toIterator =
                     conversions.listIterator(fromIndex + 1);
 
                 while (toIterator.hasNext()) {
@@ -393,7 +396,7 @@ public class Expression extends Node {
             // non-primitive peer and then to a string. Eliminate the middle
             // step and convert directly to a string.
 
-            ListIterator it = conversions.listIterator();
+            ListIterator<Conversion> it = conversions.listIterator();
             while (it.hasNext()) {
                 Type type = ((Conversion)it.next()).getToType();
                 while (type.isPrimitive() && it.hasNext()) {

@@ -16,14 +16,14 @@
 
 package org.teatrove.tea.util;
 
-import org.teatrove.tea.compiler.CompilationUnit;
-import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.trove.util.ClassInjector;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+
+import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.trove.util.ClassInjector;
 
 /**
  * ResourceCompiler compiles tea sources using the resource loading mechanism
@@ -74,7 +74,7 @@ public class ResourceCompiler extends Compiler {
         return new Unit(name, this);
     }
 
-    private class Unit extends CompilationUnit {
+    private class Unit extends AbstractCompilationUnit {
         private String mSourceFileName;
 
         public Unit(String name, Compiler compiler) {
@@ -112,16 +112,6 @@ public class ResourceCompiler extends Compiler {
 
         public void resetOutputStream() {
             mInjector.resetStream(getClassName());
-        }
-
-        protected String getClassName() {
-            String className = getName();
-            String pack = getTargetPackage();
-            if (pack != null && pack.length() > 0) {
-                className = pack + '.' + className;
-            }
-
-            return className;
         }
     }
 }

@@ -29,10 +29,10 @@ import org.teatrove.tea.runtime.TemplateLoader;
  * @author Brian S O'Neill
  */
 class TemplateAdapter extends TemplateLoader {
-    private final Class mContextClass;
+    private final Class<?> mContextClass;
     private final ClassInjector mInjector;
 
-    public TemplateAdapter(Class contextClass, 
+    public TemplateAdapter(Class<?> contextClass,
                            ClassInjector injector, String packagePrefix) {
         super(injector, packagePrefix);
         mContextClass = contextClass;
@@ -44,7 +44,7 @@ class TemplateAdapter extends TemplateLoader {
     {
         TemplateLoader.Template t = super.loadTemplate(name);
         if (t != null) {
-            Class templateContext = t.getContextType();
+            Class<?> templateContext = t.getContextType();
             if (!templateContext.isAssignableFrom(mContextClass)) {
                 if (!templateContext.isInterface()) {
                     throw new NoSuchMethodException
@@ -53,7 +53,7 @@ class TemplateAdapter extends TemplateLoader {
                 }
 
                 // Create an adapter context.
-                Constructor ctor = MergedClass.getConstructor
+                Constructor<?> ctor = MergedClass.getConstructor
                     (mInjector, new Class[] {mContextClass, templateContext});
 
                 return new AdaptedTemplate(t, ctor);
@@ -64,9 +64,9 @@ class TemplateAdapter extends TemplateLoader {
 
     private class AdaptedTemplate implements TemplateLoader.Template {
         private final Template mTemplate;
-        private final Constructor mContextConstructor;
+        private final Constructor<?> mContextConstructor;
 
-        public AdaptedTemplate(Template t, Constructor ctor) {
+        public AdaptedTemplate(Template t, Constructor<?> ctor) {
             mTemplate = t;
             mContextConstructor = ctor;
         }
@@ -79,23 +79,23 @@ class TemplateAdapter extends TemplateLoader {
             return mTemplate.getName();
         }
 
-        public Class getTemplateClass() {
+        public Class<?> getTemplateClass() {
             return mTemplate.getTemplateClass();
         }
 
-        public Class getContextType() {
+        public Class<?> getContextType() {
             return mContextConstructor.getDeclaringClass();
         }
 
         public String[] getParameterNames() {
             return mTemplate.getParameterNames();
         }
-        
-        public Class[] getParameterTypes() {
+
+        public Class<?>[] getParameterTypes() {
             return mTemplate.getParameterTypes();
         }
 
-        public void execute(Context context, Object[] parameters) 
+        public void execute(Context context, Object[] parameters)
             throws Exception
         {
             // Instantiate adapter.

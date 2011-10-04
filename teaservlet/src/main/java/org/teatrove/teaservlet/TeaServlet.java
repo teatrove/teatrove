@@ -16,6 +16,33 @@
 
 package org.teatrove.teaservlet;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.teatrove.tea.engine.ContextCreationException;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.log.TeaLog;
@@ -30,34 +57,13 @@ import org.teatrove.trove.log.LogEvent;
 import org.teatrove.trove.log.LogListener;
 import org.teatrove.trove.util.PropertyMap;
 import org.teatrove.trove.util.PropertyMapFactory;
-import org.teatrove.trove.util.PropertyParser;
+import org.teatrove.trove.util.SubstitutionFactory;
 import org.teatrove.trove.util.plugin.PluginContext;
 import org.teatrove.trove.util.plugin.PluginFactory;
 import org.teatrove.trove.util.plugin.PluginFactoryConfig;
 import org.teatrove.trove.util.plugin.PluginFactoryConfigSupport;
 import org.teatrove.trove.util.plugin.PluginFactoryException;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.teatrove.trove.util.resources.ResourceFactory;
 
 /**
  * The TeaServlet allows Tea templates to define dynamic web pages. The URI
@@ -100,6 +106,8 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class TeaServlet extends HttpServlet {
  
+    private static final long serialVersionUID = 1L;
+
     private static final Object[] NO_PARAMS = new Object[0];
     private static final boolean DEBUG = false;
     private static final String ENGINE_ATTR =
@@ -112,11 +120,13 @@ public class TeaServlet extends HttpServlet {
 
     private Log mLog;
     /** Captured log events that were likely also written to a log file. */
-    private List mLogEvents;
+    private List<LogEvent> mLogEvents;
 
     private PropertyMap mProperties;
+    private PropertyMap mSubstitutions;
     private ServletContext mServletContext;
     private String mServletName;
+    private ResourceFactory mResourceFactory;
 
     private String mQuerySeparator;
     private String mParameterSeparator;
@@ -143,13 +153,20 @@ public class TeaServlet extends HttpServlet {
         }
 
         mProperties = new PropertyMap();
-        Enumeration e = config.getInitParameterNames();
+        mSubstitutions = SubstitutionFactory.getDefaults();
+        mResourceFactory = 
+            new TeaServletResourceFactory(config.getServletContext(), 
+                                          mSubstitutions);
+        
+        Enumeration<?> e = config.getInitParameterNames();
         while (e.hasMoreElements()) {
             String key = (String) e.nextElement();
-            mProperties.put(key, config.getInitParameter(key));
+            String value = 
+                SubstitutionFactory.substitute(config.getInitParameter(key));
+            mProperties.put(key, value);
         }
 
-        loadDefaults(mProperties);
+        loadDefaults();
         mServletContext = setServletContext(config);
         mServletName = setServletName(config);
         createLog(mServletContext);
@@ -175,16 +192,16 @@ public class TeaServlet extends HttpServlet {
 
         // Check to see if tea templates are being deployed within a WAR bundle.  
         // If so, append this path to the existing template path.  For Tomcat.
-        Set rp = mServletContext.getResourcePaths(WAR_TEMPLATE_SOURCE_PATH);
+        Set<?> rp = mServletContext.getResourcePaths(WAR_TEMPLATE_SOURCE_PATH);
         if (rp != null && rp.size() > 0) {
             String warPath = mServletContext.getRealPath("/") + WAR_TEMPLATE_SOURCE_PATH;
             String newPath = mProperties.getString("template.path");
-            newPath = newPath != null && newPath.length() > 0 ? newPath = newPath : warPath;
+            newPath = newPath != null && newPath.length() > 0 ? newPath : warPath;
             mProperties.put("template.path", newPath);
         }
 
         if (mProperties.getString("template.classes") == null) {
-            Set crp = mServletContext.getResourcePaths("/WEB-INF");
+            Set<?> crp = mServletContext.getResourcePaths("/WEB-INF");
             if (crp != null && crp.size() > 0)
                 mProperties.put("template.classes", mServletContext.getRealPath("/") + WAR_TEMPLATE_CLASS_PATH);
         }
@@ -270,10 +287,19 @@ public class TeaServlet extends HttpServlet {
                                             mValueSeparator);
         }
 
-        response.setContentType("text/html");
-        request.setAttribute(this.getClass().getName(), this);
+        // start transaction
+        TeaServletTransaction tsTrans = 
+            getEngine().createTransaction(request, response, true);
+    
+        // load associated request/response
+        ApplicationRequest appRequest = tsTrans.getRequest();
+        ApplicationResponse appResponse = tsTrans.getResponse();
 
-        processTemplate(request, response);
+        // process template
+        processTemplate(appRequest, appResponse);
+        appResponse.finish();
+        
+        // flush the output
         response.flushBuffer();
     }
 
@@ -392,7 +418,8 @@ public class TeaServlet extends HttpServlet {
         if (log != null) {
 
             // Create memory log listener.
-            mLogEvents = Collections.synchronizedList(new LinkedList());
+            mLogEvents = 
+                Collections.synchronizedList(new LinkedList<LogEvent>());
 
             // The maximum number of log events to store in memory.
             final int logEventsMax = mProperties.getInt("log.max", 100);
@@ -427,98 +454,87 @@ public class TeaServlet extends HttpServlet {
         }
     }
 
-    private void loadDefaults(PropertyMap properties) throws ServletException {
+    private void loadDefaults() throws ServletException {
         try {
-            loadDefaults(properties, new HashSet(), null);
+            loadDefaults(mProperties, new HashSet<String>());
         }
-        catch (IOException e) {
-            // This should never happen because null was passed in as Reader.
+        catch (Exception e) {
             mLog.warn(e);
         }
     }
-
-    private void loadDefaults(PropertyMap properties, Set files, Reader reader)
-        throws IOException, ServletException
+    
+    private PropertyMap loadProperties(PropertyMap factoryProps) 
+        throws Exception {
+        
+        String className = null;
+        PropertyMapFactory factory = null;
+        if (factoryProps != null && factoryProps.size() > 0
+            && (className = factoryProps.getString("class")) != null) {
+        
+            // Load and use custom PropertyMapFactory.
+            Class<?> factoryClass = Class.forName(className);
+            java.lang.reflect.Constructor<?> ctor =
+                factoryClass.getConstructor(new Class[]{Map.class});
+            factory = (PropertyMapFactory)
+                ctor.newInstance(new Object[]{factoryProps.subMap("init")});
+        }
+        
+        // return properties
+        return (factory == null ? null : factory.createProperties());
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void loadDefaults(PropertyMap properties, Set<String> files)
+        throws Exception
     {
-        String fileName;
-
-        if (reader == null) {
-            fileName = properties.getString("properties.file");
-        }
-        else {
-            PropertyMap defaultProps = new PropertyMap();
-            try {
-                PropertyParser parser = new PropertyParser(defaultProps);
-                parser.parse(new BufferedReader(reader));
+        // update substitutions if provided
+        PropertyMap substitutions = properties.subMap("substitutions");
+        if (substitutions != null && substitutions.size() > 0) {
+            PropertyMap subs = SubstitutionFactory.getSubstitutions
+            (
+                substitutions, mResourceFactory
+            );
+            
+            if (subs != null) {
+                mSubstitutions.putAll(subs);
             }
-            finally {
-                reader.close();
-            }
-            properties.putDefaults(defaultProps);
-          fileName = properties.getString("properties.file");
+            
+            properties.remove("substitutions");
         }
 
+        // Get file and perform substitution of env variables/system props
+        String fileName = properties.getString("properties.file");
+        if (fileName != null) {
+            fileName = SubstitutionFactory.substitute(fileName, mSubstitutions);            
+        }
+        
+        // parse file if not yet parsed
         if (fileName != null && !files.contains(fileName)) {
-          
             // Prevent properties file cycle.
             files.add(fileName);
-         
-            try {
-                loadDefaults(properties, files, new FileReader(fileName));
+            
+            // load properties
+            PropertyMap props =
+                mResourceFactory.getResourceAsProperties(fileName);
+            
+            if (props != null) {
+                properties.putAll(props);
             }
-            catch (IOException e) {
-                // now try looking for the properties as a resource
-                try {
-                    if (getServletContext().getResourceAsStream(fileName) != null) {
-                    
-                        loadDefaults(properties, 
-                                     files, 
-                                     new InputStreamReader
-                                         (getServletContext()
-                                          .getResourceAsStream(fileName)));
-                    }
-                    else {
-                        InputStream in = this.getClass().
-                                     getResourceAsStream(! fileName.startsWith("/") ? "/" + fileName : fileName);
-                        if (in != null)
-                            loadDefaults(properties, files, new InputStreamReader(in));
-                        else
-                            throw new ServletException("Cannot locate properties at path : " + fileName);
-                    }
-                }
-                catch (IOException ioe) {
-                     throw new ServletException("Error reading properties file: " + fileName, ioe);
-                }
-            }
+            
+            loadDefaults(properties, files);
         }
         else {
-            try {
-                PropertyMap factoryProps = 
-                    properties.subMap("properties.factory");
-                String className = null;
-                if (factoryProps != null && factoryProps.size() > 0
-                    && (className = factoryProps.getString("class")) != null) {
-                
-                    // Load and use custom PropertyMapFactory.
-                    Class factoryClass = Class.forName(className);
-                    java.lang.reflect.Constructor ctor =
-                        factoryClass
-                        .getConstructor(new Class[]{Map.class});
-                    PropertyMapFactory factory = (PropertyMapFactory)ctor
-                        .newInstance(new Object[]{factoryProps
-                                                  .subMap("init")});
-                    properties.putDefaults(factory.createProperties());
-                }
-            }
-            catch (Exception e) {
-                throw new ServletException(e);
+            PropertyMap factoryProps = 
+                properties.subMap("properties.factory");
+            if (factoryProps != null && factoryProps.size() > 0) {
+                properties.putAll(loadProperties(factoryProps));
             }
         }
     }
 
     private PluginContext loadPlugins(PropertyMap properties, Log log) {
         
-        PluginContext plug = new PluginContext();
+        PluginContext plug = new PluginContext(mResourceFactory);
         PluginFactoryConfig config = new PluginFactoryConfigSupport
             (properties, log, plug);
         
@@ -545,6 +561,78 @@ public class TeaServlet extends HttpServlet {
     }
     */
 
+    private boolean processResource(ApplicationRequest appRequest,
+                                    ApplicationResponse appResponse) 
+        throws IOException {
+        
+        // TODO: make this configurable
+        // teaservlet.resources.suffixes
+        // teaservlet.resources.paths
+        
+        // TODO: this is really only for the admin pages, so maybe allow an
+        // AdminApp to return a list of valid resources that get specially
+        // encoded and redirected here?
+        
+        // validate the suffix as valid
+        Map<String, String> validSuffix = new HashMap<String, String>();
+        validSuffix.put("png", "image/png");
+        validSuffix.put("gif", "image/gif");
+        validSuffix.put("jpg", "image/jpg");
+        validSuffix.put("js", "text/javascript");
+        validSuffix.put("css", "text/css");
+        
+        // validate the path is valid
+        List<String> validPath = 
+            Arrays.asList("/system/");
+        
+        // get the associated system path
+        String context = appRequest.getContextPath();
+        String requestURI = appRequest.getRequestURI();
+        if (requestURI.startsWith(context)) {
+            requestURI = requestURI.substring(context.length());
+        }
+
+        // get suffix and verify valid
+        int extIndex = requestURI.lastIndexOf('.');
+        if (extIndex < 0) { return false; }
+        
+        String extension = requestURI.substring(extIndex + 1);
+        if (!validSuffix.containsKey(extension)) { return false; }
+        
+        // ensure valid path
+        boolean found = false;
+        for (String path : validPath) {
+            if (requestURI.startsWith(path)) {
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) { return false; }
+        
+        // load resource (/WEB-INF or class only)
+        InputStream input = getServletContext().getResourceAsStream(requestURI);
+        if (input == null) {
+            input = TeaServlet.class.getResourceAsStream(requestURI);
+            if (input == null) {
+                return false;
+            }
+        }
+        
+        // set mime type
+        appResponse.setContentType(validSuffix.get(extension));
+        
+        // write contents
+        int read = -1;
+        byte[] contents = new byte[1024];
+        ServletOutputStream output = appResponse.getOutputStream();
+        while ((read = input.read(contents)) >= 0) {
+            output.write(contents, 0, read);
+        }
+        
+        // success
+        return true;
+    }
 
     /**
      * Creates a transaction from the provided request and response and 
@@ -553,26 +641,29 @@ public class TeaServlet extends HttpServlet {
      * @param request  the user's http request
      * @param response  the user's http response
      */
-    private void processTemplate(HttpServletRequest request,
-                                 HttpServletResponse response)
+    private boolean processTemplate(ApplicationRequest appRequest,
+                                    ApplicationResponse appResponse)
         throws IOException {
         
-        TeaServletTransaction tsTrans = 
-            getEngine().createTransaction(request, response, true);
-    
-        ApplicationRequest appRequest = tsTrans.getRequest();
-        ApplicationResponse appResponse = tsTrans.getResponse();
-
+        // check if redirect or erroring out
         if (appResponse.isRedirectOrError()) {
-            return;
+            return false;
         }
 
+        // set initial content type and helper attributes
+        appResponse.setContentType("text/html");
+        appRequest.setAttribute(this.getClass().getName(), this);
+
+        // lookup template
         Template template = (Template)appRequest.getTemplate();
 
+        // process as resource if no template available
         if (template == null) {
-            appResponse.sendError
-                (ApplicationResponse.SC_NOT_FOUND, appRequest.getRequestURI());
-            return;
+            if (!processResource(appRequest, appResponse)) {
+                appResponse.sendError(404);// TODO: what was this before?
+                return false;
+            }
+            return true;
         }
         
         long endTime = 0L;
@@ -586,7 +677,7 @@ public class TeaServlet extends HttpServlet {
 	        try {    
 	            // Fill in the parameters to pass to the template.
 	        	templateStats.incrementServicing();
-	            Class[] paramTypes = template.getParameterTypes();
+	            Class<?>[] paramTypes = template.getParameterTypes();
 	            if (paramTypes.length == 0) {
 	                params = NO_PARAMS;
 	            }
@@ -599,10 +690,10 @@ public class TeaServlet extends HttpServlet {
 	                        continue;
 	                    }
 	                
-	                    Class paramType = paramTypes[i];
+	                    Class<?> paramType = paramTypes[i];
 	                
 	                    if (!paramType.isArray()) {
-	                        String value = request.getParameter(paramName);
+	                        String value = appRequest.getParameter(paramName);
 	                        if (value == null || paramType == String.class) {
 	                            params[i] = value;
 	                        }
@@ -612,7 +703,7 @@ public class TeaServlet extends HttpServlet {
 	                    }
 	                    else {
 	                        String[] values =
-	                            request.getParameterValues(paramName);
+	                            appRequest.getParameterValues(paramName);
 	                        if (values == null || paramType == String[].class) {
 	                            params[i] = values;
 	                        }
@@ -675,9 +766,9 @@ public class TeaServlet extends HttpServlet {
 	        	//       otherwise its not logged to the TeaLog.
 	            finally {
 					endTime = System.currentTimeMillis();
-					if (request instanceof TeaServletStats) {
+					if (appRequest instanceof TeaServletStats) {
 						long duration = endTime - startTime;
-						((TeaServletStats)request).setTemplateDuration(duration);
+						((TeaServletStats)appRequest).setTemplateDuration(duration);
 					}
 	            }
 	
@@ -689,10 +780,10 @@ public class TeaServlet extends HttpServlet {
 	            // Log exception
 	            StringBuffer msg = new StringBuffer();
 	            msg.append("Error processing request for ");
-	            msg.append(request.getRequestURI());
-	            if (request.getQueryString() != null) {
+	            msg.append(appRequest.getRequestURI());
+	            if (appRequest.getQueryString() != null) {
 	                msg.append('?');
-	                msg.append(request.getQueryString());
+	                msg.append(appRequest.getQueryString());
 	            }
 	            mLog.error(msg.toString());
 	
@@ -713,7 +804,7 @@ public class TeaServlet extends HttpServlet {
 	            }
 	
 	            // Internal server error unless header is already set
-	            if (!tsTrans.getResponse().isRedirectOrError()) {
+	            if (!appResponse.isRedirectOrError()) {
 	                String displayMessage = e.getLocalizedMessage();
 	                if (displayMessage == null || displayMessage.length() == 0) {
 	                    appResponse.sendError
@@ -733,10 +824,11 @@ public class TeaServlet extends HttpServlet {
         } catch (Exception e) {
         	 templateStats.decrementServicing();
         }
+		return true;
     }
 
 
-    private void logVersionInfo(Class clazz, String title, Log log) {
+    private void logVersionInfo(Class<?> clazz, String title, Log log) {
         Package pack = clazz.getPackage();
         String version = null;
         if (pack != null) {
@@ -748,7 +840,7 @@ public class TeaServlet extends HttpServlet {
         if (version == null) {
             try {
                 String classname = clazz.getName();
-                Class packinf = Class.forName(
+                Class<?> packinf = Class.forName(
                     classname.substring(0,classname.lastIndexOf('.'))
                     + ".PackageInfo");
                 java.lang.reflect.Method mo = packinf.getMethod(
@@ -796,7 +888,7 @@ public class TeaServlet extends HttpServlet {
      * @param toType Type to convert to
      * @return an instance of toType or null
      */
-    protected Object convertParameter(String value, Class toType) {
+    protected Object convertParameter(String value, Class<?> toType) {
         if (toType == Boolean.class) {
             return ! "".equals(value) ? new Boolean("true".equals(value)) : 
                 null;

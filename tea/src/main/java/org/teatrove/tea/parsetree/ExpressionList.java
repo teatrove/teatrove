@@ -25,6 +25,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  */
 public class ExpressionList extends Node {
+    private static final long serialVersionUID = 1L;
 
     private Expression[] mElements;
 

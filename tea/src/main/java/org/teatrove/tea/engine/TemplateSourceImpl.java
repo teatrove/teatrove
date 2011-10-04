@@ -16,26 +16,6 @@
 
 package org.teatrove.tea.engine;
 
-import org.teatrove.tea.compiler.CompilationUnit;
-import org.teatrove.tea.compiler.ErrorEvent;
-import org.teatrove.tea.compiler.ErrorListener;
-import org.teatrove.tea.compiler.SourceInfo;
-import org.teatrove.tea.compiler.StatusEvent;
-import org.teatrove.tea.compiler.TemplateRepository;
-import org.teatrove.tea.runtime.Context;
-import org.teatrove.tea.runtime.TemplateLoader;
-import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.tea.compiler.StatusListener;
-import org.teatrove.tea.compiler.TemplateRepository.TemplateInfo;
-import org.teatrove.tea.util.FileCompiler;
-import org.teatrove.tea.util.ResourceCompiler;
-import org.teatrove.tea.util.StringCompiler;
-import org.teatrove.trove.io.LinePositionReader;
-import org.teatrove.trove.log.Log;
-
-import org.teatrove.trove.util.ClassInjector;
-import org.teatrove.trove.util.PropertyMap;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +32,25 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.tea.compiler.ErrorEvent;
+import org.teatrove.tea.compiler.ErrorListener;
+import org.teatrove.tea.compiler.SourceInfo;
+import org.teatrove.tea.compiler.StatusEvent;
+import org.teatrove.tea.compiler.StatusListener;
+import org.teatrove.tea.compiler.TemplateRepository;
+import org.teatrove.tea.compiler.TemplateRepository.TemplateInfo;
+import org.teatrove.tea.runtime.Context;
+import org.teatrove.tea.runtime.TemplateLoader;
+import org.teatrove.tea.util.FileCompiler;
+import org.teatrove.tea.util.ResourceCompiler;
+import org.teatrove.tea.util.StringCompiler;
+import org.teatrove.trove.io.LinePositionReader;
+import org.teatrove.trove.log.Log;
+import org.teatrove.trove.util.ClassInjector;
+import org.teatrove.trove.util.PropertyMap;
 
 /**
  * This class should be created using the {@link TemplateSourceFactory}
@@ -120,7 +119,7 @@ public class TemplateSourceImpl implements TemplateSource {
     protected Results mResults;
 
     // compiled template source file info field
-    protected Map mTemplateSourceFileInfo;
+    protected Map<String, TemplateSourceFileInfo> mTemplateSourceFileInfo;
 
     protected boolean mLogCompileStatus = true;
 
@@ -155,12 +154,28 @@ public class TemplateSourceImpl implements TemplateSource {
     public TemplateCompilationResults compileTemplates(ClassInjector injector,
                                                        boolean all)
         throws Exception {
-        return compileTemplates(injector, all, true);
+        return compileTemplates(injector, all, true, null);
+    }
+    
+    public TemplateCompilationResults compileTemplates(ClassInjector injector,
+                                                       boolean all,
+                                                       StatusListener listener)
+        throws Exception {
+        return compileTemplates(injector, all, true, listener);
     }
 
     public TemplateCompilationResults compileTemplates(ClassInjector injector,
                                                        boolean all,
                                                        boolean recurse)
+        throws Exception
+    {
+        return compileTemplates(injector, all, recurse, null);
+    }
+    
+    public TemplateCompilationResults compileTemplates(ClassInjector injector,
+                                                       boolean all,
+                                                       boolean recurse,
+                                                       StatusListener listener)
         throws Exception
     {
         synchronized(mReloading) {
@@ -173,7 +188,7 @@ public class TemplateSourceImpl implements TemplateSource {
         }
 
         try {
-            mResults = actuallyCompileTemplates(injector, all, recurse);
+            mResults = actuallyCompileTemplates(injector, all, recurse, listener);
 
             return mResults.getTransientResults();
         }
@@ -184,7 +199,18 @@ public class TemplateSourceImpl implements TemplateSource {
         }
     }
 
-    public TemplateCompilationResults compileTemplates(ClassInjector injector, String[] selectedTemplates) throws Exception {
+    public TemplateCompilationResults compileTemplates(ClassInjector injector, 
+                                                       String[] selectedTemplates) 
+        throws Exception 
+    {
+        return compileTemplates(injector, null, selectedTemplates);
+    }
+    
+    public TemplateCompilationResults compileTemplates(ClassInjector injector, 
+                                                       StatusListener listener,
+                                                       String[] selectedTemplates) 
+        throws Exception 
+    {
         synchronized(mReloading) {
             if (mReloading.isReloading()) {
                 return new TemplateCompilationResults();
@@ -195,7 +221,7 @@ public class TemplateSourceImpl implements TemplateSource {
         }
 
         try {
-            mResults = actuallyCompileTemplates(injector, selectedTemplates);
+            mResults = actuallyCompileTemplates(injector, listener, selectedTemplates);
 
             return mResults.getTransientResults();
         }
@@ -210,7 +236,11 @@ public class TemplateSourceImpl implements TemplateSource {
                                                         boolean all,
                                                         String[] selectedTemplates)
     throws Exception {
-        TemplateCompilationResults results = new TemplateCompilationResults(new TreeSet(), new TreeMap());
+        TemplateCompilationResults results = new TemplateCompilationResults
+        (
+            new TreeSet<String>(), new TreeMap<String, List<TemplateError>>()
+        );
+
         if (null != mTemplateRootDirs && mTemplateRootDirs.length > 0) {
 
             if (injector == null) {
@@ -240,7 +270,7 @@ public class TemplateSourceImpl implements TemplateSource {
                 compiler.setForceCompile(true);
             }
 
-            List callerList = new ArrayList();
+            List<TemplateInfo> callerList = new ArrayList<TemplateInfo>();
 
             templateLoop:for (int i = 0; i < templates.length; i++) {
 
@@ -260,16 +290,17 @@ public class TemplateSourceImpl implements TemplateSource {
             }
 
             compiler.setForceCompile(true);
-            callerLoop:for (Iterator it = callerList.iterator(); it.hasNext();) {
-                TemplateInfo tInfo = (TemplateInfo) it.next();
-                String caller = tInfo.getShortName().replace('/', '.');
-                if(results.getReloadedTemplateNames().contains(caller)) continue callerLoop;
+            callerLoop:
+                for (Iterator<TemplateInfo> it = callerList.iterator(); it.hasNext();) {
+                    TemplateInfo tInfo = (TemplateInfo) it.next();
+                    String caller = tInfo.getShortName().replace('/', '.');
+                    if(results.getReloadedTemplateNames().contains(caller)) continue callerLoop;
 
-                CompilationUnit callingUnit = compiler.getCompilationUnit(caller, null);
-                if(callingUnit!=null) {
-                    compiler.getParseTree(callingUnit);
+                    CompilationUnit callingUnit = compiler.getCompilationUnit(caller, null);
+                    if(callingUnit!=null) {
+                        compiler.getParseTree(callingUnit);
+                    }
                 }
-            }
 
             results.appendErrors(errorListener.getTemplateErrors());
             errorListener.close();
@@ -283,7 +314,7 @@ public class TemplateSourceImpl implements TemplateSource {
     }
 
     public int getKnownTemplateCount() {
-        Set names;
+        Set<String> names;
 
         if (mResults == null ||
             (names = mResults.getKnownTemplateNames()) == null) {
@@ -294,14 +325,14 @@ public class TemplateSourceImpl implements TemplateSource {
     }
 
     public String[] getKnownTemplateNames() {
-        Set names;
+        Set<String> names;
 
         if (mResults == null ||
             (names = mResults.getKnownTemplateNames()) == null) {
             return new String[0];
         }
 
-        return (String[])names.toArray(new String[names.size()]);
+        return names.toArray(new String[names.size()]);
     }
 
     public Date getTimeOfLastReload() {
@@ -322,26 +353,27 @@ public class TemplateSourceImpl implements TemplateSource {
         return null;
     }
 
-    public org.teatrove.tea.engine.Template[] getLoadedTemplates() {
-        Map templates;
+    public Template[] getLoadedTemplates() {
+        Map<String, Template> templates;
 
         if (mResults != null &&
             (templates = mResults.getWrappedTemplates()) != null) {
-            return (org.teatrove.tea.engine.Template[]) templates.values().toArray
-                (new org.teatrove.tea.engine.Template[templates.size()]);
+            return (Template[]) templates.values().toArray
+                (new Template[templates.size()]);
         }
 
-        return new org.teatrove.tea.engine.Template[0];
+        return new Template[0];
     }
 
-    public org.teatrove.tea.engine.Template getTemplate(String name)
+    public Template getTemplate(String name)
         throws ClassNotFoundException, NoSuchMethodException
     {
-        org.teatrove.tea.engine.Template wrapped = null;
+        Template wrapped = null;
 
         try {
-            Map wrappedTemplates = mResults.getWrappedTemplates();
-            wrapped = (org.teatrove.tea.engine.Template) wrappedTemplates.get(name);
+            Map<String, Template> wrappedTemplates =
+                mResults.getWrappedTemplates();
+            wrapped = wrappedTemplates.get(name);
 
             if (wrapped == null) {
                 TemplateSourceFileInfo sourceFileInfo = null;
@@ -378,9 +410,17 @@ public class TemplateSourceImpl implements TemplateSource {
                                                boolean all)
         throws Exception
     {
+        return actuallyCompileTemplates(injector, all, null);
+    }
+    
+    protected Results actuallyCompileTemplates(ClassInjector injector,
+                                               boolean all,
+                                               StatusListener listener)
+        throws Exception
+    {
         TemplateErrorListener errorListener = createErrorListener();
         try {
-            return actuallyCompileTemplates(injector, all, true, errorListener);
+            return actuallyCompileTemplates(injector, all, true, errorListener, listener);
         }
         finally {
             errorListener.close();
@@ -392,9 +432,18 @@ public class TemplateSourceImpl implements TemplateSource {
                                                boolean recurse)
         throws Exception
     {
+        return actuallyCompileTemplates(injector, all, recurse, null);
+    }
+    
+    protected Results actuallyCompileTemplates(ClassInjector injector,
+                                               boolean all,
+                                               boolean recurse,
+                                               StatusListener listener)
+        throws Exception
+    {
         TemplateErrorListener errorListener = createErrorListener();
         try {
-            return actuallyCompileTemplates(injector, all, recurse, errorListener);
+            return actuallyCompileTemplates(injector, all, recurse, errorListener, listener, null);
         }
         finally {
             errorListener.close();
@@ -404,19 +453,28 @@ public class TemplateSourceImpl implements TemplateSource {
     protected Results actuallyCompileTemplates(ClassInjector injector,
                                                boolean all,
                                                boolean recurse,
-                                               TemplateErrorListener errorListener)
+                                               TemplateErrorListener errorListener,
+                                               StatusListener listener)
         throws Exception
     {
-        return actuallyCompileTemplates(injector, all, recurse, errorListener, null);
+        return actuallyCompileTemplates(injector, all, recurse, errorListener, listener, null);
     }
 
     protected Results actuallyCompileTemplates(ClassInjector injector,
                                                String[] selectedTemplates)
         throws Exception
     {
+        return actuallyCompileTemplates(injector, null, selectedTemplates);
+    }
+    
+    protected Results actuallyCompileTemplates(ClassInjector injector,
+                                               StatusListener listener,
+                                               String[] selectedTemplates)
+        throws Exception
+    {
         TemplateErrorListener errorListener = createErrorListener();
         try {
-            return actuallyCompileTemplates(injector, false, false, errorListener, selectedTemplates);
+            return actuallyCompileTemplates(injector, false, false, errorListener, listener, selectedTemplates);
         }
         finally {
             errorListener.close();
@@ -430,19 +488,20 @@ public class TemplateSourceImpl implements TemplateSource {
                                                boolean all,
                                                boolean recurse,
                                                TemplateErrorListener errorListener,
+                                               StatusListener listener,
                                                String[] selectedTemplates)
         throws Exception
     {
-        Set reloadedTemplateNames = new TreeSet();
+        Set<String> reloadedTemplateNames = new TreeSet<String>();
 
         if (injector == null) {
             injector = createClassInjector();
         }
 
-        Set knownTemplateNames = new TreeSet();
+        Set<String> knownTemplateNames = new TreeSet<String>();
         Date lastReloadTime = new Date();
 
-        Class type = mConfig.getContextSource().getContextType();
+        Class<?> type = mConfig.getContextSource().getContextType();
         boolean exceptionGuardian = mConfig.isExceptionGuardianEnabled();
         String prefix = mConfig.getPackagePrefix();
 
@@ -460,6 +519,10 @@ public class TemplateSourceImpl implements TemplateSource {
             fcomp.setRuntimeContext(type);
             fcomp.setExceptionGuardianEnabled(exceptionGuardian);
             fcomp.addErrorListener(errorListener);
+            
+            if (listener != null) {
+                fcomp.addStatusListener(listener);
+            }
 
             if(mLogCompileStatus) {
                 fcomp.addStatusListener(new CompilerStatusLogger(Arrays.toString(mTemplateRootDirs)));
@@ -480,7 +543,7 @@ public class TemplateSourceImpl implements TemplateSource {
         }
 
         if (mTemplateStrings != null && mTemplateStrings.length > 0) {
-            Collection names = Arrays.asList
+            Collection<String> names = Arrays.asList
                 (compileFromStrings(type, injector, errorListener, prefix,
                                     mTemplateStrings, exceptionGuardian));
 
@@ -490,7 +553,7 @@ public class TemplateSourceImpl implements TemplateSource {
 
         if (mTemplateResources != null &&
             mTemplateResources.length > 0) {
-            Collection names = Arrays.asList
+            Collection<String> names = Arrays.asList
                 (compileFromResourcePaths(type, injector, errorListener, prefix,
                                           mTemplateResources, exceptionGuardian));
 
@@ -503,13 +566,13 @@ public class TemplateSourceImpl implements TemplateSource {
              new TemplateAdapter(type, injector, mConfig.getPackagePrefix()),
              lastReloadTime,
              knownTemplateNames,
-             new HashMap());
+             new HashMap<String, Template>());
     }
 
     /**
      * provides subclasses with access to modify the KnownTemplateNames
      */
-    protected Set getKnownTemplateNameSet() {
+    protected Set<String> getKnownTemplateNameSet() {
         return mResults.getKnownTemplateNames();
     }
 
@@ -596,16 +659,18 @@ public class TemplateSourceImpl implements TemplateSource {
         return null;
     }
 
-    private Map createTemplateSourceFileInfo(Set templateNames) {
+    private Map<String, TemplateSourceFileInfo>
+    createTemplateSourceFileInfo(Set<String> templateNames) {
         if (templateNames.isEmpty()) {
             return null;
         }
 
-        HashMap sourceFileInfo = new HashMap();
+        HashMap<String, TemplateSourceFileInfo> sourceFileInfo =
+            new HashMap<String, TemplateSourceFileInfo>();
 
-        Iterator iterator = templateNames.iterator();
+        Iterator<String> iterator = templateNames.iterator();
         while (iterator.hasNext()) {
-            String name = (String) iterator.next();
+            String name = iterator.next();
 
             File sourceFile = findSourceFile(name);
             if (sourceFile == null) {
@@ -620,7 +685,7 @@ public class TemplateSourceImpl implements TemplateSource {
         return sourceFileInfo;
     }
 
-    private String[] compileFromResourcePaths(Class contextType,
+    private String[] compileFromResourcePaths(Class<?> contextType,
                                               ClassInjector injector,
                                               ErrorListener errorListener,
                                               String packagePrefix,
@@ -652,7 +717,7 @@ public class TemplateSourceImpl implements TemplateSource {
         return result;
     }
 
-    private String[] compileFromStrings(Class contextType,
+    private String[] compileFromStrings(Class<?> contextType,
                                         ClassInjector injector,
                                         ErrorListener errorListener,
                                         String packagePrefix,
@@ -717,16 +782,17 @@ public class TemplateSourceImpl implements TemplateSource {
         return result;
     }
 
-    public Map listTouchedTemplates() throws Exception {
-        TemplateRepository tRepo = TemplateRepository.getInstance();
+    public Map<String, Boolean> listTouchedTemplates() throws Exception {
+        // TemplateRepository tRepo = TemplateRepository.getInstance();
 
-        Map touchedTemplateMap = new HashMap();
+        Map<String, Boolean> touchedTemplateMap =
+            new HashMap<String, Boolean>();
 
-        Set reloadedTemplateNames = new TreeSet();
+        // Set<String> reloadedTemplateNames = new TreeSet<String>();
         if (mTemplateRootDirs != null && mTemplateRootDirs.length > 0) {
 
             ClassInjector injector = createClassInjector();
-            Class type = mConfig.getContextSource().getContextType();
+            Class<?> type = mConfig.getContextSource().getContextType();
             boolean exceptionGuardian = mConfig.isExceptionGuardianEnabled();
             String prefix = mConfig.getPackagePrefix();
 
@@ -790,21 +856,22 @@ public class TemplateSourceImpl implements TemplateSource {
             super(cl, classDirs, pkg, keepByteCode);
         }
 
-        public Class loadClass(String className)
+        public Class<?> loadClass(String className)
             throws ClassNotFoundException {
             return loadClass(className, true);
         }
     }
 
     protected class ErrorRetriever implements TemplateErrorListener {
-        protected Map mTemplateErrors = new Hashtable();
+        protected Map<String, List<TemplateError>> mTemplateErrors =
+            new Hashtable<String, List<TemplateError>>();
 
         /** Reads error line from template files */
         private LinePositionReader mOpenReader;
 
         private CompilationUnit mOpenUnit;
 
-        public Map getTemplateErrors() {
+        public Map<String, List<TemplateError>> getTemplateErrors() {
             return mTemplateErrors;
         }
 
@@ -823,9 +890,9 @@ public class TemplateSourceImpl implements TemplateSource {
 
             String templateName = unit.getName();
 
-            ArrayList errors = (ArrayList) mTemplateErrors.get(templateName);
+            List<TemplateError> errors = mTemplateErrors.get(templateName);
             if (errors == null) {
-                errors = new ArrayList();
+                errors = new ArrayList<TemplateError>();
                 mTemplateErrors.put(templateName, errors);
             }
 
@@ -898,13 +965,13 @@ public class TemplateSourceImpl implements TemplateSource {
                 linePos = mOpenReader.getNextPosition();
 
                 lineStr = mOpenReader.readLine();
-                lineStr = mOpenReader.cleanWhitespace(lineStr);
+                lineStr = LinePositionReader.cleanWhitespace(lineStr);
 
                 int indentSize = errorStartPos - linePos;
-                String indent = mOpenReader.createSequence(' ', indentSize);
+                String indent = LinePositionReader.createSequence(' ', indentSize);
 
                 int markerSize = errorEndPos - errorStartPos + 1;
-                String marker = mOpenReader.createSequence('^', markerSize);
+                String marker = LinePositionReader.createSequence('^', markerSize);
                 underline = indent + marker;
             }
             catch (IOException ex) {
@@ -946,14 +1013,14 @@ public class TemplateSourceImpl implements TemplateSource {
         private TemplateCompilationResults mTransient;
         private TemplateLoader mLoader;
         private Date mLastReloadTime;
-        private Set mKnownTemplateNames;
-        private Map mWrappedTemplates;
+        private Set<String> mKnownTemplateNames;
+        private Map<String, Template> mWrappedTemplates;
 
         public Results(TemplateCompilationResults transientResults,
                        TemplateLoader loader,
                        Date lastReload,
-                       Set known,
-                       Map wrapped) {
+                       Set<String> known,
+                       Map<String, Template> wrapped) {
             mTransient = transientResults;
             mLastReloadTime = lastReload;
             mLoader = loader;
@@ -973,11 +1040,11 @@ public class TemplateSourceImpl implements TemplateSource {
             return mLastReloadTime;
         }
 
-        public Map getWrappedTemplates() {
+        public Map<String, Template> getWrappedTemplates() {
             return mWrappedTemplates;
         }
 
-        public Set getKnownTemplateNames() {
+        public Set<String> getKnownTemplateNames() {
             return mKnownTemplateNames;
         }
     }
@@ -1013,7 +1080,7 @@ public class TemplateSourceImpl implements TemplateSource {
         }
     }
 
-    private class TemplateImpl implements org.teatrove.tea.engine.Template {
+    private class TemplateImpl implements Template {
         private TemplateLoader.Template mTemplate;
         private TemplateSource mSource;
         private File mSourceFile;
@@ -1049,11 +1116,11 @@ public class TemplateSourceImpl implements TemplateSource {
             return mTemplate.getName();
         }
 
-        public Class getTemplateClass() {
+        public Class<?> getTemplateClass() {
             return mTemplate.getTemplateClass();
         }
 
-        public Class getContextType() {
+        public Class<?> getContextType() {
             return mTemplate.getContextType();
         }
 
@@ -1061,7 +1128,7 @@ public class TemplateSourceImpl implements TemplateSource {
             return mTemplate.getParameterNames();
         }
 
-        public Class[] getParameterTypes() {
+        public Class<?>[] getParameterTypes() {
             return mTemplate.getParameterTypes();
         }
 
@@ -1077,6 +1144,7 @@ public class TemplateSourceImpl implements TemplateSource {
     }
 
     public class CompilerStatusLogger implements StatusListener {
+        @SuppressWarnings("unused")
         private String mSrc;
 
         public CompilerStatusLogger(String src) {

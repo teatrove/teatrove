@@ -25,6 +25,8 @@ import java.io.PrintStream;
  * @author Brian S O'Neill
  */
 public class Token implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+
     /** Token ID for an unknown token. */
     public final static int UNKNOWN = 0;
     /** Token ID for the end of file. */
@@ -60,7 +62,7 @@ public class Token implements java.io.Serializable {
     public final static int LBRACK = 12;
     /** Token ID for the right bracket: ']' */
     public final static int RBRACK = 13;
-    
+
     private final static int LAST_BRACKET_ID = 13;
 
     // operators
@@ -110,93 +112,105 @@ public class Token implements java.io.Serializable {
     public final static int ASSIGN = 34;
     /** Token ID for equal greater: '=>' */
     public final static int EQUAL_GREATER = 35;
+    /** Token ID for colon: ':' */
+    public final static int COLON = 36;
+    /** Token ID for question mark: '?' */
+    public final static int QUESTION = 37;
+    /** Token ID for lambda operator: '->' */
+    public final static int LAMBDA = 38;
+    /** Token ID for spaceship (comparator) operator: '<=>' */
+    public final static int SPACESHIP = 39;
+    /** Token ID for spread operator: *. */
+    public final static int SPREAD = 40;
 
-    private final static int LAST_OPERATOR_ID = 35;
+    private final static int LAST_OPERATOR_ID = 40;
     // reserved words
-    private final static int FIRST_RESERVED_ID = 36;
+    private final static int FIRST_RESERVED_ID = 41;
 
     // literals
 
     /** Token ID for the null literal: 'null' */
-    public final static int NULL = 36;
+    public final static int NULL = 41;
     /** Token ID for the true literal: 'true' */
-    public final static int TRUE = 37;
+    public final static int TRUE = 42;
     /** Token ID for the false literal: 'false' */
-    public final static int FALSE = 38;
+    public final static int FALSE = 43;
 
     // keywords
 
     /** Token ID for the not keyword: 'not' */
-    public final static int NOT = 39;
+    public final static int NOT = 44;
     /** Token ID for the or keyword: 'or' */
-    public final static int OR = 40;
+    public final static int OR = 45;
     /** Token ID for the and keyword: 'and' */
-    public final static int AND = 41;
+    public final static int AND = 46;
     /** Token ID for the if keyword: 'if' */
-    public final static int IF = 42;
+    public final static int IF = 47;
     /** Token ID for the else keyword: 'else' */
-    public final static int ELSE = 43;
+    public final static int ELSE = 48;
     /** Token ID for the is-a keyword: 'isa' */
-    public final static int ISA = 44;
+    public final static int ISA = 49;
     /** Token ID for the for-each keyword: 'foreach' */
-    public final static int FOREACH = 45;
+    public final static int FOREACH = 50;
     /** Token ID for the in keyword: 'in' */
-    public final static int IN = 46;
+    public final static int IN = 51;
     /** Token ID for the reverse keyword: 'reverse' */
-    public final static int REVERSE = 47;
+    public final static int REVERSE = 52;
     /** Token ID for the template keyword: 'template' */
-    public final static int TEMPLATE = 48;
+    public final static int TEMPLATE = 53;
     /** Token ID for the call keyword: 'call' */
-    public final static int CALL = 49;
+    public final static int CALL = 54;
     /** Token ID for the break keyword: 'break' */
-    public final static int BREAK = 50;
+    public final static int BREAK = 55;
     /** Token ID for the define keyword: 'define' */
-    public final static int DEFINE = 51;
+    public final static int DEFINE = 56;
     /** Token ID for the as keyword: 'as' */
-    public final static int AS = 52;
+    public final static int AS = 57;
     /** Token ID for the import keyword: 'import' */
-    public final static int IMPORT = 53;
+    public final static int IMPORT = 58;
     /** Token ID for the continue keyword: 'continue' */
-    public final static int CONTINUE = 54;
+    public final static int CONTINUE = 59;
+    /** Token ID for the class keyword: 'class' */
+    public final static int CLASS = 60;
 
-    private final static int LAST_RESERVED_ID = 54;
+    private final static int LAST_RESERVED_ID = 60;
 
-    private final static int LAST_ID = 54;
-    
+    private final static int LAST_ID = 60;
+
     private int mTokenID;
     private SourceInfo mInfo;
 
     Token(int sourceLine,
-          int sourceStartPos, 
+          int sourceStartPos,
           int sourceEndPos,
           int tokenID) {
 
-        this(sourceLine, 
-             sourceStartPos, 
-             sourceEndPos, 
+        this(sourceLine,
+             sourceStartPos,
+             sourceEndPos,
              sourceStartPos,
              tokenID);
     }
-    
+
     Token(int sourceLine,
-          int sourceStartPos, 
+          int sourceStartPos,
           int sourceEndPos,
           int sourceDetailPos,
           int tokenID) {
 
         mTokenID = tokenID;
-        
+
         if (tokenID > LAST_ID) {
             throw new IllegalArgumentException("Token ID out of range: " +
                                                tokenID);
         }
 
         if (sourceStartPos == sourceDetailPos) {
-            mInfo = new SourceInfo(sourceLine, 
+            mInfo = new SourceInfo(sourceLine,
                                    sourceStartPos, sourceEndPos);
         }
         else {
-            mInfo = new SourceDetailedInfo(sourceLine, 
+            mInfo = new SourceDetailedInfo(sourceLine,
                                            sourceStartPos, sourceEndPos,
                                            sourceDetailPos);
         }
@@ -208,10 +222,10 @@ public class Token implements java.io.Serializable {
                  sourceLine);
         }
     }
-    
+
     public Token(SourceInfo info, int tokenID) {
         mTokenID = tokenID;
-        
+
         if (tokenID > LAST_ID) {
             throw new IllegalArgumentException("Token ID out of range: " +
                                                tokenID);
@@ -276,10 +290,10 @@ public class Token implements java.io.Serializable {
     }
 
     /**
-     * If the given StringBuffer starts with a valid token type, its ID is
+     * If the given StringBuilder starts with a valid token type, its ID is
      * returned. Otherwise, the token ID UNKNOWN is returned.
      */
-    public static int findReservedWordID(StringBuffer word) {
+    public static int findReservedWordID(StringBuilder word) {
         char c = word.charAt(0);
 
         switch (c) {
@@ -292,6 +306,7 @@ public class Token implements java.io.Serializable {
             break;
         case 'c':
             if (matches(word, "call")) return CALL;
+            if (matches(word, "class___")) return CLASS;
             if (matches(word, "continue")) return CONTINUE;
             break;
         case 'd':
@@ -328,15 +343,15 @@ public class Token implements java.io.Serializable {
 
         return UNKNOWN;
     }
-    
-    /** 
+
+    /**
      * Case sensitive match test.
-     * @param val must be lowercase 
+     * @param val must be lowercase
      */
-    private static boolean matches(StringBuffer word, String val) {
+    private static boolean matches(StringBuilder word, String val) {
         int len = word.length();
         if (len != val.length()) return false;
-        
+
         // Start at index 1, assuming that the first characters have already
         // been checked to match.
         for (int index = 1; index < len; index++) {
@@ -363,10 +378,10 @@ public class Token implements java.io.Serializable {
      * @param out The PrintStream to write to.
      */
     public final void dump(PrintStream out) {
-        out.println("Token [Code: " + getCode() + "] [Image: " + 
-                    getImage() + "] [Value: " + getStringValue() + 
-                    "] [Id: " + getID() + "] [start: " + 
-                    mInfo.getStartPosition() + "] [end " + 
+        out.println("Token [Code: " + getCode() + "] [Image: " +
+                    getImage() + "] [Value: " + getStringValue() +
+                    "] [Id: " + getID() + "] [start: " +
+                    mInfo.getStartPosition() + "] [end " +
                     mInfo.getEndPosition() + "]");
     }
 
@@ -376,7 +391,7 @@ public class Token implements java.io.Serializable {
     public final int getID() {
         return mTokenID;
     }
-    
+
     /**
      * Returns true if this Token is a reserved word.
      */
@@ -411,7 +426,7 @@ public class Token implements java.io.Serializable {
     public final boolean isOperator() {
         return isOperator(mTokenID);
     }
-    
+
     /**
      * Token image represents what a static token looks like in a source file.
      * Token image is null if token is a string, number or identifier because
@@ -435,12 +450,12 @@ public class Token implements java.io.Serializable {
     public final SourceInfo getSourceInfo() {
         return mInfo;
     }
-    
+
     public String getStringValue() {
         return null;
     }
 
-    /** 
+    /**
      * Only valid if token is a number. Returns 0 if token is not a number
      * or is an invalid number. Returns 1 for int, 2 for long, 3 for
      * float and 4 for double. The token ID for all numbers (even invalid ones)
@@ -473,14 +488,14 @@ public class Token implements java.io.Serializable {
     }
 
     public String toString() {
-        StringBuffer buf = new StringBuffer(10);
-        
+        StringBuilder buf = new StringBuilder(10);
+
         String image = getImage();
-        
+
         if (image != null) {
             buf.append(image);
         }
-        
+
         String str = getStringValue();
 
         if (str != null) {
@@ -489,7 +504,7 @@ public class Token implements java.io.Serializable {
             }
             buf.append(str);
         }
-        
+
         return buf.toString();
     }
 
@@ -498,7 +513,7 @@ public class Token implements java.io.Serializable {
         {
             null,
             null,
-            
+
             null,
             null,
             null,
@@ -506,14 +521,14 @@ public class Token implements java.io.Serializable {
             null,
             null,
             null,
-            
+
             "(",
             ")",
             "{",
             "}",
             "[",
             "]",
-            
+
             ";",
             ",",
             ".",
@@ -536,7 +551,12 @@ public class Token implements java.io.Serializable {
             "%",
             "=",
             "=>",
-            
+            ":",
+            "?",
+            "->",
+            "<=>",
+            "*.",
+
             "null",
             "true",
             "false",
@@ -556,9 +576,10 @@ public class Token implements java.io.Serializable {
             "define",
             "as",
             "import",
-            "continue"
+            "continue",
+            "class___"
         };
-    
+
         public static final String[] TOKEN_CODES =
         {
             "UNKNOWN",
@@ -567,18 +588,18 @@ public class Token implements java.io.Serializable {
             "COMMENT",
             "ENTER_CODE",
             "ENTER_TEXT",
-            
+
             "STRING",
             "NUMBER",
             "IDENT",
-            
+
             "LPAREN",
             "RPAREN",
             "LBRACE",
             "RBRACE",
             "LBRACK",
             "RBRACK",
-            
+
             "SEMI",
             "COMMA",
             "DOT",
@@ -601,7 +622,12 @@ public class Token implements java.io.Serializable {
             "MOD",
             "ASSIGN",
             "EQUAL_GREATER",
-            
+            "COLON",
+            "QUESTION",
+            "LAMBDA",
+            "SPACESHIP",
+            "SPREAD",
+
             "NULL",
             "TRUE",
             "FALSE",
@@ -621,7 +647,8 @@ public class Token implements java.io.Serializable {
             "DEFINE",
             "AS",
             "IMPORT",
-            "CONTINUE"
+            "CONTINUE",
+            "CLASS"
         };
 
         static {

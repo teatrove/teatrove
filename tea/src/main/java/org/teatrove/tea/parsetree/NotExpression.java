@@ -27,6 +27,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public class NotExpression extends Expression implements Logical {
+    private static final long serialVersionUID = 1L;
+
     private Expression mExpr;
 
     public NotExpression(SourceInfo info,
@@ -59,7 +61,7 @@ public class NotExpression extends Expression implements Logical {
     }
 
     public void convertTo(Type type, boolean preferCast) {
-        Class clazz = type.getObjectClass();
+        Class<?> clazz = type.getObjectClass();
 
         // For these types, a Logical can simply generate a literal, skipping
         // a conversion.
@@ -71,7 +73,7 @@ public class NotExpression extends Expression implements Logical {
         else {
             super.convertTo(type, preferCast);
         }
-    }   
+    }
 
     public void setType(Type type) {
         // NotExpressions never evaluate to null.

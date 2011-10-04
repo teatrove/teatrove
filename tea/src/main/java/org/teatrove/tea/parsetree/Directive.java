@@ -23,7 +23,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  *
  * @author Guy Molinari
  */
-public abstract class Directive extends Node { 
+public abstract class Directive extends Node {
+    private static final long serialVersionUID = 1L;
 
     protected Directive(SourceInfo info) {
         super(info);

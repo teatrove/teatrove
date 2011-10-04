@@ -31,13 +31,16 @@ import java.lang.reflect.Method;
  * @author Brian S O'Neill
  * @see java.beans.Introspector
  */
-public class Lookup extends Expression {
+public class Lookup extends Expression implements NullSafe {
+    private static final long serialVersionUID = 1L;
+
     private Expression mExpr;
     private Token mDot;
     private Name mLookupName;
     private Method mMethod;
-
-    public Lookup(SourceInfo info, Expression expr, Token dot, 
+    private boolean mNullSafe;
+    
+    public Lookup(SourceInfo info, Expression expr, Token dot,
                   Name lookupName) {
         super(info);
 
@@ -60,14 +63,17 @@ public class Lookup extends Expression {
         if (super.isExceptionPossible()) {
             return true;
         }
-        
+
         if (mExpr != null) {
             if (mExpr.isExceptionPossible()) {
                 return true;
             }
-            Type type = mExpr.getType();
-            if (type != null && type.isNullable()) {
-                return true;
+            
+            if (!mNullSafe) {
+                Type type = mExpr.getType();
+                if (type != null && type.isNullable()) {
+                    return true;
+                }
             }
         }
 
@@ -102,5 +108,13 @@ public class Lookup extends Expression {
 
     public void setReadMethod(Method m) {
         mMethod = m;
+    }
+    
+    public boolean isNullSafe() {
+        return mNullSafe;
+    }
+    
+    public void setNullSafe(boolean nullSafe) {
+        mNullSafe = nullSafe;
     }
 }

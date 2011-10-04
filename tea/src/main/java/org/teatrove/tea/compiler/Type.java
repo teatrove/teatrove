@@ -17,10 +17,9 @@
 package org.teatrove.tea.compiler;
 
 import java.beans.IntrospectionException;
-
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -35,8 +34,6 @@ import org.teatrove.tea.util.BeanAnalyzer;
 import org.teatrove.tea.util.KeyedPropertyDescriptor;
 import org.teatrove.trove.generics.GenericType;
 
-// TODO: update w/ generic support and ensure full compatibility
-
 /**
  * Immutable representation of an expression's type.
  *
@@ -44,8 +41,12 @@ import org.teatrove.trove.generics.GenericType;
  * @see org.teatrove.tea.parsetree.Expression
  */
 public class Type implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+
     /** Type that is compatble with all other types */
     public static final Type NULL_TYPE = new Type(Object.class) {
+        private static final long serialVersionUID = 1L;
+
         public String getSimpleName() {
             return toString();
         }
@@ -82,8 +83,9 @@ public class Type implements java.io.Serializable {
 
     private static final Method[] EMPTY_METHOD_ARRAY = new Method[0];
 
-    private final Class mObjectClass;
-    private final Class mNaturalClass;
+    private final String mClassName;
+    private final Class<?> mObjectClass;
+    private final Class<?> mNaturalClass;
     private final GenericType mGenericType;
     private final boolean mPrimitive;
 
@@ -93,78 +95,61 @@ public class Type implements java.io.Serializable {
     private transient Method[] mArrayAccessMethods;
     private transient boolean mCheckedForIteration;
     private transient Type mIterationElementType;
+    private transient boolean mCheckedForKey;
+    private transient Type mKeyElementType;
+    private transient boolean mCheckedForValue;
+    private transient Type mValueElementType;
 
-    public Type(Class type) {
-        if (type.isPrimitive()) {
-            mPrimitive = true;
-            mNaturalClass = type;
-            mObjectClass = convertToObject(type);
-            mGenericType = new GenericType(mNaturalClass);
-        }
-        else {
-            mPrimitive = false;
-            mNaturalClass = mObjectClass = type;
-            mGenericType = new GenericType(mNaturalClass);
-        }
+    public Type(Class<?> type) {
+        this(type, (java.lang.reflect.Type) null);
     }
 
-    public Type(Class type, java.lang.reflect.Type generic) {
-        if (type.isPrimitive()) {
-            mPrimitive = true;
-            mNaturalClass = type;
-            mObjectClass = convertToObject(type);
-            mGenericType = new GenericType(mNaturalClass, generic);
-        }
-        else {
-            mPrimitive = false;
-            mNaturalClass = mObjectClass = type;
-            mGenericType = new GenericType(mNaturalClass, generic);
-        }
+    public Type(Class<?> type, java.lang.reflect.Type generic) {
+        mNaturalClass = type;
+        mClassName = type.getName();
+        mPrimitive = type.isPrimitive();
+        mGenericType = new GenericType(mNaturalClass, generic);
+        mObjectClass = (mPrimitive ? convertToObject(type) : type);
     }
 
     public Type(GenericType type) {
         Class<?> natural = type.getRawType().getType();
-        if (natural.isPrimitive()) {
-            mPrimitive = true;
-            mNaturalClass = natural;
-            mObjectClass = convertToObject(natural);
-            mGenericType = type;
-        }
-        else {
-            mPrimitive = false;
-            mNaturalClass = mObjectClass = natural;
-            mGenericType = type;
-        }
-    }
 
-    private Type(Class object, Class natural) {
-        mNaturalClass = natural;
-        mObjectClass = object;
-        mGenericType = new GenericType(mNaturalClass);
-        mPrimitive = natural.isPrimitive();
-    }
-
-    private Type(Class object, Class natural,
-                 java.lang.reflect.Type generic) {
-        mNaturalClass = natural;
-        mObjectClass = object;
-        mGenericType = new GenericType(mNaturalClass, generic);
-        mPrimitive = natural.isPrimitive();
-    }
-
-    private Type(GenericType type, Class natural) {
         mGenericType = type;
-        mObjectClass = type.getRawType().getType();
         mNaturalClass = natural;
+        mClassName = natural.getName();
         mPrimitive = natural.isPrimitive();
+        mObjectClass = (mPrimitive ? convertToObject(natural) : natural);
     }
 
-    public Type(Class type, TypedElement te) {
+    private Type(Class<?> object, Class<?> natural) {
+        this(object, natural, (java.lang.reflect.Type) null);
+    }
+
+    private Type(Class<?> object, Class<?> natural,
+                 java.lang.reflect.Type generic) {
+        mObjectClass = object;
+        mNaturalClass = natural;
+        mClassName = natural.getName();
+        mPrimitive = natural.isPrimitive();
+        mGenericType = new GenericType(mNaturalClass, generic);
+    }
+
+    private Type(GenericType type, Class<?> natural) {
+        mGenericType = type;
+        mNaturalClass = natural;
+        mClassName = natural.getName();
+        mPrimitive = natural.isPrimitive();
+        mObjectClass = type.getRawType().getType();
+    }
+
+    public Type(Class<?> type, TypedElement te) {
         this(type);
         mIterationElementType = new Type(te.value());
     }
 
-    public Type(Class type, java.lang.reflect.Type generic, TypedElement te) {
+    public Type(Class<?> type,
+                java.lang.reflect.Type generic, TypedElement te) {
         this(type, generic);
         mIterationElementType = new Type(te.value());
     }
@@ -175,6 +160,7 @@ public class Type implements java.io.Serializable {
     }
 
     Type(Type type) {
+        mClassName = type.mClassName;
         mGenericType = type.mGenericType;
         mObjectClass = type.mObjectClass;
         mNaturalClass = type.mNaturalClass;
@@ -188,10 +174,14 @@ public class Type implements java.io.Serializable {
         mIterationElementType = type.mIterationElementType;
     }
 
+    public String getClassName() {
+        return mClassName;
+    }
+
     /**
      * Class returned never represents a primitive type.
      */
-    public Class getObjectClass() {
+    public Class<?> getObjectClass() {
         return mObjectClass;
     }
 
@@ -210,8 +200,16 @@ public class Type implements java.io.Serializable {
      * Returns the natural class for this type. If type is primitive, then its
      * primitive peer is returned.
      */
-    public Class getNaturalClass() {
+    public Class<?> getNaturalClass() {
         return mNaturalClass;
+    }
+
+    /**
+     * Return true if this type is void.
+     */
+    public boolean isVoid() {
+        Class<?> natural = getNaturalClass();
+        return Void.class.equals(natural) || void.class.equals(natural);
     }
 
     /**
@@ -298,6 +296,8 @@ public class Type implements java.io.Serializable {
         }
         else {
             return new Type(this) {
+                private static final long serialVersionUID = 1L;
+
                 public boolean isNonNull() {
                     return true;
                 }
@@ -385,14 +385,10 @@ public class Type implements java.io.Serializable {
                 mIterationElementType = getArrayElementType();
             }
             else if (Collection.class.isAssignableFrom(mNaturalClass) ||
-                    Map.class.isAssignableFrom(mNaturalClass)) {
-                GenericType[] args = mGenericType.getTypeArguments();
-                if (args != null && args.length >= 1) {
-                    mIterationElementType = new Type(args[0]);
-                }
-
+                     Map.class.isAssignableFrom(mNaturalClass)) {
+                mIterationElementType = getIterationType(mGenericType);
                 if (mIterationElementType == null ||
-                    Object.class.equals(mIterationElementType.getObjectClass())) {
+                    mIterationElementType == OBJECT_TYPE) {
                     try {
                         Field field =
                             mNaturalClass.getField
@@ -401,7 +397,7 @@ public class Type implements java.io.Serializable {
                             Modifier.isStatic(field.getModifiers())) {
 
                             mIterationElementType =
-                                new Type((Class)field.get(null));
+                                new Type((Class<?>) field.get(null));
                         }
                     }
                     catch (NoSuchFieldException e) {
@@ -422,29 +418,43 @@ public class Type implements java.io.Serializable {
     }
 
     public Type getKeyElementType() throws IntrospectionException {
-        // TODO: cache result
-        if (Collection.class.isAssignableFrom(mNaturalClass) ||
-            Map.class.isAssignableFrom(mNaturalClass)) {
-            GenericType[] args = mGenericType.getTypeArguments();
-            if (args != null && args.length >= 2) {
-                return new Type(args[0]);
+        if (!mCheckedForKey) {
+            mCheckedForKey = true;
+
+            if (mKeyElementType == null) {
+                return mKeyElementType;
+            }
+
+            if (Map.class.isAssignableFrom(mNaturalClass)) {
+                mKeyElementType = getKeyType(mGenericType);
+            }
+
+            if (mKeyElementType == null) {
+                mKeyElementType = Type.OBJECT_TYPE;
             }
         }
 
-        return null;
+        return mKeyElementType;
     }
 
     public Type getValueElementType() throws IntrospectionException {
-        // TODO: cache result
-        if (Collection.class.isAssignableFrom(mNaturalClass) ||
-            Map.class.isAssignableFrom(mNaturalClass)) {
-            GenericType[] args = mGenericType.getTypeArguments();
-            if (args != null && args.length >= 2) {
-                return new Type(args[1]);
+        if (!mCheckedForValue) {
+            mCheckedForValue = true;
+
+            if (mValueElementType == null) {
+                return mValueElementType;
+            }
+
+            if (Map.class.isAssignableFrom(mNaturalClass)) {
+                mValueElementType = getValueType(mGenericType);
+            }
+
+            if (mValueElementType == null) {
+                mValueElementType = Type.OBJECT_TYPE;
             }
         }
 
-        return null;
+        return mValueElementType;
     }
 
     /**
@@ -468,7 +478,8 @@ public class Type implements java.io.Serializable {
         }
 
         try {
-            Map properties = BeanAnalyzer.getAllProperties(mGenericType);
+            Map<String, PropertyDescriptor> properties =
+                BeanAnalyzer.getAllProperties(mGenericType);
 
             KeyedPropertyDescriptor keyed =
                 (KeyedPropertyDescriptor)properties.get
@@ -490,7 +501,6 @@ public class Type implements java.io.Serializable {
         mArrayIndexTypes = new Type[length];
         for (int i=0; i<length; i++) {
             Method m = mArrayAccessMethods[i];
-            // TODO: what is this? pass in root type?
             mArrayIndexTypes[i] =
                 new Type(m.getReturnType(), m.getGenericReturnType());
         }
@@ -510,7 +520,7 @@ public class Type implements java.io.Serializable {
     public String getSimpleName() {
         if (mNaturalClass.isArray()) {
             int dim = 0;
-            Class baseNat = mNaturalClass;
+            Class<?> baseNat = mNaturalClass;
             Type baseType = this;
             while (baseNat.isArray()) {
                 dim++;
@@ -563,7 +573,7 @@ public class Type implements java.io.Serializable {
         }
         else {
             int dim = 0;
-            Class baseNat = mNaturalClass;
+            Class<?> baseNat = mNaturalClass;
             Type baseType = this;
             while (baseNat.isArray()) {
                 dim++;
@@ -673,8 +683,8 @@ public class Type implements java.io.Serializable {
             }
         }
 
-        Class classA = mObjectClass;
-        Class classB = other.mObjectClass;
+        Class<?> classA = mObjectClass;
+        Class<?> classB = other.mObjectClass;
 
         Type compat;
 
@@ -698,7 +708,7 @@ public class Type implements java.io.Serializable {
         else if (Number.class.isAssignableFrom(classA) &&
             Number.class.isAssignableFrom(classB)) {
 
-            Class clazz = compatibleNumber(classA, classB);
+            Class<?> clazz = compatibleNumber(classA, classB);
             if (isPrimitive() && other.isPrimitive()) {
                 compat = new Type(clazz, convertToPrimitive(clazz));
             }
@@ -707,6 +717,8 @@ public class Type implements java.io.Serializable {
             }
         }
         else {
+            // TODO: ensure generics are matched
+            // ie: List<Number> and List<Integer> = List<Number>
             compat = new Type(findCommonBaseClass(classA, classB));
         }
 
@@ -715,6 +727,68 @@ public class Type implements java.io.Serializable {
         }
 
         return compat;
+    }
+
+    /**
+     * Get the iteration type of the generic type based on the generic type
+     * parameters.  If the type is not generic or has no resolvable type params,
+     * then {@link Type#OBJECT_TYPE} is returned.
+     *
+     * @param type  The generic type
+     *
+     * @return  The iteration element type
+     */
+    public static Type getIterationType(GenericType type) {
+        return getTypeArgument(type, 0);
+    }
+
+    /**
+     * Get the key type of the generic type based on the generic type
+     * parameters.  The key type is usually based around a map or key/value pair
+     * class containing 2 or more type arguments.  If the type is not generic or
+     * has no resolvable type params, then {@link Type#OBJECT_TYPE} is returned.
+     *
+     * @param type  The generic type
+     *
+     * @return  The key element type
+     */
+    public static Type getKeyType(GenericType type) {
+        return getTypeArgument(type, 0);
+    }
+
+    /**
+     * Get the value type of the generic type based on the generic type
+     * parameters.  The kevaluey type is usually based around a map or key/value
+     * pair class containing 2 or more type arguments.  If the type is not
+     * generic or has no resolvable type params, then {@link Type#OBJECT_TYPE}
+     * is returned.
+     *
+     * @param type  The generic type
+     *
+     * @return  The value element type
+     */
+    public static Type getValueType(GenericType type) {
+        return getTypeArgument(type, 1);
+    }
+
+    /**
+     * Get the associated type of the generic type based on the generic type
+     * parameters.  If the type is not generic or has no resolvable type params,
+     * then {@link Type#OBJECT_TYPE} is returned.
+     *
+     * @param type  The generic type
+     * @param index  The index of the type argument
+     *
+     * @return  The element type
+     */
+    protected static Type getTypeArgument(GenericType type, int index) {
+        GenericType arg = type.getTypeArgument(index);
+        if (arg != null) {
+            return new Type(arg);
+        }
+
+        // unknown type, so return object
+        return Type.OBJECT_TYPE;
     }
 
     /**
@@ -745,8 +819,8 @@ public class Type implements java.io.Serializable {
      * if either class refers to a primitive type and isn't the same as the
      * other class.
      */
-    public static Class findCommonBaseClass(Class a, Class b) {
-        Class clazz = findCommonBaseClass0(a, b);
+    public static Class<?> findCommonBaseClass(Class<?> a, Class<?> b) {
+        Class<?> clazz = findCommonBaseClass0(a, b);
 
         if (clazz != null && clazz.isInterface()) {
             // Only return interface if it actually defines something.
@@ -758,7 +832,7 @@ public class Type implements java.io.Serializable {
         return clazz;
     }
 
-    private static Class findCommonBaseClass0(Class a, Class b) {
+    private static Class<?> findCommonBaseClass0(Class<?> a, Class<?> b) {
         if (a == b) {
             return a;
         }
@@ -768,7 +842,7 @@ public class Type implements java.io.Serializable {
         }
 
         if (a.isArray() && b.isArray()) {
-            Class clazz = findCommonBaseClass(a.getComponentType(),
+            Class<?> clazz = findCommonBaseClass(a.getComponentType(),
                                               b.getComponentType());
 
             if (clazz == null) {
@@ -780,17 +854,17 @@ public class Type implements java.io.Serializable {
 
         // Determine the intersection set of all the classes, superclasses and
         // interfaces from the passed in classes.
-        Set set = new HashSet(19);
+        Set<Class<?>> set = new HashSet<Class<?>>(19);
         addToClassSet(set, a);
 
-        Set setB = new HashSet(19);
+        Set<Class<?>> setB = new HashSet<Class<?>>(19);
         addToClassSet(setB, b);
 
         set.retainAll(setB);
 
         int size = set.size();
         if (size == 1) {
-            return (Class)set.iterator().next();
+            return set.iterator().next();
         }
         else if (size == 0) {
             return Object.class;
@@ -798,12 +872,12 @@ public class Type implements java.io.Serializable {
 
         // Reduce the set by removing classes/interfaces that are extended and
         // interfaces that are implemented by other classes.
-        Iterator i = set.iterator();
+        Iterator<Class<?>> i = set.iterator();
         while (i.hasNext()) {
-            Class x = (Class)i.next();
-            Iterator j = set.iterator();
+            Class<?> x = i.next();
+            Iterator<Class<?>> j = set.iterator();
             while (j.hasNext()) {
-                Class y = (Class)j.next();
+                Class<?> y = j.next();
                 if (x != y && x.isAssignableFrom(y)) {
                     i.remove();
                     break;
@@ -813,7 +887,7 @@ public class Type implements java.io.Serializable {
 
         size = set.size();
         if (size == 1) {
-            return (Class)set.iterator().next();
+            return set.iterator().next();
         }
         else if (size == 0) {
             return Object.class;
@@ -822,32 +896,32 @@ public class Type implements java.io.Serializable {
         // Reduce the set by discarding interfaces.
         i = set.iterator();
         while (i.hasNext()) {
-            if (((Class)i.next()).isInterface()) {
+            if ((i.next()).isInterface()) {
                 i.remove();
             }
         }
 
         if (set.size() == 1) {
-            return (Class)set.iterator().next();
+            return set.iterator().next();
         }
 
         return Object.class;
     }
 
-    private static void addToClassSet(Set set, Class clazz) {
+    private static void addToClassSet(Set<Class<?>> set, Class<?> clazz) {
         if (clazz == null || !set.add(clazz)) {
             return;
         }
 
         addToClassSet(set, clazz.getSuperclass());
 
-        Class[] interfaces = clazz.getInterfaces();
+        Class<?>[] interfaces = clazz.getInterfaces();
         for (int i=0; i<interfaces.length; i++) {
             addToClassSet(set, interfaces[i]);
         }
     }
 
-    private static Class compatibleNumber(Class classA, Class classB) {
+    private static Class<?> compatibleNumber(Class<?> classA, Class<?> classB) {
         if (classA == Integer.class) {
 
             if (classB == Integer.class ||
@@ -900,7 +974,7 @@ public class Type implements java.io.Serializable {
      * If class passed in represents a primitive type, its object peer is
      * returned. Otherwise, it is returned unchanged.
      */
-    private static Class convertToObject(Class type) {
+    private static Class<?> convertToObject(Class<?> type) {
         if (type == int.class) {
             return Integer.class;
         }
@@ -937,7 +1011,7 @@ public class Type implements java.io.Serializable {
      * If class passed in has a primitive type peer, it is returned.
      * Otherwise, it is returned unchanged.
      */
-    private static Class convertToPrimitive(Class type) {
+    private static Class<?> convertToPrimitive(Class<?> type) {
         if (type == Integer.class) {
             return int.class;
         }
@@ -1025,8 +1099,8 @@ public class Type implements java.io.Serializable {
             return 1;
         }
 
-        Class thisNat = mNaturalClass;
-        Class otherNat = other.mNaturalClass;
+        Class<?> thisNat = mNaturalClass;
+        Class<?> otherNat = other.mNaturalClass;
 
         if (thisNat.isAssignableFrom(otherNat)) {
             return 2;
@@ -1084,7 +1158,7 @@ public class Type implements java.io.Serializable {
         return cost;
     }
 
-    private static int typeCode(Class clazz) {
+    private static int typeCode(Class<?> clazz) {
         if (clazz.isPrimitive()) {
             if (clazz == boolean.class) {
                 return 0;

@@ -26,6 +26,8 @@ import java.lang.reflect.Method;
  * @author Brian S O'Neill
  */
 public class ExpressionStatement extends Statement {
+    private static final long serialVersionUID = 1L;
+
     private Expression mExpr;
     private Method mReceiver;
 

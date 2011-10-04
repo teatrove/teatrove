@@ -1,0 +1,110 @@
+/*
+ *  Copyright 1997-2011 teatrove.org
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package org.teatrove.trove.util.resources;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.PropertyMapFactory;
+import org.teatrove.trove.util.PropertyMapFactoryProvider;
+import org.teatrove.trove.util.SubstitutionFactory;
+
+public class DefaultResourceFactory implements ResourceFactory {
+    
+    /** Singleton instance. */
+    private static final DefaultResourceFactory INSTANCE = 
+        new DefaultResourceFactory();
+    
+    /**
+     * Default constructor.
+     */
+    public DefaultResourceFactory() {
+        super();
+    }
+    
+    /**
+     * Get the singleton instance of the factory.
+     * 
+     * @return  The default resource factory
+     */
+    public static DefaultResourceFactory getInstance() {
+        return INSTANCE;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public URL getResource(String path)
+        throws MalformedURLException {
+        
+        File file = new File(path);
+        if (file.exists()) {
+            return file.toURI().toURL();
+        }
+        else {
+            return DefaultResourceFactory.class.getResource(path);
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public InputStream getResourceAsStream(String path) {
+        try { return new FileInputStream(path); }
+        catch (FileNotFoundException fnfe) {
+            return DefaultResourceFactory.class.getResourceAsStream(path);
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public PropertyMap getResourceAsProperties(String path) 
+        throws IOException {
+        
+        return getResourceAsProperties(path, SubstitutionFactory.getDefaults());
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public PropertyMap getResourceAsProperties(String path, 
+                                               PropertyMap substitutions)
+        throws IOException {
+        
+        // get associated resource
+        InputStream input = getResourceAsStream(path);
+        if (input == null) { return null; }
+        Reader reader = new InputStreamReader(input);
+        
+        // get associated factory
+        PropertyMapFactory factory = 
+            PropertyMapFactoryProvider.createPropertyMapFactory(path, reader,
+                                                                substitutions);
+        
+        // return properties
+        return factory.createProperties();
+    }
+}

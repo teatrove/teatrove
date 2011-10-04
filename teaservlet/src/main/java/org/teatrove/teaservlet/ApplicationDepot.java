@@ -146,7 +146,14 @@ public class ApplicationDepot {
     private TeaServletContextSource createContextSource(boolean http)
         throws Exception {
 
-        return new TeaServletContextSource(getClass().getClassLoader(), this, mEngine.getServletContext(), mEngine.getLog(), http, mEngine.getProperties().getBoolean("profiling.enabled", true));
+        return new TeaServletContextSource(getClass().getClassLoader(), 
+                                           this, 
+                                           mEngine.getServletContext(), 
+                                           mEngine.getLog(), 
+                                           http,
+                                           mEngine.getProperties().getBoolean("management.httpcontext", false),
+                                           mEngine.getProperties().getInt("management.httpcontext.readUrlCacheSize", 500),
+                                           mEngine.getProperties().getBoolean("profiling.enabled", true));
     }
 
     private void loadApplications() throws ServletException {

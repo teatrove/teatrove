@@ -35,14 +35,14 @@ public class Scanner {
     private boolean mEmitSpecial;
 
     /** StringBuffer for temporary use. */
-    private StringBuffer mWord = new StringBuffer(20);
+    private StringBuilder mWord = new StringBuilder(20);
 
     /** The scanner supports any amount of lookahead. */
-    private Stack mLookahead = new Stack();
+    private Stack<Token> mLookahead = new Stack<Token>();
     
     private Token mEOFToken;
 
-    private Vector mListeners = new Vector(1);
+    private Vector<ErrorListener> mListeners = new Vector<ErrorListener>(1);
     private int mErrorCount = 0;
 
     private MessageFormatter mFormatter;
@@ -70,7 +70,7 @@ public class Scanner {
 
         synchronized (mListeners) {
             for (int i = 0; i < mListeners.size(); i++) {
-                ((ErrorListener)mListeners.elementAt(i)).compileError(e);
+                mListeners.elementAt(i).compileError(e);
             }
         }
     }
@@ -104,7 +104,7 @@ public class Scanner {
             return scanToken();
         }
         else {
-            return (Token)mLookahead.pop();
+            return mLookahead.pop();
         }
     }
 
@@ -113,10 +113,10 @@ public class Scanner {
      */
     public synchronized Token peekToken() throws IOException {
         if (mLookahead.empty()) {
-            return (Token)mLookahead.push(scanToken());
+            return mLookahead.push(scanToken());
         }
         else {
-            return (Token)mLookahead.peek();
+            return mLookahead.peek();
         }
     }
 
@@ -193,6 +193,12 @@ public class Scanner {
             case ',':
                 return makeToken(Token.COMMA);
                 
+            case ':':
+                return makeToken(Token.COLON);
+                
+            case '?':
+                return makeToken(Token.QUESTION);
+
             case '.':
                 peek = mSource.peek();
 
@@ -246,7 +252,13 @@ public class Scanner {
                 if (mSource.peek() == '=') {
                     startPos = mSource.getStartPosition();
                     mSource.read();
-                    return makeToken(Token.LE, startPos);
+                    if (mSource.peek() == '>') {
+                        mSource.read();
+                        return makeToken(Token.SPACESHIP, startPos);
+                    }
+                    else {
+                        return makeToken(Token.LE, startPos);
+                    }
                 }
                 else {
                     return makeToken(Token.LT);
@@ -271,7 +283,7 @@ public class Scanner {
                 if (mSource.peek() == '>') {
                     startPos = mSource.getStartPosition();
                     mSource.read();
-                    return makeToken(Token.EQUAL_GREATER);
+                    return makeToken(Token.EQUAL_GREATER, startPos);
                 }
                 else {
                     return makeToken(Token.ASSIGN);
@@ -287,7 +299,14 @@ public class Scanner {
                 return makeToken(Token.MINUS);
                 
             case '*':
-                return makeToken(Token.MULT);
+                if (mSource.peek() == '.') {
+                    startPos = mSource.getStartPosition();
+                    mSource.read();
+                    return makeToken(Token.SPREAD, startPos);
+                }
+                else {
+                    return makeToken(Token.MULT);
+                }
                 
             case '%':
                 return makeToken(Token.MOD);
@@ -385,7 +404,7 @@ public class Scanner {
         int startLine = mSource.getLineNumber();
         int startPos = mSource.getStartPosition();
         int endPos = mSource.getEndPosition();
-        StringBuffer buf = new StringBuffer(256);
+        StringBuilder buf = new StringBuilder(256);
 
         while (c != -1) {
             if (c == SourceReader.ENTER_CODE) {
@@ -425,14 +444,7 @@ public class Scanner {
             buf.setLength(i + 1);
         }
 
-        String str;
-        if (buf.length() == 0) {
-            str = "";
-        }
-        else {
-            str = new String(buf.toString());
-        }
-
+        String str = buf.toString();
         return new StringToken(startLine, startPos, endPos,
                                Token.STRING, str);
     }
@@ -886,8 +898,6 @@ public class Scanner {
     /**
      * 
      * @author Brian S O'Neill
-     * @version
-
      */
     private static class Tester {
         public static void test(String[] arg) throws Exception {

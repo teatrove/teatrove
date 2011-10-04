@@ -5,12 +5,12 @@
   <parent>
     <groupId>org.teatrove</groupId>
     <artifactId>teatrove</artifactId>
-    <version>4.0-SNAPSHOT</version>
+    <version>4.1-SNAPSHOT</version>
   </parent>
 
   <groupId>org.teatrove</groupId>
   <artifactId>teaservlet</artifactId>
-  <version>4.0-SNAPSHOT</version>
+  <version>4.1-SNAPSHOT</version>
   
   <packaging>jar</packaging>
 

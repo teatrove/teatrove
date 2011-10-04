@@ -23,7 +23,7 @@ import org.teatrove.trove.util.SecureReadWriteLock;
 /**
  * An implementation of FileBuffer that makes direct calls into the operating
  * system's file I/O functions. This class requires a native library:
- * com_go_trove_file_SystemFileBuffer.
+ * org.teatrove_trove_file_SystemFileBuffer.
  *
  * @author Brian S O'Neill
  */
@@ -33,7 +33,7 @@ public final class SystemFileBuffer implements FileBuffer {
     public final static int MAP_COW = 3;
 
     static {
-        System.loadLibrary("com_go_trove_file_SystemFileBuffer");
+        System.loadLibrary("org.teatrove_trove_file_SystemFileBuffer");
     }
 
     private volatile long mHandle;

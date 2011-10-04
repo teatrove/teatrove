@@ -25,7 +25,7 @@ import org.teatrove.trove.util.IntegerFactory;
 
 public class WrapperTypeConversionUtil {
 
-    public static Number convert(Number from, Class toType) {
+    public static Number convert(Number from, Class<?> toType) {
         if (toType == Integer.class || toType == Integer.TYPE)
             return toInteger(from);
         if (toType == Double.class || toType == Double.TYPE)

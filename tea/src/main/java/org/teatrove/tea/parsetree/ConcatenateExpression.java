@@ -27,6 +27,8 @@ import org.teatrove.tea.compiler.Token;
  * @author Brian S O'Neill
  */
 public class ConcatenateExpression extends BinaryExpression {
+    private static final long serialVersionUID = 1L;
+
     public ConcatenateExpression(SourceInfo info,
                                  Token operator,
                                  Expression left,

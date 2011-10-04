@@ -22,12 +22,14 @@ package org.teatrove.tea.compiler;
  */
 public class StatusEvent extends java.util.EventObject {
 
+    private static final long serialVersionUID = 1L;
+
     private int mTotal;
     private int mCurrent;
     private String mCurrentName;
-    
-    public StatusEvent(Object source, int current, int total, 
-                       String currentName) {        
+
+    public StatusEvent(Object source, int current, int total,
+                       String currentName) {
         super(source);
         mTotal = total;
         mCurrent = current;

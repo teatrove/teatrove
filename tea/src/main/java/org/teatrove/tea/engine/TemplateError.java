@@ -24,6 +24,8 @@ import java.util.Date;
  */
 public class TemplateError implements java.io.Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     //
     // Private instance members
     //
@@ -209,7 +211,7 @@ public class TemplateError implements java.io.Serializable {
             return "";
         }
     }
-    
+
     public String getDetail() {
         try {
             return mSourceLine.substring(mDetailPos, mDetailPos + 1);
@@ -218,7 +220,7 @@ public class TemplateError implements java.io.Serializable {
             return "";
         }
     }
-    
+
     public String getErrorEnd() {
         try {
             return mSourceLine.substring(mDetailPos + 1, mErrorEndPos + 1);
@@ -227,7 +229,7 @@ public class TemplateError implements java.io.Serializable {
             return "";
         }
     }
-    
+
     public String getLineEnd() {
         try {
             return mSourceLine.substring
@@ -236,6 +238,6 @@ public class TemplateError implements java.io.Serializable {
         catch (IndexOutOfBoundsException e) {
             return "";
         }
-    }    
+    }
 }
 

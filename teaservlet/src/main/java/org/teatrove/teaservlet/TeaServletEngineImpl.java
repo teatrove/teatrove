@@ -16,10 +16,13 @@
 
 package org.teatrove.teaservlet;
 
+import org.teatrove.tea.compiler.StatusListener;
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
 import org.teatrove.tea.engine.TemplateSource;
+import org.teatrove.teaservlet.management.HttpContextManagement;
+import org.teatrove.teaservlet.management.HttpContextManagementMBean;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.log.LogEvent;
 import org.teatrove.trove.util.PropertyMap;
@@ -27,11 +30,14 @@ import org.teatrove.trove.util.Utils;
 import org.teatrove.trove.util.plugin.Plugin;
 import org.teatrove.trove.util.plugin.PluginContext;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.*;
 
 /**
@@ -53,13 +59,38 @@ public class TeaServletEngineImpl implements TeaServletEngine {
     private List mLogEvents;
 
     private PluginContext mPluginContext;
+    
+    private boolean initialized;
+    private Exception initializationException;
 
-    protected void startEngine(PropertyMap properties,
-                               ServletContext servletContext,
-                               String servletName,
-                               Log log,
-                               List memLog,
-                               PluginContext plug)
+    protected void compileTemplates() {
+        compileTemplates(null);
+    }
+    
+    protected void compileTemplates(StatusListener listener) {
+        try {
+            mLog.debug("loading templates");
+            getTemplateSource().compileTemplates(null, false, listener);
+        }
+        catch (Exception e) {
+            mLog.error(e);
+            initializationException = e;
+        }
+        finally {
+            initialized = true;
+        }
+    }
+    
+    protected boolean isInitialized() {
+        return initialized;
+    }
+    
+    public void startEngine(PropertyMap properties,
+                            ServletContext servletContext,
+                            String servletName,
+                            Log log,
+                            List memLog,
+                            PluginContext plug)
         throws ServletException {
 
         try {
@@ -70,12 +101,26 @@ public class TeaServletEngineImpl implements TeaServletEngine {
             setLogEvents(memLog);
             setPluginContext(plug);
             mApplicationDepot = new ApplicationDepot(this);
-
-            mLog.debug("loading templates");
-            getTemplateSource().compileTemplates(null, false);
+            
+            // Initialize the HttpContext JMX angent
+            if (properties.getBoolean("management.httpcontext", false) != false) {
+                MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+                ObjectName objectName = new ObjectName("org.teatrove.teaservlet:name=HttpContext");
+                if (mBeanServer.isRegistered(objectName) != false) {
+                    mLog.debug("MBean already registered for HttpContext");
+                }
+                else {
+                    int cacheSize = properties.getInt("management.httpcontext.readUrlCacheSize", 500);
+                    mBeanServer.registerMBean((HttpContextManagementMBean)HttpContextManagement.create(cacheSize), 
+                                              objectName);
+                }
+            }
+            
+            // compile templates
+            compileTemplates();
         }
         catch (Exception e) {
-                throw (ServletException) new ServletException(e).initCause(e);
+            throw new ServletException(e);
         }
     }
 
@@ -225,7 +270,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
                 // Initialize the JDK 1.4+ exception chain,
                 //   otherwise ServletException for Servlet 2.3 swallows the cause
                 //noinspection ThrowableInstanceNeverThrown
-                throw (ServletException) new ServletException(e).initCause(e);
+                throw (ServletException) new ServletException(e);
             }
 
             return new RequestAndResponse(appRequest, appResponse);
@@ -270,6 +315,8 @@ public class TeaServletEngineImpl implements TeaServletEngine {
                 getServletContext(),
                 getLog(),
                 true,
+                mProperties.getBoolean("management.httpcontext", false),
+                mProperties.getInt("management.httpcontext.readUrlCacheSize", 500),
                 mProperties.getBoolean("profiling.enabled", true));
 
         // Create a new template source using the newly loaded context
@@ -438,14 +485,14 @@ public class TeaServletEngineImpl implements TeaServletEngine {
             //   otherwise ServletException for Servlet 2.3 swallows the cause
             //noinspection ThrowableInstanceNeverThrown
             throw (ServletException) new ServletException("Template at \"" + uri
-                                       + "\" is invalid", e).initCause(e);
+                                       + "\" is invalid", e);
         }
         catch (LinkageError e) {
             // Initialize the JDK 1.4+ exception chain,
             //   otherwise ServletException for Servlet 2.3 swallows the cause
             //noinspection ThrowableInstanceNeverThrown
             throw (ServletException) new ServletException("Template at \"" + uri
-                                       + "\" is invalid", e).initCause(e);
+                                       + "\" is invalid", e);
         }
         return template;
     }
@@ -464,7 +511,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
                                  template.getTemplateSource().getContextSource());
     }
 
-    private HttpContext createHttpContext(ApplicationRequest req,
+    public HttpContext createHttpContext(ApplicationRequest req,
                                           ApplicationResponse resp,
                                           ContextSource cs)
         throws Exception {

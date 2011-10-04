@@ -29,21 +29,21 @@ import java.text.MessageFormat;
  */
 class MessageFormatter {
     // Maps Classes to MessageFormatters.
-    private static Map cMessageFormatters;
+    private static Map<Class<?>, MessageFormatter> cMessageFormatters;
 
     static {
         try {
-            cMessageFormatters = new WeakHashMap(7);
+            cMessageFormatters = new WeakHashMap<Class<?>, MessageFormatter>(7);
         }
         catch (LinkageError e) {
-            cMessageFormatters = new HashMap(7);
+            cMessageFormatters = new HashMap<Class<?>, MessageFormatter>(7);
         }
         catch (Exception e) {
             // Microsoft VM sometimes throws an undeclared
             // ClassNotFoundException instead of doing the right thing and
             // throwing some form of a LinkageError if the class couldn't
             // be found.
-            cMessageFormatters = new HashMap(7);
+            cMessageFormatters = new HashMap<Class<?>, MessageFormatter>(7);
         }
 
     }
@@ -54,9 +54,8 @@ class MessageFormatter {
         return lookup(user.getClass());
     }
 
-    private static MessageFormatter lookup(Class clazz) {
-        MessageFormatter formatter =
-            (MessageFormatter)cMessageFormatters.get(clazz);
+    private static MessageFormatter lookup(Class<?> clazz) {
+        MessageFormatter formatter = cMessageFormatters.get(clazz);
         if (formatter == null) {
             String className = clazz.getName();
             String resourcesName;
@@ -135,7 +134,7 @@ class MessageFormatter {
         }
 
         if (message != null) {
-            return MessageFormat.format(message, new String[] {arg1, arg2});
+            return MessageFormat.format(message, arg1, arg2);
         }
         else {
             return key + ": " + arg1 + ", " + arg2;
@@ -151,8 +150,7 @@ class MessageFormatter {
         }
 
         if (message != null) {
-            return MessageFormat.format(message,
-                                        new String[] {arg1, arg2, arg3});
+            return MessageFormat.format(message, arg1, arg2, arg3);
         }
         else {
             return key + ": " + arg1 + ", " + arg2 + ", " + arg3;

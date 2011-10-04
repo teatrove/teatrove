@@ -19,7 +19,7 @@ package org.teatrove.trove.util;
 /**
  * A zlib deflater interface that matches {@link java.util.zip.Deflater},
  * except additional flush operations are supported. This class requires native
- * code support and looks for a library named "com_go_trove_util_Deflater".
+ * code support and looks for a library named "org.teatrove_trove_util_Deflater".
  *
  * @author Brian S O'Neill
  * @version
@@ -42,7 +42,7 @@ public class Deflater {
         FINISH = 4;
 
     static {
-        System.loadLibrary("com_go_trove_util_Deflater");
+        System.loadLibrary("org.teatrove_trove_util_Deflater");
         initIDs();
     }
 

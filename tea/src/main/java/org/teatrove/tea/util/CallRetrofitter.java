@@ -18,6 +18,7 @@ package org.teatrove.tea.util;
 
 import java.io.*;
 import java.util.*;
+
 import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.*;
 import org.teatrove.tea.runtime.*;
@@ -49,10 +50,10 @@ public class CallRetrofitter {
             return;
         }
 
-        Class context = null;
+        Class<?> context = null;
         String encoding = null;
         File rootDir = null;
-        Collection templates = new ArrayList(args.length);
+        Collection<String> templates = new ArrayList<String>(args.length);
 
         try {
             boolean parsingOptions = true;
@@ -86,7 +87,7 @@ public class CallRetrofitter {
                     templates.add(arg);
                     continue;
                 }
-                
+
                 usage();
                 return;
             }
@@ -110,14 +111,14 @@ public class CallRetrofitter {
         do {
             FileCompiler compiler =
                 new FileCompiler(rootDir, null, null, null, encoding);
-            
+
             compiler.setRuntimeContext(context);
             compiler.setForceCompile(true);
             compiler.setCodeGenerationEnabled(false);
-            
+
             Retrofitter retrofitter = new Retrofitter(compiler, encoding);
             compiler.addErrorListener(retrofitter);
-            
+
             String[] names;
             if (templates.size() == 0) {
                 names = compiler.compileAll(true);
@@ -127,18 +128,18 @@ public class CallRetrofitter {
                     (String[])templates.toArray(new String[templates.size()]);
                 names = compiler.compile(names);
             }
-            
+
             retrofitter.applyChanges();
-            
+
             changeCount = retrofitter.getChangeCount();
             errorCount = compiler.getErrorCount() - changeCount;
-            
+
             String msg = String.valueOf(errorCount) + " error";
             if (errorCount != 1) {
                 msg += 's';
             }
             System.out.println(msg);
-            
+
             totalChangeCount += changeCount;
             System.out.println("Total changes made: " + totalChangeCount);
         } while (changeCount > 0);
@@ -166,50 +167,52 @@ public class CallRetrofitter {
         private String mEncoding;
 
         // Maps source files to lists of ErrorEvents.
-        private Map mChanges;
+        private Map<File, List<ErrorEvent>> mChanges;
 
         private int mChangeCount;
-        
+
         private Retrofitter(Compiler c, String encoding) {
             mCompiler = c;
             mEncoding = encoding;
-            mChanges = new TreeMap();
+            mChanges = new TreeMap<File, List<ErrorEvent>>();
         }
-        
+
         public void compileError(ErrorEvent e) {
             if ("Can't find function".equalsIgnoreCase(e.getErrorMessage())) {
                 File sourceFile = ((FileCompiler.Unit)e.getCompilationUnit())
                     .getSourceFile();
-                List errorEvents = (List)mChanges.get(sourceFile);
+                List<ErrorEvent> errorEvents = mChanges.get(sourceFile);
                 if (errorEvents == null) {
-                    errorEvents = new ArrayList();
+                    errorEvents = new ArrayList<ErrorEvent>();
                     mChanges.put(sourceFile, errorEvents);
                 }
                 errorEvents.add(e);
             }
         }
-        
+
         public int getChangeCount() {
             return mChangeCount;
         }
-        
+
         public void applyChanges() throws IOException {
-            Iterator it = mChanges.entrySet().iterator();
+            Iterator<Map.Entry<File, List<ErrorEvent>>> it =
+                mChanges.entrySet().iterator();
+
             while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry)it.next();
-                applyChanges((File)entry.getKey(), (List)entry.getValue());
+                Map.Entry<File, List<ErrorEvent>> entry = it.next();
+                applyChanges(entry.getKey(), entry.getValue());
             }
             mChanges = null;
         }
 
-        private void applyChanges(File sourceFile, List errorEvents)
+        private void applyChanges(File sourceFile, List<ErrorEvent> errorEvents)
             throws IOException
         {
             RandomAccessFile raf = new RandomAccessFile(sourceFile, "r");
 
-            Map replacements = new HashMap();
+            Map<String, String> replacements = new HashMap<String, String>();
 
-            Iterator it = errorEvents.iterator();
+            Iterator<ErrorEvent> it = errorEvents.iterator();
             while (it.hasNext()) {
                 ErrorEvent event = (ErrorEvent)it.next();
                 SourceInfo info = event.getSourceInfo();

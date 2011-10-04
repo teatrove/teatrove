@@ -16,6 +16,7 @@
 
 package org.teatrove.tea.compiler;
 
+import java.beans.IntrospectionException;
 import java.lang.reflect.Method;
 
 /**
@@ -30,7 +31,7 @@ public class MethodMatcher {
      * The int returned indicates the number of candidates in the array. Zero
      * is returned if there is no possible match.
      */
-    public static int match(Method[] methods, String name, Type[] params) {
+    public static int match(Method[] methods, String name, Type... params) {
         int paramCount = params.length;
         int matchCount = methods.length;
         Method m;
@@ -38,45 +39,39 @@ public class MethodMatcher {
         int[] costs = new int[matchCount];
 
         // Filter the available methods down to a smaller set, tossing
-        // out candidates that could not possibly match because the name 
+        // out candidates that could not possibly match because the name
         // differs, and the number of parameters differ. Also eliminate
         // ones in which the parameter types are not compatible at all
         // because no known conversion could be applied.
-        
+
         int lowestTotalCost = Integer.MAX_VALUE;
         int length = matchCount;
         matchCount = 0;
         for (int i=0; i < length; i++) {
             m = methods[i];
-            
-            // ignore bridge methods
-            if (m.isBridge()) { continue; }
-            
-            // check if match
             if (name == null || m.getName().equals(name)) {
-                Class[] methodParams = m.getParameterTypes();
-                java.lang.reflect.Type[] methodTypes = null;
-                try { methodTypes = m.getGenericParameterTypes(); }
-                catch (Throwable re) {
-                    throw new RuntimeException(re);
-                }
-
-                if (methodParams.length == paramCount) {
-
+                Class<?>[] methodParams = m.getParameterTypes();
+                
+                int cnt = methodParams.length;
+                if ((cnt == paramCount) || 
+                    (m.isVarArgs() && paramCount >= cnt - 1)) {
+                    
+                    int j = 0;
                     int total = 0;
-                    int j;
-                    for (j=0; j<paramCount; j++) {
-                        int cost = new Type(methodParams[j], methodTypes[j])
-                            .convertableFrom(params[j]);
-                        if (cost < 0) {
-                            break;
-                        }
-                        else {
-                            total += cost;
-                        }
+                    for (; j < paramCount; j++) {
+                        Type methodParam = getMethodParam(m, j, params[j]);
+                        int cost = methodParam.convertableFrom(params[j]);
+                        
+                        if (cost < 0) { break; }
+                        else { total += cost; }
                     }
 
                     if (j == paramCount) {
+                        // discount non-use of var args
+                        if (m.isVarArgs() && j < methodParams.length) {
+                            total++;
+                        }
+                        
                         costs[matchCount] = total;
                         methods[matchCount++] = m;
                         if (total < lowestTotalCost) {
@@ -108,23 +103,36 @@ public class MethodMatcher {
         // Filter further by matching parameters with the shortest distance
         // in the hierarchy.
 
+        int ambiguous = 0;
         for (int j=0; j<paramCount; j++) {
-            Class lastMatch = null;
+            Class<?> lastMatch = null;
             Method bestFit = null;
-
+            
             length = matchCount;
             matchCount = 0;
+            int bestFits = 0;
             for (int i=0; i < length; i++) {
                 m = methods[i];
+                
                 if (bestFit == null) {
                     bestFit = m;
                 }
-                Class methodParam = m.getParameterTypes()[j];
-                java.lang.reflect.Type methodType =
-                    m.getGenericParameterTypes()[j];
+                
+                Type methodType = getMethodParam(m, j, params[j]);
+                Class<?> methodParam = methodType.getNaturalClass();
+                
+                // TODO: match against generics?
+                //java.lang.reflect.Type methodType = methodType.getGeneric();
 
-                Class param = params[j].getNaturalClass();
+                Class<?> param = params[j].getNaturalClass();
                 if (methodParam.isAssignableFrom(param)) {
+                    if (lastMatch != null) {
+                        if (lastMatch.equals(methodParam)) {
+                            bestFits++;
+                        }
+                        else { bestFits = 0; }
+                    }
+                        
                     if (lastMatch == null ||
                         lastMatch.isAssignableFrom(methodParam)) {
                         
@@ -133,13 +141,52 @@ public class MethodMatcher {
                     }
                 }
             }
+            
+            if (bestFits > 0) {
+                ambiguous++;
+            }
 
             methods[matchCount++] = bestFit;
         }
 
+        if (ambiguous >= paramCount) {
+            return -1; // ambiguous cases
+        }
+        
         return matchCount;
     }
 
+    public static Type getMethodParam(Method method, int index, Type type) {
+        Type result = null;
+        Class<?>[] methodParams = method.getParameterTypes();
+        java.lang.reflect.Type[] methodTypes = method.getGenericParameterTypes();
+        
+        if (method.isVarArgs() && index >= methodParams.length - 1) {
+            int idx = methodParams.length - 1;
+            Type varArg = new Type(methodParams[idx], methodTypes[idx]);
+            if (index == methodParams.length - 1) {
+                if (varArg.convertableFrom(type) >= 0) {
+                    result = varArg;
+                }
+            }
+            
+            if (result == null) {
+                try { result = varArg.getArrayElementType(); }
+                catch (IntrospectionException ie) {
+                    throw new RuntimeException(ie);
+                }
+            }
+            else {
+                
+            }
+        }
+        else if (index < methodParams.length) {
+            result = new Type(methodParams[index], methodTypes[index]);
+        }
+        
+        return result;
+    }
+    
     /**
      * Test program.
      */
@@ -227,7 +274,7 @@ public class MethodMatcher {
             // Should only produce the method that accepts B
             test("test8", new Type[] {new Type(C.class)});
         }
-        
+
         private void test(String name, Type[] params) {
             Method[] methods = this.getClass().getMethods();
             int count = MethodMatcher.match(methods, name, params);
@@ -296,7 +343,7 @@ public class MethodMatcher {
         private class A {}
         private class B extends A {}
         private class C extends B {}
-        
+
         public void test8(A a) {}
         public void test8(B b) {}
     }

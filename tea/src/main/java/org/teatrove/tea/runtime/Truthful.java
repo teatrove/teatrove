@@ -14,20 +14,13 @@
  *  limitations under the License.
  */
 
-package org.teatrove.tea.io;
-
-import java.io.OutputStream;
+package org.teatrove.tea.runtime;
 
 /**
- * DualOutput wraps two OutputStreams so they can be written to simultaneously.
- * This is handy for writing to a file and a class injector at the same time.
+ * 
+ * @author Nick Hagan
  *
- * @author Brian S O'Neill
- * @deprecated Moved to org.teatrove.trove.io package.
- * @see ClassInjector
  */
-public class DualOutput extends org.teatrove.trove.io.DualOutput {
-    public DualOutput(OutputStream out1, OutputStream out2) {
-        super(out1, out2);
-    }
-}        
+public interface Truthful {
+	boolean isTrue();
+}

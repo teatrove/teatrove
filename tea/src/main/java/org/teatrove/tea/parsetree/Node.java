@@ -26,6 +26,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @see NodeVisitor
  */
 public abstract class Node implements Cloneable, java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final String cPackage;
     private static final int cPackageLength;
 
@@ -41,7 +43,7 @@ public abstract class Node implements Cloneable, java.io.Serializable {
 
         cPackageLength = cPackage.length();
     }
-    
+
     private SourceInfo mInfo;
 
     protected Node(SourceInfo info) {
@@ -87,19 +89,19 @@ public abstract class Node implements Cloneable, java.io.Serializable {
             name = name.substring(cPackageLength);
         }
 
-        String identityCode = 
+        String identityCode =
             Integer.toHexString(System.identityHashCode(this));
 
         if (mInfo == null) {
             return name + '@' + identityCode;
         }
         else {
-            return 
-                name + 
-                '(' + 
+            return
+                name +
+                '(' +
                 mInfo.getLine() + ',' + ' ' +
                 mInfo.getStartPosition() + ',' + ' ' +
-                mInfo.getEndPosition() + 
+                mInfo.getEndPosition() +
                 ')' + '@' + identityCode;
         }
     }
