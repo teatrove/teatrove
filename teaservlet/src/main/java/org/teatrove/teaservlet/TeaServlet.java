@@ -488,7 +488,12 @@ public class TeaServlet extends HttpServlet {
     	}
         
         // return properties
-        return (factory == null ? null : factory.createProperties());
+        PropertyMap result = null;
+        if (factory != null) {
+        	result = factory.createProperties();
+        	System.out.println("properties: " + result);
+        }
+        return result;
     }
     
     @SuppressWarnings("unchecked")
