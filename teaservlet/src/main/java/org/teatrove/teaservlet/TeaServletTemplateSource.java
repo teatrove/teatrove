@@ -214,6 +214,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         }
     }
 
+    @Override
     public int getKnownTemplateCount() {
         int total = super.getKnownTemplateCount();
         for (int j = 0; j < mCustomTemplateSources.length; j++) {
@@ -222,6 +223,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         return total;
     }
 
+    @Override
     public String[] getKnownTemplateNames() {
         String[] allNames = new String[getKnownTemplateCount()];
         String[] names = super.getKnownTemplateNames();
@@ -243,21 +245,24 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         return allNames;
     }
 
+    @Override
     public TemplateCompilationResults compileTemplates(ClassInjector commonInjector,
-            boolean all, StatusListener listener)
+            boolean all, boolean recurse, StatusListener listener)
         throws Exception {
 
-        return compileTemplates(commonInjector, all, true, true, listener);
+        return compileTemplates(commonInjector, all, recurse, true, listener);
     }
 
+    @Override
     public TemplateCompilationResults compileTemplates(ClassInjector injector,
-            String[] selectedTemplates, StatusListener listener) 
+    		StatusListener listener, String[] selectedTemplates) 
         throws Exception {
 
         return compileTemplates(injector, false, false, true, selectedTemplates,
                                 listener);
     }
 
+    @Override
     public TemplateCompilationResults checkTemplates(ClassInjector injector,
             boolean all,
             String[] selectedTemplates)
@@ -478,10 +483,10 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         return mDefaultTemplateName;
     }
 
+    @Override
     protected TemplateErrorListener createErrorListener() {
         return new RemoteTemplateErrorRetriever();
     }
-
 
     private void preloadTemplates(TemplateSource ts)
             throws Throwable {
@@ -582,6 +587,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         }
     }
 
+    @Override
     public Map listTouchedTemplates() throws Exception {
         TemplateRepository tRepo = TemplateRepository.getInstance();
 
