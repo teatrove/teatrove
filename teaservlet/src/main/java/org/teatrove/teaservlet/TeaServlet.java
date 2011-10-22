@@ -459,7 +459,9 @@ public class TeaServlet extends HttpServlet {
             loadDefaults(mProperties, new HashSet<String>());
         }
         catch (Exception e) {
+        	e.printStackTrace();
             mLog.warn(e);
+            mLog.warn(e.getCause().fillInStackTrace());
         }
     }
     
@@ -470,17 +472,28 @@ public class TeaServlet extends HttpServlet {
         PropertyMapFactory factory = null;
         if (factoryProps != null && factoryProps.size() > 0
             && (className = factoryProps.getString("class")) != null) {
-        
+            System.out.println("Using property factory: " + className);
             // Load and use custom PropertyMapFactory.
             Class<?> factoryClass = Class.forName(className);
             java.lang.reflect.Constructor<?> ctor =
                 factoryClass.getConstructor(new Class[]{Map.class});
             factory = (PropertyMapFactory)
                 ctor.newInstance(new Object[]{factoryProps.subMap("init")});
-        }
+        } else if (factoryProps == null){
+        	System.out.println("factoryProps is null.");
+    	} else if (factoryProps.size() == 0) {
+    		System.out.println("factory props size is 0.");
+    	} else if (className == null) {
+    		System.out.println("className is null");
+    	}
         
         // return properties
-        return (factory == null ? null : factory.createProperties());
+        PropertyMap result = null;
+        if (factory != null) {
+        	result = factory.createProperties();
+        	System.out.println("properties: " + result);
+        }
+        return result;
     }
     
     @SuppressWarnings("unchecked")
@@ -504,6 +517,7 @@ public class TeaServlet extends HttpServlet {
 
         // Get file and perform substitution of env variables/system props
         String fileName = properties.getString("properties.file");
+        System.out.println("properties.file: " + fileName);
         if (fileName != null) {
             fileName = SubstitutionFactory.substitute(fileName, mSubstitutions);            
         }
@@ -526,8 +540,10 @@ public class TeaServlet extends HttpServlet {
         else {
             PropertyMap factoryProps = 
                 properties.subMap("properties.factory");
+            System.out.println("properties.factory: " + factoryProps);
             if (factoryProps != null && factoryProps.size() > 0) {
-                properties.putAll(loadProperties(factoryProps));
+            	PropertyMap map = loadProperties(factoryProps);
+                properties.putAll(map);
             }
         }
     }

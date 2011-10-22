@@ -311,23 +311,23 @@ public class AdminApplication implements AdminApp {
     public AppAdminLinks getAdminLinks() {
 
         AppAdminLinks links = new AppAdminLinks(mConfig.getName());
-        links.addAdminLink("Instrumentation","/system/console?page=instrumentation");
-        links.addAdminLink("Dashboard","/system/console?page=dashboard");
-        links.addAdminLink("Janitor","/system/console?page=janitor");
-        links.addAdminLink("Compile","/system/console?page=compile");
-        links.addAdminLink("Templates","/system/console?page=templates");
-        links.addAdminLink("Functions","/system/console?page=functions");
-        links.addAdminLink("Applications", "/system/console?page=applications");
-        links.addAdminLink("Logs","/system/console?page=logs");
-        links.addAdminLink("Servlet Engine", "/system/console?page=servlet_engine");
-        links.addAdminLink("Echo Request", "/system/console?page=echo_request");
+        //links.addAdminLink("Instrumentation","/system/console?page=instrumentation");
+        //links.addAdminLink("Dashboard","/system/console?page=dashboard");
+        //links.addAdminLink("Janitor","/system/console?page=janitor");
+        //links.addAdminLink("Compile","/system/console?page=compile");
+        //links.addAdminLink("Templates","/system/console?page=templates");
+        //links.addAdminLink("Functions","/system/console?page=functions");
+        //links.addAdminLink("Applications", "/system/console?page=applications");
+        //links.addAdminLink("Logs","/system/console?page=logs");
+        //links.addAdminLink("Servlet Engine", "/system/console?page=servlet_engine");
+        //links.addAdminLink("Echo Request", "/system/console?page=echo_request");
         
-        links.addAdminLink("Classic Templates","/system/teaservlet/AdminTemplates");
-        links.addAdminLink("Classic Functions","/system/teaservlet/AdminFunctions");
-        links.addAdminLink("Classic Applications",
+        links.addAdminLink("Templates","/system/teaservlet/AdminTemplates");
+        links.addAdminLink("Functions","/system/teaservlet/AdminFunctions");
+        links.addAdminLink("Applications",
                            "/system/teaservlet/AdminApplications");
-        links.addAdminLink("Classic Logs","/system/teaservlet/LogViewer");
-        links.addAdminLink("Classic Servlet Engine",
+        links.addAdminLink("Logs","/system/teaservlet/LogViewer");
+        links.addAdminLink("Servlet Engine",
                            "/system/teaservlet/AdminServletEngine");
         return links;
     }

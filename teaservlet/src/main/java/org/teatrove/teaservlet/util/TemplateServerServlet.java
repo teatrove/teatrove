@@ -43,7 +43,11 @@ public class TemplateServerServlet extends HttpServlet {
     
     public void init(ServletConfig conf) {
         mConfig = conf;
+        mConfig.getServletContext().log("Starting TemplateServerServlet.");
+        mConfig.getServletContext().log("\ttemplate.root: " + conf.getInitParameter("template.root"));
+        mConfig.getServletContext().log("\ttemplate.source: " + conf.getInitParameter("template.source"));
         mTemplateRoot = new File(conf.getInitParameter("template.root"));
+        System.out.println("");
         mTemplateSource = conf.getInitParameter("template.source");
         if (mTemplateSource == null) {
                 mConfig.getServletContext().log("template.source not defined.");
@@ -60,6 +64,7 @@ public class TemplateServerServlet extends HttpServlet {
             mFilterExt[i] = mFilterExt[i].trim().toLowerCase();
             conf.getServletContext().log("TemplateServer "+ conf.getServletName() +" including file ext: "+mFilterExt[i]);
         }
+        mConfig.getServletContext().log("TemplateServerServlet init complete.");
     }
     
     public void doPost(HttpServletRequest req,HttpServletResponse res) {
