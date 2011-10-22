@@ -13,6 +13,7 @@
         <module>teaservlet</module>
         <module>trove</module>
         <module>build-tools</module>
+        <module>examples</module>
     </modules>
 
     <packaging>pom</packaging>
