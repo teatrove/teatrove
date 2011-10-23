@@ -139,14 +139,14 @@ public class MethodMatcher {
                         bestFit = m;
                         lastMatch = methodParam;
                     }
+                    
+                    methods[matchCount++] = bestFit;
                 }
             }
             
             if (bestFits > 0) {
                 ambiguous++;
             }
-
-            methods[matchCount++] = bestFit;
         }
 
         if (ambiguous >= paramCount) {
