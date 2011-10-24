@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app version="2.5">
+    <display-name>Simple TeaTrove Application</display-name>
+
+    <servlet>
+        <servlet-name>TeaServlet</servlet-name>
+        <servlet-class>org.teatrove.teaservlet.TeaServlet</servlet-class>
+        <init-param>
+            <param-name>properties.file</param-name>
+            <param-value>/WEB-INF/teaservlet.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>TeaServlet</servlet-name>
+        <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+
+</web-app>
