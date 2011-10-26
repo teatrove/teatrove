@@ -1,11 +1,11 @@
-<% template DirectoryBrowserSample() 
+<% template index() 
 
 dir = getFiles()
 if (dir != null) {
     if (dir.length > 0) {%>
         <h2>Files in <%dir[0].parent%></h2>
             
-        <a href="DirectoryBrowserSample?path=<%replace(dir[0].parent,"\\","/")%>/..">
+        <a href="index?path=<%replace(dir[0].parent,"\\","/")%>/..">
         <font color="#800000">[-UP-]</a></font><br>   
         <%   foreach (file in dir) {
          nobackslashpath = replace(file.absolutePath,"\\","/")
@@ -13,7 +13,7 @@ if (dir != null) {
                 '<a href=\"file://'nobackslashpath'\"><font color=\"#000080\">'
                 file.name'</a></font><br>'   
             } else {
-                '<a href=\"DirectoryBrowserSample?path='nobackslashpath'\"><font color=\"#800000\">['
+                '<a href=\"index?path='nobackslashpath'\"><font color=\"#800000\">['
                 file.name']</a></font><br>'
             }
                 
@@ -24,5 +24,3 @@ if (dir != null) {
 } else {%>
     <h2>Not a Directory</h2>
 <%}%>
-
-

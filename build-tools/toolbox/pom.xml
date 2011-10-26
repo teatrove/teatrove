@@ -37,14 +37,6 @@
       <version>1.6.2</version>
     </dependency>
 
-    <dependency>
-      <groupId>sun.jdk</groupId>
-      <artifactId>tools</artifactId>
-      <version>${java.version}</version>
-      <scope>system</scope>
-      <systemPath>${java.home}/../lib/tools.jar</systemPath>
-    </dependency>
-
   </dependencies>
 
   <build>
@@ -96,13 +88,6 @@
                     <groupId>org.teatrove</groupId>
                     <artifactId>trove</artifactId>
                     <version>${trove.version}</version>
-                </dependency>
-                <dependency>
-                    <groupId>sun.jdk</groupId>
-                    <artifactId>tools</artifactId>
-                    <version>${java.version}</version>
-                    <scope>system</scope>
-                    <systemPath>${java.home}/../lib/tools.jar</systemPath>
                 </dependency>
             </dependencies>
         </plugin>

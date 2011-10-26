@@ -101,22 +101,41 @@ public class MethodMatcher {
         }
 
         // Filter further by matching parameters with the shortest distance
-        // in the hierarchy.
+        // in the hierarchy. This matches each parameter to each matching method
+        // to either find the best possible match where the method parameter is
+        // the shortest. If multiple matches exist, the parameter is considered
+        // ambiguous. If all parameters are ambiguous, then this will return -1
+        // as a failiure. If multiple methods match for different parmaters,
+        // then the result is also considered ambiguous and -1 returned. For
+        // example, the methods:
+        //     void doX(String a, Object b)
+        //     void doX(Object a, String b)
+        // with the method: 
+        //     doX("string1", "string2")
+        // will best match the first method as String is closer than object but
+        // will best match the second method as again String is closer. Thus,
+        // the result is ambiguous.
 
-        int ambiguous = 0;
+        // maintain the best matching method per parameter
+        Method[] paramResults = new Method[paramCount];
+        
+        // search each parameter separately to find best matching method
         for (int j=0; j<paramCount; j++) {
             Class<?> lastMatch = null;
             Method bestFit = null;
             
             length = matchCount;
-            matchCount = 0;
             int bestFits = 0;
+            
+            // search each matching method for the best match. If we have not
+            // yet marked a best fit, then we mark the first method. Otherwise,
+            // if the next method is closer (ie: the last match is assignable)
+            // then we update the best fit. If the last match ever matches
+            // the current match, then it is considered ambiguous and the best
+            // fit is reset.
+            
             for (int i=0; i < length; i++) {
                 m = methods[i];
-                
-                if (bestFit == null) {
-                    bestFit = m;
-                }
                 
                 Type methodType = getMethodParam(m, j, params[j]);
                 Class<?> methodParam = methodType.getNaturalClass();
@@ -126,13 +145,20 @@ public class MethodMatcher {
 
                 Class<?> param = params[j].getNaturalClass();
                 if (methodParam.isAssignableFrom(param)) {
+                	
+                	// check for ambiguity by determining if multiple methods
+                	// have same type
+                	
                     if (lastMatch != null) {
                         if (lastMatch.equals(methodParam)) {
                             bestFits++;
                         }
                         else { bestFits = 0; }
                     }
-                        
+
+                    // if first time through or last match is assignable (ie:
+                    // farther away), then update best fit
+                    
                     if (lastMatch == null ||
                         lastMatch.isAssignableFrom(methodParam)) {
                         
@@ -141,19 +167,42 @@ public class MethodMatcher {
                     }
                 }
             }
+
+            // set best fitting method if single match...otherwise, leave null
+            // to denote ambiguous result
             
-            if (bestFits > 0) {
-                ambiguous++;
+            if (bestFits == 0) {
+            	paramResults[j] = bestFit;
             }
-
-            methods[matchCount++] = bestFit;
-        }
-
-        if (ambiguous >= paramCount) {
-            return -1; // ambiguous cases
         }
         
-        return matchCount;
+        // check if multiple matching methods (ambiguous) or if all params are
+        // ambiguous
+        
+        Method last = null;
+        for (int i = 0; i < paramCount; i++) {
+        	// update last match if not yet determined
+        	if (last == null) {
+        		last = paramResults[i];
+        	}
+        	
+    		// check if non-match (ie: multiple matching methods), and return
+        	// ambiguous (-1)
+        	else if (!last.equals(paramResults[i])) {
+        		return -1;
+        	}
+        }
+        
+        // check if all ambiguous..no matches
+        if (last == null) {
+        	return -1;
+        }
+        
+        // ensure first result is set to match
+        methods[0] = last;
+        
+        // return single result
+        return 1;
     }
 
     public static Type getMethodParam(Method method, int index, Type type) {

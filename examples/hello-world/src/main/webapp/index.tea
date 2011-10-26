@@ -1,0 +1,19 @@
+<% template index(String name)
+
+// set a default name if one was not provided
+name = name ?: 'World'
+
+// get the greeting for the given user
+// this uses the HelloWorldApplication and HelloWorldContext
+greeting = getGreeting(name)
+
+%>
+
+<html>
+<head>
+	<title><% greeting %></title>
+</head>
+<body>
+	<h1><% greeting %></h1>
+</body>
+</html>

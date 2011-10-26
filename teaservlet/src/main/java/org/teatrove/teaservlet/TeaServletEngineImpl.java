@@ -532,6 +532,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
     private TeaServletTemplateSource createTemplateSource(
                                          ContextSource contextSource) {
         return TeaServletTemplateSource.createTemplateSource(
+            getServletContext(),
             (TeaServletContextSource) contextSource,
             getProperties().subMap("template"),
             getLog());
