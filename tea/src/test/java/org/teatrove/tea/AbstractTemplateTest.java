@@ -6,8 +6,8 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.teatrove.tea.compiler.ErrorEvent;
 import org.teatrove.tea.compiler.ErrorListener;
@@ -25,19 +25,20 @@ public abstract class AbstractTemplateTest {
     protected static final String PKG = "org.teatrove.tea.templates";
 
     protected ClassInjector injector;
-    protected List<ContextSource> contexts;
+    protected Map<String, ContextSource> contexts;
     protected Object context;
     protected ByteArrayOutputStream output;
     protected int counter;
 
     public AbstractTemplateTest() {
         output = new ByteArrayOutputStream(1024);
-        contexts = new ArrayList<ContextSource>();
-        addContext(new TestCompiler.Context(new PrintStream(output)));
+        contexts = new HashMap<String, ContextSource>();
+        addContext("DefaultApplication",
+        		   new TestCompiler.Context(new PrintStream(output)));
     }
 
-    public void addContext(final Object context) {
-        contexts.add(new ContextSource() {
+    public void addContext(final String name, final Object context) {
+        contexts.put(name.concat("$"), new ContextSource() {
 
             @Override
             public Class<?> getContextType() throws Exception {
@@ -68,7 +69,8 @@ public abstract class AbstractTemplateTest {
         source.init
         (
             Thread.currentThread().getContextClassLoader(),
-            contexts.toArray(new ContextSource[contexts.size()]),
+            contexts.values().toArray(new ContextSource[contexts.size()]),
+            contexts.keySet().toArray(new String[contexts.size()]),
             false
         );
 

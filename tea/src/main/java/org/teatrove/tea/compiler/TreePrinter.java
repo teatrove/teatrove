@@ -64,6 +64,7 @@ import org.teatrove.tea.parsetree.SubstitutionStatement;
 import org.teatrove.tea.parsetree.Template;
 import org.teatrove.tea.parsetree.TemplateCallExpression;
 import org.teatrove.tea.parsetree.TernaryExpression;
+import org.teatrove.tea.parsetree.TypeExpression;
 import org.teatrove.tea.parsetree.TypeName;
 import org.teatrove.tea.parsetree.Variable;
 import org.teatrove.tea.parsetree.VariableRef;
@@ -597,6 +598,11 @@ public class TreePrinter extends CodeGenerator {
         
         public Object visit(NoOpExpression node) {
             return null;
+        }
+        
+        public Object visit(TypeExpression node) {
+        	node.getTypeName().accept(this);
+        	return null;
         }
         
         public Object visit(SpreadExpression node) {

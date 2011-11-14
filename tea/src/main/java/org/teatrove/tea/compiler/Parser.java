@@ -1420,50 +1420,14 @@ public class Parser {
     private FunctionCallExpression parseFunctionCallExpression(Token token)
         throws IOException {
 
-        SourceInfo info = token.getSourceInfo();
+    	Token next = peek();
+    	if (next.getID() != Token.LPAREN) {
+    		return null;
+    	}
+    	
+    	SourceInfo info = token.getSourceInfo();
+        Name target = new Name(info, token.getStringValue());
 
-        // Search for pattern <ident> {<dot> <ident>} <lparen>
-        Vector<Token> lookahead = new Vector<Token>();
-        StringBuffer name = new StringBuffer(token.getStringValue());
-        Name target = null;
-
-        while (true) {
-            token = read();
-            lookahead.addElement(token);
-
-            if (token.getID() == Token.DOT) {
-                name.append('.');
-                info = info.setEndPosition(token.getSourceInfo());
-            }
-            else if (token.getID() == Token.LPAREN) {
-                target = new Name(info, name.toString());
-                unread(token);
-                break;
-            }
-            else {
-                break;
-            }
-
-            token = read();
-            lookahead.addElement(token);
-
-            if (token.getID() == Token.IDENT) {
-                name.append(token.getStringValue());
-                info = info.setEndPosition(token.getSourceInfo());
-            }
-            else {
-                break;
-            }
-        }
-
-        if (target == null) {
-            // Pattern not found, unread all lookahead tokens.
-            for (int i = lookahead.size() - 1; i >= 0; --i) {
-                unread((Token)lookahead.elementAt(i));
-            }
-            return null;
-        }
-        
         // parse remainder of call expression
         return parseCallExpression(FunctionCallExpression.class, 
                                    null, target, info);

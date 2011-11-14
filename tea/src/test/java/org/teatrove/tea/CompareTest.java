@@ -40,7 +40,7 @@ public class CompareTest extends AbstractTemplateTest {
 
     @Before
     public void setup() {
-        addContext(new CompareContext());
+        addContext("CompareApplication", new CompareContext());
     }
 
     @Test

@@ -28,7 +28,6 @@ import java.lang.reflect.Method;
 public class FunctionCallExpression extends CallExpression {
     private static final long serialVersionUID = 1L;
 
-    private Object mCaller;
     private Method mCalledMethod;
 
     public FunctionCallExpression(SourceInfo info, 

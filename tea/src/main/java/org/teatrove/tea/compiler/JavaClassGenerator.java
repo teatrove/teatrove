@@ -21,6 +21,7 @@ import java.beans.IntrospectionException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
@@ -79,6 +80,7 @@ import org.teatrove.tea.parsetree.Template;
 import org.teatrove.tea.parsetree.TemplateCallExpression;
 import org.teatrove.tea.parsetree.TernaryExpression;
 import org.teatrove.tea.parsetree.TreeWalker;
+import org.teatrove.tea.parsetree.TypeExpression;
 import org.teatrove.tea.parsetree.TypeName;
 import org.teatrove.tea.parsetree.Variable;
 import org.teatrove.tea.parsetree.VariableRef;
@@ -1504,8 +1506,20 @@ public class JavaClassGenerator extends CodeGenerator {
             final Expression expr = node.getExpression();
             generate(expr);
             
-            // generate null-safe check if necessary
+            // generate line number
             setLineNumber(node.getSourceInfo());
+            
+            // generate static field lookup if provided
+            Field field = node.getReadProperty();
+            if (field != null) {
+            	mBuilder.loadStaticField(field.getDeclaringClass().getName(), 
+            			                 field.getName(), 
+            			                 makeDesc(node.getType()));
+            	
+            	return null;
+            }
+            
+            // generate null-safe check if necessary
             generateNullSafe(node, expr, new NullSafeCallback() {
                 public Type execute() {
                     Method readMethod = node.getReadMethod();
@@ -1942,6 +1956,12 @@ public class JavaClassGenerator extends CodeGenerator {
         
         public Object visit(NoOpExpression node) {
             return null;
+        }
+        
+        public Object visit(TypeExpression node) {
+        	// nothing to do....lookup and function call expressions
+        	// will handle by performing static invocations
+        	return null;
         }
         
         public Object visit(SpreadExpression node) {
