@@ -13,7 +13,7 @@ public class SpreadTest extends AbstractTemplateTest {
 
     @Before
     public void setup() {
-        addContext(new SpreadContext());
+        addContext("SpreadApplication", new SpreadContext());
     }
 
     @Test

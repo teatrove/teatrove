@@ -16,9 +16,9 @@
 
 package org.teatrove.tea.parsetree;
 
-import org.teatrove.tea.compiler.Type;
-
 import java.util.Iterator;
+
+import org.teatrove.tea.compiler.Type;
 
 /**
  * TreeMutator is similar to {@link TreeWalker TreeWalker} in that it
@@ -321,6 +321,11 @@ public abstract class TreeMutator implements NodeVisitor {
         node.setExpression((Expression) node.getExpression().accept(this));
         node.setOperation((Expression) node.getOperation().accept(this));
         
+        return node;
+    }
+    
+    public Object visit(TypeExpression node) {
+        node.setTypeName((TypeName) node.getTypeName().accept(this));
         return node;
     }
     

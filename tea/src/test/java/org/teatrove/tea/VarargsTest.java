@@ -11,7 +11,7 @@ public class VarargsTest extends AbstractTemplateTest {
 
     @Before
     public void setup() {
-        addContext(new VarargsContext());
+        addContext("VarargsApplication", new VarargsContext());
     }
 
     @Test

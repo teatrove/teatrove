@@ -623,7 +623,8 @@ public class Type implements java.io.Serializable {
                 return false;
             }
 
-            if (mNaturalClass == t.mNaturalClass &&
+            if (mNaturalClass.equals(t.mNaturalClass) &&
+                mGenericType.equals(t.mGenericType) &&
                 isNonNull() == t.isNonNull()) {
 
                 if (!mCheckedForArrayLookup && !t.mCheckedForArrayLookup) {

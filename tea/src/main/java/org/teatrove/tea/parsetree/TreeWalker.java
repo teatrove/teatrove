@@ -314,6 +314,11 @@ public abstract class TreeWalker implements NodeVisitor {
         return null;
     }
     
+    public Object visit(TypeExpression node) {
+        node.getTypeName().accept(this);
+        return null;
+    }
+    
     public Object visit(SpreadExpression node) {
         node.getExpression().accept(this);
         node.getOperation().accept(this);

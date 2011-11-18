@@ -65,6 +65,10 @@ public abstract class CallExpression extends Expression implements NullSafe {
         return mTarget;
     }
     
+    public void setTarget(Name target) {
+    	mTarget = target;
+    }
+    
     public Expression getExpression() {
         return mExpression;
     }
