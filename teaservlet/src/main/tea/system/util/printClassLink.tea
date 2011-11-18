@@ -1,0 +1,46 @@
+<% template printClassLink (Class class, Boolean showLink)
+
+    info = getHandyClassInfo(class);
+
+    link = '';
+    pathPrefix = call system.util.getPathPrefix();
+
+    name = info.fullName;
+    if ( name == "org.teatrove.tea.runtime.Substitution" ) {
+        name = '<b>...</b>';
+    } else if ( startsWith(name, "java.lang.") ) {
+        name = substring(name, "java.lang.".length);
+    } else if ( startsWith(name, "java.util.") ) {
+        name = substring(name, "java.util.".length);
+    }
+    name = replace(name, "$", ".");
+
+    // these are not classes or are classes we don't want
+    // to display properties of
+    unlinked = ##(
+                  "void", "",
+                  "char", "",
+                  "int", "",
+                  "double", "",
+                  "byte", "",
+                  "long", "",
+                  "float", "",
+                  "boolean", "",
+                  "org.teatrove.tea.runtime.Substitution", ""
+                  );
+
+    if ( ( not showLink ) or ( unlinked[class.name] != null ) or ( unlinked[replace(name, '[]', '')] != null ) ) {
+        link = link & name
+    } else {
+        //link = link & '<a href="' & pathPrefix & 'system/teaservlet/Admin?subTemplate=system.teaservlet.BeanProperties&bean=' & class.name & '">';
+        //link = link & '<a href="' & pathPrefix & 'system/teaservlet/new/format/getBeanDetails?bean=' & class.name & '">';
+        link = link & '<a href="' & pathPrefix & 'system/format/getBeanDetails?bean=' & class.name & '">';
+        //link = link & '<a href="#">';
+        link = link & name;
+        link = link & '</a>';
+    }
+
+    // return link string
+    link
+
+%>

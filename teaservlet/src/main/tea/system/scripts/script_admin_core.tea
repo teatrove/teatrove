@@ -1,0 +1,1133 @@
+<% template script_admin_core ()
+
+    setContentType("text/javascript;charset=utf-8");
+
+%>
+
+;(function($) {
+
+    var global = this;
+
+    /* model */
+    global.Admin = {
+        id: "Admin"
+        ,version: "0.1"
+    };
+
+    var templateInterval;
+
+    /* nav */
+    $('header a').live('click', function (evt) {
+        if ( $(this).attr('href') == '#' ) {
+            evt.preventDefault();
+        }
+    });
+
+    /* tree */
+    function expandTreeNode (elemId) {
+        if ( elemId ) {
+            var node = $('#'+elemId);
+            if ( node.is('.jstree-closed') ) {
+                node.removeClass('jstree-closed').addClass('jstree-open');
+            }
+        }
+    };
+    function collapseTreeNode (elemId) {
+        if ( elemId ) {
+            var node = $('#'+elemId);
+            if ( node.is('.jstree-open') ) {
+                node.removeClass('jstree-open').addClass('jstree-closed');
+            }
+        }
+    };
+    function toggleTreeNode (elemId) {
+        if ( elemId ) {
+            var node = $('#'+elemId);
+            if ( node.is('.jstree-open') ) {
+                collapseTreeNode(elemId);
+            } else if ( node.is('.jstree-closed') ) {
+                expandTreeNode(elemId);
+            }
+        }
+    };
+    function toggleTreeNodes () {
+        // toggle all
+        $('#tree-container li').each( function (i, val) {
+            var elemId = $(this).attr("id");
+            toggleTreeNode(elemId);
+        });
+    };
+    function toggleAnimation () {
+        // toggle animation
+        var anim = $("#toggleAnimation").attr("anim");
+        if ( anim != '0' ) {
+            $("#tree-container").jstree( { "core" : { "animation" : 100 } } );
+            $("#toggleAnimation").attr("anim", 100);
+        } else {
+            $("#tree-container").jstree( { "core" : { "animation" : 0 } } );
+            $("#toggleAnimation").attr("anim", 0);
+        }
+    };
+    function expandTreeNodes () {
+        // expand all
+        $('#tree-container li').each( function (i, val) {
+            var elemId = $(this).attr("id");
+            expandTreeNode(elemId);
+        });
+    };
+    function collapseTreeNodes () {
+        // collapse all
+        $('#tree-container li').each( function (i, val) {
+            var elemId = $(this).attr("id");
+            collapseTreeNode(elemId);
+        });
+    };
+    function filterTreeNodes () {
+        var regex;
+        try {
+            var pattern = $('#tree-search-text').val();
+            if ( pattern == '' ) {
+                return true;
+            }
+            regex = new RegExp(pattern, 'ig');
+
+            $('#tree-search-text').css('border-color', 'green');
+            $("#tree-container ul li").each( function(i, val) {
+                var text = $(this).text();
+                if ( regex.test(text) ) {
+                    $(this).find('a').addClass('jstree-search');
+                    $(this).show();
+                    var parentNode = $(this).parent('ul').parent('li');
+                    if ( parentNode ) {
+                        var elemId = parentNode.attr('id');
+                        expandTreeNode(elemId);
+                    }
+                } else {
+                    $(this).find('a').removeClass('jstree-search');
+                    if ( $(this).attr('rel') != 'parameter' ) {
+                        $(this).hide();
+                    }
+                }
+            });
+        } catch(e) {
+            $('#tree-search-text').css('border-color', 'red');
+            $("#tree-container ul li a.jstree-search").removeClass('jstree-search');
+            $("#tree-container ul li").show();
+        }
+    };
+    function initTree () {
+        $("#tree-container")
+            .bind("loaded.jstree", function (event, data) {
+                var expandFirst = $('#tree-container').attr('expandFirst');
+                if ( expandFirst && expandFirst == "true" ) {
+                    var elemId = $('#tree-container ul li').eq(0).attr('id');
+                    toggleTreeNode(elemId);
+                }
+            })
+            .jstree({
+                "core": { "animation" : 0 },
+                "plugins" : [
+                    "themes",
+                    "html_data",
+                    "ui",
+                    "types"],
+                "themes" : {
+	                "theme" : "default",
+	                "url" : "styles/style_jstree",
+	                "dots" : true,
+	                "icons" : true
+	            }
+        });
+        $('#tree-search-text').bind("change keyup", function(evt) {
+            var text = $(this).val();
+            //$("#tree-container").jstree("search", text);
+            if ( text != '' ) {
+                filterTreeNodes();
+            } else {
+                $("#tree-container ul li a.jstree-search").removeClass('jstree-search');
+                $("#tree-container ul li").show();
+            }
+        });
+        $('#toggleTree').click( function(evt) {
+            toggleTreeNodes();
+        });
+        $('#expandCollapseTree').click( function(evt) {
+            var buttonText = $(this).find('.ui-button-text').text();
+            if ( buttonText == 'Expand All' ) {
+                expandTreeNodes();
+                $(this).find('.ui-button-text').text('Collapse All');
+            } else if ( buttonText == 'Collapse All' ) {
+                collapseTreeNodes();
+                $(this).find('.ui-button-text').text('Expand All');
+            }
+        });
+        $('#showHideTypes').click( function(evt) {
+            var buttonText = $(this).find('.ui-button-text').text();
+            if ( buttonText == 'Hide Types' ) {
+                $('#tree-container li a span.italic').hide();
+                $(this).find('.ui-button-text').text('Show Types');
+            } else if ( buttonText == 'Show Types' ) {
+                $('#tree-container li a span.italic').show();
+                $(this).find('.ui-button-text').text('Hide Types');
+            }
+        });
+        var loadLeaf = true;
+        $('#tree-container li').click( function (evt) {
+            var text = $(this).find("a").eq(0).text();
+            var rel = $(this).attr('rel');
+            var isRoot = $(this).parents('li').length == 0;
+
+            // load details
+            var details = $(this).attr('details');
+            if ( details ) {
+                if ( loadLeaf ) {
+                    $('#details-container').load(details);
+                }
+            }
+            // must do this because evt.stopPropagation() breaks tree
+            if ( isRoot ) {
+                loadLeaf = true;
+            } else {
+                loadLeaf = false;
+            }
+        });
+        $('#tree-container li a').click( function (evt) {
+            evt.preventDefault();
+        });
+        $('#tree-container li').dblclick( function (evt) {
+            var rel = $(this).attr('rel');
+            if ( rel != 'template' ) {
+                var elemId = $(this).attr("id");
+                $("#tree-container").jstree("toggle_node", "#"+elemId);
+                evt.stopPropagation();
+            } else {
+                var href = $(this).children('a').eq(0).attr('href');
+                if ( href != '#' ) {
+                    window.open(href, '_blank');
+                }
+            }
+        });
+        $("#details-container a").live('click', function (evt) {
+            var href = $(this).attr('href');
+            if ( href && href != '#' ) {
+                $('#details-container').load(href);
+            }
+            evt.preventDefault();
+        });
+    };
+
+    /* logs */
+    function initLogs () {
+        getLogEvents();
+        setInterval(getLogEvents, 15000);
+
+        $('#showHideLogs').click( function(evt) {
+            var numLast = $('#logs-container ul').eq(0).attr('numLast');
+            var buttonText = $(this).find('.ui-button-text').text();
+            if ( buttonText == 'Show Last '+numLast ) {
+                $(this).find('.ui-button-text').text('Show All');
+            } else if ( buttonText == 'Show All' ) {
+                $(this).find('.ui-button-text').text('Show Last '+numLast);
+            }
+
+            filterLogEvents();
+        });
+        $('#logs-search-text').bind("change keyup", function(evt) {
+            filterLogEvents();
+        });
+    };
+    function filterLogEvents () {
+        var showLast = true;
+        var buttonText = $('#showHideLogs .ui-button-text').text();
+        if ( buttonText != 'Show All' ) {
+            showLast = false;
+        }
+
+        var regex;
+        try {
+            var pattern = $('#logs-search-text').val();
+            if ( pattern == '' ) {
+                return true;
+            }
+            regex = new RegExp(pattern, 'ig');
+
+            $('#logs-search-text').css('border-color', 'green');
+            $("#logs-container ul li").each( function(i, val) {
+                var text = $(this).text();
+                if ( regex.test(text) ) {
+                    $(this).addClass('regexMatch');
+                } else {
+                    $(this).removeClass('regexMatch');
+                }
+            });
+        } catch(e) {
+            $('#logs-search-text').css('border-color', 'red');
+        } finally {
+            if ( showLast ) {
+                var numLast = $('#logs-container ul').eq(0).attr('numLast');
+                if ( $('#logs-container li.regexMatch').length > 0 ) {
+                    $('#logs-container li').addClass('hide');
+
+                    $('#logs-container li.regexMatch')
+                        .slice(-1*parseInt(numLast))
+                        .removeClass('hide');
+
+                } else {
+                    $('#logs-container li').addClass('hide');
+
+                    $('#logs-container li')
+                        .slice(-1*parseInt(numLast))
+                        .removeClass('hide');
+                }
+            } else {
+                if ( $('#logs-container li.regexMatch').length > 0 ) {
+                    $('#logs-container li').addClass('hide');
+                    $('#logs-container li.regexMatch').removeClass('hide');
+                } else {
+                    $('#logs-container li').removeClass('hide');
+                }
+            }
+        }
+    };
+    function getLogEvents () {
+        var showLast = true;
+        var buttonText = $('#showHideLogs .ui-button-text').text();
+        if ( buttonText != 'Show All' ) {
+            showLast = false;
+        }
+
+        $('#loadingIndicator').show();
+        $.ajax({
+            url: "format/getLogEvents?showLast="+showLast,
+            success: function (data) {
+                $("#logs-container").html(data);
+            },
+            complete: function () {
+                filterLogEvents();
+                $('#loadingIndicator').hide();
+            }
+        });
+    };
+    function initJanitorOptions () {
+        $('#buttonset-view .ui-button').live('click', function (evt) {
+             var text = $(this).text();
+
+             if ( text == "Applications" ) {
+                $("#janitor-container-applications").show();
+                $("#janitor-container-templates").hide();
+             } else if ( text == "Templates" ) {
+                $("#janitor-container-templates").show();
+                $("#janitor-container-applications").hide();
+            }
+        });
+    };
+    function initCompileOptions () {
+        $("#switch-autocompile").iphoneSwitch(
+            "off",
+            function() {
+                $('#label-validate').hide();
+                $('#buttonset-validate').hide();
+                $('#label-compile').hide();
+                $('#buttonset-compile').hide();
+
+                $("#switch-autocompile").removeClass('state-off').addClass('state-on');
+                clearInterval(templateInterval);
+                templateInterval = setInterval(autocompileTemplates, 5000);
+            },
+            function() {
+                $('#label-validate').show();
+                $('#buttonset-validate').show();
+                $('#label-compile').show();
+                $('#buttonset-compile').show();
+
+                $("#switch-autocompile").removeClass('state-on').addClass('state-off');
+                clearInterval(templateInterval);
+                templateInterval = setInterval(getTemplateUpdates, 10000);
+			}
+		);
+        $("#buttonset-validate .ui-button").click( function (evt) {
+            $(".controls-wrapper .ui-button").button( "option", "disabled", true );
+            $('#loadingIndicator').show();
+
+            var isReady = true;
+            var url = 'remote/reload';
+
+            var buttonText = $(this).find('span').text();
+            if ( buttonText == 'Selected' ) {
+                url += '?testCompile=selected';
+                $("#reload-container .reloadableTemplates").each( function(i,val) {
+                    if ( $(this).is(":checked") ) {
+                        var reloadableTemplate = $(this).attr('name');
+                        if ( reloadableTemplate ) {
+                            url += '&selectedTemplates=' + reloadableTemplate;
+                        }
+                    }
+                });
+                isReady = true;
+            } else if ( buttonText == "Changes" ) {
+                url += '?testCompile=changes';
+            } else if ( buttonText == "All" ) {
+                url += '?testCompile=all';
+            }
+
+            if ( isReady ) {
+                $.ajax({
+                    url: url,
+                    success: function (data) {
+                        $("#reload-container").html(data);
+                    },
+                    complete: function () {
+                        $(".controls-wrapper .ui-button").removeClass('ui-state-active');
+                        $(".controls-wrapper .ui-button").button( "option", "disabled", false );
+                        $('#loadingIndicator').hide();
+                        SyntaxHighlighter.highlight();
+                    }
+                });
+            } else {
+                $("#reload-container").html('Feature is not ready yet.');
+                $('#loadingIndicator').hide();
+            }
+        });
+        $("#buttonset-compile .ui-button").click( function (evt) {
+            $(".controls-wrapper .ui-button").button( "option", "disabled", true );
+            $('#loadingIndicator').show();
+
+            var isReady = true;
+            var url = 'remote/reload';
+
+            var buttonText = $(this).find('span').text();
+            if ( buttonText == 'Selected' ) {
+                url += '?reloadTemplates=selected';
+                $("#reload-container .reloadableTemplates").each( function(i,val) {
+                    if ( $(this).is(":checked") ) {
+                        var reloadableTemplate = $(this).attr('name');
+                        if ( reloadableTemplate ) {
+                            url += '&selectedTemplates=' + reloadableTemplate;
+                        }
+                    }
+                });
+                isReady = true;
+            } else if ( buttonText == "Changes" ) {
+                url += '?reloadTemplates=changes';
+            } else if ( buttonText == "All" ) {
+                url += '?reloadTemplates=all';
+            } else if ( buttonText == "Cluster" ) {
+                url += '?reloadTemplates=changes&cluster=true';
+            }
+
+            if ( isReady ) {
+                $.ajax({
+                    url: url,
+                    success: function (data) {
+                        $("#reload-container").html(data);
+                    },
+                    complete: function () {
+                        $(".controls-wrapper .ui-button").removeClass('ui-state-active');
+                        $(".controls-wrapper .ui-button").button( "option", "disabled", false );
+                        $('#loadingIndicator').hide();
+                        SyntaxHighlighter.highlight();
+                    }
+                });
+            } else {
+                $("#reload-container").html('Feature is not ready yet.');
+                $('#loadingIndicator').hide();
+            }
+        });
+
+        $('.sml-w .reloadableTemplates').live('click', function(evt) {
+            // cookie test
+            if ( $.cookies.test() ) {
+                // browser is accepting cookies
+
+                var selectedTemplate = $(this).attr('name');
+
+                var previousTemplatesString = $.cookies.get('selectedTemplates');
+
+                if ( $(this).is(":checked") ) {
+                    var newTemplatesArray = new Array(selectedTemplate);
+                    if ( previousTemplatesString && previousTemplatesString.length ) {
+                        previousTemplatesArray = previousTemplatesString.split(",");
+                        newTemplatesArray = $.merge(newTemplatesArray, previousTemplatesArray);
+                    }
+                    var newTemplatesString = newTemplatesArray.join(",");
+                    $.cookies.set('selectedTemplates', newTemplatesString);
+
+                } else {
+                    if ( previousTemplatesString && previousTemplatesString.length ) {
+                        var previousTemplatesArray = previousTemplatesString.split(",");
+                        templateIndex = $.inArray(selectedTemplate, previousTemplatesArray);
+                        if ( templateIndex > -1 ) {
+                            var newTemplatesArray = previousTemplatesArray;
+                            newTemplatesArray.splice(templateIndex, 1);
+                            var newTemplatesString = newTemplatesArray.join(",");
+                            $.cookies.set('selectedTemplates', newTemplatesString);
+                        }
+                    }
+                }
+            }
+        });
+
+		$(".table-container a.methodName").live("click", function(evt) {
+            var url = 'format/getTemplateDetails?name=' + $(this).attr("template");
+			$.ajax({
+                url: url,
+                success: function (data) {
+                    $(data).dialog({
+						height: 400,
+						width: 600,
+						modal: true
+					});
+                },
+				complete : function (data) {
+					$('.ui-dialog table a').each( function(i, val) {
+						var linkText = $(this).text();
+						$(this).replaceWith(linkText);
+					});
+				}
+            });
+			evt.preventDefault();
+		});
+    };
+    function getTemplateUpdates () {
+        if ( $('#reload-container .sml-e').length == 0 ) {
+            $('#loadingIndicator').show();
+            $.ajax({
+                url: "remote/reload?findUpdates=true",
+                success: function (data) {
+                    var result = data;
+
+                    updateCompileHistory();
+
+                    $("#reload-container").html(result);
+
+                    // cookie test
+                    if ( $.cookies.test() ) {
+                        // browser is accepting cookies
+                        var selectedTemplatesString = $.cookies.get('selectedTemplates');
+                        if ( selectedTemplatesString && selectedTemplatesString.length ) {
+                            var selectedTemplatesArray = selectedTemplatesString.split(',');
+                            $(result).find('input').each( function(i,val) {
+                                var name = $(val).attr('name');
+                                var templateIndex = $.inArray(name, selectedTemplatesArray);
+                                if ( templateIndex > -1 ) {
+                                    var replaceName = name.replace(/\./g, '_');
+                                    $('#template_'+replaceName).attr('checked', 'checked');
+                                }
+                            });
+                        }
+                    }
+                },
+                complete: function () {
+                    $('#loadingIndicator').hide();
+                    SyntaxHighlighter.highlight();
+                    prettyLinks();
+                }
+            });
+        }
+    };
+    function autocompileTemplates () {
+        $('#loadingIndicator').show();
+        $.ajax({
+            url: "remote/reload?reloadTemplates=changes",
+            success: function (data) {
+                updateCompileHistory();
+                $("#reload-container").html(data);
+            },
+            complete: function () {
+                $('#loadingIndicator').hide();
+                SyntaxHighlighter.highlight();
+                prettyLinks();
+            }
+        });
+    };
+    function updateCompileHistory () {
+        if ( $('#reload-container .sml-c, #reload-container .sml-e').length != 0 ) {
+            var d = new Date();
+            var currentTime = d.getTime();
+
+            var compileHTML = '';
+            var errorHTML = '';
+            var previousError = '';
+            $('#reload-container .sml-cnt li').each( function (i,val1) {
+                var newCompile = $(val1);
+                $('#reload-container-history .sml-cnt li').each( function (j,val2) {
+                    var oldCompile = $(val2);
+                    if ( !$(oldCompile).is('.default') ) {
+                        var isCorrectOld = $(oldCompile).closest('.sml-s').is('.sml-c');
+                        var isCorrectNew = $(newCompile).closest('.sml-s').is('.sml-c');
+                        var isErrorOld = $(oldCompile).closest('.sml-s').is('.sml-e');
+                        var isErrorNew = $(newCompile).closest('.sml-s').is('.sml-e');
+
+                        if ( (isCorrectOld == isCorrectNew) || (isErrorOld == isErrorNew) ) {
+                            if ( $(newCompile).find('a').eq(0).text() == $(oldCompile).find('a').eq(0).text() ) {
+                                $(oldCompile).remove();
+                            }
+                        }
+                    }
+                });
+                if ( $(newCompile).closest('.sml-s').is('.sml-c') ) {
+                    compileHTML += '<li timestamp="' + currentTime + '">' + $(newCompile).find('a').parent().html() + '</li>';
+                } else if ( $(newCompile).closest('.sml-s').is('.sml-e') ) {
+                    if ( previousError != $(newCompile).find('a').text() ) {
+                        errorHTML += '<li timestamp="' + currentTime + '">' + $(newCompile).find('a').parent().html() + '</li>';
+                        previousError = $(newCompile).find('a').text();
+                    }
+                }
+            });
+            if ( compileHTML != '' ) {
+                if ( $('#reload-container-history .sml-c li.default').length > 0 ) {
+                    $('#reload-container-history .sml-c li.default').remove();
+                }
+                $('#reload-container-history .sml-c ul').prepend(compileHTML);
+            }
+            if ( errorHTML != '' ) {
+                if ( $('#reload-container-history .sml-e li.default').length > 0 ) {
+                    $('#reload-container-history .sml-e li.default').remove();
+                }
+                $('#reload-container-history .sml-e ul').prepend(errorHTML);
+            }
+
+            if ( !$('#reload-container-history').is(":visible") ) {
+                $('.table-container').hide();
+                $('#reload-container-history-label').show();
+                $('#reload-container-history').show();
+            }
+        }
+    };
+    function initInstrumentationOptions () {
+        $("#buttonset-compile .ui-button").live('click', function (evt) {
+            $(".controls-wrapper .ui-button").button( "option", "disabled", true );
+            $('#loadingIndicator').show();
+
+            var url = 'remote/reload';
+
+            var buttonText = $(this).find('span').text();
+            if ( buttonText == "Changes" ) {
+                url += '?reloadTemplates=changes';
+            } else if ( buttonText == "All" ) {
+                url += '?reloadTemplates=all';
+            } else if ( buttonText == "Cluster" ) {
+                url += '?reloadTemplates=changes&cluster=true';
+            }
+
+            $.ajax({
+                url: url,
+                success: function (data) {
+                    var title = "Compile: " + buttonText;
+
+                    var msg = 'No changes detected';
+                    var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-info.png';
+
+                    if ( $(data).closest('.sml-e').length > 0 ) {
+
+                        img = 'http://labs.espndb.s3.amazonaws.com/img/notification-incorrect.png';
+                        msg = 'Encountered errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
+
+                    } else if ( $(data).closest('.sml-c').length > 0 ) {
+
+                        img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+                        msg = 'Successful';
+
+                    }
+
+                    $.gritter.add({
+                        // (string | mandatory) the heading of the notification
+                        title: title,
+                        // (string | mandatory) the text inside the notification
+                        text: msg,
+                        // (string | optional) the image to display on the left
+                        image: img,
+                        // (bool | optional) if you want it to fade out on its own or just sit there
+                        sticky: false,
+                        // (int | optional) the time you want it to be alive for before fading out
+                        time: ''
+                    });
+                },
+                complete: function () {
+                    $("#buttonset-compile .ui-button").removeClass('ui-state-active');
+					$("#buttonset-compile .ui-button").button( "option", "disabled", false );
+					$('#loadingIndicator').hide();
+                }
+            });
+        });
+        $("#buttonset-view .ui-button").click( function (evt) {
+            $(".controls-wrapper .ui-button").button( "option", "disabled", true );
+            var button_view = $(this).attr('id');
+            $.bbq.pushState( { 'view' : button_view } );
+            getInstrumentationUpdates();
+        });
+        $(".trend-options a").live("click", function (evt) {
+            $(".trend-options a").removeClass('active');
+            $(this).addClass('active');
+
+            if ( $(this).is(".duration") || $(this).is(".payload") ) {
+                getInstrumentationUpdates();
+            }
+
+            evt.preventDefault();
+        });
+		$(".template-options a").live("click", function (evt) {
+	            if ( $(this).is(".web") || $(this).is(".info") ) {
+				// follow link
+                //evt.preventDefault();
+            } else if ( $(this).is(".compile") || $(this).is(".reset") ) {
+		        $('#loadingIndicator').show();
+				var link = $(this);
+				var url = $(link).attr('href');
+				var qs = $.deparam.querystring(url);
+
+				$.ajax({
+		            url: url,
+		            success: function (data) {
+						if ( $(link).is(".compile") ) {
+							var name = qs.selectedTemplates;
+							if ( name.indexOf('.') > -1 ) {
+								index = name.lastIndexOf('.');
+								name = name.substring(index+1);
+							}
+							var msg = 'No changes detected.';
+							var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-info.png';
+
+							if ( $(data).closest('.sml-e').length > 0 ) {
+
+								img = 'http://labs.espndb.s3.amazonaws.com/img/notification-incorrect.png';
+								msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
+
+							} else if ( $(data).closest('.sml-c').length > 0 ) {
+
+								img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+								msg = 'Template compiled successfully!';
+
+							}
+
+							$.gritter.add({
+								// (string | mandatory) the heading of the notification
+								title: name,
+								// (string | mandatory) the text inside the notification
+								text: msg,
+								// (string | optional) the image to display on the left
+								image: img,
+								// (bool | optional) if you want it to fade out on its own or just sit there
+								sticky: false,
+								// (int | optional) the time you want it to be alive for before fading out
+								time: ''
+							});
+						} else if ( $(link).is(".reset") ) {
+							if ( data == 'Success' ) {
+								var name = qs.name;
+								if ( name.indexOf('.') > -1 ) {
+									index = name.lastIndexOf('.');
+									name = name.substring(index+1);
+								}
+								var msg = 'Template stats were reset.';
+								var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+
+								$.gritter.add({
+									// (string | mandatory) the heading of the notification
+									title: name,
+									// (string | mandatory) the text inside the notification
+									text: msg,
+									// (string | optional) the image to display on the left
+									image: img,
+									// (bool | optional) if you want it to fade out on its own or just sit there
+									sticky: false,
+									// (int | optional) the time you want it to be alive for before fading out
+									time: ''
+								});
+							}
+						}
+		            },
+		            complete: function () {
+		                $('#loadingIndicator').hide();
+		                getInstrumentationUpdates();
+		            }
+		        });
+				evt.preventDefault();
+			}
+        });
+
+		var viewState = $.bbq.getState('view');
+		if ( viewState ) {
+		    $('#'+viewState).trigger('click');
+		}
+    };
+	function initTemplateInfoOptions () {
+        $(".template-options a").live("click", function (evt) {
+            if ( $(this).is(".web") || $(this).is(".info") ) {
+				// follow link
+                //evt.preventDefault();
+            } else if ( $(this).is(".compile") || $(this).is(".reset") ) {
+		        $('#loadingIndicator').show();
+				var link = $(this);
+				var url = $(link).attr('href');
+				var qs = $.deparam.querystring(url);
+
+				$.ajax({
+		            url: url,
+		            success: function (data) {
+						if ( $(link).is(".compile") ) {
+							var name = qs.selectedTemplates;
+							if ( name.indexOf('.') > -1 ) {
+								index = name.lastIndexOf('.');
+								name = name.substring(index+1);
+							}
+							var msg = 'No changes detected.';
+							var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-info.png';
+
+							if ( $(data).closest('.sml-e').length > 0 ) {
+
+								img = 'http://labs.espndb.s3.amazonaws.com/img/notification-incorrect.png';
+								msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
+
+							} else if ( $(data).closest('.sml-c').length > 0 ) {
+
+								img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+								msg = 'Template compiled successfully!';
+
+							}
+
+							$.gritter.add({
+								// (string | mandatory) the heading of the notification
+								title: name,
+								// (string | mandatory) the text inside the notification
+								text: msg,
+								// (string | optional) the image to display on the left
+								image: img,
+								// (bool | optional) if you want it to fade out on its own or just sit there
+								sticky: false,
+								// (int | optional) the time you want it to be alive for before fading out
+								time: ''
+							});
+						} else if ( $(link).is(".reset") ) {
+							if ( data == 'Success' ) {
+								var name = qs.name;
+								if ( name.indexOf('.') > -1 ) {
+									index = name.lastIndexOf('.');
+									name = name.substring(index+1);
+								}
+								var msg = 'Template stats were reset.';
+								var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+
+								$.gritter.add({
+									// (string | mandatory) the heading of the notification
+									title: name,
+									// (string | mandatory) the text inside the notification
+									text: msg,
+									// (string | optional) the image to display on the left
+									image: img,
+									// (bool | optional) if you want it to fade out on its own or just sit there
+									sticky: false,
+									// (int | optional) the time you want it to be alive for before fading out
+									time: ''
+								});
+							}
+						}
+		            },
+		            complete: function () {
+		                $('#loadingIndicator').hide();
+		                getInstrumentationUpdates();
+		            }
+		        });
+				evt.preventDefault();
+			}
+        });
+
+		var viewState = $.bbq.getState('view');
+		if ( viewState ) {
+		    $('#'+viewState).trigger('click');
+		}
+
+		$("#template-info-functions .methodName a").live("click", function(evt) {
+            var url = $(this).attr("href");
+			$.ajax({
+                url: url,
+                success: function (data) {
+                    $(data).dialog({
+						//height: 400,
+						width: 600,
+						modal: true
+					});
+                },
+				complete : function (data) {
+					$('.ui-dialog table a').each( function(i, val) {
+						var linkText = $(this).text();
+						//$(this).replaceWith(linkText);
+					});
+				}
+            });
+			evt.preventDefault();
+		});
+
+		$(".ui-dialog .table-container .tablehead a").live("click", function(evt) {
+            var url = $(this).attr("href");
+			$.ajax({
+                url: url,
+                success: function (data) {
+                    $('.ui-dialog').remove();
+                    $(data).dialog({
+						//height: 400,
+						width: 600,
+						modal: true
+					});
+                },
+				complete : function (data) {
+					$('.ui-dialog table a').each( function(i, val) {
+						var linkText = $(this).text();
+						//$(this).replaceWith(linkText);
+					});
+				}
+            });
+			evt.preventDefault();
+		});
+	};
+    function getInstrumentationUpdates () {
+        $('#loadingIndicator').show();
+
+        var url = 'format/getInstrumentationTable';
+
+        var buttonText = $("#buttonset-view label.ui-state-active").find('span').text();
+        if ( buttonText == "Streaming" || buttonText == "Overall" || buttonText == "Both" ) {
+            url += '?view=' + buttonText.toLowerCase();
+        }
+        var trendText = $(".trend-options a.active").attr('alt');
+        if ( trendText == "Duration" || trendText == "Payload" ) {
+            url += '&trend=' + trendText.toLowerCase();
+        }
+        var querystring = $.deparam.querystring();
+        if ( querystring.sort ) {
+            url += '&sort=' + querystring.sort;
+        }
+        if ( querystring.descending ) {
+            url += '&descending=' + querystring.descending;
+        }
+
+        $.ajax({
+            url: url,
+            success: function (data) {
+                $("#instrumentation-container").html(data);
+            },
+            complete: function () {
+                $(".controls-wrapper .ui-button").button( "option", "disabled", false );
+                $('#loadingIndicator').hide();
+            }
+        });
+    };
+
+    /* live dashboard */
+    function getLatestCompilations () {
+        $('#loadingIndicator').show();
+        $.ajax({
+            url: "format/getLatestCompilations",
+            success: function (data) {
+                $("#latest-compilations").find("ul").html(data);
+            },
+            complete: function () {
+                prettyLinks();
+                $('#loadingIndicator').hide();
+            }
+        });
+    };
+    function getHeaviestTemplates () {
+        $('#loadingIndicator').show();
+        $.ajax({
+            url: "format/getHeaviestTemplates",
+            success: function (data) {
+                $("#heaviest-templates").find("ul").html(data);
+            },
+            complete: function () {
+                $('#loadingIndicator').hide();
+            }
+        });
+    };
+    function getMostTemplateInvokes () {
+        $('#loadingIndicator').show();
+        $.ajax({
+            url: "format/getMostTemplateInvokes",
+            success: function (data) {
+                $("#most-invokes").find("ul").html(data);
+            },
+            complete: function () {
+                $('#loadingIndicator').hide();
+            }
+        });
+    };
+    function getSlowestTemplates () {
+        $('#loadingIndicator').show();
+        $.ajax({
+            url: "format/getSlowestTemplates",
+            success: function (data) {
+                $("#slowest-templates").find("ul").html(data);
+            },
+            complete: function () {
+                $('#loadingIndicator').hide();
+            }
+        });
+    };
+    function getUncompiledTemplates () {
+        $('#loadingIndicator').show();
+        $.ajax({
+            url: "format/getUncompiledTemplates",
+            success: function (data) {
+                $("#uncompiled-templates").find("ul").html(data);
+            },
+            complete: function () {
+                $('#loadingIndicator').hide();
+            }
+        });
+    };
+    function getStressedTemplates () {
+        $('#loadingIndicator').show();
+        $.ajax({
+            url: "format/getStressedTemplates",
+            success: function (data) {
+                $("#stressed-templates").find("ul").html(data);
+            },
+            complete: function () {
+                $('#loadingIndicator').hide();
+            }
+        });
+    };
+    function prettyLinks () {
+        $('.mod-content a').each( function(i, val) {
+            var timestamp = $(this).attr('timestamp');
+            var datestamp = $(this).attr('datestamp');
+            var parent = $(this).closest('li');
+
+            if ( timestamp ) {
+                var timeString = relative_time(timestamp);
+
+                if ( timeString ) {
+                    timeString = ' ('+timeString+')';
+                    if ( $(parent).children('span.timestamp').length ) {
+                        $(parent).children('span.timestamp').html(timeString);
+                    } else {
+                        $(parent).append('<span class="timestamp">'+timeString+'</span>');
+                    }
+                }
+            }
+        });
+        $('#reload-container-history li').each( function(i, val) {
+            var timestamp = $(this).attr('timestamp');
+
+            if ( timestamp ) {
+                var timeString = relative_time(timestamp);
+
+                if ( timeString ) {
+                    timeString = ' ('+timeString+')';
+                    if ( $(this).children('span.timestamp').length ) {
+                        $(this).children('span.timestamp').html(timeString);
+                    } else {
+                        $(this).append('<span class="timestamp">'+timeString+'</span>');
+                    }
+                }
+            }
+        });
+    };
+    // time_value:  unix timestamp in milliseconds
+    function relative_time(time_value) {
+        var parsed_date = new Date(parseInt(time_value));
+        var relative_to = (arguments.length > 1) ? arguments[1] : new Date();
+        var delta = parseInt((relative_to.getTime() - parsed_date) / 1000);
+
+        if ( delta < 60 ) {
+            return 'less than a minute ago';
+        } else if ( delta < 120 ) {
+            return 'about a minute ago';
+        } else if ( delta < (45*60) ) {
+            var value = (parseInt(delta / 60)).toString();
+            var text = 'about ' + value + ' minute';
+            if ( value != '1' ) {
+                text += 's';
+            }
+            text += ' ago';
+            return text;
+        } else if ( delta < (90*60) ) {
+            return 'about an hour ago';
+        } else if ( delta < (24*60*60) ) {
+            var value = (parseInt(delta / 3600)).toString();
+            var text = 'about ' + value + ' hour';
+            if ( value != '1' ) {
+                text += 's';
+            }
+            text += ' ago';
+            return text;
+        } else if ( delta < (48*60*60) ) {
+            return '1 day ago';
+        } else {
+            var value = (parseInt(delta / 86400)).toString();
+            var text = 'about ' + value + ' day';
+            if ( value != '1' ) {
+                text += 's';
+            }
+            text += ' ago';
+            return text;
+        }
+    };
+
+    /* initialize */
+    $(document).ready(function () {
+        var serverName = window.location.host;
+        $("ul.breadcrumbs .serverName").text(serverName);
+
+		$(".accordion").accordion({ header: "h3", active: false, collapsible: true });
+		$(".button").button();
+		$(".buttonset").buttonset();
+
+		/* Dashboard */
+        if ( $("#dashboard-container").length ) {
+            $('#dashboard-container').sortable({
+                placeholder: "span-2 ui-state-highlight"
+            });
+		    $('#dashboard-container').disableSelection();
+
+            getLatestCompilations();
+            setInterval(getLatestCompilations, 15000);
+
+            getHeaviestTemplates();
+            setInterval(getHeaviestTemplates, 15000);
+
+            getMostTemplateInvokes();
+            setInterval(getMostTemplateInvokes, 15000);
+
+            getSlowestTemplates();
+            setInterval(getSlowestTemplates, 15000);
+
+            getUncompiledTemplates();
+            setInterval(getUncompiledTemplates, 15000);
+
+            getStressedTemplates();
+            setInterval(getStressedTemplates, 15000);
+        }
+        /* Compile */
+        if ( $("#reload-container").length ) {
+            SyntaxHighlighter.all();
+            initCompileOptions();
+            getTemplateUpdates();
+            templateInterval = setInterval(getTemplateUpdates, 10000);
+        }
+        /* Templates, Applications, and Functions */
+        if ( $("#tree-container").length ) {
+            initTree();
+        }
+        /* Logs */
+        if ( $("#logs-container").length ) {
+            initLogs();
+        }
+        /* Instrumentation */
+        if ( $("#instrumentation-container").length ) {
+            initInstrumentationOptions();
+            setInterval(getInstrumentationUpdates, 15000);
+        }
+        /* Template Info */
+        if ( $("#template-info-container").length ) {
+            initTemplateInfoOptions();
+        }
+        /* Janitor */
+        if ( $("#janitor-container").length ) {
+            initJanitorOptions();
+        }
+
+    });
+
+})(jQuery);
+

@@ -1,0 +1,20 @@
+<% template logs (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+%>
+		<article>
+			<section>
+				<div class="controls">
+					<div class="controls-wrapper">
+                        <div id="loadingIndicator"></div>
+                        <div><input id="logs-search-text" type="search" placeholder="Search" /></div>
+                        <div id="showHideLogs" class="button">Show All</div>
+					</div>
+				</div>
+				<div id="logs-container"></div>
+			</section>
+		</article>

@@ -1,0 +1,30 @@
+<% template getPathPrefix ()
+
+    request = getRequest();
+
+    /*
+    path = request.requestURI;
+
+    if ( request.pathInfo != null ) {
+        index = findFirst(path, request.pathInfo);
+    } else {
+        // look for any extensions like ".tea"
+        index = findLast(path, ".");
+        if ( index >= 0 ) {
+            extension = substring(path, index);
+            path = substring(path, 0, index);
+        }
+        index = 0;
+    }
+
+    if ( index >= 0 ) {
+        path = substring(path, 0, index);
+    }
+    */
+    path = request.servletPath;
+    path = path & '/';
+
+    // return path prefix string
+    path
+    
+%>

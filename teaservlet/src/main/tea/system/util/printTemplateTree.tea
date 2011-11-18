@@ -1,0 +1,43 @@
+<% template printTemplateTree (SortedMap templateMap, String pathPrefix, String idPrefix, String servletName)
+
+    '<ul>';
+    leafElements = '';
+    childrenKeys = getKeysAsStrings(templateMap);
+    foreach ( i in 0..childrenKeys.length-1 ) {
+        childKey = childrenKeys[i];
+
+        childValue = templateMap[childKey];
+        pathString = pathPrefix & '/' & childKey;
+
+        detailsPathString = replaceFirst(pathString, '/', '');
+        pathTokens = tokenize(detailsPathString, '/');
+        root = "";
+        if ( pathTokens.length > 0 ) {
+            root = pathTokens[0];
+            if ( servletName != '' ) {
+                detailsPathString = replaceFirst(detailsPathString, root&'/', '');
+            }
+        }
+        detailsPathString = replace(detailsPathString, '/', '.');
+        
+        detailsString = 'format/getTemplateDetails?name=' & detailsPathString;
+        elemId = idPrefix & '_' & childKey;
+        if ( childValue == null ) {
+            leafElements = leafElements & '<li id="' & elemId & '" rel="template" details="' & detailsString & '">';
+                leafElements = leafElements & '<a href="' & pathString & '">';
+                    leafElements = leafElements & childKey;
+                leafElements = leafElements & '</a>';
+            leafElements = leafElements & '</li>\n';
+        } else if ( childValue isa SortedMap ) {
+            '<li id="' & elemId & '" rel="directory">'
+                '<a href="#">' & childKey & '</a>';
+                call printTemplateTree(childValue, pathString, elemId, servletName);
+            '</li>\n';
+        }
+    }
+
+    leafElements
+    
+    '</ul>\n';
+    
+%>

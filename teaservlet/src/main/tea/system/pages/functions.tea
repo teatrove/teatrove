@@ -1,0 +1,73 @@
+<% template functions (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+    
+    applications = admin.applications;
+
+    path = request.requestURI;
+    root = "";
+    extension = "";
+
+    pathTokens = tokenize(path, '/');
+    if ( pathTokens.length > 0 ) {
+        root = pathTokens[0];
+    }
+
+%>
+		<article>
+			<section>
+				<div class="controls">
+					<div class="controls-wrapper">
+					    <div><input id="tree-search-text" type="search" placeholder="Search" /></div>
+                        <div id="showHideTypes" class="button">Hide Types</div>
+                        <div id="expandCollapseTree" class="button">Expand All</div>
+                        <div id="toggleTree" class="button">Toggle All</div>
+					</div>
+				</div>
+                <div id="tree-container" expandFirst="false">
+                <%
+                    if ( admin.functions != null ) {
+                        '<ul>\n'
+                        foreach ( c in 0..admin.functions.length-1 ) {
+                            contextFunction = admin.functions[c];
+
+                            idStringFunc = 'tree_' & contextFunction.name & '_' & c;
+                            '<li id="' idStringFunc '"  rel="function" details="format/getContextFunctionDetails?context=' contextFunction.descriptor.method.declaringClass.name '&function=' contextFunction.name '">\n';
+                                '<a href="#">'
+                                    contextFunction.descriptor.name ' : ' call system.util.printClassInfo(contextFunction.descriptor.method.returnType);
+                                '</a>\n';
+                                types = contextFunction.descriptor.method.parameterTypes;
+                                descriptors = contextFunction.descriptor.parameterDescriptors;
+                                if ( descriptors != null ) {
+                                    '<ul>\n'
+                                    foreach ( p in 0..descriptors.length-1 ) {
+                                        parameterType = types[p];
+                                        parameterDescriptor = descriptors[p];
+                                        parameterPath = parameterType.name;
+
+                                        '<li id="' idStringFunc '_' parameterDescriptor.name '" rel="parameter" details="format/getBeanDetails?bean=' parameterPath '">\n';
+                                            '<a href="#">'
+                                                '<span class="italic">'
+                                                    call system.util.printClassInfo(parameterType);
+                                                '</span>'
+                                                parameterDescriptor.name;
+                                            '</a>\n';
+                                        '</li>\n'
+                                    }
+                                    '</ul>\n'
+                                }
+                            '</li>\n'
+                        }
+                        '</ul>\n'
+                    }
+                %>
+                </div>
+                <div id="details-container">
+                    Click a function or bean to the left.
+                </div>
+                <div class="clear"></div>
+			</section>
+		</article>

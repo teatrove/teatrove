@@ -1,0 +1,18 @@
+<% template printClassInfo (Class class)
+
+    info = getHandyClassInfo(class);
+
+    classInfo = info.fullName;
+    if ( classInfo == "org.teatrove.tea.runtime.Substitution" ) {
+        classInfo = '...';
+    } else if ( startsWith(classInfo, "java.lang.") ) {
+		classInfo = substring(classInfo, "java.lang.".length);
+	} else if (startsWith(classInfo, "java.util.")) {
+		classInfo = substring(classInfo, "java.util.".length);
+	}
+    classInfo = replace(classInfo, "$", ".");
+
+    // return class info string
+    classInfo
+    
+%>

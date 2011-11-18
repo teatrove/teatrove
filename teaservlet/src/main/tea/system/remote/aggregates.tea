@@ -1,0 +1,145 @@
+<% template aggregates (String templateName)
+
+    admin = getTeaServletAdmin();
+
+    //setContentType("application/json");
+    '{'
+    if ( templateName != null ) {
+        templateStats = getTemplateStats(templateName);
+
+        if ( templateStats != null ) {
+            currentTime = currentDate().time;
+            
+            aggregateIntervals = templateStats.aggregateIntervals;
+            aggregateIntervalForRawData = templateStats.aggregateIntervalForRawData;
+
+            numberFormat("0.00");
+            //averageStressLevel = (random() * 100) & "%";
+            averageStressLevel = call system.util.getTemplateStressValue(templateStats) & "%";
+
+            numberFormat("#,###,###.##");
+            averageTime = aggregateIntervalForRawData.durationStats.arithmeticMean;
+            averageTimeString = aggregateIntervalForRawData.durationStats.arithmeticMean & "";
+            averageThroughput = (aggregateIntervalForRawData.contentLengthStats.arithmeticMean/1024.0) & "";
+            numberFormat(null);
+
+            //overallStart = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.startTime, false, null);
+            //overallDuration = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.startTime, true, null);
+
+            overallStart = call system.util.getRelativeTimeText(currentTime, currentTime-templateStats.cumulativeServiceTime, false, null);
+            overallDuration = call system.util.getRelativeTimeText(currentTime, currentTime-templateStats.cumulativeServiceTime, true, null);
+
+            //numberFormat("#,###,###");
+            numberFormat("#");
+            topLevelInvokesString = templateStats.servicedCount & '';
+            numberFormat(null);
+%>
+    "stats" :
+    {
+        "averageStressLevel" : "<% averageStressLevel %>",
+        "averageTime" : "<% averageTimeString %>ms",
+        "averageThroughput" : "<% averageThroughput %>k",
+        "overallStart" : "<% overallStart %>",
+        "overallDuration" : "<% overallDuration %>",
+        "topLevelInvokes" : "<% topLevelInvokesString %>"
+    },
+    "aggregates" :
+    [<%
+            if ( templateStats != null and aggregateIntervals != null ) {
+                foreach ( i in 0..aggregateIntervals.length-1 ) {
+                    item = aggregateIntervals[i];
+
+                    startDateObj = createDate(item.startTime);
+                    endDateObj = createDate(item.endTime);
+
+                    dateFormat("dd-MM-yyyy");
+                    startDate = startDateObj & "";
+                    endDate = endDateObj & "";
+
+                    dateFormat("HH:mm:ss");
+                    startTime = startDateObj & "";
+                    endTime = endDateObj & "";
+
+                    startMillis = item.startTime & "";
+                    endMillis = item.endTime & "";
+
+                    dateFormat(null);
+
+                    itemStart = call system.util.getRelativeTimeText(currentTime, item.startTime, false, null);
+                    itemEnd = call system.util.getRelativeTimeText(currentTime, item.endTime, false, null);
+
+                    serviced = item.sampleSize;
+                    requestsPerSecond = serviced / ((item.endTime-item.startTime)/1000.0);
+                    stress = item.durationStressMeasure*100;
+
+                    processAverage = item.durationStats.arithmeticMean;
+                    processMedian = item.durationStats.median;
+                    processMin = item.durationStats.min;
+                    processMax = item.durationStats.max;
+                    processStdDev = item.durationStats.standardDeviation;
+
+                    processLowerWhisker = item.durationStats.lowerWhisker;
+                    processLowerQuartile = item.durationStats.lowerQuartile;
+                    processUpperQuartile = item.durationStats.upperQuartile;
+                    processUpperWhisker = item.durationStats.upperWhisker;
+
+                    payloadAverage = item.contentLengthStats.arithmeticMean;
+                    payloadMedian = item.contentLengthStats.median;
+                    payloadMin = item.contentLengthStats.min;
+                    payloadMax = item.contentLengthStats.max;
+                    payloadStdDev = item.contentLengthStats.standardDeviation;
+
+                    payloadLowerWhisker = item.contentLengthStats.lowerWhisker;
+                    payloadLowerQuartile = item.contentLengthStats.lowerQuartile;
+                    payloadUpperQuartile = item.contentLengthStats.upperQuartile;
+                    payloadUpperWhisker = item.contentLengthStats.upperWhisker;
+
+                    //numberFormat("#,###.##");
+                    numberFormat("#.##");
+%>
+        {
+            "index" : <% i %>,
+            
+            "start" : { "date" : "<% startDate %>", "time" : "<% startTime %>", "millis" : <% startMillis %> },
+            "end" : { "date" : "<% endDate %>", "time" : "<% endTime %>", "millis" : <% endMillis %> },
+
+            "serviced" : "<% serviced %>",
+            "requestsPerSecond" : "<% requestsPerSecond %>",
+            "stress" : "<% stress %>",
+
+            "processAverage" : "<% processAverage %>",
+            "processMedian" : "<% processMedian %>",
+            "processMin" : "<% processMin %>",
+            "processMax" : "<% processMax %>",
+            "processStdDev" : "<% processStdDev %>",
+
+            "processLowerWhisker" : "<% processLowerWhisker %>",
+            "processLowerQuartile" : "<% processLowerQuartile %>",
+            "processUpperQuartile" : "<% processUpperQuartile %>",
+            "processUpperWhisker" : "<% processUpperWhisker %>",
+
+            "payloadAverage" : "<% payloadAverage %>",
+            "payloadMedian" : "<% payloadMedian %>",
+            "payloadMin" : "<% payloadMin %>",
+            "payloadMax" : "<% payloadMax %>",
+            "payloadStdDev" : "<% payloadStdDev %>",
+
+            "payloadLowerWhisker" : "<% payloadLowerWhisker %>",
+            "payloadLowerQuartile" : "<% payloadLowerQuartile %>",
+            "payloadUpperQuartile" : "<% payloadUpperQuartile %>",
+            "payloadUpperWhisker" : "<% payloadUpperWhisker %>"
+
+        }<%
+                    if ( i < aggregateIntervals.length-1 ) {
+                        ','
+                    }
+                    numberFormat(null);
+                }
+            }
+%>
+    ]
+<%
+        }
+    }
+    '}'
+%>

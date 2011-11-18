@@ -1,0 +1,39 @@
+<% template getTemplatePathFromSourcePath (org.teatrove.teaservlet.TeaServletAdmin admin, String sourcePath)
+
+    templatePath = sourcePath;
+
+    if ( admin != null ) {
+        templatePath = '';
+        pathPrefix = call system.util.getPathPrefix();
+
+        knownTemplates = admin.knownTemplates;
+
+        sourcePathTokens = tokenize(sourcePath, '/');
+
+        foundMatch = false;
+        foreach ( t in 0..sourcePathTokens.length-1 reverse ) {
+            token = sourcePathTokens[t];
+            if ( t == sourcePathTokens.length-1 ) {
+                token = replace(token, '.tea', '');
+            }
+            templatePath = token & templatePath;
+            foreach ( knownTemplate in knownTemplates ) {
+                name = '/' & replace(knownTemplate.name, '.', '/');
+                if ( name == '/'&templatePath ) {
+                    foundMatch = true;
+                    break;
+                }
+            }
+            if ( foundMatch ) {
+                break;
+            } else {
+                templatePath = '/' & templatePath;
+            }
+        }
+        templatePath = pathPrefix & templatePath;
+    }
+
+    // return template path
+    templatePath
+
+%>
