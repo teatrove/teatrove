@@ -330,6 +330,26 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      * Send a warn log message to the system logs.
      */
     public void warn(String s);
+    
+    /**
+     * Send a debug log throwable to the system logs.
+     */
+    public void debug(Throwable t);
+
+    /**
+     * Send a error log throwable to the system logs.
+     */
+    public void error(Throwable t);
+
+    /**
+     * Send a info log throwable to the system logs.
+     */
+    public void info(Throwable t);
+
+    /**
+     * Send a warn log throwable to the system logs.
+     */
+    public void warn(Throwable t);
 
     /**
      * @hidden
