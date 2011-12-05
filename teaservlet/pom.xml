@@ -204,6 +204,28 @@
             <groupId>org.teatrove</groupId>
             <artifactId>teacompiler-maven-plugin</artifactId>
             <version>${teacompiler.version}</version>
+            <!--
+            <configuration>
+                <force>true</force>
+                <guardian>true</guardian>
+                <contextClassBuilder implementation="org.teatrove.maven.plugins.teacompiler.contextclassbuilder.MergedContextClassBuilder">
+                    <mergedClassName>org.teatrove.teaservlet.admin.MergedAdminContext</mergedClassName>
+                    <contexts>
+                        <context>com.go.teaservlet.HttpContext</context>
+                        <context>com.go.teaservlet.AdminContext</context>
+                        <context>disney.entrepot.context.impl.ArrayContext</context>
+                        <context>disney.entrepot.context.impl.Base64Context</context>
+                        <context>disney.entrepot.context.impl.BeanPropertyContext</context>
+                        <context>disney.entrepot.context.impl.DateContext</context>
+                        <context>disney.entrepot.context.impl.MapContext</context>
+                        <context>disney.entrepot.context.impl.NumberFormatContext</context>
+                        <context>disney.entrepot.context.impl.ListContext</context>
+                        <context>disney.entrepot.context.impl.SortContext</context>
+                        <context>disney.entrepot.context.impl.StringContext</context>
+                        <context>com.espn.cache.CacheContext</context>
+                    </contexts>
+                </contextClassBuilder>
+            </configuration>-->
             <executions>
                 <execution>
                     <id>compile-tea</id>
