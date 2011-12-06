@@ -17,9 +17,7 @@ package org.teatrove.teaapps.apps;
 
 import javax.servlet.ServletException;
 
-import java.lang.management.*; 
-import javax.management.*;
-
+import org.teatrove.teaapps.contexts.JMXContext;
 import org.teatrove.teaservlet.AdminApp;
 import org.teatrove.teaservlet.AppAdminLinks;
 import org.teatrove.teaservlet.ApplicationConfig;
@@ -28,7 +26,6 @@ import org.teatrove.teaservlet.ApplicationResponse;
 import org.teatrove.teaservlet.RegionCachingContext;
 import org.teatrove.trove.log.Log;
 
-import java.util.List;
 
 /*
  * @author Scott Jappinen
@@ -68,91 +65,6 @@ public class JMXConsoleApplication implements AdminApp {
     	AppAdminLinks links = new AppAdminLinks(mLog.getName());
         links.addAdminLink("JMX Console","system.teaservlet.JMXConsole");
         return links;
-    }
-    
-    public class JMXContext {
-    	
-    	public ClassLoadingMXBean getClassLoadingMXBean() {
-    		return ManagementFactory.getClassLoadingMXBean();
-    	}
-    	
-    	public void setClassLoadingMXBeanVerbose(boolean value) {
-    		ManagementFactory.getClassLoadingMXBean().setVerbose(value);
-    	}
-    	
-    	public CompilationMXBean getCompilationMXBean() {
-    		return ManagementFactory.getCompilationMXBean();
-    	}
-    	
-    	public List<GarbageCollectorMXBean> getGarbageCollectorMXBeans() {
-    		return ManagementFactory.getGarbageCollectorMXBeans();
-    	}
-    	
-    	public List<MemoryManagerMXBean> getMemoryManagerMXBeans() {
-    		return ManagementFactory.getMemoryManagerMXBeans();
-    	}
-    	
-    	public MemoryMXBean getMemoryMXBean() {
-    		return ManagementFactory.getMemoryMXBean();
-    	}
-    	
-    	public void setMemoryMXBeanVerbose(boolean value) {
-    		ManagementFactory.getMemoryMXBean().setVerbose(value);
-    	}
-    	
-    	public List<MemoryPoolMXBean> getMemoryPoolMXBeans() {
-    		return ManagementFactory.getMemoryPoolMXBeans();
-    	}
-    	
-    	public void resetPeakUsage(MemoryPoolMXBean bean) {
-    		bean.resetPeakUsage();
-    	}
-    	
-    	public void setCollectionUsageThreshold(MemoryPoolMXBean bean, long threshold) {
-    		bean.setCollectionUsageThreshold(threshold);
-    	}
-    	
-    	public void setUsageThreshold(MemoryPoolMXBean bean, long threshold) {
-    		bean.setUsageThreshold(threshold);
-    	}
-    	
-    	public OperatingSystemMXBean getOperatingSystemMXBean() {
-    		return ManagementFactory.getOperatingSystemMXBean();
-    	}
-    	
-    	public MBeanServer getPlatformMBeanServer() {
-    		return ManagementFactory.getPlatformMBeanServer();
-    	}
-    	
-    	// TODO add methods for platform server
-    	
-    	public RuntimeMXBean getRuntimeMXBean() {
-    		return ManagementFactory.getRuntimeMXBean();
-    	}
-    	
-    	public ThreadMXBean getThreadMXBean() {
-    		return ManagementFactory.getThreadMXBean();
-    	}
-    	
-    	public ThreadInfo[] dumpAllThreads(boolean lockedMonitors, boolean lockedSynchronizers) {
-    		return ManagementFactory.getThreadMXBean().dumpAllThreads(lockedMonitors, lockedSynchronizers);
-    	}
-    	
-    	public long[] findDeadlockedThreads() {
-    		return ManagementFactory.getThreadMXBean().findDeadlockedThreads();
-    	}
-    	
-    	public long[] findMonitorDeadlockedThreads() {
-    		return ManagementFactory.getThreadMXBean().findMonitorDeadlockedThreads();
-    	}
-    	
-    	public void setThreadContentionMonitoringEnabled(boolean enable) {
-    		ManagementFactory.getThreadMXBean().setThreadContentionMonitoringEnabled(enable);
-    	}
-    	
-    	public void setThreadCpuTimeEnabled(boolean enable) {
-    		ManagementFactory.getThreadMXBean().setThreadCpuTimeEnabled(enable);
-    	}
     }
 	
 }

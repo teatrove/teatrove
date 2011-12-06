@@ -21,6 +21,8 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Date;
 
+import org.teatrove.trove.util.FastDateFormat;
+
 public class DateContext {
 
     private static SimpleDateFormat cFormatter = new SimpleDateFormat("yyyyMMdd");

@@ -20,10 +20,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.DecoderException;
 
 /**
  * @author Scott Jappinen
@@ -65,13 +68,13 @@ public class EncodingContext {
     public String encodeByteArray(byte[] input)
         throws IOException {
         
-        return new String(JBase64.encodeBytes(input));
+        return Base64.encodeBase64String(input);
     }
 
     public byte[] decodeByteArray(String input)
         throws IOException {
         
-        return JBase64.decodeBytes(input.getBytes());
+        return Base64.decodeBase64(input);
     }
 
     public byte[] serialize(Serializable value) 

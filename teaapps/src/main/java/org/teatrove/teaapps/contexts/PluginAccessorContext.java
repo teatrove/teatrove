@@ -15,25 +15,27 @@
  */
 package org.teatrove.teaapps.contexts;
 
-import org.teatrove.trove.util.plugin.Plugin;
-
 import java.util.Map;
+
+import org.teatrove.teaapps.Context;
+import org.teatrove.teaapps.ContextConfig;
+import org.teatrove.trove.util.plugin.Plugin;
 
 /**
  * @author Scott Jappinen
  */
 public class PluginAccessorContext implements Context {
 
-    private Map mPluginMap;
+    private Map<String, Plugin> mPluginMap;
     private Plugin[] mPluginArray;
     
-    public void init(ContextConfig config) throws Exception {
+    public void init(ContextConfig config) {
         mPluginArray = config.getPluginArray();
         mPluginMap = config.getPlugins();
     }
     
     public Plugin getPlugin(String name) {
-        return (Plugin) mPluginMap.get(name);
+        return mPluginMap.get(name);
     }
     
     public Plugin[] getPlugins() {

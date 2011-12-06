@@ -42,6 +42,10 @@ public class ContextConfig extends ConfigSupport {
         return mPlugins.get(name);
     }
     
+    public Map<String, Plugin> getPlugins() {
+        return mPlugins;
+    }
+    
     public Plugin[] getPluginArray() {
         Collection<Plugin> collection = mPlugins.values();        
         return collection.toArray(new Plugin[collection.size()]);
