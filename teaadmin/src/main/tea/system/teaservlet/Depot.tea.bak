@@ -1,0 +1,132 @@
+<% template Depot() 
+request = getRequest()
+%>
+<form action="<%request.requestURI%>" method="post">
+<input type="submit" value="Reset Stats">&nbsp;&nbsp;&nbsp;
+<input type="hidden" name="subTemplate" value="system.teaservlet.Depot">
+<input type="hidden" name="resetStatistics">
+</form>
+<%
+if (request.parameters["resetStatistics"] != null) {
+    resetDepotStats()
+}
+cluster = getClusterCacheInfo() 
+
+size = getCacheSize()
+validSize = getValidEntryCount()
+invalidSize = getInvalidEntryCount()%>
+<table width="100%" border="1" cellpadding="2" cellspacing="1">
+  <tr>
+      <td bgcolor="#737398" colspan="8"><font size="2" face="Arial" color="#FFFFFF">
+      <font size="2" face="Arial"><b>Region Cache Status
+      <% if (cluster != null and cluster.knownPeers.length > 0) {
+           'for the ' cluster.clusterName ' cluster'  
+      } %>
+
+    </b></font></td>    
+</tr><tr> 
+    <td align="left" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Host</font></td>
+    <td align="right" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Cache Size</font></td>
+    <td align="right" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Valid Entries</font></td>
+    <td align="right" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Invalid Entries</font></td>
+    <td align="right" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Cache Gets</font></td>
+    <td align="right" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Cache Hits</font></td>
+    <td align="right" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Cache Misses</font></td>
+    <td align="right" bgcolor="#C2C8D1"><font color="#000000" face="Arial" size="2">Hit Ratio</font></td>
+</tr>
+<tr>
+    <td align="left"><font size="2" face="Arial">Local Cache</font></td>
+    <td align="right"><font size="2" face="Arial">
+    <%size' item' 
+    if(size != 1) {'s'} '</font></td>'
+    '<td align="right"><font size="2" face="Arial">'
+    validSize' item' 
+    if(validSize != 1) {'s'} '</font></td>'
+    '<td align="right"><font size="2" face="Arial">'
+    invalidSize' item' 
+    if(invalidSize != 1) {'s'} '</font></td>'
+    '<td align="right"><font size="2" face="Arial">'
+    getCacheGets()
+    '</font></td>'
+    '<td align="right"><font size="2" face="Arial">'
+    getCacheHits()
+    '</font></td>'
+    '<td align="right"><font size="2" face="Arial">'
+    getCacheMisses()
+    '</font></td>'
+    '<td align="right"><font size="2" face="Arial">'
+    hitRatio = 0.0 
+    if (getCacheGets() != 0) {
+        hitRatio = (1 - (getCacheMisses() + 0.0) / (getCacheGets() + 0.0)) * 100
+    }
+    numberFormat("##0")
+    hitRatio '%'
+    numberFormat("#######")
+    '</font></td>'
+    
+'</tr>'
+
+if(cluster != null) {
+    foreach (peer in cluster.knownPeers) {
+        '<tr><td align="left"><font size="2" face="Arial">'
+        peer.serverName '</font></td>'
+        if (peer isa org.teatrove.teaservlet.RegionCachingApplication.ClusterCacheInfo) {
+            info = peer.regionCacheInfo
+            if (info != null) {
+                '<td align="right"><font size="2" face="Arial">'
+                items = info.size
+                items' item' 
+                if(items != 1) {'s'} '</font></td>'
+                '<td align="right"><font size="2" face="Arial">'
+                info.validSize' item' 
+                if(info.validSize != 1) {'s'} '</font></td>'
+                '<td align="right"><font size="2" face="Arial">'
+                info.invalidSize' item' 
+                if(info.invalidSize != 1) {'s'} '</font></td>'
+                '<td align="right"><font size="2" face="Arial">'
+                info.cacheGets
+                '</font></td>'
+                '<td align="right"><font size="2" face="Arial">'
+                info.cacheHits
+                '</font></td>'
+                '<td align="right"><font size="2" face="Arial">'
+                info.cacheMisses
+                '</font></td>'
+                '<td align="right"><font size="2" face="Arial">'
+                hitRatio = 0.0
+                if (info.cacheGets != 0) {
+                    hitRatio = (1 - (info.cacheMisses + 0.0) / (info.cacheGets + 0.0)) * 100
+                }
+                numberFormat("##0")
+                hitRatio '%'
+                numberFormat("##########")
+                '</font></td>'
+            }
+            else {
+                '<td colspan=7><font size="2" face="Arial">'
+                'RegionCacheInfo Unavailable'
+                '</font></td>'
+            }
+            '</tr>'
+        }
+    }
+}
+/* cache test
+
+
+'Live Data: 'currentDate() ' -- Depot Size:'depot.size
+if (findFirst(request.queryString,"live") < 0) {
+cache(15000) {%><br>
+15 second cache: <%currentDate()' -- Depot Size:'depot.size
+        nocache() {
+            '<br>nested Live Data: 'currentDate() ' -- Depot Size:'depot.size
+        }
+     cache(5000) {'<br>5 second cache: ' currentDate()' -- Depot Size:'depot.size
+        nocache() {
+            '<br>doubly nested Live Data: 'currentDate() ' -- Depot Size:'depot.size
+        }
+    }
+'<br>back to 15 seconds ' currentDate()' -- Depot Size:'depot.size
+}
+}
+*/

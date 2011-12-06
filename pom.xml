@@ -9,11 +9,12 @@
     <version>4.1-SNAPSHOT</version>
 
     <modules>
+        <module>build-tools</module>
+        <module>trove</module>
         <module>tea</module>
         <module>teaservlet</module>
         <module>teaapps</module>
-        <module>trove</module>
-        <module>build-tools</module>
+        <module>teaadmin</module>
         <module>examples</module>
     </modules>
 
@@ -41,6 +42,7 @@
       <toolbox.version>4.1-SNAPSHOT</toolbox.version>
       <tea.version>4.1-SNAPSHOT</tea.version>
       <teaapps.version>4.1-SNAPSHOT</teaapps.version>
+      <teaadmin.version>4.1-SNAPSHOT</teaadmin.version>
       <teaservlet.version>4.1-SNAPSHOT</teaservlet.version>
       <trove.version>4.1-SNAPSHOT</trove.version>
     </properties>

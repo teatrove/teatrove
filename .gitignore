@@ -1,7 +1,8 @@
 target/
 .project
-.settings/org.maven.ide.eclipse.prefs
+.metadata/
+.settings/
 build-tools/.project
-build-tools/.settings/org.maven.ide.eclipse.prefs
+build-tools/.settings/
 build-tools/teacompiler/.project
-build-tools/teacompiler/.settings/org.maven.ide.eclipse.prefs
+build-tools/teacompiler/.settings/
