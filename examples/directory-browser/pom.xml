@@ -18,7 +18,7 @@
     </description>
 
     <packaging>war</packaging>
-  
+    
     <dependencies>
 
         <dependency>
@@ -29,10 +29,10 @@
     
         <dependency>
             <groupId>org.teatrove</groupId>
-            <artifactId>teaservlet</artifactId>
+            <artifactId>teaadmin</artifactId>
             <version>4.1-SNAPSHOT</version>
         </dependency> 
 
     </dependencies>
-
+  
 </project>
