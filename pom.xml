@@ -31,6 +31,97 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <id>nicholashagen</id>
+            <name>Nicholas Hagen</name>
+            <organization>ESPN</organization>
+            <organizationUrl>http://espn.go.com</organizationUrl>
+            <timezone>-5</timezone>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>jappy</id>
+            <name>Scott Jappinen</name>
+            <organization>ESPN</organization>
+            <organizationUrl>http://espn.go.com</organizationUrl>
+            <timezone>-5</timezone>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>erikhaddad</id>
+            <name>Erik Haddad</name>
+            <organization>ESPN</organization>
+            <organizationUrl>http://espn.go.com</organizationUrl>
+            <timezone>-5</timezone>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>jaxzin</id>
+            <email>brian@jaxzin.com</email>
+            <organization>ESPN</organization>
+            <organizationUrl>http://espn.go.com</organizationUrl>
+            <timezone>-5</timezone>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+
+        <developer>
+            <name>Brian O'Neill</name>
+            <roles>
+                <role>Author of Tea</role>
+                <role>Lead Developer</role>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Reece Wilton</name>
+            <roles>
+                <role>TeaServlet Creator</role>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Jonathan Colwell</name>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Guy Molinari</name>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Erik Earle</name>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Michael Rathjen</name>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>markmasse</id>
+            <name>Mark S. Masse</name>
+            <timezone>-8</timezone>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+    </developers>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
