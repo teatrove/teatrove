@@ -24,27 +24,27 @@
     <description>The Tea language along with supporting projects.</description>
 
     <properties>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-      <maven.version>3.0</maven.version>
-      <slf4j.version>1.6.1</slf4j.version>
+        <maven.version>3.0</maven.version>
+        <slf4j.version>1.6.1</slf4j.version>
 
-      <!-- The following properties centralize the definition of child module versions.
-           It is critical that these version numbers are kept in lockstep with the <version> elements
-           of their respective child poms, otherwise the build will be break.  The convenience is that
-           when you update the <version> of that child pom, you only need to update it one other place, here,
-           and all references to the child artifact will be updated accordingly.
-       -->
-      <package-info-maven-plugin.version>4.1.1-SNAPSHOT</package-info-maven-plugin.version>
-      <teacompiler.version>4.1.1-SNAPSHOT</teacompiler.version>
-      <teatools.version>4.1.1-SNAPSHOT</teatools.version>
-      <toolbox.version>4.1.1-SNAPSHOT</toolbox.version>
-      <tea.version>4.1.1-SNAPSHOT</tea.version>
-      <teaapps.version>4.1.1-SNAPSHOT</teaapps.version>
-      <teaadmin.version>4.1.1-SNAPSHOT</teaadmin.version>
-      <teaservlet.version>4.1.1-SNAPSHOT</teaservlet.version>
-      <trove.version>4.1.1-SNAPSHOT</trove.version>
+        <!-- The following properties centralize the definition of child module versions.
+            It is critical that these version numbers are kept in lockstep with the <version> elements
+            of their respective child poms, otherwise the build will be break.  The convenience is that
+            when you update the <version> of that child pom, you only need to update it one other place, here,
+            and all references to the child artifact will be updated accordingly.
+        -->
+        <package-info-maven-plugin.version>4.1.1-SNAPSHOT</package-info-maven-plugin.version>
+        <teacompiler.version>4.1.1-SNAPSHOT</teacompiler.version>
+        <teatools.version>4.1.1-SNAPSHOT</teatools.version>
+        <toolbox.version>4.1.1-SNAPSHOT</toolbox.version>
+        <tea.version>4.1.1-SNAPSHOT</tea.version>
+        <teaapps.version>4.1.1-SNAPSHOT</teaapps.version>
+        <teaadmin.version>4.1.1-SNAPSHOT</teaadmin.version>
+        <teaservlet.version>4.1.1-SNAPSHOT</teaservlet.version>
+        <trove.version>4.1.1-SNAPSHOT</trove.version>
     </properties>
 
     <prerequisites>
@@ -133,6 +133,22 @@
         </pluginManagement>
     </build>
 
+    <distributionManagement>
+        <!--
+            For site distribution to work, you need to add this to your settings.xml:
+            <servers>
+              <server>
+                <id>github-project-site</id>
+                <username>git</username>
+              </server>
+            </servers>
+        -->
+        <site>
+            <id>github-project-site</id>
+            <url>gitsite:git@github.com/jaxzin/teatrove.git</url>
+        </site>
+    </distributionManagement>
+
     <profiles>
         <profile>
             <id>release</id>
@@ -153,22 +169,22 @@
                         </executions>
                     </plugin>
                     <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-javadoc-plugin</artifactId>
-                      <version>2.7</version>
-                      <inherited>true</inherited>
-                      <configuration>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.7</version>
+                        <inherited>true</inherited>
+                        <configuration>
                             <!-- Override the project source directories so we don't run javadoc against generated sources -->
                             <sourcepath>${project.basedir}/src/main/java</sourcepath>
-                      </configuration>
-                      <executions>
-                        <execution>
-                          <goals>
-                            <goal>jar</goal>
-                            <goal>test-jar</goal>
-                          </goals>
-                        </execution>
-                      </executions>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>jar</goal>
+                                    <goal>test-jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -190,7 +206,7 @@
                     <systemPath>${java.home}/../lib/tools.jar</systemPath>
                 </dependency>
             </dependencies>
-        </profile>        
+        </profile>
     </profiles>
 
 </project>
