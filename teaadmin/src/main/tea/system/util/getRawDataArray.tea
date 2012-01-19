@@ -1,0 +1,74 @@
+<% template getRawDataArray (org.teatrove.teaservlet.stats.RawData[] data, String variable,
+                                Boolean useIndex, Boolean useReverse, Integer limit)
+
+    if ( useIndex == null ) {
+        useIndex = false;
+    }
+    if ( useReverse == null ) {
+        useReverse = false;
+    }
+    
+    result = '[';
+    if ( data != null ) {
+        if ( limit == null ) {
+            limit = data.length;
+        }
+        if ( limit > data.length ) {
+            limit = data.length;
+        }
+        firstIndex = 0;
+        lastIndex = data.length-1;
+        if ( data.length > limit ) {
+            lastIndex = limit-1;
+        }
+
+        if ( useReverse ) {
+            foreach ( index in firstIndex..lastIndex reverse ) {
+                if ( variable == "duration" or variable == "payload" ) {
+                    rawData = data[index];
+                    if ( useIndex ) {
+                        result = result & '[' & index & ',';
+                    }
+                    if ( variable == "duration" ) {
+                        result = result & rawData.duration;
+                    } else if ( variable == "payload" ) {
+                        result = result & rawData.contentLength;
+                    }
+                    if ( useIndex ) {
+                        result = result & ']';
+                    }
+
+                    if ( index > firstIndex ) {
+                        result = result & ',';
+                    }
+                }
+            }
+        } else {
+            foreach ( index in firstIndex..lastIndex ) {
+                if ( variable == "duration" or variable == "payload" ) {
+                    rawData = data[index];
+                    if ( useIndex ) {
+                        result = result & '[' & index & ',';
+                    }
+                    if ( variable == "duration" ) {
+                        result = result & rawData.duration;
+                    } else if ( variable == "payload" ) {
+                        result = result & rawData.contentLength;
+                    }
+                    if ( useIndex ) {
+                        result = result & ']';
+                    }
+
+                    if ( index < lastIndex ) {
+                        result = result & ',';
+                    }
+                }
+            }
+        }
+    }
+	result = result & ']';
+
+    // return result array
+    result
+
+%>

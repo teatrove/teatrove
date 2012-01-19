@@ -1,0 +1,96 @@
+<% template getBeanDetails (String bean)
+
+    admin = getTeaServletAdmin();
+
+    info = getHandyClassInfo(bean);
+
+    if ( ( info == null ) or ( info.type == null ) ) {
+        'Bean class not found: ' bean;
+    } else {
+        props = info.teaBeanPropertyDescriptors;
+
+        '<div class="table-container">'
+            '<table class="tablehead" cellpadding="3" cellspacing="1" style="border: 1px solid #CDCDCD; border-collapse: separate;">'
+                '<thead>'
+                    '<tr class="stathead">'
+                        '<th colspan="3" class="left-align">'
+                            'Properties of <strong>' info.fullName '</strong>'
+                        '</th>'
+                    '</tr>'
+                '</thead>'
+                '<tbody>'
+                if ( info.description != "" ) {
+                    '<tr class="colhead">'
+                        '<td colspan="3" class="left-align">'
+                            'Description'
+                        '</td>'
+                    '</tr>'
+                    '<tr>'
+                        '<td colspan="3" class="left-align">'
+                            info.description
+                        '</td>'
+                    '</tr>'
+                }
+                if ( props != null and props.length > 0 ) {
+                    '<tr class="colhead">'
+                        '<td class="center-align">'
+                            'Type'
+                        '</td>'
+                        '<td class="center-align">'
+                            'Name'
+                        '</td>'
+                        '<td class="center-align">'
+                            'Description'
+                        '</td>'
+                    '</tr>'
+                    rowClass = 'oddrow';
+                    foreach ( property in props ) {
+                        if ( property isa java.beans.PropertyDescriptor ) {
+                            if ( property isa org.teatrove.tea.util.KeyedPropertyDescriptor ) {
+                                propertyType = property.keyedPropertyType;
+                            } else {
+                                propertyType = property.propertyType;
+                            }
+
+                            if ( propertyType != null ) {
+                                descriptions = call system.util.getBeanDescriptions();
+                                descName = info.fullName & "-" & property.name;
+                                if ( descriptions[descName] != null ) {
+                                    description = descriptions[descName];
+                                } else {
+                                    description = property.shortDescription;
+                                }
+                                if ( description == property.name ) {
+                                    description = "&nbsp;";
+                                }
+
+                                if ( rowClass == 'oddrow' ) {
+                                    rowClass = 'evenrow';
+                                } else {
+                                    rowClass = 'oddrow';
+                                }
+
+                                '<tr class="' rowClass '">'
+                                    '<td>'
+                                        //'Problem Cannot convert actual type of "non-null java.lang.Object" to formal type of "java.lang.Class",call system.util.printClassLink(propertyType, true);'
+                                        // call system.util.printClassLink(propertyType, true);
+                                        if ( propertyType isa Class ) {
+                                            call system.util.printClassLink(propertyType, true);
+                                        }
+                                    '</td>'
+                                    '<td>'
+                                        property.name
+                                    '</td>'
+                                    '<td>'
+                                        description
+                                    '</td>'
+                                '</tr>'
+                            }
+                        }
+                    }
+                }
+                '</tbody>'
+            '</table>'
+        '</div>'
+    }
+%>

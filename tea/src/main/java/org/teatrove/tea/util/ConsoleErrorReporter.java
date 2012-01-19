@@ -69,27 +69,27 @@ public class ConsoleErrorReporter implements ErrorListener {
                 if (mPositionReader == null ||
                     mPositionReaderUnit != unit ||
                     mPositionReader.getLineNumber() >= line) {
-                    
+
                     mPositionReaderUnit = unit;
                     mPositionReader = new LinePositionReader
                         (new BufferedReader(unit.getReader()));
-                } 
+                }
 
                 mPositionReader.skipForwardToLine(line);
                 int position = mPositionReader.getNextPosition();
 
                 String lineStr = mPositionReader.readLine();
-                lineStr = mPositionReader.cleanWhitespace(lineStr);
+                lineStr = LinePositionReader.cleanWhitespace(lineStr);
                 mOut.println(lineStr);
-                
+
                 int indentSize = start - position;
-                String indent = 
-                    mPositionReader.createSequence(' ', indentSize);
+                String indent =
+                    LinePositionReader.createSequence(' ', indentSize);
 
                 int markerSize = end - start + 1;
-                String marker = 
-                    mPositionReader.createSequence('^', markerSize);
-                
+                String marker =
+                    LinePositionReader.createSequence('^', markerSize);
+
                 mOut.print(indent);
                 mOut.println(marker);
                 mOut.println();

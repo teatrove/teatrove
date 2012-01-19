@@ -1,0 +1,23 @@
+<% template handleRequest (org.teatrove.teaservlet.HttpContext.Request request)
+
+    if ( request == null ) {
+        request = getRequest();
+    }
+    
+    uri = request.requestURI;
+    if ( not endsWith(uri, "console") ) {
+        page = substring(uri, findLast(uri, '/'));
+
+        url = '/system/console?page='&page;
+        if ( request.servletPath != null ) {
+            url = request.servletPath & url;
+        }
+
+        if ( request.queryString != null ) {
+            url = url & '&' & request.queryString;
+        }
+        
+        sendRedirect(url);
+    }
+
+%>

@@ -16,10 +16,18 @@
 
 package org.teatrove.trove.util.plugin;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.resources.DefaultResourceFactory;
+import org.teatrove.trove.util.resources.ResourceFactory;
 
 /**
  * Plugin can reference other Plugins through the PluginContext. If a Plugin is
@@ -31,14 +39,28 @@ import java.util.Map;
  *
  * @author Scott Jappinen
  */
-public class PluginContext {
+public class PluginContext implements ResourceFactory {
     
-    private List mPluginListeners;
-    private Map mPluginMap;
+    private List<PluginListener> mPluginListeners;
+    private Map<String, Plugin> mPluginMap;
+    private ResourceFactory mResourceFactory;
     
     public PluginContext() {
-        mPluginListeners = new ArrayList();
-        mPluginMap = new HashMap(7);
+        this(DefaultResourceFactory.getInstance());
+    }
+    
+    public PluginContext(ResourceFactory resourceFactory) {
+        mResourceFactory = resourceFactory;
+        mPluginListeners = new ArrayList<PluginListener>();
+        mPluginMap = new HashMap<String, Plugin>(7);
+    }
+    
+    public ResourceFactory getResourceFactory() {
+        return mResourceFactory;
+    }
+    
+    public void setResourceFactory(ResourceFactory resourceFactory) {
+        this.mResourceFactory = resourceFactory;
     }
    
     /**
@@ -77,7 +99,7 @@ public class PluginContext {
      * @return Plugin the Plugin object.
      */
     public Plugin getPlugin(String name) {
-        return (Plugin) mPluginMap.get(name);
+        return mPluginMap.get(name);
     }
     
     /**
@@ -85,15 +107,70 @@ public class PluginContext {
      *
      * @return Map the map of Plugins.
      */
-    public Map getPlugins() {
-        return new HashMap(mPluginMap);		
+    public Map<String, Plugin> getPlugins() {
+        return new HashMap<String, Plugin>(mPluginMap);		
     }	
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public URL getResource(String path)
+        throws MalformedURLException {
+        
+        if (mResourceFactory == null) {
+            return null;
+        }
+        
+        return mResourceFactory.getResource(path);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InputStream getResourceAsStream(String path) {
+        if (mResourceFactory == null) {
+            return null;
+        }
+        
+        return mResourceFactory.getResourceAsStream(path);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PropertyMap getResourceAsProperties(String path) 
+        throws IOException {
+        
+        if (mResourceFactory == null) {
+            return null;
+        }
+        
+        return mResourceFactory.getResourceAsProperties(path);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PropertyMap getResourceAsProperties(String path, 
+                                               PropertyMap substitutions)
+        throws IOException {
+        
+        if (mResourceFactory == null) {
+            return null;
+        }
+        
+        return mResourceFactory.getResourceAsProperties(path, substitutions);
+    }
     
     /* Notifies all PluginListeners of a Plugin being added to this class.
      */
     protected void firePluginAddedEvent(PluginEvent event) {
         PluginListener[] listeners = new PluginListener[mPluginListeners.size()];
-        listeners = (PluginListener[]) mPluginListeners.toArray(listeners);
+        listeners = mPluginListeners.toArray(listeners);
         for (int i=0; i < listeners.length; i++) {			
             listeners[i].pluginAdded(event);
         }

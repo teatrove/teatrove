@@ -21,30 +21,32 @@ package org.teatrove.tea.compiler;
  * @author Brian S O'Neill
  */
 class StringToken extends Token {
+    private static final long serialVersionUID = 1L;
+
     private String mValue;
 
     StringToken(int sourceLine,
-                int sourceStartPos, 
+                int sourceStartPos,
                 int sourceEndPos,
                 int tokenID,
-                String value) 
+                String value)
     {
         super(sourceLine, sourceStartPos, sourceEndPos, tokenID);
         mValue = value;
     }
-    
+
     StringToken(int sourceLine,
-                int sourceStartPos, 
+                int sourceStartPos,
                 int sourceEndPos,
                 int sourceDetailPos,
                 int tokenID,
-                String value) 
+                String value)
     {
-        super(sourceLine, sourceStartPos, sourceEndPos, sourceDetailPos, 
+        super(sourceLine, sourceStartPos, sourceEndPos, sourceDetailPos,
               tokenID);
         mValue = value;
     }
-    
+
     public String getStringValue() {
         return mValue;
     }

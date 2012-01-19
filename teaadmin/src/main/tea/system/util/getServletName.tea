@@ -1,0 +1,19 @@
+<% template getServletName ()
+
+    servletName = '';
+
+    request = getRequest();
+
+    /*
+    tokens = tokenize(request.requestURI, '/');
+    if ( tokens.length > 0 ) {
+        servletName = tokens[0];
+    }
+    */
+
+    servletName = replaceFirst(request.servletPath, '/', '');
+
+    // return servlet name
+    servletName
+
+%>

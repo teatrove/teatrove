@@ -14,11 +14,35 @@
  *  limitations under the License.
  */
 
-
 package org.teatrove.tea.compiler;
 
 import java.util.Vector;
-import org.teatrove.tea.parsetree.*;
+
+import org.teatrove.tea.parsetree.AndExpression;
+import org.teatrove.tea.parsetree.ArithmeticExpression;
+import org.teatrove.tea.parsetree.Block;
+import org.teatrove.tea.parsetree.BooleanLiteral;
+import org.teatrove.tea.parsetree.BreakStatement;
+import org.teatrove.tea.parsetree.CompareExpression;
+import org.teatrove.tea.parsetree.ConcatenateExpression;
+import org.teatrove.tea.parsetree.ContinueStatement;
+import org.teatrove.tea.parsetree.Expression;
+import org.teatrove.tea.parsetree.ForeachStatement;
+import org.teatrove.tea.parsetree.IfStatement;
+import org.teatrove.tea.parsetree.Literal;
+import org.teatrove.tea.parsetree.NegateExpression;
+import org.teatrove.tea.parsetree.Node;
+import org.teatrove.tea.parsetree.NotExpression;
+import org.teatrove.tea.parsetree.NumberLiteral;
+import org.teatrove.tea.parsetree.OrExpression;
+import org.teatrove.tea.parsetree.ParenExpression;
+import org.teatrove.tea.parsetree.RelationalExpression;
+import org.teatrove.tea.parsetree.Statement;
+import org.teatrove.tea.parsetree.StatementList;
+import org.teatrove.tea.parsetree.StringLiteral;
+import org.teatrove.tea.parsetree.TernaryExpression;
+import org.teatrove.tea.parsetree.TreeMutator;
+import org.teatrove.tea.parsetree.VariableRef;
 
 /**
  * The BasicOptimizer only performs two optimizations: constant
@@ -51,20 +75,20 @@ public class BasicOptimizer {
         public Object visit(Statement node) {
             return null;
         }
-        
+
         public Object visit(StatementList node) {
             Statement[] stmts = optimizeStatements(node.getStatements());
             if (stmts == null || stmts.length == 0) {
                 return null;
             }
-            
+
             if (stmts.length == 1) {
                 return stmts[0];
             }
-            
+
             return new StatementList(node.getSourceInfo(), stmts);
         }
-        
+
         public Object visit(Block node) {
             Statement[] stmts = optimizeStatements(node.getStatements());
 
@@ -77,46 +101,46 @@ public class BasicOptimizer {
             if (fin != null) {
                 fin = (Statement)fin.accept(this);
             }
-            
+
             if (stmts == null || stmts.length == 0) {
                 if (init == null && fin == null) {
                     return null;
                 }
                 else {
-                    node = new Block(node.getSourceInfo());
+                    node.setStatements(new Statement[0]);
                 }
             }
             else {
-                node = new Block(node.getSourceInfo(), stmts);
+                node.setStatements(stmts);
             }
-            
+
             node.setInitializer(init);
             node.setFinalizer(fin);
 
             return node;
         }
-        
+
         private Statement[] optimizeStatements(Statement[] stmts) {
             if (stmts == null) {
                 return null;
             }
-            
+
             int length = stmts.length;
-            Vector v = new Vector(length);
-            
+            Vector<Statement> v = new Vector<Statement>(length);
+
             for (int i=0; i<length; i++) {
                 Statement stmt = (Statement)stmts[i].accept(this);
                 if (stmt != null) {
                     v.addElement(stmt);
                 }
             }
-            
+
             Statement[] newStmts = new Statement[v.size()];
             v.copyInto(newStmts);
-            
+
             return newStmts;
         }
-        
+
         public Object visit(BreakStatement node) {
             return (BreakStatement)super.visit(node);
         }
@@ -138,33 +162,33 @@ public class BasicOptimizer {
 
                 if (rangeValue instanceof Number &&
                     endRangeValue instanceof Number) {
-                    
+
                     if (((Number)rangeValue).intValue() >
                         ((Number)endRangeValue).intValue()) {
-                        
+
                         // Will loop zero times. Set the body to null
                         // instead of returning null because the loop
                         // variable still should be set to the first value.
                         // It is possible that the loop variable is
                         // accessed outside the loop, so it must be
                         // set to the correct value.
-                        
+
                         node.setBody(null);
                     }
                 }
             }
-            
+
             return node;
         }
-        
+
         public Object visit(IfStatement node) {
             Expression condition = visitExpression(node.getCondition());
-            
+
             Block thenPart;
             Block elsePart;
-            
+
             // If the condition is a constant boolean...
-            if (condition.isValueKnown() && 
+            if (condition.isValueKnown() &&
                 condition.getType().getObjectClass() == Boolean.class) {
                 // ... and the condition's value is true...
                 if ( ((Boolean)condition.getValue()).booleanValue() ) {
@@ -173,7 +197,7 @@ public class BasicOptimizer {
                     if (thenPart != null) {
                         thenPart = (Block)thenPart.accept(this);
                     }
-                    
+
                     return thenPart;
                 }
                 else {
@@ -182,21 +206,21 @@ public class BasicOptimizer {
                     if (elsePart != null) {
                         elsePart = (Block)elsePart.accept(this);
                     }
-                    
+
                     return elsePart;
                 }
             }
-            
+
             thenPart = node.getThenPart();
             if (thenPart != null) {
                 thenPart = (Block)thenPart.accept(this);
             }
-            
+
             elsePart = node.getElsePart();
             if (elsePart != null) {
                 elsePart = (Block)elsePart.accept(this);
             }
-            
+
             // if there is no then part, but there is an else part,
             // invert the condition and make the else part the then part.
             if (thenPart == null && elsePart != null) {
@@ -214,21 +238,21 @@ public class BasicOptimizer {
 
             return node;
         }
-        
+
         public Object visit(ParenExpression node) {
             return node.getExpression().accept(this);
         }
-        
+
         public Object visit(NegateExpression node) {
             SourceInfo info = node.getSourceInfo();
             Expression expr = visitExpression(node.getExpression());
-            
+
             if (expr.isValueKnown()) {
                 Object value = expr.getValue();
-                
+
                 if (value instanceof Number) {
                     Number number = (Number)value;
-                    
+
                     if (value instanceof Integer) {
                         return new NumberLiteral(info, -number.intValue());
                     }
@@ -246,18 +270,18 @@ public class BasicOptimizer {
             else if (expr instanceof NegateExpression) {
                 return ((NegateExpression)expr).getExpression();
             }
-            
+
             node.setExpression(expr);
             return node;
         }
-        
+
         public Object visit(NotExpression node) {
             SourceInfo info = node.getSourceInfo();
             Expression expr = visitExpression(node.getExpression());
-            
+
             if (expr.isValueKnown()) {
                 Object value = expr.getValue();
-                
+
                 if (value instanceof Boolean) {
                     boolean bv = ((Boolean)value).booleanValue();
                     return new BooleanLiteral(info, !bv);
@@ -266,20 +290,20 @@ public class BasicOptimizer {
             else if (expr instanceof NotExpression) {
                 return ((NotExpression)expr).getExpression();
             }
-            
+
             node.setExpression(expr);
             return node;
         }
-        
+
         public Object visit(ConcatenateExpression node) {
             SourceInfo info = node.getSourceInfo();
 
             Expression left = visitExpression(node.getLeftExpression());
             Expression right = visitExpression(node.getRightExpression());
-            
+
             if (left.isValueKnown() && left.getValue() instanceof String) {
                 String leftValue = (String)left.getValue();
-                if (right.isValueKnown() && 
+                if (right.isValueKnown() &&
                     right.getValue() instanceof String) {
 
                     String rightValue = (String)right.getValue();
@@ -306,27 +330,27 @@ public class BasicOptimizer {
         public strictfp Object visit(ArithmeticExpression node) {
             SourceInfo info = node.getSourceInfo();
             Token operator = node.getOperator();
-            
+
             Expression left = visitExpression(node.getLeftExpression());
             Expression right = visitExpression(node.getRightExpression());
-            
+
             if (node.getType() != null &&
                 left.isValueKnown() && right.isValueKnown()) {
                 int ID = operator.getID();
                 Object leftValue = left.getValue();
                 Object rightValue = right.getValue();
-                
+
                 Type type = left.getType();
 
-                if (leftValue instanceof Number && 
+                if (leftValue instanceof Number &&
                     rightValue instanceof Number &&
                     type.equals(right.getType())) {
-                    
-                    Class clazz = type.getObjectClass();
+
+                    Class<?> clazz = type.getObjectClass();
 
                     Number lv = (Number)leftValue;
                     Number rv = (Number)rightValue;
-                    
+
                     try {
                         if (clazz == Integer.class) {
                             int i1 = lv.intValue();
@@ -348,7 +372,7 @@ public class BasicOptimizer {
                         else if (clazz == Float.class) {
                             float f1 = lv.floatValue();
                             float f2 = rv.floatValue();
-                            
+
                             switch (ID) {
                             case Token.PLUS:
                                 return new NumberLiteral(info, f1 + f2);
@@ -365,7 +389,7 @@ public class BasicOptimizer {
                         else if (clazz == Long.class) {
                             long L1 = lv.longValue();
                             long L2 = rv.longValue();
-                            
+
                             switch (ID) {
                             case Token.PLUS:
                                 return new NumberLiteral(info, L1 + L2);
@@ -382,7 +406,7 @@ public class BasicOptimizer {
                         else if (clazz == Double.class) {
                             double d1 = lv.doubleValue();
                             double d2 = rv.doubleValue();
-                            
+
                             switch (ID) {
                             case Token.PLUS:
                                 return new NumberLiteral(info, d1 + d2);
@@ -411,7 +435,7 @@ public class BasicOptimizer {
             node.setRightExpression(right);
             return node;
         }
-        
+
         public Object visit(RelationalExpression node) {
             SourceInfo info = node.getSourceInfo();
             Token operator = node.getOperator();
@@ -429,7 +453,7 @@ public class BasicOptimizer {
                     // Widening case. i.e. (5 isa Number) is always true.
                     return new BooleanLiteral(info, true);
                 }
- 
+
                 node.setLeftExpression(left);
                 return node;
             }
@@ -445,16 +469,16 @@ public class BasicOptimizer {
                 Type type = leftType;
 
                 // TODO: support JDK1.2 Comparable interface
-                
+
                 if (leftValue instanceof Number &&
                     rightValue instanceof Number &&
                     type.equals(rightType)) {
-                    
-                    Class clazz = type.getObjectClass();
-                    
+
+                    Class<?> clazz = type.getObjectClass();
+
                     Number lv = (Number)leftValue;
                     Number rv = (Number)rightValue;
-                        
+
                     if (clazz == Integer.class) {
                         int i1 = lv.intValue();
                         int i2 = rv.intValue();
@@ -534,10 +558,10 @@ public class BasicOptimizer {
                 }
                 else if (leftValue instanceof String &&
                          rightValue instanceof String) {
-                    
-                    int result = 
+
+                    int result =
                         ((String)leftValue).compareTo((String)rightValue);
-                    
+
                     switch (ID) {
                     case Token.EQ:
                         return new BooleanLiteral(info, result == 0);
@@ -564,7 +588,7 @@ public class BasicOptimizer {
 
                     if (right.isValueKnown() && rightValue != null) {
                         boolean rv = ((Boolean)rightValue).booleanValue();
-                        
+
                         if (ID == Token.EQ) {
                             return new BooleanLiteral(info, lv == rv);
                         }
@@ -634,7 +658,7 @@ public class BasicOptimizer {
             }
 
             // Optimize tests against null.
-            
+
             boolean leftIsNull = left.isValueKnown() && leftValue == null;
             boolean rightIsNull = right.isValueKnown() && rightValue == null;
 
@@ -669,13 +693,13 @@ public class BasicOptimizer {
             node.setRightExpression(right);
             return node;
         }
-        
+
         public Object visit(AndExpression node) {
             SourceInfo info = node.getSourceInfo();
-             
+
             Expression left = visitExpression(node.getLeftExpression());
             Expression right = visitExpression(node.getRightExpression());
-            
+
             if (left.isValueKnown()) {
                 Object leftValue = left.getValue();
                 if (leftValue instanceof Boolean) {
@@ -690,7 +714,7 @@ public class BasicOptimizer {
                     }
                 }
             }
-            
+
             if (right.isValueKnown()) {
                 Object rightValue = right.getValue();
                 if (rightValue instanceof Boolean) {
@@ -704,18 +728,18 @@ public class BasicOptimizer {
                     }
                 }
             }
-            
+
             node.setLeftExpression(left);
             node.setRightExpression(right);
             return node;
         }
-        
+
         public Object visit(OrExpression node) {
             SourceInfo info = node.getSourceInfo();
-            
+
             Expression left = visitExpression(node.getLeftExpression());
             Expression right = visitExpression(node.getRightExpression());
-            
+
             if (left.isValueKnown()) {
                 Object leftValue = left.getValue();
                 if (leftValue instanceof Boolean) {
@@ -730,7 +754,7 @@ public class BasicOptimizer {
                     }
                 }
             }
-            
+
             if (right.isValueKnown()) {
                 Object rightValue = right.getValue();
                 if (rightValue instanceof Boolean) {
@@ -744,9 +768,95 @@ public class BasicOptimizer {
                     }
                 }
             }
+
+            node.setLeftExpression(left);
+            node.setRightExpression(right);
+            return node;
+        }
+
+        public Object visit(TernaryExpression node) {
+            Expression condition = visitExpression(node.getCondition());
+
+            Expression thenPart;
+            Expression elsePart;
+
+            // If the condition is a constant boolean...
+            if (condition.isValueKnown() &&
+                condition.getType().getObjectClass() == Boolean.class) {
+                // ... and the condition's value is true...
+                if ( ((Boolean)condition.getValue()).booleanValue() ) {
+                    // ... then the then part will always execute.
+                    thenPart = node.getThenPart();
+                    if (thenPart != null) {
+                        thenPart = (Expression)thenPart.accept(this);
+                    }
+
+                    return thenPart;
+                }
+                else {
+                    // ... else the else part will always execute.
+                    elsePart = node.getElsePart();
+                    if (elsePart != null) {
+                        elsePart = (Expression)elsePart.accept(this);
+                    }
+
+                    return elsePart;
+                }
+            }
+
+            thenPart = node.getThenPart();
+            if (thenPart != null) {
+                thenPart = (Expression)thenPart.accept(this);
+            }
+
+            elsePart = node.getElsePart();
+            if (elsePart != null) {
+                elsePart = (Expression)elsePart.accept(this);
+            }
+
+            // if there is no then part, but there is an else part,
+            // invert the condition and make the else part the then part.
+            if (thenPart == null && elsePart != null) {
+                thenPart = elsePart;
+                elsePart = null;
+                condition.convertTo(Type.BOOLEAN_TYPE);
+                condition = new NotExpression(condition.getSourceInfo(),
+                                              condition);
+                condition.convertTo(Type.BOOLEAN_TYPE);
+            }
+
+            node.setCondition(condition);
+            node.setThenPart(thenPart);
+            node.setElsePart(elsePart);
+
+            return node;
+        }
+        
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        public Object visit(CompareExpression node) {
+            Expression left = visitExpression(node.getLeftExpression());
+            Expression right = visitExpression(node.getRightExpression());
+
+            if (left.isValueKnown() && right.isValueKnown()) {
+                Object lvalue = left.getValue();
+                Object rvalue = right.getValue();
+                if (lvalue != null && lvalue != null) {
+                    if (lvalue instanceof Comparable &&
+                        lvalue.getClass().isAssignableFrom(rvalue.getClass())) {
+                        int result = ((Comparable) lvalue).compareTo(rvalue);
+                        return new NumberLiteral(node.getSourceInfo(), result);
+                    }
+                    else {
+                        int result = 
+                            lvalue.toString().compareTo(rvalue.toString());
+                        return new NumberLiteral(node.getSourceInfo(), result);
+                    }
+                }
+            }
             
             node.setLeftExpression(left);
             node.setRightExpression(right);
+            
             return node;
         }
     }

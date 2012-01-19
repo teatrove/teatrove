@@ -23,6 +23,7 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Guy A. Molinari
  */
 public class ContinueStatement extends Statement {
+    private static final long serialVersionUID = 1L;
 
     public ContinueStatement(SourceInfo info) {
         super(info);

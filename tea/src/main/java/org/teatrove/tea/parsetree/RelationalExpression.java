@@ -26,10 +26,12 @@ import org.teatrove.tea.compiler.Token;
  *
  * <p>Operator returned is one of Token.EQ, Token.NE, Token.LT, Token.GT,
  * Token.LE, Token.GE or Token.ISA.
- * 
+ *
  * @author Brian S O'Neill
  */
 public class RelationalExpression extends BinaryLogicalExpression {
+    private static final long serialVersionUID = 1L;
+
     private TypeName mTypeName;
 
     public RelationalExpression(SourceInfo info,

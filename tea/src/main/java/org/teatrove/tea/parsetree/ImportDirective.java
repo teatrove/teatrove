@@ -25,6 +25,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Guy Molinari
  */
 public class ImportDirective extends Directive {
+    private static final long serialVersionUID = 1L;
+
     private String mName;
 
     /**

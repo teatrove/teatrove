@@ -1,0 +1,50 @@
+<% template AdminShell(String subTitle) {...}
+admin = getTeaServletAdmin()
+if (subTitle == null) {
+    subTitle = ""
+}
+%>
+<!DOCTYPE html>
+<html><head><title>TeaServlet <% subTitle %></title></head>
+<body bgcolor="#ffffff" link="#000066" vlink="333399">
+
+
+<table width="100%" cellspacing="0" cellpadding="4" border="0">
+  <tr bgcolor="#737398">
+    <td align="left">
+      <font size="4" face="Arial" color="#FFFFFF"><b>TeaServlet Administration</b></font> <font size="2" face="Arial" color="#FFFFFF"><b>(<% getRequest().serverName %>)</b></font>
+    </td><td align="right">
+      <font size="2" face="Arial" color="#FFFFFF"><b>TeaServlet <% admin.teaServletVersion %></b></font>
+    </td>
+  </tr>
+    
+    <%firstRow = true
+    foreach (adminLink in admin.adminLinks) {%>
+  <tr>
+    <td <% if (not firstRow) {'colspan="2"'} %> >
+      <font size="2" face="Arial" color="#000000"><b>
+
+    <i><% adminLink.appName '</i> - '  
+    linkCount = adminLink.links.length
+    foreach (link in adminLink.links) {
+        linkCount = linkCount - 1
+        call MenuLink(link.location,link.name) 
+        if (linkCount > 0) {' | '}
+    }%>
+
+      </b></font>
+    </td><% if (firstRow) {%><td align = right>
+      <font size="2" face="Arial" color="#000000"><b>
+      <% call MenuLink("/system/teaservlet/About", "About") %>
+      
+    <td><%
+    firstRow =false}%>
+  </tr>    
+<%}%>
+
+</table>
+<p>
+
+<% ... %>
+
+</body></html>

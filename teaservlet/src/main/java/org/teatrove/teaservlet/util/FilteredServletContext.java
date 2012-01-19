@@ -148,7 +148,7 @@ public class FilteredServletContext implements ServletContext {
         return mContext.getServletNames();
     }
 
-    //public String getContextPath() {
-    //    return mContext.getContextPath();
-    //}
+    public String getContextPath() {
+        return mContext.getContextPath();
+    }
 }

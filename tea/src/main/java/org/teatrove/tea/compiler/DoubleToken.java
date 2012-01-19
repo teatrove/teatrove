@@ -21,12 +21,14 @@ package org.teatrove.tea.compiler;
  * @author Brian S O'Neill
  */
 class DoubleToken extends Token {
+    private static final long serialVersionUID = 1L;
+
     private double mValue;
 
     DoubleToken(int sourceLine,
-                int sourceStartPos, 
+                int sourceStartPos,
                 int sourceEndPos,
-                double value) 
+                double value)
     {
         super(sourceLine, sourceStartPos, sourceEndPos, Token.NUMBER);
         mValue = value;

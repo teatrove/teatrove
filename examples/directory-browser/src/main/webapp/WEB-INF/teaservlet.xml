@@ -1,0 +1,68 @@
+<teaservlet>
+
+	<!-- 
+	define the default template when just the directory is provided 
+	-->
+    
+    <template>
+        <default>index</default>
+    </template>
+
+	<!-- 
+	define the logging states for the TeaServlet 
+	-->
+    
+    <log>
+        <debug>false</debug>
+        <info>true</info>
+        <warn>true</warn>
+        <error>true</error>
+    </log>
+
+	<!-- 
+	define the administration key required to access the administration pages
+	ie: http://[host]:[port]/[context]/system/teaservlet/Admin?[key]=[value]
+	-->
+    
+    <admin.key>secret</admin.key>
+    <admin.value>password</admin.value>
+
+	<!-- 
+	define any plugins for the TeaServlet environment. Plugins may help control
+	the TeaServlet and provide data to other applications or plugins.
+	-->
+    
+    <plugins></plugins>
+
+	<!-- 
+	define the list of applications that the TeaServlet should load and use
+	to provide functionality to the templates.
+	-->
+	
+    <applications>
+
+		<!-- 
+		load the standard TeaServlet administration console and methods
+		-->
+		
+        <TeaServletAdmin>
+            <class>org.teatrove.teaservlet.AdminApplication</class>
+        </TeaServletAdmin>
+        
+        <!-- 
+        load our custom DirectoryBrowserApplication that provides access to
+        functionality to traverse a directory structure.  The <init> block may 
+        be used to provide config data to the application during the init 
+        method.
+        -->
+        
+        <DirectoryBrowserApplication>
+        	<class>org.teatrove.examples.directorybrowser.DirectoryBrowserApplication</class>
+        	<init>
+        		<defaultPath>/</defaultPath>
+        	</init>
+        </DirectoryBrowserApplication>
+
+    </applications>
+
+</teaservlet>

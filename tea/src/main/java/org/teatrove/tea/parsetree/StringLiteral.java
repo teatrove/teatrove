@@ -26,6 +26,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public class StringLiteral extends Literal {
+    private static final long serialVersionUID = 1L;
+
     private String mValue;
 
     public StringLiteral(SourceInfo info, String value) {

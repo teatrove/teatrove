@@ -16,6 +16,7 @@
 
 package org.teatrove.tea.engine;
 
+import java.util.List;
 import java.util.Map;
 
 import org.teatrove.tea.compiler.ErrorListener;
@@ -25,7 +26,7 @@ import org.teatrove.tea.compiler.ErrorListener;
  * @author Jonathan Colwell
  */
 public interface TemplateErrorListener extends ErrorListener {
-    public Map getTemplateErrors();
+    public Map<String, List<TemplateError>> getTemplateErrors();
 
     /**
      * Close listener to dispose of any resources (i.e. open files) that the

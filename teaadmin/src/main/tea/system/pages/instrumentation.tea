@@ -1,0 +1,49 @@
+<% template instrumentation (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+    if ( request.parameters["view"] != null ) {
+        view = request.parameters["view"];
+    } else {
+        view = "both";
+    }
+
+    trend = "duration";
+
+%>
+		<article>
+			<section>
+				<div class="controls">
+					<div class="controls-wrapper">
+						<div id="loadingIndicator"></div>
+						<!--div role="label">Focus:</div>
+						<div id="buttonset-focus" class="buttonset">
+							<input type="radio" id="focus_radio1" name="radio" checked="checked" /><label for="focus_radio1">Duration</label>
+							<input type="radio" id="focus_radio2" name="radio" /><label for="focus_radio2">Payload</label>
+						</div-->
+						<div role="label">Compile:</div>
+						<div id="buttonset-compile" class="buttonset">
+							<input type="radio" id="compile_radio1" name="radio" /><label for="compile_radio1">Changes</label>
+							<input type="radio" id="compile_radio2" name="radio" /><label for="compile_radio2">All</label>
+							<% if ( getTeaServletAdmin().clusteredServers != null ) { %>
+							<input type="radio" id="compile_radio3" name="radio" /><label for="compile_radio3">Cluster</label>
+							<% } %>
+						</div>
+						<div role="label">View:</div>
+						<div id="buttonset-view" class="buttonset">
+							<input type="radio" id="view_radio1" name="radio" <% if ( view == "streaming" ) { 'checked="checked" ' } %>/><label id="view_streaming" for="view_radio1">Streaming</label>
+							<input type="radio" id="view_radio2" name="radio" <% if ( view == "overall" ) { 'checked="checked" ' } %>/><label id="view_overall" for="view_radio2">Overall</label>
+							<input type="radio" id="view_radio3" name="radio" <% if ( view == "both" ) { 'checked="checked" ' } %>/><label id="view_both" for="view_radio3">Both</label>
+						</div>
+					</div>
+				</div>
+                <div id="instrumentation-container" class="table-container">
+<%
+                    call system.format.getInstrumentationTable(view, trend);
+%>
+                </div>
+			</section>
+		</article>

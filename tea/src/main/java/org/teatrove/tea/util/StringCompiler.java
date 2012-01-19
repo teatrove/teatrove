@@ -15,14 +15,17 @@
  */
 
 package org.teatrove.tea.util;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.OutputStream;
 import java.util.Hashtable;
-import org.teatrove.trove.util.ClassInjector;
+
 import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.trove.util.ClassInjector;
 
 /**
  * Simple compiler implementation that compiles a Tea template whose source
@@ -35,7 +38,7 @@ public class StringCompiler extends Compiler {
 
     private ClassInjector mInjector;
     private String mPackagePrefix;
-    private Hashtable mTemplateSources;
+    private Hashtable<String, String> mTemplateSources;
 
     /**
      * @param injector ClassInjector to feed generated classes into
@@ -52,7 +55,7 @@ public class StringCompiler extends Compiler {
         super();
         mInjector = injector;
         mPackagePrefix = packagePrefix;
-        mTemplateSources = new Hashtable();
+        mTemplateSources = new Hashtable<String, String>();
     }
 
     public boolean sourceExists(String name) {
@@ -71,7 +74,7 @@ public class StringCompiler extends Compiler {
         mTemplateSources.put(name, source);
     }
 
-    private class Unit extends CompilationUnit {
+    private class Unit extends AbstractCompilationUnit {
         private String mSourceFileName;
 
         public Unit(String name, Compiler compiler) {
@@ -100,16 +103,6 @@ public class StringCompiler extends Compiler {
 
         public void resetOutputStream() {
             mInjector.resetStream(getClassName());
-        }
-
-        protected String getClassName() {
-            String className = getName();
-            String pack = getTargetPackage();
-            if (pack != null && pack.length() > 0) {
-                className = pack + '.' + className;
-            }
-
-            return className;
         }
     }
 }

@@ -45,7 +45,7 @@ public interface DynamicContextSource extends ContextSource {
      * @param param {@link TeaExecutionEngine engine} specific parameter that
      * may be used to create the context instance
      */
-    public Object createContext(Class contextClass, Object param)
+    public Object createContext(Class<?> contextClass, Object param)
         throws Exception;
 }
 

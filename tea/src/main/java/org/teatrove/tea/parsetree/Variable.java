@@ -30,6 +30,8 @@ import org.teatrove.trove.generics.GenericType;
  * @see VariableRef
  */
 public class Variable extends Node {
+    private static final long serialVersionUID = 1L;
+
     private String mName;
     private TypeName mTypeName;
     private Type mType;
@@ -199,5 +201,28 @@ public class Variable extends Node {
         }
 
         return new TypeName(info, genericTypes, type);
+    }
+    
+    public String toString() {
+        String className = Object.class.getName();
+        Type type = getType();
+        if (type != null) {
+            className = type.getClassName();
+        }
+        else {
+            TypeName typeName = getTypeName();
+            type = typeName.getType();
+            if (type != null) {
+                className = type.getClassName();
+            }
+            else {
+                String name = typeName.getName();
+                if (name != null) {
+                    className = name;
+                }
+            }
+        }
+        
+        return "Variable(" + className + " " + getName() + ")";
     }
 }

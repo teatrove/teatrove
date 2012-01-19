@@ -26,6 +26,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  */
 public class ExceptionGuardStatement extends Statement {
+    private static final long serialVersionUID = 1L;
+
     private Statement mGuarded;
     private Statement mReplacement;
 

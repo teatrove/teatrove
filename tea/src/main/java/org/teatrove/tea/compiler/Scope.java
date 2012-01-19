@@ -36,19 +36,20 @@ import java.util.Set;
  */
 public class Scope {
     // Shared variables, maps Variable objects to Variable objects.
-    private Map mVariables;
+    private Map<Variable, Variable> mVariables;
     private Scope mParent;
-    private Collection mChildren;
+    private Collection<Scope> mChildren;
     
     // Set of private Variables declared in this scope.
-    private Set mPrivateVars;
+    private Set<Variable> mPrivateVars;
 
     // Maps String variable names to Variable objects for locally available
     // variables.
-    private Map mDeclared = new HashMap(11);
+    private Map<String, Variable> mDeclared = new HashMap<String, Variable>(11);
 
     // Contains a list of all the VariableRefs used in this scope.
-    private Collection mVariableRefs = new ArrayList();
+    private Collection<VariableRef> mVariableRefs =
+        new ArrayList<VariableRef>();
     
     public Scope() {
         this(null);
@@ -58,12 +59,12 @@ public class Scope {
         if ((mParent = parent) != null) {
             mVariables = parent.mVariables;
             if (parent.mChildren == null) {
-                parent.mChildren = new ArrayList(5);
+                parent.mChildren = new ArrayList<Scope>(5);
             }
             parent.mChildren.add(this);
         }
         else {
-            mVariables = new HashMap(53);
+            mVariables = new HashMap<Variable, Variable>(53);
         }
     }
 
@@ -82,7 +83,7 @@ public class Scope {
             return new Scope[0];
         }
         else {
-            return (Scope[])mChildren.toArray(new Scope[mChildren.size()]);
+            return mChildren.toArray(new Scope[mChildren.size()]);
         }
     }
 
@@ -106,7 +107,7 @@ public class Scope {
      */
     public Variable declareVariable(Variable var, boolean isPrivate) {
         if (mVariables.containsKey(var)) {
-            var = (Variable)mVariables.get(var);
+            var = mVariables.get(var);
         }
         else {
             mVariables.put(var, var);
@@ -116,7 +117,7 @@ public class Scope {
 
         if (isPrivate) {
             if (mPrivateVars == null) {
-                mPrivateVars = new HashSet(7);
+                mPrivateVars = new HashSet<Variable>(7);
             }
             mPrivateVars.add(var);
         }
@@ -160,7 +161,7 @@ public class Scope {
     public Variable getDeclaredVariable(String name, boolean publicOnly) {
         //private Set mPrivateVars;
 
-        Variable var = (Variable)mDeclared.get(name);
+        Variable var = mDeclared.get(name);
         if (var != null) {
             // If its okay to be private or its public then...
             if (!publicOnly || mPrivateVars == null ||
@@ -182,8 +183,8 @@ public class Scope {
      * @return non-null array of locally declared variables
      */
     private Variable[] getLocallyDeclaredVariables() {
-        Collection vars = mDeclared.values();
-        return (Variable[])vars.toArray(new Variable[vars.size()]);
+        Collection<Variable> vars = mDeclared.values();
+        return vars.toArray(new Variable[vars.size()]);
     }
     
     /**
@@ -215,19 +216,20 @@ public class Scope {
      * @return non-null array of VariableRefs.
      */
     public VariableRef[] getVariableRefs() {
-        Collection allRefs = new ArrayList();
+        Collection<VariableRef> allRefs = new ArrayList<VariableRef>();
         fillVariableRefs(allRefs, this);
-        return (VariableRef[])allRefs.toArray(new VariableRef[allRefs.size()]);
+        return allRefs.toArray(new VariableRef[allRefs.size()]);
     }
 
-    private static void fillVariableRefs(Collection refs, Scope scope) {
+    private static void fillVariableRefs(Collection<VariableRef> refs,
+                                         Scope scope) {
         refs.addAll(scope.mVariableRefs);
 
-        Collection children = scope.mChildren;
+        Collection<Scope> children = scope.mChildren;
         if (children != null) {
-            Iterator it = children.iterator();
+            Iterator<Scope> it = children.iterator();
             while (it.hasNext()) {
-                fillVariableRefs(refs, (Scope)it.next());
+                fillVariableRefs(refs, it.next());
             }
         }
     }
@@ -240,7 +242,7 @@ public class Scope {
      */
     public VariableRef[] getLocalVariableRefs() {
         VariableRef[] refs = new VariableRef[mVariableRefs.size()];
-        return (VariableRef[])mVariableRefs.toArray(refs);
+        return mVariableRefs.toArray(refs);
     }
 
     /**
@@ -253,14 +255,15 @@ public class Scope {
             return new VariableRef[0];
         }
 
-        Collection allRefs = new ArrayList();
+        Collection<VariableRef> allRefs = new ArrayList<VariableRef>();
         fillVariableRefs(allRefs, this);
 
-        Collection refs = new ArrayList(allRefs.size());
+        Collection<VariableRef> refs =
+            new ArrayList<VariableRef>(allRefs.size());
 
-        Iterator it = allRefs.iterator();
+        Iterator<VariableRef> it = allRefs.iterator();
         while (it.hasNext()) {
-            VariableRef ref = (VariableRef)it.next();
+            VariableRef ref = it.next();
             Variable var = ref.getVariable();
             if (var != null &&
                 parent.getDeclaredVariable(var.getName()) == var) {
@@ -269,7 +272,7 @@ public class Scope {
         }
 
         VariableRef[] refsArray = new VariableRef[refs.size()];
-        return (VariableRef[])refs.toArray(refsArray);
+        return refs.toArray(refsArray);
     }
 
     /**
@@ -282,11 +285,12 @@ public class Scope {
             return new VariableRef[0];
         }
 
-        Collection refs = new ArrayList(mVariableRefs.size());
+        Collection<VariableRef> refs =
+            new ArrayList<VariableRef>(mVariableRefs.size());
 
-        Iterator it = mVariableRefs.iterator();
+        Iterator<VariableRef> it = mVariableRefs.iterator();
         while (it.hasNext()) {
-            VariableRef ref = (VariableRef)it.next();
+            VariableRef ref = it.next();
             Variable var = ref.getVariable();
             if (var != null &&
                 parent.getDeclaredVariable(var.getName()) == var) {
@@ -295,7 +299,7 @@ public class Scope {
         }
         
         VariableRef[] refsArray = new VariableRef[refs.size()];
-        return (VariableRef[])refs.toArray(refsArray);
+        return refs.toArray(refsArray);
     }
 
     /**
@@ -339,16 +343,16 @@ public class Scope {
      * @return variables representing the intersection
      */
     public Variable[] intersect(Scope scope) {
-        Collection intersection = new ArrayList();
+        Collection<Variable> intersection = new ArrayList<Variable>();
         
         // A set of variable names that have been moved into the intersection.
-        Set matchedNames = new HashSet(7);
+        Set<String> matchedNames = new HashSet<String>(7);
 
         intersectFrom(this, scope, matchedNames, intersection);
         intersectFrom(scope, this, matchedNames, intersection);
 
         Variable[] vars = new Variable[intersection.size()];
-        return (Variable[])intersection.toArray(vars);
+        return intersection.toArray(vars);
     }
 
     /**
@@ -372,21 +376,21 @@ public class Scope {
             return new Variable[0];
         }
 
-        Collection promotion = new ArrayList();
+        Collection<Variable> promotion = new ArrayList<Variable>();
         
         // A set of variable names that have been moved into the promotion.
-        Set matchedNames = new HashSet(7);
+        Set<String> matchedNames = new HashSet<String>(7);
 
         intersectFrom(this, parent, matchedNames, promotion);
 
         Variable[] vars = new Variable[promotion.size()];
-        return (Variable[])promotion.toArray(vars);
+        return promotion.toArray(vars);
     }
 
     private static void intersectFrom(Scope scope1, Scope scope2,
-                                      Set matchedNames,
-                                      Collection vars) {
-        Set privates1 = scope1.mPrivateVars;
+                                      Set<String> matchedNames,
+                                      Collection<Variable> vars) {
+        Set<Variable> privates1 = scope1.mPrivateVars;
 
         Variable[] vars1 = scope1.getLocallyDeclaredVariables();
         for (int i=0; i<vars1.length; i++) {
@@ -468,7 +472,7 @@ public class Scope {
 
             buf.append(indentMore);
             
-            Set privateVars = scope.mPrivateVars;
+            Set<Variable> privateVars = scope.mPrivateVars;
             if (privateVars != null && privateVars.contains(var)) {
                 buf.append("private ");
             }

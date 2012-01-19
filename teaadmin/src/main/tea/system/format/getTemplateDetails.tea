@@ -1,0 +1,236 @@
+<% template getTemplateDetails (String name)
+
+    admin = getTeaServletAdmin();
+
+    info = getTemplateInfo(name);
+    templateStats = getTemplateStats(name);
+
+    pathPrefix = call system.util.getPathPrefix();
+
+    if ( info == null ) {
+        'Template not found: ' name;
+    } else {
+        currentTime = currentDate().time;
+        if ( templateStats != null ) {
+            overallStart = call system.util.getRelativeTimeText(currentTime, currentTime-templateStats.cumulativeServiceTime, false, null);
+            overallDuration = call system.util.getRelativeTimeText(currentTime, currentTime-templateStats.cumulativeServiceTime, true, null);
+
+            overallStress = call system.util.getTemplateStressValue(templateStats);
+            overallStress = overallStress * 100;
+
+            numberFormat("#,###,###");
+            topLevelInvokes = templateStats.servicedCount;
+            topLevelInvokesString = topLevelInvokes & '';
+            numberFormat(null);
+        } else {
+            aggregateIntervals = null;
+            aggregateIntervalForRawData = null;
+            rawData = null;
+
+            numberFormat("0.00");
+            averageStressLevel = (random() * 100) & "%";
+            averageTime = 0;
+            averageTimeString = "0.00";
+            averageThroughput = "0";
+            numberFormat(null);
+
+            overallStart = "";
+            overallDuration = "";
+
+            overallStress = "";
+
+            topLevelInvokes = 0;
+            topLevelInvokesString = topLevelInvokes & '';
+        }
+        
+        '<div class="table-container">'
+            '<table class="tablehead" cellpadding="3" cellspacing="1">'
+                '<thead>'
+                    '<tr class="stathead">'
+                        '<th colspan="2">Details for ' name '</th>'
+                    '</tr>'
+                '</thead>'
+                '<tbody>'
+                    '<tr class="colhead">'
+                        '<td colspan="2">General</td>'
+                    '</tr>'
+                    '<tr class="evenrow">'
+                        '<td>Last Successful Compile</td>'
+                        '<td>' info.lastModifiedDate '</td>'
+                    '</tr>'
+                    '<tr class="oddrow">'
+                        '<td>Parameters</td>'
+                        '<td>'
+                            if ( info.parameterTypes.length > 1 ) {
+                                foreach ( t in 1..info.parameterTypes.length - 1 ) {
+                                    if ( t != 1 ) {
+                                        ', '
+                                    }
+                                    formatTypeDesc(info.parameterTypes[t])
+                                }
+                            } else {
+                                'None'
+                            }
+                        '</td>'
+                    '</tr>'
+                    '<tr class="evenrow">'
+                        '<td>Return Type</td>'
+                        '<td>' formatTypeDesc(info.returnType) '</td>'
+                    '</tr>'
+
+                    '<tr class="colhead">'
+                        '<td colspan="2">Tracking</td>'
+                    '</tr>'
+                    '<tr class="evenrow">'
+                        '<td>Start</td>'
+                        '<td>' overallStart '</td>'
+                    '</tr>'
+                    '<tr class="oddrow">'
+                        '<td>Duration</td>'
+                        '<td>' overallDuration '</td>'
+                    '</tr>'
+                    '<tr class="evenrow">'
+                        '<td>Invokes</td>'
+                        '<td>' topLevelInvokesString '</td>'
+                    '</tr>'
+
+                    '<tr class="colhead">'
+                        '<td colspan="2">Callees</td>'
+                    '</tr>'
+                    if ( info.dependents.length != 0 ) {
+                        foreach ( j in 0..info.dependents.length-1 ) {
+                            dependent = info.dependents[j];
+                            dependent = replace(dependent, "com/go/teaservlet/template/", "");
+                            dependent = replace(dependent, "org/teatrove/teaservlet/template/", "");
+
+                            templateNamePath = dependent;
+                            templateNamePath = replace(templateNamePath, '/', '.');
+
+                            templateTokens = tokenize(dependent, '/');
+                            templateFile = templateTokens[templateTokens.length-1];
+                            templatePath = pathPrefix & replaceLast(dependent, templateFile, '');
+
+                            rowClass = 'oddrow';
+                            if ( j % 2 == 1 ) {
+                                rowClass = 'evenrow';
+                            }
+
+                            '<tr class="' rowClass '">\n'
+                                '<td colspan="2">'
+                                    //'<a href="?page=template_info&name=' templateNamePath '" title="Get template info">' templatePath templateFile '</a>'
+                                    '<a href="format/getTemplateDetails?name=' templateNamePath '" title="Get template info">' templatePath templateFile '</a>'
+                                '</td>'
+                            '</tr>\n'
+                        }
+                    } else {
+                        '<tr class="oddrow">'
+                            '<td colspan="2">None</td>\n'
+                        '</tr>\n'
+                    }
+
+                    '<tr class="colhead">'
+                        '<td colspan="2">Functions</td>'
+                    '</tr>'
+                    if ( info.appMethodsCalled.length != 0 ) {
+                        foreach ( j in 0..info.appMethodsCalled.length-1 ) {
+                            method = info.appMethodsCalled[j];
+                            paramString = "(";
+                            foreach ( k in method.params ) {
+                               p = k & "";
+                               if ( findLast(k, "/") != -1 ) {
+                                   p = substring(k, findLast(k, "/") + 1, findLast(k, ";"))
+                               }
+                               paramString = paramString & p & ", ";
+                            }
+                            if ( method.params != null and method.params.length > 0 ) {
+                               paramString = substring(paramString, 0, paramString.length - 2);
+                            }
+                            paramString = paramString & ")";
+
+                            rowClass = 'oddrow';
+                            if ( j % 2 == 1 ) {
+                                rowClass = 'evenrow';
+                            }
+
+                            '<tr class="' rowClass '">\n'
+                                '<td colspan="2">'
+                                    functionName = 'Anonymous';
+                                    descriptor = method.descriptorStr;
+                                    if ( descriptor != null and descriptor != '' ) {
+                                        descriptor = replace(descriptor, '$', '.');
+                                        descriptorFunction = getFunction(descriptor);
+                                        if ( descriptorFunction != null ) {
+                                            functionName = replace(descriptorFunction.descriptor.name,"$",".");
+                                            call system.util.printMethodLink(descriptorFunction.descriptor, 1);
+                                        }
+                                    }
+                                    '&nbsp;'
+                                    paramString
+                                '</td>'
+                            '</tr>'
+                        }
+                    } else {
+                        '<tr class="oddrow">'
+                            '<td colspan="2">None</td>\n'
+                        '</tr>\n'
+                    }
+
+                    '<tr class="colhead">'
+                        '<td colspan="2">Callers</td>'
+                    '</tr>'
+                    callers = getCallers(name);
+                    if ( callers.length != 0 ) {
+                        foreach ( j in 0..callers.length-1 ) {
+                            caller = callers[j];
+                            callerName = caller.shortName;
+
+                            callerNamePath = callerName;
+                            compareName = '/' & callerName;
+                            callerNamePath = replace(callerNamePath, '/', '.');
+
+                            callerTemplateInfo = getTemplateInfo(callerNamePath);
+                            callerTokens = tokenize(callerName, '/');
+                            callerFile = callerTokens[callerTokens.length-1];
+                            callerPath = pathPrefix & replaceLast(callerName, callerFile, '');
+
+                            rowClass = 'oddrow';
+                            if ( j % 2 == 1 ) {
+                                rowClass = 'evenrow';
+                            }
+
+                            callerTemplateInfo = getTemplateInfo(callerNamePath);
+                            if ( callerTemplateInfo.dependents.length != 0 ) {
+                                foreach ( k in 0..callerTemplateInfo.dependents.length-1 ) {
+                                    callerDependent = callerTemplateInfo.dependents[k];
+                                    callerDependent = replace(callerDependent, "com/go/teaservlet/template/", "");
+                                    callerDependent = replace(callerDependent, "org/teatrove/teaservlet/template/", "");
+
+                                    callerDependentNamePath = callerDependent;
+                                    callerDependentNamePath = replace(callerDependentNamePath, '/', '.');
+
+                                    callerDependentTokens = tokenize(callerDependent, '/');
+                                    callerDependentFile = callerDependentTokens[callerDependentTokens.length-1];
+                                    callerDependentPath = pathPrefix & replaceLast(callerDependent, callerDependentFile, '');
+
+                                    if ( callerDependentNamePath == name ) {
+                                        '<tr class="' rowClass '">\n'
+                                            '<td colspan="2">'
+                                                //'<a href="' callerNamePath callerFile'" title="Get template info">' callerPath '/' callerFile '</a>'
+                                                '<a href="format/getTemplateDetails?name=' callerNamePath '" title="Get template info">' callerPath callerFile '</a>'
+                                            '</td>'
+                                        '</tr>\n'
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        '<tr class="oddrow">'
+                            '<td colspan="2">None</td>\n'
+                        '</tr>\n'
+                    }
+                '</tbody>'
+            '</table>'
+        '</div>'
+    }
+%>

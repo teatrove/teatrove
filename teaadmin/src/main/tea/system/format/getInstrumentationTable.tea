@@ -1,0 +1,398 @@
+<% template getInstrumentationTable (String view, String trend)
+
+    admin = getTeaServletAdmin();
+    
+    if ( view == null ) {
+        view = "both";
+    }
+    if ( trend == null ) {
+        trend = "duration";
+    }
+    
+    request = getRequest();
+    parameters = request.parameters;
+
+    pathPrefix = call system.util.getPathPrefix();
+
+    sort = parameters['sort'];
+    if ( sort == null ) {
+        sort = "overall_serviced";
+    } else {
+        sort = sort.asString;
+    }
+    
+    descending = parameters['descending'];
+    if ( descending == null ) {
+        descending = true;
+    } else {
+        descending = descending.asString;
+        if ( descending == 'true' ) {
+            descending = true;
+        } else {
+            descending = false;
+        }
+    }
+
+    allTemplateStats = getTemplateStats();
+
+    if ( sort == "resource" ) {
+
+        sort(allTemplateStats, "templateName", descending);
+
+    } else if ( sort == "stress" ) {
+
+        sort(allTemplateStats, "aggregateIntervalForRawData.durationStressMeasure", descending);
+
+    } else if ( sort == "servicing" ) {
+
+        sort(allTemplateStats, "numberServicing", descending);
+
+    } else if ( sort == "streaming_first" or sort == "streaming_duration" ) {
+
+        sort(allTemplateStats, "aggregateIntervalForRawData.startTime", descending);
+
+    } else if ( sort == "streaming_process" ) {
+
+        sort(allTemplateStats, "aggregateIntervalForRawData.durationStats.arithmeticMean", descending);
+
+    } else if ( sort == "streaming_payload" ) {
+
+        sort(allTemplateStats, "aggregateIntervalForRawData.contentLengthStats.arithmeticMean", descending);
+
+    } else if ( sort == "overall_serviced" ) {
+
+        sort(allTemplateStats, "servicedCount", descending);
+
+    } else if ( sort == "overall_process" ) {
+
+        sort(allTemplateStats, "averageServiceDuration", descending);
+
+    }
+    sortClass = 'sortcell sortcell-ascending';
+    if ( descending ) {
+        sortClass = 'sortcell sortcell-descending';
+    }
+    
+    sparklineDimensions = 'width: 20, height: 20';
+    sparklineJS = '';
+
+%>
+        <table cellspacing="1" cellpadding="3" class="tablehead">
+            <thead>
+                <tr class="stathead">
+                    <th colspan="12">Instrumentation</th>
+                </tr>
+                <tr class="colhead">
+<%
+                    if ( sort == "resource" ) {
+                        '<th class="' sortClass '" rowspan="2">'
+                            '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Resource</a>'
+                        '</th>\n'
+                    } else {
+                        '<th rowspan="2">'
+                            '<a class="sort-option" href="?page=instrumentation&sort=resource&descending=false&view=' view '">Resource</a>'
+                        '</th>\n'
+                    }
+
+                    if ( sort == "stress" ) {
+                        '<th class="' sortClass '" rowspan="2">'
+                            '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Stress</a>'
+                        '</th>\n'
+                    } else {
+                        '<th rowspan="2">'
+                            '<a class="sort-option" href="?page=instrumentation&sort=stress&descending=true&view=' view '">Stress</a>'
+                        '</th>\n'
+                    }
+
+                    if ( sort == "servicing" ) {
+                        '<th class="right-align ' sortClass '" rowspan="2">'
+                            '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Servicing</a>'
+                        '</th>\n'
+                    } else {
+                        '<th class="right-align" rowspan="2">'
+                            '<a class="sort-option" href="?page=instrumentation&sort=servicing&descending=true&view=' view '">Servicing</a>'
+                        '</th>\n'
+                    }
+                    
+                    '<th rowspan="2" class="center-align">Trend'
+                        '<div class="trend-options" style="display:none">'
+                            '<a class="duration' if ( trend == 'duration' ) { ' active' } '" href="#" title="View duration trend" alt="Duration"></a>'
+                            '<a class="payload' if ( trend == 'payload' ) { ' active' } '" href="#" title="View payload trend" alt="Payload"></a>'
+                        '</div>'
+                    '</th>\n'
+
+                    if ( view == 'both' or view == 'streaming' ) {
+                        '<th colspan="4" class="center-align">Streaming</th>\n'
+                    }
+                    if ( view == 'both' or view == 'overall' ) {
+                        '<th colspan="4" class="center-align">Overall</th>\n'
+                    }
+%>
+                </tr>
+                <tr class="colhead">
+<%
+                    if ( view == 'both' or view == 'streaming' ) {
+
+                        if ( sort == "streaming_first" ) {
+                            '<th class="' sortClass '">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">First</a>'
+                            '</th>\n'
+                        } else {
+                            '<th>'
+                                '<a class="sort-option" href="?page=instrumentation&sort=streaming_first&descending=false&view=' view '">First</a>'
+                            '</th>\n'
+                        }
+
+                        if ( sort == "streaming_duration" ) {
+                            '<th class="right-align ' sortClass '">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Duration</a>'
+                            '</th>\n'
+                        } else {
+                            '<th class="right-align">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=streaming_duration&descending=true&view=' view '">Duration</a>'
+                            '</th>\n'
+                        }
+
+                        if ( sort == "streaming_process" ) {
+                            '<th class="right-align ' sortClass '">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Process (ms)</a>'
+                            '</th>\n'
+                        } else {
+                            '<th class="right-align">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=streaming_process&descending=true&view=' view '&view=' view '">Process (ms)</a>'
+                            '</th>\n'
+                        }
+
+                        if ( sort == "streaming_payload" ) {
+                            '<th class="right-align ' sortClass '">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Payload (k)</a>'
+                            '</th>\n'
+                        } else {
+                            '<th class="right-align">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=streaming_payload&descending=true&view=' view '">Payload (k)</a>'
+                            '</th>\n'
+                        }
+                    }
+                    if ( view == 'both' or view == 'overall' ) {
+                        '<th>'
+                            'Start'
+                        '</th>\n'
+
+                        '<th>'
+                            'Duration'
+                        '</th>\n'
+
+                        if ( sort == "overall_serviced" ) {
+                            '<th class="right-align ' sortClass '">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Serviced</a>'
+                            '</th>\n'
+                        } else {
+                            '<th class="right-align">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=overall_serviced&descending=true&view=' view '">Serviced</a>'
+                            '</th>\n'
+                        }
+                        
+                        if ( sort == "overall_process" ) {
+                            '<th class="right-align ' sortClass '">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Process (ms)</a>'
+                            '</th>\n'
+                        } else {
+                            '<th class="right-align">'
+                                '<a class="sort-option" href="?page=instrumentation&sort=overall_process&descending=true&view=' view '">Process (ms)</a>'
+                            '</th>\n'
+                        }
+                    }
+                    %>
+                </tr>
+            </thead>
+            <tbody>
+            <%
+                nullFormat("none");
+                if ( allTemplateStats != null ) {
+                    rowClass = 'evenrow';
+                    foreach ( d in 0..allTemplateStats.length-1 ) {
+                        stats = allTemplateStats[d];
+
+                        if ( stats != null ) {
+                            templateNamePath = stats.fullTemplateName;
+                            templateName = stats.templateName;
+                            templatePath = pathPrefix & replace(stats.templatePath, '.', '/');
+                            if ( findLast(stats.templatePath, '.') > -1 ) {
+                                templatePath = templatePath & '/';
+                            }
+
+                            if ( stats.aggregateIntervalForRawData != null ) {
+                                resource = stats.templateName;
+
+                                stress = call system.util.getTemplateStressValue(stats);
+
+                                startColor = "#008000"; /* green */
+                                lowThresholdValue = 25;
+                                lowThresholdColor = "#FFFF00"; /* yellow */
+                                mediumThresholdValue = 50;
+                                mediumThresholdColor = "#FFA500"; /* orange */
+                                highThresholdValue = 75;
+                                endColor = "#FF0000"; /* red */
+
+                                inlineStressClass = 'green';
+                                if ( (stress*100.0) > highThresholdValue ) {
+                                    inlineStressClass = 'red';
+                                } else if ( (stress*100.0) > mediumThresholdValue ) {
+                                    inlineStressClass = 'orange';
+                                } else if ( (stress*100.0) > lowThresholdValue ) {
+                                    inlineStressClass = 'yellow';
+                                }
+
+                                numberFormat("0.00");
+                                stress = (stress*100.0) & '%';
+                                numberFormat(null);
+                                trendChart = '<span id="raw-sparkline-' & d & '">Loading...</span>';
+
+                                cdt = currentDateTime();
+                                useIndex = false;
+                                useReverse = false;
+                                limit = 10;
+                                rawDataArray = call system.util.getRawDataArray(stats.rawData, trend, useIndex, useReverse, limit);
+                                // 1 minute
+                                //aggregateIntervalForRawDataArray = getAggregateIntervalForRawData(stats, cdt.millis-60000, cdt.millis);
+                                //rawDataArray = call system.util.getRawDataArray(aggregateIntervalForRawDataArray, trend, useIndex, useReverse, limit);
+
+                                useIndex = false;
+                                useReverse = false;
+                                limit = 10;
+                                aggregateDataArray = call system.util.getAggregateDataArray(stats.aggregateIntervals, trend, useIndex, useReverse, limit);
+                                // 1 minute
+                                //aggregateIntervalsForAggregateDataArray = getAggregateIntervals(stats, cdt.millis-60000, cdt.millis);
+                                //aggregateDataArray = call system.util.getAggregateDataArray(aggregateIntervalsForAggregateDataArray, trend, useIndex, useReverse, limit);
+
+                                sparklineJS = sparklineJS & '$("#raw-sparkline-' & d & '").sparkline(' & aggregateDataArray & ', { type: "bar", barColor: "#ddf", ' & sparklineDimensions & ' });\n';
+                                sparklineJS = sparklineJS & '$("#raw-sparkline-' & d & '").sparkline(' & rawDataArray & ', { composite: true, fillColor: false, lineColor: "red", ' & sparklineDimensions & ' });\n';
+
+                                aggregateIntervalForRawData = stats.aggregateIntervalForRawData;
+                                rawDataDurationsStats = aggregateIntervalForRawData.durationStats;
+                                rawDataContentLengthStats = aggregateIntervalForRawData.contentLengthStats;
+
+                                currentTime = currentDate().time;
+
+                                if ( aggregateIntervalForRawData.startTime != null and aggregateIntervalForRawData.startTime > -1 ) {
+                                    streamingFirst = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.startTime, false, null);
+                                    streamingLast = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.endTime, false, null);
+                                    streamingDuration = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.startTime, true, null);
+
+                                    numberFormat("#,###");
+                                    streamingServiced = stats.rawData.length & "";
+                                    numberFormat("#,###.00");
+                                    streamingProcess = rawDataDurationsStats.arithmeticMean & "";
+                                    streamingPayload = (rawDataContentLengthStats.arithmeticMean/1024) & "";
+                                    numberFormat(null);
+                                } else {
+                                    streamingFirst = '--';
+                                    streamingLast = '--';
+                                    streamingDuration = '--';
+                                    streamingServiced = '--';
+                                    streamingProcess = '--';
+                                    streamingPayload = '--';
+                                }
+                                if ( aggregateIntervalForRawData.endTime != null and aggregateIntervalForRawData.endTime > -1 ) {
+                                    streamingLast = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.endTime, false, null);
+                                } else {
+                                    streamingLast = '--';
+                                }
+                                if ( aggregateIntervalForRawData.startTime != null and aggregateIntervalForRawData.startTime > -1 ) {
+                                    streamingDuration = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.startTime, true, null);
+                                } else {
+                                    streamingDuration = '--';
+                                }
+
+                                //overallStart = call system.util.getRelativeTimeText(currentTime, currentTime-stats.cumulativeServiceTime, false, null);
+                                //overallDuration = call system.util.getRelativeTimeText(currentTime, currentTime-stats.cumulativeServiceTime, true, null);
+                                if ( stats.aggregateIntervals != null and stats.aggregateIntervals.length > 0 and stats.aggregateIntervals[0].startTime > -1 ) {
+                                    overallStartTime = stats.aggregateIntervals[0].startTime;
+                                } else if ( stats.aggregateIntervalForRawData.startTime > -1 ) {
+                                    overallStartTime = stats.aggregateIntervalForRawData.startTime;
+                                } else {
+                                    overallStartTime = currentDate().time;
+                                }
+
+                                overallStart = call system.util.getRelativeTimeText(currentTime, overallStartTime, false, null);
+                                overallDuration = call system.util.getRelativeTimeText(currentTime, overallStartTime, true, null);
+
+                                numberFormat("#,###");
+                                overallServiced = stats.servicedCount & "";
+                                numberFormat("#,###.00");
+                                overallProcess = stats.averageServiceDuration & "";
+                                numberFormat(null);
+
+                                needsReload = false;
+                                foreach ( reloadableTemplate in admin.reloadableTemplates ) {
+                                    dotPath = replace(reloadableTemplate.name, "/", ".");
+                                    if ( stats.fullTemplateName == dotPath ) {
+                                        needsReload = true;
+                                        break;
+                                    }
+                                }
+
+                                if ( rowClass == 'evenrow' ) {
+                                    rowClass = 'oddrow';
+                                } else if ( rowClass == 'oddrow' ) {
+                                    rowClass = 'evenrow';
+                                }
+
+                                '<tr class="' rowClass '">\n'
+                                    '<td>'
+                                        '<div class="template-pathname">'
+                                            '<div class="template-path">' templatePath '</div>'
+                                            '<div class="template-name">'
+                                                //'<a target="_blank" href="' templatePath templateName '" title="Follow template url">' templateName '</a>'
+                                                '<a href="?page=template_info&name='  templateNamePath '" title="Follow template url">' templateName '</a>'
+                                                if ( needsReload ) {
+                                                    '<span class="reloadableTemplate" style="margin-left: 4px; color: red;">&#187;</span>'
+                                                }
+                                            '</div>'
+                                        '</div>'
+                                        '<div class="template-options">'
+                                            if ( needsReload ) {
+                                                '<a class="compile" href="remote/reload?reloadTemplates=selected&selectedTemplates='  templateNamePath '" title="Compile template"></a>'
+                                            } else {
+                                                '<span class="blank"></span>'
+                                            }
+                                            '<a class="web" target="_blank" href="' templatePath templateName '" title="Follow template url"></a>'
+                                            '<a class="info" href="?page=template_info&name='  templateNamePath '" title="View template stats"></a>'
+                                            '<a class="reset" href="remote/reset?name='  templateNamePath '" title="Reset template stats"></a>'
+                                        '</div>'
+                                    '</td>\n'
+                                    '<td class="stress-cell' if ( sort == 'stress' ) { ' sortcell' } '">'
+                                        '<div class="stress-text">' stress '</div>'
+                                        '<span class="stress-percentage-bar ' inlineStressClass '" style="width:' stress ';" title="' stress '"></span>'
+                                    '</td>\n'
+                                    '<td class="right-align' if ( sort == 'servicing' ) { ' sortcell' } '">' stats.numberServicing '</td>\n'
+                                    '<td class="sparkline-cell center-align">' trendChart '</td>\n'
+                                    if ( view == 'both' or view == 'streaming' ) {
+                                        '<td' if ( sort == 'streaming_first' ) { ' class="sortcell"' } '>' streamingFirst '</td>\n'
+                                        '<td class="right-align' if ( sort == 'streaming_duration' ) { ' sortcell' } '">' streamingDuration '</td>\n'
+                                        '<td class="right-align' if ( sort == 'streaming_process' ) { ' sortcell' } '">' streamingProcess '</td>\n'
+                                        '<td class="right-align' if ( sort == 'streaming_payload' ) { ' sortcell' } '">' streamingPayload '</td>\n'
+                                    }
+                                    if ( view == 'both' or view == 'overall' ) {
+                                        '<td>' overallStart '</td>\n'
+                                        '<td>' overallDuration '</td>\n'
+                                        '<td class="right-align' if ( sort == 'overall_serviced' ) { ' sortcell' } '">' overallServiced '</td>\n'
+                                        '<td class="right-align' if ( sort == 'overall_process' ) { ' sortcell' } '">' overallProcess '</td>\n'
+                                    }
+                                '</tr>\n'
+                            }
+                        }
+                    }
+                }
+                nullFormat("none");
+            %>
+            </tbody>
+        </table>
+        <script type="text/javascript">
+            $(function () {
+<%
+                sparklineJS
+
+%>
+            });
+	    </script>

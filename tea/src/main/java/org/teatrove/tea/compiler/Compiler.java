@@ -16,13 +16,22 @@
 
 package org.teatrove.tea.compiler;
 
-import org.teatrove.trove.classfile.TypeDesc;
-import java.io.*;
-import java.net.URLClassLoader;
-import java.util.*;
-import java.lang.reflect.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.Vector;
+
+import org.teatrove.tea.parsetree.Template;
 import org.teatrove.trove.io.SourceReader;
-import org.teatrove.tea.parsetree.*;
 
 /**
  * The Tea compiler. This class is abstract, and a few concrete
@@ -37,26 +46,30 @@ import org.teatrove.tea.parsetree.*;
  */
 public abstract class Compiler {
     // Maps qualified names to ParseTrees.
-    final Map mParseTreeMap;
+    final Map<String, Template> mParseTreeMap;
 
     // Maps qualified names to CompilationUnits.
-    private final Map mCompilationUnitMap = new HashMap();
+    private final Map<String, CompilationUnit> mCompilationUnitMap =
+        new HashMap<String, CompilationUnit>();
 
     // Set of names for CompilationUnits that have already been compiled.
-    private final Set mCompiled = new HashSet();
+    private final Set<String> mCompiled = new HashSet<String>();
 
-    private Set mPreserveTree;
+    private Set<String> mPreserveTree;
 
-    private Class mContextClass = org.teatrove.tea.runtime.UtilityContext.class;
+    private Class<?> mContextClass = org.teatrove.tea.runtime.UtilityContext.class;
     private Method[] mRuntimeMethods;
     private Method[] mStringConverters;
 
     private ErrorListener mErrorListener;
 
-    private Vector mErrorListeners = new Vector(4);
+    private Vector<ErrorListener> mErrorListeners =
+        new Vector<ErrorListener>(4);
+
     private int mErrorCount = 0;
 
-    private Vector mStatusListeners = new Vector();
+    private Vector<StatusListener> mStatusListeners =
+        new Vector<StatusListener>();
 
     private boolean mGenerateCode = true;
     private boolean mExceptionGuardian = false;
@@ -69,7 +82,7 @@ public abstract class Compiler {
     { mImports.add("java.lang"); mImports.add("java.util"); }
 
     public Compiler() {
-        this(Collections.synchronizedMap(new HashMap()));
+        this(Collections.synchronizedMap(new HashMap<String, Template>()));
     }
 
     /**
@@ -84,7 +97,7 @@ public abstract class Compiler {
      *
      * @param parseTreeMap map should be thread-safe
      */
-    public Compiler(Map parseTreeMap) {
+    public Compiler(Map<String, Template> parseTreeMap) {
         mParseTreeMap = parseTreeMap;
         mErrorListener = new ErrorListener() {
             public void compileError(ErrorEvent e) {
@@ -191,7 +204,7 @@ public abstract class Compiler {
      *
      * @see #setClassLoader(ClassLoader)
      */
-    public Class loadClass(String name) throws ClassNotFoundException {
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
         while (true) {
             try {
                 if (mClassLoader == null) {
@@ -224,7 +237,7 @@ public abstract class Compiler {
      */
     public void preserveParseTree(String name) {
         if (mPreserveTree == null) {
-            mPreserveTree = new HashSet();
+            mPreserveTree = new HashSet<String>();
         }
         mPreserveTree.add(name);
     }
@@ -275,10 +288,10 @@ public abstract class Compiler {
         }
 
         names = new String[mCompiled.size()];
-        Iterator it = mCompiled.iterator();
+        Iterator<String> it = mCompiled.iterator();
         int i = 0;
         while (it.hasNext()) {
-            names[i++] = (String)it.next();
+            names[i++] = it.next();
         }
 
         return names;
@@ -370,7 +383,7 @@ public abstract class Compiler {
      *
      * @see org.teatrove.tea.runtime.UtilityContext
      */
-    public Class getRuntimeContext() {
+    public Class<?> getRuntimeContext() {
         return mContextClass;
     }
 
@@ -380,7 +393,7 @@ public abstract class Compiler {
      *
      * @see org.teatrove.tea.runtime.Context
      */
-    public void setRuntimeContext(Class contextClass) {
+    public void setRuntimeContext(Class<?> contextClass) {
         mContextClass = contextClass;
         mRuntimeMethods = null;
         mStringConverters = null;
@@ -431,7 +444,7 @@ public abstract class Compiler {
         if (mStringConverters == null) {
             String name = getRuntimeStringConverter();
 
-            Vector methods = new Vector();
+            Vector<Method> methods = new Vector<Method>();
 
             if (name != null) {
                 Method[] contextMethods = getRuntimeContextMethods();
@@ -458,7 +471,7 @@ public abstract class Compiler {
 
                     // Don't add to list if a custom converter already handles
                     // this method's parameter type.
-                    Class type = m.getParameterTypes()[0];
+                    Class<?> type = m.getParameterTypes()[0];
                     int j;
                     for (j=0; j<customSize; j++) {
                         Method cm = (Method)methods.elementAt(j);
@@ -488,7 +501,7 @@ public abstract class Compiler {
      * @param from optional CompilationUnit
      */
     private String determineQualifiedName(String name, CompilationUnit from) {
-        if (from != null) {
+        if (from != null || name.charAt(0) == '.') {
             // Determine qualified name as being relative to "from"
 
             String fromName = from.getName();

@@ -25,6 +25,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public class NumberLiteral extends Literal {
+    private static final long serialVersionUID = 1L;
+
     private Number mValue;
 
     public NumberLiteral(SourceInfo info, Number value) {
@@ -91,7 +93,7 @@ public class NumberLiteral extends Literal {
     public boolean isValueKnown() {
         Type type = getType();
         if (type != null) {
-            Class clazz = type.getObjectClass();
+            Class<?> clazz = type.getObjectClass();
             return Number.class.isAssignableFrom(clazz) ||
                 clazz.isAssignableFrom(Number.class);
         }

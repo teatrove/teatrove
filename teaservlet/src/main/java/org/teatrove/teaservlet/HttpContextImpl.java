@@ -20,9 +20,14 @@ import java.io.*;
 import java.net.*;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Collection;
+import java.util.ArrayList;
 import java.util.AbstractList;
+import java.util.Iterator;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,10 +37,12 @@ import org.teatrove.trove.log.Log;
 import org.teatrove.trove.io.*;
 import org.teatrove.trove.net.*;
 
+import org.teatrove.teaservlet.management.HttpContextManagement;
 import org.teatrove.teaservlet.util.DecodedRequest;
 
 import org.teatrove.tea.runtime.Substitution;
 import org.teatrove.tea.runtime.OutputReceiver;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponseWrapper;
 
@@ -71,6 +78,8 @@ implements HttpContext {
 
     // Default is 10,000 milliseconds.
     private long mURLTimeout = 10000;
+    
+    private HttpContextManagement mHttpContextMBean;  
 
     /**
      * Constructs the HttpContext which provides HTTP-specific template
@@ -85,7 +94,8 @@ implements HttpContext {
                            HttpServletRequest request,
                            HttpServletResponse response,
                            CharToByteBuffer buffer,
-                           OutputReceiver outputReceiver) {
+                           OutputReceiver outputReceiver,
+                           HttpContextManagement httpContextMBean) {
         mServletContext = context;
         mLog = log;
         mRequest = request;
@@ -93,6 +103,7 @@ implements HttpContext {
         mBuffer = buffer;
         mOutputReceiver = outputReceiver;
         mOutputOverridePermitted = (outputReceiver != null);
+        mHttpContextMBean = httpContextMBean;
     }
 
     public void write(int c) throws IOException {
@@ -436,6 +447,11 @@ implements HttpContext {
         if (url == null) {
             return "";
         }
+        
+        // Add the URL to the mBean if it's configured.
+        if (mHttpContextMBean != null) {
+            mHttpContextMBean.addReadUrl(url);          
+        }
 
         try {
             HttpResource resource = HttpResource.get(absoluteURL(url));
@@ -523,17 +539,33 @@ implements HttpContext {
     public void debug(String s) {
         mLog.debug(s);
     }
+    
+    public void debug(Throwable t) {
+        mLog.debug(t);
+    }
 
     public void error(String s) {
         mLog.error(s);
+    }
+    
+    public void error(Throwable t) {
+        mLog.error(t);
     }
 
     public void info(String s) {
         mLog.info(s);
     }
+    
+    public void info(Throwable t) {
+        mLog.info(t);
+    }
 
     public void warn(String s) {
         mLog.warn(s);
+    }
+    
+    public void warn(Throwable t) {
+        mLog.warn(t);
     }
 
 

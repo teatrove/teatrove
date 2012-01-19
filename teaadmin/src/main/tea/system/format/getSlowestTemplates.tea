@@ -1,0 +1,36 @@
+<% template getSlowestTemplates ()
+
+    admin = getTeaServletAdmin();
+
+    pathPrefix = call system.util.getPathPrefix();
+
+    templates = admin.knownTemplates;
+    sort(templates, "templateTime", true);
+
+    foreach ( i in 0..templates.length-1 ) {
+        if ( i < 10 ) {
+            knownTemplate = templates[i];
+
+            templatePath = knownTemplate.name;
+            templatePath = replace(templatePath, '.', '/');
+            templatePath = pathPrefix & templatePath;
+
+            templateName = templatePath;
+            templateTokens = tokenize(templatePath, '/');
+            if ( templateTokens != null ) {
+                templateName = templateTokens[templateTokens.length-1];
+            }
+
+            numberFormat("##,###.00");
+            templateTime = knownTemplate.templateTime & 'ms';
+            numberFormat(null);
+
+            '<li>\n'
+                '<a href="' templatePath '">' templateName '</a><span> (' templateTime ')</span>\n'
+            '</li>\n'
+        } else {
+            break;
+        }
+    }
+    
+%>

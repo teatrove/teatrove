@@ -22,19 +22,24 @@ import org.teatrove.tea.compiler.SourceInfo;
  * 
  * @author Brian S O'Neill
  */
-public abstract class CallExpression extends Expression {
+public abstract class CallExpression extends Expression implements NullSafe {
+    private static final long serialVersionUID = 1L;
+
+    private Expression mExpression;
     private Name mTarget;
     private ExpressionList mParams;
     private Statement mInitializer;
     private Block mSubParam;
-    private boolean mVoidPermitted = false;
+    private boolean mVoidPermitted;
+    private boolean mNullSafe;
 
     public CallExpression(SourceInfo info, 
-                          Name target, 
+                          Expression expression, Name target,
                           ExpressionList params,
                           Block subParam) {
         super(info);
 
+        mExpression = expression;
         mTarget = target;
         mParams = params;
         mSubParam = subParam;
@@ -59,7 +64,19 @@ public abstract class CallExpression extends Expression {
     public Name getTarget() {
         return mTarget;
     }
+    
+    public void setTarget(Name target) {
+    	mTarget = target;
+    }
+    
+    public Expression getExpression() {
+        return mExpression;
+    }
 
+    public void setExpression(Expression expression) {
+        mExpression = expression;
+    }
+    
     public ExpressionList getParams() {
         return mParams;
     }
@@ -99,5 +116,13 @@ public abstract class CallExpression extends Expression {
 
     public void setVoidPermitted(boolean b) {
         mVoidPermitted = b;
+    }
+    
+    public boolean isNullSafe() {
+        return mNullSafe;
+    }
+    
+    public void setNullSafe(boolean nullSafe) {
+        mNullSafe = nullSafe;
     }
 }

@@ -1,0 +1,160 @@
+<% template compile (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+    if ( request.parameters["sort"] != null and request.parameters["sort"] != "" ) {
+        setTemplateOrdering(request.parameters["sort"]);
+    }
+    
+    templates = admin.knownTemplates;
+    reloadTime = admin.timeOfLastReload;
+
+    reloadString = '';
+    if ( templates != null and templates.length > 0 ) {
+        reloadString = reloadString & templates.length;
+    } else {
+        reloadString = reloadString & 'None';
+    }
+    reloadString = reloadString & ' Known Templates | ';
+    if ( reloadTime != null ) {
+        reloadString = reloadString & 'last reload: ' & reloadTime;
+    } else {
+        reloadString = reloadString & 'no reloads since system startup';
+    }
+
+    pathPrefix = call system.util.getPathPrefix();
+    extension = '';
+
+%>
+		<article>
+			<section>
+				<div class="controls">
+					<div class="controls-wrapper">
+						<div id="loadingIndicator"></div>
+
+						<div id="label-validate" role="label">Validate:</div>
+						<div id="buttonset-validate" class="buttonset">
+							<input type="radio" id="validate_radio1" name="radio" /><label for="validate_radio1">Changes</label>
+							<input type="radio" id="validate_radio2" name="radio" /><label for="validate_radio2">All</label>
+						</div>
+
+						<div id="label-compile" role="label">Compile:</div>
+						<div id="buttonset-compile" class="buttonset">
+							<input type="radio" id="compile_radio1" name="radio" /><label for="compile_radio1">Changes</label>
+							<input type="radio" id="compile_radio2" name="radio" /><label for="compile_radio2">Selected</label>
+							<input type="radio" id="compile_radio3" name="radio" /><label for="compile_radio3">All</label>
+							<% if (admin.clusteredServers != null) { %>
+							<input type="radio" id="compile_radio4" name="radio" /><label for="compile_radio4">Cluster</label>
+							<% } %>
+						</div>
+
+						<div id="label-autocompile" role="label">Auto Compile:</div>
+						<div id="switch-autocompile" class="state-off"></div>
+					</div>
+				</div>
+				<div id="reload-container"></div>
+				
+				<div id="reload-container-history-label" role="label">Compilation History:</div>
+				<div id="reload-container-history">
+                    <div class="sml-s sml-c">
+                        <div class="sm-imc sml-imc">
+                            <ul class="sml-cnt arial13">
+                                <li class="default">No templates successfully compiled yet.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="sml-s sml-e">
+                        <div class="sm-imc sml-imc">
+                            <ul class="sml-cnt arial13">
+                                <li class="default">No template errors registered yet.</li></ul>
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+				</div>
+
+				<div class="table-container">
+					<table cellspacing="1" cellpadding="3" class="tablehead">
+						<thead>
+							<tr class="stathead">
+								<th colspan="5"><% reloadString %></th>
+							</tr>
+							<tr class="colhead">
+								<th class="left-align"><a href="?page=compile&sort=name">Templates</a></th>
+								<th class="right-align"><a href="?page=compile&sort=templateTime-">Time (ms)</a></th>
+								<th class="right-align"><a href="?page=compile&sort=templateInvokes-">Invokes</a></th>
+								<th class="right-align"><a href="?page=compile&sort=weight-">Weight (%)</a></th>
+								<th class="left-align">Parameters</th>
+							</tr>
+						</thead>
+						<tbody>
+						<%
+						    if ( templates != null ) {
+
+                                // first pass to determine total, since template weight is busted.
+                                totalWeight = 0.0;
+                                foreach ( knownTemplate in templates ) {
+                                    totalWeight = totalWeight + knownTemplate.weight;
+                                }
+
+						        foreach ( t in 0..templates.length-1 ) {
+						            tea = templates[t];
+
+                                    uri = pathPrefix & replace(tea.name, '.', '/') & extension;
+
+                                    rowClass = 'evenrow';
+						            if ( t % 2 == 1 ) {
+                                        rowClass = 'oddrow';
+						            }
+
+                                    templateTime = 'N/A';
+                                    templateInvokes = 'N/A';
+                                    templateWeight = 'N/A';
+                                    templateParameters = 'N/A';
+                                    if ( isTemplateRepositoryEnabled() ) {
+                                        numberFormat("##,###.00");
+                                        templateTime = tea.templateTime & '';
+                                        numberFormat("###,###,###");
+                                        templateInvokes = tea.templateInvokes & '';
+                                        numberFormat("##,###.00");
+                                        templateWeight = ((tea.weight/totalWeight)*100.0) & '';
+                                        numberFormat(null);
+                                    }
+                                    if ( tea.loaded ) {
+                                        types = tea.loadedTemplate.parameterTypes;
+                                        names = tea.loadedTemplate.parameterNames;
+
+                                        templateParameters = '';
+                                        if ( types.length != 0 ) {
+                                            foreach ( index in 0..types.length-1 ) {
+                                                if ( index > 0 ) {
+                                                    templateParameters = templateParameters & ', '
+                                                }
+                                                templateParameters = templateParameters & call system.util.printClassInfo(types[index]);
+                                                if ( names != null ) {
+                                                    name = names[index];
+                                                    if ( name != null ) {
+                                                        templateParameters = templateParameters & ' ' & name;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    '<tr class="' rowClass '">\n'
+                                        '<td class="left-align"><a class="methodName" href="' uri '" template="' tea.name '">' uri '</a></td>\n'
+                                        '<td class="right-align">' templateTime '</td>\n'
+                                        '<td class="right-align">' templateInvokes '</td>\n'
+                                        '<td class="right-align">' templateWeight '</td>\n'
+                                        '<td class="left-align">' templateParameters '</td>\n'
+                                    '</tr>\n'
+						        }
+						    }
+                        %>
+						</tbody>
+					</table>
+				</div>
+			</section>
+		</article>

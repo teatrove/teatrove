@@ -27,13 +27,15 @@ import org.teatrove.tea.compiler.Token;
  * @author Brian S O'Neill
  */
 public class OrExpression extends BinaryLogicalExpression {
+    private static final long serialVersionUID = 1L;
+
     public OrExpression(SourceInfo info,
                         Token token,
                         Expression left,
                         Expression right) {
         super(info, token, left, right);
     }
-    
+
     public Object accept(NodeVisitor visitor) {
         return visitor.visit(this);
     }

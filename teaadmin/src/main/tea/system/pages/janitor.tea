@@ -1,0 +1,394 @@
+<% template janitor (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+%>
+		<article>
+			<section>
+				<div class="controls">
+					<div class="controls-wrapper">
+						<div id="loadingIndicator"></div>
+						<div role="label">View:</div>
+						<div id="buttonset-view" class="buttonset">
+							<input type="radio" id="view_radio1" name="radio" checked="checked" /><label for="view_radio1">Applications</label>
+							<input type="radio" id="view_radio2" name="radio" /><label for="view_radio2">Templates</label>
+						</div>
+					</div>
+				</div>
+				<div id="janitor-container">
+			        <div id="janitor-container-applications">
+<%
+
+                        apps = admin.applications;
+                        appMap = createHashMap();
+                        appUsageMap = createHashMap()
+
+                        foreach ( app in apps ) {
+                            if ( app != null ) {
+                                methods = app.contextFunctions;
+
+                                if ( methods != null ) {
+                                    methodArray = createArrayList();
+                                    methodMap = createHashMap();
+
+                                    foreach ( method in methods ) {
+                                        if ( method != null ) {
+                                            z = add(methodArray, method.name);
+                                            put(methodMap, method.name, createArrayList());
+                                        }
+                                    }
+                                    put(appMap, app.name, methodArray);
+                                    put(appUsageMap, app.name, methodMap);
+                                }
+                            }
+                        }
+
+                        isProfilingEnabled = true;
+                        templates = admin.knownTemplates;
+
+                        if ( templates != null ) {
+                            foreach ( temp in templates ) {
+                                if ( temp != null ) {
+                                    tempInfo = getTemplateInfo(temp.name);
+
+                                    if ( tempInfo != null ) {
+                                        appMethodsCalled = tempInfo.appMethodsCalled;
+
+                                        if ( appMethodsCalled != null ) {
+                                            foreach ( method in appMethodsCalled ) {
+                                                methodName = method.name;
+
+                                                if ( methodName != null ) {
+                                                    appName = null;
+                                                    //duplicate method names contain the app name as well (AppName$methodName)
+                                                    //so split them to be able to properly match the method
+                                                    methodParts = tokenize(methodName, "$");
+                                                    if ( methodParts != null and methodParts.length > 1) {
+                                                        appName = methodParts[0];
+                                                        methodName = methodParts[1];
+                                                    }
+
+                                                    //if the app name exists, just remove that app
+                                                    //from the map that contains all app names. consider it used
+                                                    if ( appName != null ) {
+                                                        z = remove(appMap, appName);
+
+                                                        //also update the usage map
+                                                        methodMap2 = remove(appUsageMap, appName) as Map;
+
+                                                        if ( methodMap2 != null and containsKey(methodMap2, methodName) ) {
+                                                            templateUsageList = remove(methodMap2, methodName) as ArrayList;
+
+                                                            if ( templateUsageList != null ) {
+                                                                z = add(templateUsageList, temp.name);
+                                                            }
+                                                            put(methodMap2, methodName, templateUsageList); //put it back
+                                                        }
+                                                        put(appUsageMap, appName, methodMap2); //put it back
+                                                    }
+                                                    //otherwise, search the entire app map for this method
+                                                    else {
+                                                        unusedAppNames = getKeys(appMap);
+
+                                                        if ( unusedAppNames != null ) {
+                                                            foreach(appName in unusedAppNames ) {
+                                                                if ( appName != null ) {
+                                                                    methodList = remove(appMap, appName) as ArrayList;
+
+                                                                    //if the current method is not contained in the method list
+                                                                    //put the List back on the map to be used by the next iteration
+                                                                    if ( not contains(methodList, methodName) ) {
+                                                                        put(appMap, appName, methodList);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        appNames = getKeys(appUsageMap);
+
+                                                        if ( appNames != null ) {
+                                                            foreach(appName in appNames ) {
+                                                                if ( appName != null ) {
+                                                                    //also update the usage map
+                                                                    methodMap2 = remove(appUsageMap, appName) as Map;
+
+                                                                    if ( methodMap2 != null and containsKey(methodMap2, methodName) ) {
+                                                                        templateUsageList = remove(methodMap2, methodName) as ArrayList;
+
+                                                                        if ( templateUsageList != null ) {
+                                                                            z = add(templateUsageList, temp.name);
+                                                                        }
+                                                                        put(methodMap2, methodName, templateUsageList); //put it back
+                                                                    }
+                                                                    put(appUsageMap, appName, methodMap2); //put it back
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        appNames = getKeys(appUsageMap);
+                        sort(appNames, false, true);
+                        if ( appNames != null ) {
+                            unusedAppNames = getKeys(appMap);
+                            theadText = appNames.length & ' applications installed'
+                            if ( unusedAppNames != null and unusedAppNames.length > 0 ) {
+                                theadText = theadText & ' (' & unusedAppNames.length & ' are unused)'
+                            }
+
+                            if ( unusedAppNames != null and unusedAppNames.length > 0 ) {
+                                theadText = unusedAppNames.length & ' Unused Applications';
+                            } else {
+                                theadText = '0 Unused Applications';
+                            }
+                            theadText = theadText & " (out of " & appNames.length & " installed)";
+
+                            '<div class="table-container">'
+                                '<table class="tablehead" cellpadding="3" cellspacing="1">'
+                                    '<thead>'
+                                        '<tr class="stathead">'
+                                            '<th colspan="2">' theadText '</th>'
+                                        '</tr>'
+                                    '</thead>'
+                                    '<tbody>'
+                                        sort(unusedAppNames, false, true);
+                                        unusedApps = createArrayList();
+                                        if ( unusedAppNames != null ) {
+                                            foreach(unusedAppName in unusedAppNames ) {
+                                                if ( unusedAppName != null ) {
+                                                    z = add(unusedApps, unusedAppName);
+                                                }
+                                            }
+                                        }
+
+                                        aRowClass = 'evenrow';
+                                        foreach ( appName in appNames ) {
+                                            if ( appName != null ) {
+                                                methodMap3 = remove(appUsageMap, appName) as Map;
+
+                                                if ( methodMap3 != null) {
+                                                    methodNames = getKeys(methodMap3);
+                                                    sort(methodNames, false, true);
+
+                                                    if ( methodNames != null ) {
+                                                        isAppUnused = contains(unusedApps, appName);
+
+                                                        if ( aRowClass == 'oddrow' ) {
+                                                            aRowClass = 'evenrow';
+                                                        } else {
+                                                            aRowClass = 'oddrow';
+                                                        }
+                                                        addedClass = '';
+                                                        if ( isAppUnused ) {
+                                                            addedClass = ' red-border';
+                                                        }
+                                                        '<tr class="' aRowClass addedClass '">'
+                                                            '<td>'
+                                                                '<div class="bold">'
+                                                                    appName
+                                                                '</div>'
+                                                                '<div>'
+                                                                    methodNames.length & ' method'
+                                                                    if ( methodNames.length != 1 ) {
+                                                                        's'
+                                                                    }
+                                                                '</div>'
+                                                                if ( isAppUnused ) {
+                                                                    '<div class="red-font">'
+                                                                        'This app is unused!'
+                                                                    '</div>'
+                                                                }
+                                                            '</td>'
+                                                            '<td>'
+                                                                '<div class="table-container janitor-methods">'
+                                                                    '<table class="tablehead" cellpadding="3" cellspacing="1">'
+                                                                        '<thead>'
+                                                                            '<tr class="colhead">'
+                                                                                '<th>Method</th>'
+                                                                                '<th>Template Usage</th>'
+                                                                                '<th class="right-align">Method Invokes</th>'
+                                                                            '</tr>'
+                                                                        '</thead>'
+                                                                        '<tbody>'
+                                                                            mRowClass = 'evenrow';
+                                                                            foreach ( methodName in methodNames ) {
+                                                                                if ( methodName != null ) {
+                                                                                    templateUsageList = remove(methodMap3, methodName) as ArrayList;
+
+                                                                                    if ( templateUsageList != null ) {
+                                                                                        if ( mRowClass == 'oddrow' ) {
+                                                                                            mRowClass = 'evenrow';
+                                                                                        } else {
+                                                                                            mRowClass = 'oddrow';
+                                                                                        }
+                                                                                        '<tr class="' mRowClass '">'
+                                                                                            '<td>'
+                                                                                                methodName
+                                                                                            '</td>'
+
+                                                                                            templates = toArray(templateUsageList, getClassForName('java.lang.String'));
+                                                                                            if ( templates != null and templates.length > 0 ) {
+                                                                                                //templates = cloneArray(templates);
+                                                                                                sort(templates, false, true);
+                                                                                                '<td>'
+                                                                                                    foreach ( templateName in templates ) {
+                                                                                                        if ( templateName != null ) {
+                                                                                                            '<div>'
+                                                                                                                '<a href="Admin?subTemplate=system.teaservlet.AdminTemplateInfo&templateName=' & templateName & '">'
+                                                                                                                    templateName
+                                                                                                                '</a>'
+                                                                                                            '</div>'
+                                                                                                        }
+                                                                                                    }
+                                                                                                '</td>'
+                                                                                                '<td class="right-align">'
+                                                                                                    foreach ( templateName in templates ) {
+                                                                                                        if ( templateName != null ) {
+                                                                                                            methodInvokes = 0;
+                                                                                                            if ( templateName != null and methodName != null ) {
+                                                                                                                stats = getStatistics(templateName, methodName);
+
+                                                                                                                if ( stats != null ) {
+                                                                                                                    methodInvokes = stats.servicedCount;
+                                                                                                                }
+                                                                                                            }
+                                                                                                            numberFormat("#,###");
+                                                                                                            '<div>' methodInvokes '</div>'
+                                                                                                            numberFormat(null);
+                                                                                                        }
+                                                                                                    }
+                                                                                                '</td>'
+                                                                                            } else {
+                                                                                                '<td>None</div>'
+                                                                                                '<td class="right-align">0</div>'
+                                                                                            }
+                                                                                        '</tr>'
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        '</tbody>'
+                                                                    '</table>'
+                                                                '</div>'
+                                                            '</td>'
+                                                        '</tr>'
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    '</tbody>'
+                                '</table>'
+                            '</div>\n'
+                        }
+			        '</div>\n'
+
+                    templates = admin.knownTemplates;
+                    sort(templates, "name", false);
+
+                    totalUnused = 0;
+                    if ( templates != null ) {
+                        foreach ( t in 0..templates.length-1 ) {
+                            tea = templates[t];
+
+                            templateInvokes = 0;
+                            if ( isTemplateRepositoryEnabled() ) {
+                                templateInvokes = tea.templateInvokes;
+                            }
+
+                            if ( templateInvokes == 0 ) {
+                                totalUnused = totalUnused + 1;
+                            }
+                        }
+                    }
+
+                    tableHeadString = totalUnused & ' Unused Templates (out of ' & templates.length & ' known templates)';
+
+                    pathPrefix = call system.util.getPathPrefix();
+                    extension = '';
+%>
+                    <div id="janitor-container-templates" class="table-container">
+                        <table cellspacing="1" cellpadding="3" class="tablehead">
+                            <thead>
+                                <tr class="stathead">
+                                    <th colspan="5"><% tableHeadString %></th>
+                                </tr>
+                                <tr class="colhead">
+                                    <th align="center">Templates</th>
+                                    <th align="center">Time (ms)</th>
+                                    <th align="center">Invokes</th>
+                                    <th align="center">Weight (%)</th>
+                                    <th align="center">Parameters</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <%
+                                if ( templates != null ) {
+                                    foreach ( t in 0..templates.length-1 ) {
+                                        tea = templates[t];
+
+                                        uri = pathPrefix & replace(tea.name, '.', '/') & extension;
+
+                                        rowClass = 'evenrow';
+                                        if ( t % 2 == 1 ) {
+                                            rowClass = 'oddrow';
+                                        }
+
+                                        templateTime = 'N/A';
+                                        templateInvokes = 'N/A';
+                                        templateWeight = 'N/A';
+                                        templateParameters = 'N/A';
+                                        if ( isTemplateRepositoryEnabled() ) {
+                                            numberFormat("##,###.00");
+                                            templateTime = tea.templateTime & '';
+                                            numberFormat("###,###,###");
+                                            templateInvokes = tea.templateInvokes & '';
+                                            numberFormat("##,###.00");
+                                            templateWeight = (tea.weight * 100) & '';
+                                            numberFormat(null);
+                                        }
+                                        if ( tea.loaded ) {
+                                            types = tea.loadedTemplate.parameterTypes;
+                                            names = tea.loadedTemplate.parameterNames;
+
+                                            templateParameters = '';
+                                            if ( types.length != 0 ) {
+                                                foreach ( index in 0..types.length-1 ) {
+                                                    if ( index > 0 ) {
+                                                        templateParameters = templateParameters & ', '
+                                                    }
+                                                    templateParameters = templateParameters & call system.util.printClassInfo(types[index]);
+                                                    if ( names != null ) {
+                                                        name = names[index];
+                                                        if ( name != null ) {
+                                                            templateParameters = templateParameters & ' ' & name;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if ( templateInvokes == 'N/A' or templateInvokes == '0' ) {
+                                            '<tr class="' rowClass '">\n'
+                                                '<td><a href="' uri '">' uri '</a></td>\n'
+                                                '<td>' templateTime '</td>\n'
+                                                '<td>' templateInvokes '</td>\n'
+                                                '<td>' templateWeight '</td>\n'
+                                                '<td>' templateParameters '</td>\n'
+                                            '</tr>\n'
+                                        }
+                                    }
+                                }
+                            %>
+                            </tbody>
+                        </table>
+                    </div>
+				</div>
+			</section>
+		</article>

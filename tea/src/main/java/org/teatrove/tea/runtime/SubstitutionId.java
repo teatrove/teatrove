@@ -21,7 +21,7 @@ package org.teatrove.tea.runtime;
  *
  * @author Brian S O'Neill
  */
-public class SubstitutionId extends java.lang.ref.WeakReference {
+public class SubstitutionId extends java.lang.ref.WeakReference<Class<?>> {
     private final int mBlockId;
 
     public SubstitutionId(Object template, int blockId) {
@@ -51,7 +51,7 @@ public class SubstitutionId extends java.lang.ref.WeakReference {
     }
     
     public String toString() {
-        Class c = (Class)get();
+        Class<?> c = get();
         if (c != null) {
             return c.getName() + '.' + mBlockId;
         }

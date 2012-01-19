@@ -466,7 +466,7 @@ public class ClassFile {
      */
     public MethodInfo addMethod(Method method) {
         Modifiers modifiers = new Modifiers(method.getModifiers());
-        modifiers.setAbstract(false);
+        modifiers.setAbstract(this.getModifiers().isInterface());
 
         TypeVariableDesc[] typeParams = lookupTypeVariables(method);
         TypeDesc ret = TypeDesc.forClass(method.getReturnType(),
@@ -507,8 +507,9 @@ public class ClassFile {
      */
     public MethodInfo addMethod(Method method, Class<?> returnType,
                                 Class<?>... paramClasses) {
+        
         Modifiers modifiers = new Modifiers(method.getModifiers());
-        modifiers.setAbstract(false);
+        modifiers.setAbstract(this.getModifiers().isInterface());
 
         TypeVariableDesc[] typeParams = lookupTypeVariables(method);
         TypeDesc ret = TypeDesc.forClass(returnType,

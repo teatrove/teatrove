@@ -1,0 +1,148 @@
+<% template reload (String reloadTemplates, String testCompile, String findUpdates, Boolean cluster, String[] selectedTemplates)
+
+    /* nomenclature: reloadTemplates == compile, testCompile == verify, findUpdates == choose */
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+    parameters = request.parameters;
+
+    if ( reloadTemplates != null or testCompile != null ) {
+
+        reloadResult = getCompilationResults();
+
+        if ( testCompile != null ) {
+            if ( testCompile == "selected" and selectedTemplates != null ) {
+                reloadResult = checkTemplates(selectedTemplates);
+            } else {
+                all = (testCompile == "all");
+                reloadResult = checkTemplates(all);
+            }
+        }
+
+        if ( reloadResult != null ) {
+            alreadyLoading = reloadResult.alreadyReloading;
+            errors = reloadResult.allTemplateErrors;
+            compiled = reloadResult.reloadedTemplateNames;
+        } else {
+            alreadyLoading = false;
+            errors = null;
+            compiled = null;
+        }
+
+        if ( alreadyLoading ) {
+            '<div class="sml-s sml-i">\n'
+                '<div class="sm-imc sml-imc">\n'
+                    '<ul class="sml-cnt">\n'
+                        '<li class="arial13bold">\n'
+                            '<span>Reload already in progress, hang on a sec.</span>\n'
+                        '</li>\n'
+                    '</ul>\n'
+                '</div>\n'
+            '</div>\n'
+        } else {
+            if ( compiled != null ) {
+                if ( compiled.length == 0 ) {
+                    '<div class="sml-s sml-i">\n'
+                        '<div class="sm-imc sml-imc">\n'
+                            '<ul class="sml-cnt">\n'
+                                '<li class="arial13bold">\n'
+                                    '<span>No templates compiled.</span>\n'
+                                '</li>\n'
+                            '</ul>\n'
+                        '</div>\n'
+                    '</div>\n'
+                } else {
+                    pathPrefix = call system.util.getPathPrefix();
+                    '<div class="sml-s sml-c">\n'
+                        '<div class="sm-imc sml-imc">\n'
+                            '<ul class="sml-cnt">\n'
+                                foreach ( tea in compiled ) {
+                                    uri = pathPrefix & replace(tea, ".", "/");
+                                    '<li class="arial13bold">'
+                                        '<a href="' uri '">' uri '</a>'
+                                    '</li>\n'
+                                }
+                            '</ul>\n'
+                        '</div>\n'
+                    '</div>\n'
+                }
+            }
+
+            if ( errors != null and errors.length > 0 ) {
+                '<div class="sml-s sml-e">\n'
+                    '<div class="sm-imc sml-imc">\n'
+                        '<ul class="sml-cnt">\n'
+                            previousTemplatePath = null;
+                            foreach ( e in errors ) {
+                                if ( e isa org.teatrove.tea.engine.TemplateError ) {
+                                    errorString = "";
+                                    errorString = errorString & call system.util.cleanString(trimLeading(e.lineStart));
+                                    errorString = errorString & call system.util.cleanString(e.errorStart);
+                                    errorString = errorString & call system.util.cleanString(e.detail);
+                                    errorString = errorString & call system.util.cleanString(e.errorEnd);
+                                    errorString = errorString & call system.util.cleanString(e.lineEnd);
+
+                                    templateName = e.sourcePath;
+                                    templateName = substring(templateName, findLast(templateName, '/')+1);
+                                    //templateName = replace(templateName, '.tea', '');
+
+                                    templatePath = call system.util.getTemplatePathFromSourcePath(admin, e.sourcePath);
+
+                                    if ( previousTemplatePath != null and templatePath != previousTemplatePath ) {
+                                        // close previous
+                                        '</li>\n'
+                                    }
+
+                                    if ( templatePath != previousTemplatePath ) {
+                                        '<li class="arial13">\n'
+                                            '<div class="template-path">'
+                                                '<a target="_blank" href="' templatePath '">' templatePath '</a>'
+                                            '</div>\n'
+                                    }
+                                    '<div class="error-detail">'
+                                        e.errorMessage
+                                    '</div>\n'
+                                    '<pre class="brush: java; first-line: ' e.lineNumber '">' errorString '</pre>'
+                                    
+                                    previousTemplatePath = templatePath;
+                                }
+                            }
+                            '</li>\n'
+                        '</ul>\n'
+                    '</div>\n'
+                '</div>\n'
+            }
+        }
+
+    } else if ( findUpdates != null ) {
+        reloadableTemplates = admin.reloadableTemplates;
+        if ( reloadableTemplates != null and reloadableTemplates.length > 0 ) {
+            pathPrefix = call system.util.getPathPrefix();
+            '<div class="sml-s sml-w">\n'
+                '<div class="sm-imc sml-imc">\n'
+                    '<ul class="sml-cnt">\n'
+                        foreach ( t in reloadableTemplates ) {
+                            '<li class="arial13bold">\n'
+                                underscorePath = replace(t.name, '/', '_');
+                                dotPath = replace(t.name, '/', '.');
+                                '<input id="template_' underscorePath '" class="reloadableTemplates" type="checkbox" name="' dotPath '"/>'
+                                '<span>' pathPrefix t.name '</span>\n'
+                            '</li>\n'
+                        }
+                    '</ul>\n'
+                '</div>\n'
+            '</div>\n'
+        } else {
+            '<div class="sml-s sml-i">\n'
+                '<div class="sm-imc sml-imc">\n'
+                    '<ul class="sml-cnt">\n'
+                        '<li class="arial13bold">\n'
+                            '<span>No template changes detected.</span>\n'
+                        '</li>\n'
+                    '</ul>\n'
+                '</div>\n'
+            '</div>\n'
+        }
+    }
+
+ %>

@@ -16,9 +16,11 @@
 
 package org.teatrove.tea.parsetree;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.teatrove.tea.compiler.SourceInfo;
 import org.teatrove.tea.compiler.Type;
 
@@ -27,17 +29,23 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Brian S O'Neill
  */
-public class Template extends Node {
+public class Template extends Node implements Returnable {
+    private static final long serialVersionUID = 1L;
     private Name mName;
     private Variable[] mParams;
     private boolean mSubParam;
     private Statement mStatement;
     private Type mType;
-    private List mDirectiveList;
+    private List<Directive> mDirectiveList;
+    private Map<String, Object> mProperties =
+        new HashMap<String, Object>();
 
+    public Template() {
+        super(null);
+    }
     public Template(SourceInfo info,
                     Name name, Variable[] params, boolean subParam,
-                    Statement statement, List directiveList) {
+                    Statement statement, List<Directive> directiveList) {
 
         super(info);
 
@@ -64,10 +72,12 @@ public class Template extends Node {
 
         t.mStatement = (Statement)mStatement.clone();
  
-        if (mDirectiveList != null)
-            t.mDirectiveList = new ArrayList();
-            for (Iterator i = mDirectiveList.iterator(); i.hasNext(); )
-                t.mDirectiveList.add(((Directive) i.next()).clone());
+        if (mDirectiveList != null) {
+            t.mDirectiveList = new ArrayList<Directive>();
+            for (Directive directive : mDirectiveList) {
+                t.mDirectiveList.add((Directive) directive.clone());
+            }
+        }
         return t;
     }
 
@@ -75,8 +85,24 @@ public class Template extends Node {
         return mName;
     }
 
+    public void setName(Name name) {
+        this.mName = name;
+    }
+
     public Variable[] getParams() {
         return mParams;
+    }
+
+    public void setParams(Variable[] params) {
+        this.mParams = params;
+    }
+
+    public Object getProperty(String propertyName) {
+        return mProperties.get(propertyName);
+    }
+
+    public void setProperty(String propertyName, Object value) {
+        this.mProperties.put(propertyName, value);
     }
 
     public boolean hasSubstitutionParam() {
@@ -98,7 +124,7 @@ public class Template extends Node {
         mStatement = stmt;
     }
 
-    public List getDirectives() { return mDirectiveList; }
+    public List<Directive> getDirectives() { return mDirectiveList; }
 
     /**
      * The return type is set by a type checker. Returns null if this template

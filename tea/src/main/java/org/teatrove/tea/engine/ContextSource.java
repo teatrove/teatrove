@@ -28,7 +28,7 @@ public interface ContextSource {
     /**
      * @return the Class of the object returned by createContext.
      */
-    public Class getContextType() throws Exception;
+    public Class<?> getContextType() throws Exception;
 
     /**
      * A generic method to create context instances.

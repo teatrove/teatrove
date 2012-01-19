@@ -27,14 +27,16 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @see Template#getStatement()
  */
 public class StatementList extends Statement {
+    private static final long serialVersionUID = 1L;
+
     private Statement[] mStatements;
 
     public StatementList(SourceInfo info, Statement[] statements) {
         super(info);
-        
+
         mStatements = statements;
     }
-    
+
     public Object accept(NodeVisitor visitor) {
         return visitor.visit(this);
     }
@@ -65,5 +67,9 @@ public class StatementList extends Statement {
 
     public Statement[] getStatements() {
         return mStatements;
+    }
+    
+    public void setStatements(Statement[] stmts) {
+        mStatements = stmts;
     }
 }

@@ -1,0 +1,78 @@
+<% template getLogEvents (Boolean showLast)
+
+    if ( showLast == null ) {
+        showLast = true;
+    }
+    admin = getTeaServletAdmin();
+
+    logEvents = admin.logEvents;
+
+    dateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+
+    numLast = 25;
+
+    '<ul numLast="' numLast '">\n'
+    foreach ( e in 0..logEvents.length-1 ) {
+        event = logEvents[e];
+
+        if ( showLast ) {
+            if ( e < logEvents.length-numLast ) {
+                output = '<li class="hide">\n';
+            } else {
+                output = '<li>\n';
+            }
+        } else {
+            output = '<li>\n';
+        }
+
+        type = event.type;
+        if ( type == 1 ) {
+            output = output & " D";
+        } else if ( type == 2 ) {
+            output = output & " I";
+        } else if ( type == 3 ) {
+            output = output & "*W";
+        } else {
+            output = output & "*E";
+        }
+
+        output = output & "," & event.timestamp;
+        //output = output & "," & event.threadName;
+        if ( event.logSource != null and event.logSource.name != null ) {
+            //output = output & "," & event.logSource.name;
+        }
+        output = output & "> ";
+
+        if ( event isa org.teatrove.tea.log.TeaLogEvent ) {
+            firstLine = true;
+            foreach ( stackTraceLine in event.lines ) {
+                if ( firstLine ) {
+                    firstLine = false;
+                } else {
+                    output = output & '<br/>\n';
+                }
+                if ( stackTraceLine.lineNumber == null ) {
+                    output = output & stackTraceLine.line;
+                } else {
+                    output = output & "at line " & stackTraceLine.lineNumber & " of template " & stackTraceLine.templateName;
+                }
+            }
+        } else {
+            if ( event.exception != null ) {
+                output = output & '<span class="italic">' & replace(event.exceptionStackTrace, "\n", "<br/>&nbsp;&nbsp;&nbsp;&nbsp;") & '</span>';
+            } else {
+                message = event.message;
+                message = replace(message, "<", "&lt;");
+                message = replace(message, ">", "&gt;");
+                output = output & '<span>' & message & '</span>';
+            }
+        }
+        output = replace(output, "\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+
+        output = output & '</li>\n';
+
+        // output line
+        output
+    }
+    '</ul>\n'
+%>

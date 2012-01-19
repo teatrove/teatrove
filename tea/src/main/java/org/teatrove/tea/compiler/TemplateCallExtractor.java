@@ -31,8 +31,6 @@ import org.teatrove.trove.classfile.TypeDesc;
 import org.teatrove.trove.classfile.CodeDisassembler;
 import org.teatrove.trove.classfile.CodeAssemblerPrinter;
 
-import org.teatrove.tea.compiler.JavaClassGenerator;
-
 /**
  * 
  * @author Guy A. Molinari
@@ -60,7 +58,7 @@ public class TemplateCallExtractor {
                 all[i].getName()) && all[i].getModifiers().isStatic()) {
                 executeMethod = all[i];
                 break;
-            } 
+            }
         }
         in.close();
         return executeMethod;
@@ -78,13 +76,13 @@ public class TemplateCallExtractor {
 
         // find the execute method on this template
         for (int i = 0; i < all.length; i++) {
-            
+
             if ("substitute".equals(
-                all[i].getName()) && 
+                all[i].getName()) &&
                 all[i].getMethodDescriptor().getParameterCount() == 1) {
                 substituteMethod = all[i];
                 break;
-            } 
+            }
         }
         in.close();
         return substituteMethod;
@@ -93,33 +91,35 @@ public class TemplateCallExtractor {
     /**
      * Get the names of all templates called within a template.
      */
-    public static String[] getTemplatesCalled(String basePath, String templateName) { 
+    public static String[] getTemplatesCalled(String basePath, String templateName) {
 
-        final HashMap templatesCalledMap = new HashMap();
+        final HashMap<String, String> templatesCalledMap =
+            new HashMap<String, String>();
+
         try {
-            File templatePath = new File(new File(basePath), 
+            File templatePath = new File(new File(basePath),
                 templateName.replace('.', '/') + ".class");
-            if (!templatePath.exists() && 
+            if (!templatePath.exists() &&
                     templateName.startsWith(TEMPLATE_PACKAGE)) {
-                templatePath = new File(new File(basePath),  
+                templatePath = new File(new File(basePath),
                     templateName.substring(TEMPLATE_PACKAGE.length()).
                     replace('.','/') + ".class");
             }
-      
-           
+
+
             MethodInfo executeMethod = getTemplateExecuteMethod(new FileInputStream(templatePath));
 
             // Search for embedded execute methods.
             CodeDisassembler cd = new CodeDisassembler(executeMethod);
             cd.disassemble(new CodeAssemblerPrinter(executeMethod
                 .getMethodDescriptor().getParameterTypes(), true, null) {
-    
-                 public void invokeStatic(String className, String methodName, 
+
+                 public void invokeStatic(String className, String methodName,
                      TypeDesc ret, TypeDesc[] params)  {
                      if (JavaClassGenerator.EXECUTE_METHOD_NAME.equals(methodName))
                          templatesCalledMap.put(className.replace('.', '/'), className);
                  }
-    
+
                  public void println(String s) { } // Do nothing
             });
 
@@ -133,103 +133,105 @@ public class TemplateCallExtractor {
             cd = new CodeDisassembler(substituteMethod);
             cd.disassemble(new CodeAssemblerPrinter(substituteMethod
                 .getMethodDescriptor().getParameterTypes(), true, null) {
-    
-                 public void invokeStatic(String className, String methodName, 
+
+                 public void invokeStatic(String className, String methodName,
                      TypeDesc ret, TypeDesc[] params)  {
                      if (JavaClassGenerator.EXECUTE_METHOD_NAME.equals(methodName))
                          templatesCalledMap.put(className.replace('.', '/'), className);
                  }
-    
+
                  public void println(String s) { } // Do nothing
             });
         }
         catch (IOException ix) {
             return new String[0];
         }
-    
+
         return (String[]) templatesCalledMap.keySet().toArray(
             new String[templatesCalledMap.keySet().size()]);
-    }   
+    }
 
     /**
      * Get the names of all application methods called within a template.
      */
-    public static AppMethodInfo[] getAppMethodsCalled(String basePath, final String templateName, 
-            final String contextClass) { 
+    public static AppMethodInfo[] getAppMethodsCalled(String basePath, final String templateName,
+            final String contextClass) {
 
-        final HashMap methodsCalledMap = new HashMap();
+        final HashMap<AppMethodInfo, AppMethodInfo> methodsCalledMap =
+            new HashMap<AppMethodInfo, AppMethodInfo>();
+
         try {
-            File templatePath = new File(new File(basePath), 
+            File templatePath = new File(new File(basePath),
                 templateName.replace('.', '/') + ".class");
-            if (!templatePath.exists() && 
+            if (!templatePath.exists() &&
                     templateName.startsWith(TEMPLATE_PACKAGE)) {
-                templatePath = new File(new File(basePath),  
+                templatePath = new File(new File(basePath),
                     templateName.substring(TEMPLATE_PACKAGE.length()).
                     replace('.','/') + ".class");
             }
-      
+
             final MethodInfo executeMethod = getTemplateExecuteMethod(new FileInputStream(templatePath));
 
             CodeDisassembler cd = new CodeDisassembler(executeMethod);
             cd.disassemble(new CodeAssemblerPrinter(executeMethod
                 .getMethodDescriptor().getParameterTypes(), true, null) {
-    
-                 public void invokeVirtual(String className, String methodName, 
+
+                 public void invokeVirtual(String className, String methodName,
                          TypeDesc ret, TypeDesc[] params)  {
-                     if ("print".equals(methodName) || 
+                     if ("print".equals(methodName) ||
                              "toString".equals(methodName) ||
                              "equals".equals(methodName) ||
                              (contextClass.indexOf(className) == -1 &&
                              className.indexOf("MergedClass") == -1))
                          return;
-                  
+
                      AppMethodInfo ami = new AppMethodInfo(methodName, params);
                      if (! methodsCalledMap.containsKey(ami))
                          methodsCalledMap.put(ami, ami);
-                     else 
-                         ((AppMethodInfo) methodsCalledMap.get(ami)).incCallCount();
+                     else
+                         methodsCalledMap.get(ami).incCallCount();
                  }
-    
+
                  public void println(String s) { } // Do nothing
             });
 
             final MethodInfo substituteMethod = getTemplateSubstituteMethod(new FileInputStream(templatePath));
 
             if (substituteMethod == null)
-                return (AppMethodInfo[]) methodsCalledMap.values().toArray(
+                return methodsCalledMap.values().toArray(
                     new AppMethodInfo[methodsCalledMap.values().size()]);
 
             // check the substitute methods on this template
             cd = new CodeDisassembler(substituteMethod);
             cd.disassemble(new CodeAssemblerPrinter(substituteMethod
                 .getMethodDescriptor().getParameterTypes(), true, null) {
-    
-                 public void invokeVirtual(String className, String methodName, 
+
+                 public void invokeVirtual(String className, String methodName,
                          TypeDesc ret, TypeDesc[] params)  {
-                     if ("print".equals(methodName) || 
+                     if ("print".equals(methodName) ||
                              "toString".equals(methodName) ||
                              "equals".equals(methodName) ||
                              (contextClass.indexOf(className) == -1 &&
                              className.indexOf("MergedClass") == -1))
                          return;
-                  
+
                      AppMethodInfo ami = new AppMethodInfo(methodName, params);
                      if (! methodsCalledMap.containsKey(ami))
                          methodsCalledMap.put(ami, ami);
-                     else 
-                         ((AppMethodInfo) methodsCalledMap.get(ami)).incCallCount();
+                     else
+                         methodsCalledMap.get(ami).incCallCount();
                  }
-    
+
                  public void println(String s) { } // Do nothing
             });
         }
         catch (IOException ix) {
             return new AppMethodInfo[0];
         }
-    
-        return (AppMethodInfo[]) methodsCalledMap.values().toArray(
+
+        return methodsCalledMap.values().toArray(
             new AppMethodInfo[methodsCalledMap.values().size()]);
-    }   
+    }
 
     public static class AppMethodInfo {
 
@@ -246,9 +248,9 @@ public class TemplateCallExtractor {
         public AppMethodInfo(String desc, String delim) {
             mName = desc.substring(0, desc.indexOf('('));
             StringTokenizer st = new StringTokenizer(
-                desc.substring(desc.indexOf('(') + 1, 
+                desc.substring(desc.indexOf('(') + 1,
                 desc.indexOf(')')), delim);
-            ArrayList l = new ArrayList();
+            ArrayList<TypeDesc> l = new ArrayList<TypeDesc>();
             while ( st.hasMoreTokens() )
                 l.add(TypeDesc.forDescriptor(st.nextToken().trim()));
             mParams = (TypeDesc[]) l.toArray(new TypeDesc[l.size()]);
@@ -266,7 +268,7 @@ public class TemplateCallExtractor {
         }
 
         public AppMethodInfo(Method method) {
-            Class[] pTypes = method.getParameterTypes();
+            Class<?>[] pTypes = method.getParameterTypes();
             java.lang.reflect.Type[] gTypes = method.getGenericParameterTypes();
             mParams = new TypeDesc[pTypes.length];
             for (int i = 0; i < mParams.length; i++)
@@ -309,7 +311,7 @@ public class TemplateCallExtractor {
         public boolean equals(Object o) {
             for (int i = 0; mParams != null && i < mParams.length; i++)
 
-                if (((AppMethodInfo) o).getParams().length != mParams.length || 
+                if (((AppMethodInfo) o).getParams().length != mParams.length ||
                         ! ((AppMethodInfo) o).getParams()[i].equals(mParams[i]))
                     return false;
             return ((AppMethodInfo) o).getName().equals(mName);

@@ -30,6 +30,8 @@ import java.io.PrintWriter;
  */
 public class ContextCreationException extends UndeclaredThrowableException {
 
+    private static final long serialVersionUID = 1L;
+
     public ContextCreationException(Exception e) {
         super(e);
     }
@@ -60,7 +62,7 @@ public class ContextCreationException extends UndeclaredThrowableException {
             Throwable rock = getUndeclaredThrowable();
             if (rock != null) {
                 rock.printStackTrace(ps);
-            } 
+            }
             else {
                 super.printStackTrace(ps);
             }
@@ -72,7 +74,7 @@ public class ContextCreationException extends UndeclaredThrowableException {
             Throwable rock = getUndeclaredThrowable();
             if (rock != null) {
                 rock.printStackTrace(pw);
-            } 
+            }
             else {
                 super.printStackTrace(pw);
             }

@@ -1,0 +1,18 @@
+<% template script (String pageTitle) %>
+
+    <script src="scripts/script_bbq" type="text/javascript"></script>
+    <script src="scripts/script_cookies" type="text/javascript"></script>
+
+    <% if ( pageTitle == 'Compile' ) { %>
+    <script src="scripts/script_iphoneswitch" type="text/javascript"></script>
+    <script src="scripts/script_syntaxhighlighter" type="text/javascript"></script>
+    <% } else if ( pageTitle == 'Templates' or pageTitle == 'Functions' or pageTitle == 'Applications' ) { %>
+    <script src="scripts/script_jstree" type="text/javascript"></script>
+    <% } else if ( pageTitle == 'Instrumentation' ) { %>
+    <script src="scripts/script_sparkline" type="text/javascript"></script>
+    <% } else if ( pageTitle == 'Template Info' ) { %>
+    <script src="scripts/script_charts" type="text/javascript"></script>
+    <% } %>
+    <script src="scripts/script_gritter" type="text/javascript"></script>
+    <script src="scripts/script_admin_core" type="text/javascript"></script>
+

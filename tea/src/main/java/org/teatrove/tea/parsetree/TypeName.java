@@ -24,6 +24,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill, Nick Hagan
  */
 public class TypeName extends Name {
+    private static final long serialVersionUID = 1L;
+
     private int mDimensions;
     private Type mType;
     private TypeName[] mGenericTypes;
@@ -93,7 +95,7 @@ public class TypeName extends Name {
 
     public int getDimensions() {
         if (mDimensions < 0 && mType != null) {
-            Class clazz = mType.getNaturalClass();
+            Class<?> clazz = mType.getNaturalClass();
             int dim = 0;
             while (clazz.isArray()) {
                 dim++;

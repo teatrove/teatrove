@@ -36,7 +36,7 @@ public class TemplateLoader {
     private String mPackagePrefix;
 
     // Maps full template names to Templates.
-    private Map mTemplates;
+    private Map<String, Template> mTemplates;
 
     /**
      * Creates a TemplateLoader that uses the current ClassLoader as a base.
@@ -82,9 +82,9 @@ public class TemplateLoader {
         }
         mPackagePrefix = packagePrefix.trim();
 
-        mTemplates = new HashMap();
+        mTemplates = new HashMap<String, Template>();
     }
-    
+
     /**
      * Get or load a template by its full name. The full name of a template
      * has '.' characters to separate name parts, and it does not include a
@@ -124,7 +124,6 @@ public class TemplateLoader {
      *
      * @author Brian S O'Neill
      * @version
-
      */
     public static interface Template {
         public TemplateLoader getTemplateLoader();
@@ -137,14 +136,14 @@ public class TemplateLoader {
         /**
          * Returns the class that defines this template.
          */
-        public Class getTemplateClass();
+        public Class<?> getTemplateClass();
 
         /**
          * Returns the type of runtime context that this template accepts.
          *
          * @see org.teatrove.tea.runtime.Context
          */
-        public Class getContextType();
+        public Class<?> getContextType();
 
         /**
          * Returns the parameter names that this template accepts. The length
@@ -152,12 +151,12 @@ public class TemplateLoader {
          * If any template parameter names is unknown, the array entry is null.
          */
         public String[] getParameterNames();
-        
+
         /**
          * Returns the parameter types that this template accepts. The length
          * of the returned array is the same as returned by getParameterNames.
          */
-        public Class[] getParameterTypes();
+        public Class<?>[] getParameterTypes();
 
         /**
          * Executes this template using the given runtime context instance and
@@ -168,7 +167,7 @@ public class TemplateLoader {
          * @param parameters Must have same length and types as returned by
          * {@link #getParameterTypes()}.
          */
-        public void execute(Context context, Object[] parameters) 
+        public void execute(Context context, Object[] parameters)
             throws Exception;
 
         /**
@@ -179,14 +178,14 @@ public class TemplateLoader {
 
     private class TemplateImpl implements Template {
         private String mName;
-        private Class mClass;
+        private Class<?> mClass;
 
         private transient Method mExecuteMethod;
-        private transient Class mReturnType;
+        private transient Class<?> mReturnType;
         private transient String[] mParameterNames;
-        private transient Class[] mParameterTypes;
+        private transient Class<?>[] mParameterTypes;
 
-        private TemplateImpl(String name, Class clazz)
+        private TemplateImpl(String name, Class<?> clazz)
             throws NoSuchMethodException
         {
             mName = name;
@@ -202,23 +201,23 @@ public class TemplateLoader {
             return mName;
         }
 
-        public Class getTemplateClass() {
+        public Class<?> getTemplateClass() {
             return mClass;
         }
 
-        public Class getContextType() {
+        public Class<?> getContextType() {
             return mExecuteMethod.getParameterTypes()[0];
         }
 
         public String[] getParameterNames() {
             return (String[])mParameterNames.clone();
         }
-        
-        public Class[] getParameterTypes() {
+
+        public Class<?>[] getParameterTypes() {
             return (Class[])mParameterTypes.clone();
         }
 
-        public void execute(Context context, Object[] parameters) 
+        public void execute(Context context, Object[] parameters)
             throws Exception
         {
             int length = parameters.length;
@@ -254,11 +253,11 @@ public class TemplateLoader {
             buf.append("template ");
             buf.append(getName());
             buf.append('(');
-            
+
             buf.append(getContextType().getName());
 
             String[] paramNames = getParameterNames();
-            Class[] paramTypes = getParameterTypes();
+            Class<?>[] paramTypes = getParameterTypes();
             int length = paramTypes.length;
             for (int i=0; i<length; i++) {
                 buf.append(", ");
@@ -277,7 +276,7 @@ public class TemplateLoader {
         private void doReflection() throws NoSuchMethodException {
             // Bind to first execute method found; there should be one.
             Method[] methods = getTemplateClass().getMethods();
-            
+
             for (int i=0; i<methods.length; i++) {
                 Method m = methods[i];
                 if (m.getName().equals
@@ -291,13 +290,13 @@ public class TemplateLoader {
 
             if (mExecuteMethod == null) {
                 throw new NoSuchMethodException
-                    ("No execute method found in class " + 
+                    ("No execute method found in class " +
                      "for template \"" + getName() + "\"");
             }
 
             mReturnType = mExecuteMethod.getReturnType();
 
-            Class[] methodParams = mExecuteMethod.getParameterTypes();
+            Class<?>[] methodParams = mExecuteMethod.getParameterTypes();
             if (methodParams.length == 0 ||
                 !Context.class.isAssignableFrom(methodParams[0])) {
 
@@ -316,9 +315,9 @@ public class TemplateLoader {
 
             try {
                 Method namesMethod = getTemplateClass().getMethod
-                    (JavaClassGenerator.PARAMETER_METHOD_NAME, null);
+                    (JavaClassGenerator.PARAMETER_METHOD_NAME);
 
-                String[] names = (String[])namesMethod.invoke(null, null);
+                String[] names = (String[])namesMethod.invoke(null);
                 if (names != null) {
                     // Copy, just in case the length differs.
                     for (int i=0; i<length; i++) {

@@ -21,12 +21,14 @@ package org.teatrove.tea.compiler;
  * @author Brian S O'Neill
  */
 class FloatToken extends Token {
+    private static final long serialVersionUID = 1L;
+
     private float mValue;
 
     FloatToken(int sourceLine,
-               int sourceStartPos, 
+               int sourceStartPos,
                int sourceEndPos,
-               float value) 
+               float value)
     {
         super(sourceLine, sourceStartPos, sourceEndPos, Token.NUMBER);
         mValue = value;

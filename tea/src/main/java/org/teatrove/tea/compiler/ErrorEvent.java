@@ -22,6 +22,8 @@ package org.teatrove.tea.compiler;
  */
 public class ErrorEvent extends java.util.EventObject {
 
+    private static final long serialVersionUID = 1L;
+
     private String mErrorMsg;
     private Token mCulprit;
     private SourceInfo mInfo;
@@ -35,7 +37,7 @@ public class ErrorEvent extends java.util.EventObject {
         this(source, errorMsg, info, null);
     }
 
-    ErrorEvent(Object source, String errorMsg, Token culprit, 
+    ErrorEvent(Object source, String errorMsg, Token culprit,
                CompilationUnit unit) {
         super(source);
         mErrorMsg = errorMsg;
@@ -46,7 +48,7 @@ public class ErrorEvent extends java.util.EventObject {
         mUnit = unit;
     }
 
-    ErrorEvent(Object source, String errorMsg, SourceInfo info, 
+    ErrorEvent(Object source, String errorMsg, SourceInfo info,
                CompilationUnit unit) {
         super(source);
         mErrorMsg = errorMsg;
@@ -86,7 +88,7 @@ public class ErrorEvent extends java.util.EventObject {
                 msg = mUnit.getSourceFileName();
             }
             else {
-                msg = 
+                msg =
                     mUnit.getSourceFileName() + ':' + mInfo.getLine();
             }
         }

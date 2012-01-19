@@ -10,6 +10,28 @@ compiler. A much smaller amount of code supports Tea in a runtime environment.
 
 Change History
 
+
+4.0.0 to 4.1.0
+=============================
+- Added null-safe operator (ie: user?.address?.city)
+- Added ternary operator (ie: count % 2 == 0 ? 'even' : 'odd')
+- Added elvis ternary operator (ie: value = value ?: 5)
+- Added truthful statements for logic/if statements (collections, arrays, strings, objects, numbers, etc)
+- Added spaceship operator for comparisons and sorting (ie: num1 <=> num2)
+- Added spread operator to retrieve properties on collections (ie: allUserNames = users*.fullName)
+- Added direct function invocation (ie: obj.doSomething())
+- Added static function invocation (ie: Math.abs(num))
+- Added variable argument support (ie: doSomething(a, b, c) via void doSomething(String... args))
+- Added JSON-like map notation (ie: ##(key : value, key : value))
+
+
+3.9.0 to 4.0.0
+=============================
+- Added generics support to class files
+- Added generics awareness to tea files (looping, definitions, etc)
+- Added automatic imports configuraiton to automatically import packages without explicit defintion
+
+
 3.5.1 to 3.9.0
 ===============================
 - Added getTemplateInfos to TemplateRepository
@@ -17,6 +39,7 @@ Change History
 - Changed packaging from com.go to org.teatrove
 - Changed license from The Tea Software License 1.1 to Apache License 2.0
 - Changed copyright from Walt Disney Internet Group to TeaTrove.org
+
 
 3.5.0 to 3.5.1
 ===============================
