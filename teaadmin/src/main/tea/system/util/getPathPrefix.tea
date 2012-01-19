@@ -21,7 +21,19 @@
         path = substring(path, 0, index);
     }
     */
-    path = request.servletPath;
+    
+    path = ''
+    
+    tmp = request.contextPath
+    if (tmp != null and tmp.length > 0) {
+        path = path & tmp
+    }
+    
+    tmp = request.servletPath;
+    if (tmp != null and tmp.length > 0) {
+        path = path & tmp
+    }
+    
     path = path & '/';
 
     // return path prefix string

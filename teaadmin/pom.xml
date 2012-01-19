@@ -64,7 +64,6 @@
                         <context>org.teatrove.teaapps.contexts.DateContext</context>
                         <context>org.teatrove.teaapps.contexts.MathContext</context>
                         <context>org.teatrove.teaapps.contexts.NumberFormatContext</context>
-                        <context>org.teatrove.teaapps.contexts.ListContext</context>
                         <context>org.teatrove.teaapps.contexts.JMXContext</context>
                     </contexts>
                 </contextClassBuilder>
