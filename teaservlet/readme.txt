@@ -14,6 +14,19 @@ properties file with configuration information and initialization parameters.
 Change History
 
 
+4.0.0 to 4.1.0
+===============================
+- Added substitution files and variable expressions in configuration files
+- Enabled resolving configuration files against WEB-INF (via new ResourceFactory)
+- Added support for both XML and enhanced property files natively
+- Added initial support for serving static assets for admin applications
+
+
+3.9.0 to 4.0.0
+===============================
+- Added automatic imports configuration to template block
+
+
 1.8.2 to 3.9.0
 ===============================
 - Changed version to match that of the entire TeaTrove project, from here on the project
