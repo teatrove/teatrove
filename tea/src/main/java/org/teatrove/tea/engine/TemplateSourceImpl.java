@@ -836,6 +836,10 @@ public class TemplateSourceImpl implements TemplateSource {
         }
 
         CompilationUnit unit = compiler.getCompilationUnit(tName, null);
+        if (unit == null) {
+            return false;
+        }
+        
         return ! unit.signatureEquals(tName, templateInfo.getParameterTypes(), templateInfo.getReturnType());
     }
 

@@ -20,7 +20,8 @@
             }
             
             '<li>\n'
-                '<a href="' templatePath '">' templateName '</a>'
+                //'<a href="' templatePath '">' templateName '</a>'
+                '<a href="?page=template_info&name='  reloadableTemplate.name '" title="View template stats">' templateName '</a>'
                 if ( reloadableTemplate.signatureChanged ) {
                     '<span> (Signature Changed)</span>\n'
                 }
