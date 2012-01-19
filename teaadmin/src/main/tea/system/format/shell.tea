@@ -1,0 +1,213 @@
+<% template shell (Map configuration) {...}
+
+    testing = false;
+
+    admin = getTeaServletAdmin();
+
+    pageTitle = configuration["pageTitle"] as java.lang.String;
+    servletName = call system.util.getServletName();
+
+    request = getRequest();
+
+    setContentType("text/html;charset=utf-8");
+    
+%><!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+	<head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+		<title><% pageTitle %> | <% if ( servletName != '' ) { toUpperCase(servletName) ' | ' } %>TeaServlet Admin Console</title>
+        <meta name="description" content="Admin console for managing TeaServlet and Tea templates" />
+        <meta name="author" content="TeaTrove" />
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+        <!-- CSS: implied media=all -->
+        <!-- CSS concatenated and minified via ant build script-->
+<%
+        call system.format.style(pageTitle);
+        call system.config.customize();
+%>
+        <!-- end CSS-->
+
+        <!-- jQuery, local -->
+        <script src="scripts/script_jquery"></script>
+
+        <!-- Modernizr enables HTML5 elements & feature detects -->
+        <script src="scripts/script_modernizr"></script>
+
+	</head>
+    <body>
+		<header>
+			<section>
+    			<h1>
+					<a href="console" id="logo"></a>
+				</h1>
+				<nav class="groups">
+					<ul>
+						<li<% if ( configuration['pageSection'] == 'Dashboard' ) { ' class="current"' } %>>
+							<a href="?page=dashboard">Dashboard</a>
+						</li>
+						<li<% if ( configuration['pageSection'] == 'Compile' ) { ' class="current"' } %>>
+							<a href="?page=compile">Compile</a>
+						</li>
+						<li<% if ( configuration['pageSection'] == 'Explore' ) { ' class="current"' } %>>
+							<a href="#">Explore</a>
+							<ul>
+								<li class="first">
+									<a href="?page=templates">Templates</a>
+								</li>
+							    <li>
+									<a href="?page=functions">Functions</a>
+								</li>
+							 	<li>
+									<a href="?page=applications">Applications</a>
+								</li>
+								<li>
+									<a href="?page=logs">Logs</a>
+								</li>
+							</ul>
+						</li>
+						<li<% if ( configuration['pageSection'] == 'Analyze' ) { ' class="current"' } %>>
+							<a href="#" onclick="return false">Analyze</a>
+							<ul>
+								<li class="first">
+									<a href="?page=instrumentation">Instrumentation</a>
+								</li>
+								<li>
+									<a href="?page=system_information">System Information</a>
+								</li>
+							    <li>
+									<a href="?page=janitor">Janitor</a>
+								</li>
+								<li>
+									<a href="?page=servlet_engine">Servlet Engine</a>
+								</li>
+							    <li>
+									<a href="?page=echo_request">Echo Request</a>
+								</li>
+							</ul>
+						</li>
+                    </ul>
+				</nav>
+<%
+				adminLinks = admin.adminLinks;
+				if ( adminLinks != null and adminLinks.length > 0 ) {
+%>
+				<nav class="admins">
+					<ul>
+						<li<% if ( configuration['pageSection'] == 'Other' ) { ' class="current"' } %>>
+							<a href="admins">Other Admins</a>
+							<ul>
+<%
+                                foreach ( l in 0..adminLinks.length-1 ) {
+                                    adminLink = adminLinks[l];
+                                    adminAppName = adminLink.appName;
+                                    isLegacy = false;
+                                    if ( adminAppName == 'TeaServletAdmin' or adminAppName == 'BaristaAdmin' ) {
+                                        isLegacy = true;
+                                    }
+                                    
+                                    '<li' if ( l == 0 ) { ' class="first"' } '>\n'
+                                        '<a href="#">' adminAppName if ( isLegacy ) { ' (Legacy)' } '</a>\n'
+                                        if ( adminLink.links != null and adminLink.links.length > 0 ) {
+                                            '<ul>\n'
+                                            foreach ( link in adminLink.links ) {
+                                                '<li>\n'
+                                                    pathPlusParam = '/system/console?page=';
+                                                    if ( isLegacy ) {
+                                                        pathPlusParam = '/system/teaservlet/Admin?subTemplate='
+                                                    }
+
+                                                    linkLocation = link.location;
+                                                    if ( findFirst(linkLocation, '/') == 0 ) {
+                                                        linkLocation = replaceFirst(linkLocation, '/', '');
+                                                    }
+                                                    linkLocation = replace(linkLocation, '/', '.');
+                                                    linkLocation = pathPlusParam & linkLocation;
+                                                    if ( servletName != '' ) {
+                                                        linkLocation = '/' & servletName & linkLocation;
+                                                    }
+
+                                                    '<a href="' linkLocation '">' link.name '</a>\n'
+                                                '</li>\n'
+                                            }
+                                            '</ul>\n'
+                                        }
+                                    '</li>\n'
+                                }
+%>
+							</ul>
+						</li>
+					</ul>
+				</nav>
+<%
+                }
+%>
+			</section>
+	    </header>
+
+        <aside>
+            <section>
+                <ul class="breadcrumbs">
+<%
+                    '<li>'
+                        '<span class="serverName">'
+                            request.serverName
+                        '</span>'
+                        clusteredServers = getTeaServletAdmin().clusteredServers;
+                        if ( clusteredServers != null ) {
+                            '<ul>'
+                            foreach ( server in clusteredServers ) {
+                                link = server;
+                                if ( request.serverPort != null and request.serverPort != 80 ) {
+                                    link = link & ':' & request.serverPort;
+                                }
+                                link = link & request.requestURI;
+                                if ( request.queryString != null ) {
+                                    link = link & '?' & request.queryString;
+                                }
+                                '<li><a href="' & link & '">' server '</a></li>'
+                            }
+                            '</ul>\n'
+                        }
+                    '</li>\n'
+
+                    if ( servletName != '' ) {
+                        '<li>'
+                            '<span>' servletName '</span>'
+                        '</li>\n'
+                    }
+
+                    '<li>' toLowerCase(pageTitle) '</li>\n'
+
+%>
+                </ul>
+            </section>
+        </aside>
+		<%
+		// Page injection
+		...
+		%>
+		<footer>
+			<section>
+				<div>TeaServlet version <% getTeaServletAdmin().teaServletVersion %></div>
+				<div>&copy; <a href="http://www.teatrove.org">TeaTrove</a> 1999-2011</div>
+			</section>
+		</footer>
+
+        <!-- JavaScript at the bottom for fast page loading -->
+
+        <!-- jQuery UI, local -->
+        <script src="scripts/script_jqueryui"></script>
+<%
+        call system.format.script(pageTitle);
+%>
+
+	</body>
+</html>

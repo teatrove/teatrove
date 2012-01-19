@@ -4,12 +4,12 @@
   
   <groupId>org.teatrove</groupId>
   <artifactId>trove</artifactId>
-  <version>4.1-SNAPSHOT</version>
+  <version>4.1.1-SNAPSHOT</version>
 
   <parent>
     <groupId>org.teatrove</groupId>
     <artifactId>teatrove</artifactId>
-    <version>4.1-SNAPSHOT</version>
+    <version>4.1.1-SNAPSHOT</version>
   </parent>
 
   <packaging>jar</packaging>
@@ -84,18 +84,6 @@
   </developers>
   
   <dependencies>
-
-    <dependency>
-      <groupId>jcache</groupId>
-      <artifactId>jcache</artifactId>
-      <version>1.0-dev-2</version>
-    </dependency> 
-
-    <dependency>
-      <groupId>com.google.code</groupId>
-      <artifactId>javabi-sizeof</artifactId>
-      <version>0.2</version>
-    </dependency>
 
     <dependency>
       <groupId>org.jdom</groupId>

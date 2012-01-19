@@ -1,1 +1,8 @@
 target/
+.project
+.metadata/
+.settings/
+build-tools/.project
+build-tools/.settings/
+build-tools/teacompiler/.project
+build-tools/teacompiler/.settings/

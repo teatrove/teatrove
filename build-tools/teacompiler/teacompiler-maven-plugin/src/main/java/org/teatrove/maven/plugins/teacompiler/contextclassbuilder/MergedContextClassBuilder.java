@@ -16,19 +16,27 @@
 
 package org.teatrove.maven.plugins.teacompiler.contextclassbuilder;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
 import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilder;
 import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilderException;
 import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilderHelper;
 import org.teatrove.tea.runtime.Context;
 import org.teatrove.trove.classfile.ClassFile;
+import org.teatrove.trove.io.DualOutput;
 import org.teatrove.trove.util.ClassInjector;
-import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
-
-import java.io.*;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Merges a list of interfaces and outputs the merged interface to the project's output directory
@@ -45,7 +53,7 @@ public class MergedContextClassBuilder implements ContextClassBuilder {
     public Class<Context> getContextClass(final ContextClassBuilderHelper helper) throws ContextClassBuilderException {
         return getMergedContextClass(contexts, helper);
     }
-
+    
     private Class<Context> getMergedContextClass(final List<String> contexts, final ContextClassBuilderHelper helper) throws ContextClassBuilderException {
 
         final String mergedClassName = this.mergedClassName != null ? this.mergedClassName : buildClassName(helper, contexts);
@@ -72,8 +80,8 @@ public class MergedContextClassBuilder implements ContextClassBuilder {
 
         final ClassFile classFile = createMergedInterface(mergedClassName, contextClasses);
 
-        writeMergedInterface(mergedClassLocation, classFile);
-
+        writeMergedInterface(mergedClassLocation, classFile, injector);
+        
         return loadMergedInterface(injector, mergedClassName);
     }
 
@@ -97,7 +105,7 @@ public class MergedContextClassBuilder implements ContextClassBuilder {
         }
     }
 
-    private void writeMergedInterface(File mergedClassLocation, ClassFile classFile) throws ContextClassBuilderException {
+    private void writeMergedInterface(File mergedClassLocation, ClassFile classFile, ClassInjector injector) throws ContextClassBuilderException {
         // Write Merged interface to project build output directory so it can be package with jar and loaded by runtime.
         BufferedOutputStream out = null;
         try {
@@ -108,7 +116,10 @@ public class MergedContextClassBuilder implements ContextClassBuilder {
                 }
             }
             mergedClassLocation.createNewFile();
-            out = new BufferedOutputStream(new FileOutputStream(mergedClassLocation));
+            out = new BufferedOutputStream(new DualOutput(
+                new FileOutputStream(mergedClassLocation), 
+                injector.getStream(classFile.getClassName()))
+            );
             classFile.writeTo(out);
             out.flush();
         } catch (FileNotFoundException e) {
@@ -130,10 +141,21 @@ public class MergedContextClassBuilder implements ContextClassBuilder {
         final ClassFile classFile = new ClassFile(mergedClassName);
 
         // For the runtime to be able to adapt to this class, make it an interface
+        Set<Method> methods = new HashSet<Method>();
         classFile.getModifiers().setInterface(true);
-
         for (Class contextClass : contextClasses) {
-            classFile.addInterface(contextClass);
+            if (contextClass.isInterface()) {
+                classFile.addInterface(contextClass);
+            }
+            else {
+                for (Method method : contextClass.getMethods()) {
+                    if (!methods.contains(method) && 
+                        !method.getDeclaringClass().equals(Object.class)) {
+                        methods.add(method);
+                        classFile.addMethod(method);
+                    }
+                }
+            }
         }
         return classFile;
     }
