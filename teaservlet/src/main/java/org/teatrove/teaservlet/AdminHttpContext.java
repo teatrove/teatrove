@@ -22,6 +22,5 @@ package org.teatrove.teaservlet;
  * @author Brian S O'Neill
  */
 public interface AdminHttpContext extends AdminContext, 
-                                          HttpContext,
-                                          RegionCachingContext {
+                                          HttpContext {
 }
