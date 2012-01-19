@@ -1,0 +1,1695 @@
+<% template template_info (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+    testing = false;
+
+    pathPrefix = call system.util.getPathPrefix();
+
+    parameters = request.parameters;
+    
+    templateName = null;
+    if ( parameters["name"] != null ) {
+        templateName = parameters["name"];
+    }
+    
+    callers = getCallers(templateName);
+    info = getTemplateInfo(templateName);
+    tstats = getStatistics(templateName, null);
+    templateStats = getTemplateStats(templateName);
+
+    totalTime = 0.0;
+    topLevelInvokes = 0;
+    if ( tstats != null ) {
+        totalTime = tstats.averageServiceDuration;
+        topLevelInvokes = tstats.servicedCount;
+    }
+
+    tsubstats = getStatistics(templateName, "__substitution");
+    if ( tsubstats != null ) {
+        totalTime = totalTime - tsubstats.averageServiceDuration;
+    }
+
+    netTime = totalTime;
+
+    numberFormat("####0.00");
+    totalTimeString = totalTime & '';
+    numberFormat("#,###,###");
+    topLevelInvokesString = topLevelInvokes & '';
+    numberFormat(null);
+
+    dataArrayTemplates = '';
+    dataArrayFunctions = '';
+    rawDataPayloadJsArray = '';
+    rawDataProcessJsArray = '';
+    dataArrayAggregatesDuration = '';
+    dataArrayAggregatesPayload = '';
+
+    netTemplateDuration = 0;
+    netTemplatePercentage = 0;
+
+    netFunctionDuration = 0;
+    netFunctionPercentage = 0;
+
+    netNativeDuration = 0;
+    netNativePercentage = 0;
+
+    currentTime = currentDate().time;
+    if ( templateStats != null and templateStats.aggregateIntervalForRawData != null ) {
+        aggregateIntervals = templateStats.aggregateIntervals;
+        aggregateIntervalForRawData = templateStats.aggregateIntervalForRawData;
+        rawData = templateStats.rawData;
+
+        numberFormat("0.00");
+        //averageStressLevel = (random() * 100) & "%";
+        templateStress = call system.util.getTemplateStressValue(templateStats);
+        averageStressLevel = (templateStress*100) & "%";
+
+        numberFormat("#,###,###.##");
+        averageTime = aggregateIntervalForRawData.durationStats.arithmeticMean;
+        averageTimeString = averageTime & "";
+
+        averageThroughput = (aggregateIntervalForRawData.contentLengthStats.arithmeticMean/1024.0) & "";
+        numberFormat(null);
+
+        overallStart = call system.util.getRelativeTimeText(currentTime, currentTime-templateStats.cumulativeServiceTime, false, null);
+        overallDuration = call system.util.getRelativeTimeText(currentTime, currentTime-templateStats.cumulativeServiceTime, true, null);
+
+        overallStress = call system.util.getTemplateStressValue(templateStats);
+        overallStress = overallStress * 100;
+
+        numberFormat("#,###,###");
+        topLevelInvokesString = templateStats.servicedCount & '';
+        numberFormat(null);
+    } else {
+        aggregateIntervals = null;
+        aggregateIntervalForRawData = null;
+        rawData = null;
+
+        numberFormat("0.00");
+        averageStressLevel = (random() * 100) & "%";
+        averageTime = 0;
+        averageTimeString = "0.00";
+        averageThroughput = "0";
+        numberFormat(null);
+
+        overallStart = "";
+        overallDuration = "";
+
+        overallStress = "";
+    }
+
+%>
+		<article>
+			<section>
+				<div class="controls">
+					<div class="controls-wrapper">
+						<div id="loadingIndicator"></div>
+						<div role="label">Reset Stats:</div>
+						<div id="buttonset-reset" class="buttonset">
+							<input type="radio" id="reset_radio1" name="radio" /><label for="reset_radio1">Template</label>
+							<input type="radio" id="reset_radio2" name="radio" /><label for="reset_radio2">All</label>
+						</div>
+						<div role="label">Compile:</div>
+						<div id="buttonset-compile" class="buttonset">
+							<input type="radio" id="compile_radio1" name="radio" /><label for="compile_radio1">Template</label>
+							<input type="radio" id="compile_radio2" name="radio" /><label for="compile_radio2">Changes</label>
+							<input type="radio" id="compile_radio3" name="radio" /><label for="compile_radio3">All</label>
+							<% if (admin.clusteredServers != null) { %>
+							<input type="radio" id="compile_radio4" name="radio" /><label for="compile_radio4">Cluster</label>
+							<% } %>
+						</div>
+						<div role="label">View:</div>
+						<div id="buttonset-view" class="buttonset">
+							<input type="radio" id="view_radio1" name="radio" /><label id="view_native" for="view_radio1">Native</label>
+							<input type="radio" id="view_radio2" name="radio" /><label id="view_templates" for="view_radio2">Templates</label>
+							<input type="radio" id="view_radio3" name="radio" /><label id="view_functions" for="view_radio3">Functions</label>
+							<input type="radio" id="view_radio4" name="radio" /><label id="view_callers" for="view_radio4">Callers</label>
+							<input type="radio" id="view_radio5" name="radio" /><label id="view_raw" for="view_radio5">Raw</label>
+							<input type="radio" id="view_radio6" name="radio" /><label id="view_aggregates" for="view_radio6">Aggregates</label>
+							<input type="radio" id="view_radio7" name="radio" checked="checked" /><label id="view_all" for="view_radio7">All</label>
+						</div>
+					</div>
+				</div>
+			    <div id="template-info-container">
+<%
+			        if ( templateName != null and info != null ) {
+                        templateNamePath = replace(templateName, '.', '/');
+                        templateTokens = tokenize(templateNamePath, '/');
+                        templateFile = templateTokens[templateTokens.length-1];
+                        templatePath = pathPrefix & replaceLast(templateNamePath, templateFile, '');
+%>
+                    <div id="template-info-snapshot">
+                        <div class="quick-summary">
+                            <table class="tablehead">
+                                <tr>
+                                <%
+                                    '<td style="width:20%">'
+                                        '<div>'
+                                            '<div class="label left-align" style="color:#AAAAAA;">' templatePath '</div>'
+                                            '<div class="value left-align"><a href="' pathPrefix templateNamePath '" target="_blank">' templateFile '</a></div>'
+                                        '</div>'
+                                    '</td>\n'
+                                    '<td style="width:20%">'
+                                        '<div>'
+                                            '<div id="stackedChartGeneral"></div>'
+                                            '<div class="label">Duration Breakdown</div>'
+                                        '</div>'
+                                    '</td>\n'
+                                    '<td style="width:15%">'
+                                        '<div id="averageStressLevel">'
+                                            '<div class="value">' averageStressLevel '</div>'
+                                            '<div class="label">Average Stress Level</div>'
+                                        '</div>'
+                                    '</td>\n'
+                                    '<td style="width:15%">'
+                                        '<div id="averageTime">'
+                                            '<div class="value">' averageTimeString '</div>'
+                                            '<div class="label">Average Time (ms)</div>'
+                                        '</div>'
+                                    '</td>'
+                                    '<td style="width:15%">'
+                                        '<div id="averageThroughput">'
+                                            '<div class="value">' averageThroughput '</div>'
+                                            '<div class="label">Average Throughput (Kbps)</div>'
+                                        '</div>'
+                                    '</td>\n'
+                                    '<td style="width:15%">'
+                                        '<div id="topLevelInvokes">'
+                                            '<div class="value">' topLevelInvokesString '</div>'
+                                            '<div class="label">Invokes</div>'
+                                        '</div>'
+                                    '</td>\n'
+                                %>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="template-info-native" class="template-info-section">
+                        <div class="heading">Native</div>
+                        <div class="panes">
+                            <div class="visuals">
+                                <div id="processTimeNative" class="processTimeText">
+                                    <div class="percentage">0.0%</div>
+                                    <div class="label">Total Process Time</div>
+                                </div>
+                                <div id="stackedChartNative" class="processTimeBarChart"></div>
+                            </div>
+                            <div class="tabular">
+                                <div class="full-summary">
+                                    <div class="table-container left-float">
+                                        <table cellspacing="1" cellpadding="3" class="tablehead">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="2">General</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="evenrow">
+                                                    <td>Last Successful Compile</td>
+                                                    <td><% info.lastModifiedDate %></td>
+                                                </tr>
+                                                <tr class="oddrow">
+                                                    <td>Parameters</td>
+<%
+                                                    '<td>'
+                                                        if ( info.parameterTypes.length > 1 ) {
+                                                            foreach ( t in 1..info.parameterTypes.length - 1 ) {
+                                                                if ( t != 1 ) {
+                                                                    ', '
+                                                                }
+                                                                formatTypeDesc(info.parameterTypes[t])
+                                                            }
+                                                        } else {
+                                                            'None'
+                                                        }
+                                                    '</td>'
+%>
+                                                </tr>
+                                                <tr class="evenrow">
+                                                    <td>Return Type</td>
+                                                    <td><% formatTypeDesc(info.returnType) %></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="table-container right-float">
+                                        <table cellspacing="1" cellpadding="3" class="tablehead">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="2">Tracking</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="evenrow">
+                                                    <td>Start</td>
+                                                    <td><% overallStart %></td>
+                                                </tr>
+                                                <tr class="oddrow">
+                                                    <td>Duration</td>
+                                                    <td><% overallDuration %></td>
+                                                </tr>
+                                                <tr class="evenrow">
+                                                    <td>Invokes</td>
+                                                    <td><% topLevelInvokesString %></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="clear"></div>
+                                </div>
+                            </div>
+                            <div class="clear"></div>
+                        </div>
+                    </div>
+
+                    <div id="template-info-callees" class="template-info-section">
+                        <div class="heading">Templates (<% info.dependents.length %>)</div>
+                        <div class="panes">
+                            <div class="visuals">
+                                <div id="processTimeTemplates" class="processTimeText">
+                                    <div class="percentage">0.0%</div>
+                                    <div class="label">Total Process Time</div>
+                                </div>
+                                <div id="stackedChartTemplates" class="processTimeBarChart"></div>
+                                <div id="pieChartTemplates" class="processTimePieChart"></div>
+                            </div>
+                            <div class="tabular">
+                                <table cellspacing="1" cellpadding="3" class="tablehead">
+                                    <thead>
+                                        <tr class="colhead">
+                                            <th>Template</th>
+                                            <th>Calls Per</th>
+                                            <th>Sub Block Time</th>
+                                            <th>Average Time</th>
+                                            <th>% Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+<%
+                                        if ( info.dependents.length != 0 ) {
+                                            foreach ( j in 0..info.dependents.length-1 ) {
+                                                dependent = info.dependents[j];
+                                                dependent = replace(dependent, "com/go/teaservlet/template/", "");
+                                                dependent = replace(dependent, "org/teatrove/teaservlet/template/", "");
+
+                                                templateNamePath = dependent;
+                                                templateNamePath = replace(templateNamePath, '/', '.');
+
+                                                templateTokens = tokenize(dependent, '/');
+                                                templateFile = templateTokens[templateTokens.length-1];
+                                                templatePath = pathPrefix & replaceLast(dependent, templateFile, '');
+
+                                                rowClass = 'oddrow';
+                                                if ( j % 2 == 1 ) {
+                                                    rowClass = 'evenrow';
+                                                }
+
+                                                '<tr class="' rowClass '">\n'
+                                                    '<td>'
+                                                        '<div class="template-pathname">'
+                                                            '<div class="template-path">' templatePath '</div>'
+                                                            '<div class="template-name">'
+                                                                //'<a target="_blank" href="' templatePath templateFile '" title="Follow template url">' templateFile '</a>'
+                                                                '<a href="?page=template_info&name=' templateNamePath '" title="Get template info">' templateFile '</a>'
+                                                            '</div>'
+                                                        '</div>'
+                                                        '<div class="template-options">'
+                                                            '<a class="web" target="_blank" href="' templatePath templateFile '" title="Follow template url"></a>'
+                                                            '<a class="info" href="?page=template_info&name=' templateNamePath '" title="View template stats"></a>'
+                                                            '<a class="compile" href="remote/reload?reloadTemplates=selected&selectedTemplates='  templateNamePath '" title="Compile template"></a>'
+                                                            '<a class="reset" href="remote/reset?name='  templateNamePath '" title="Reset template stats"></a>'
+                                                        '</div>'
+                                                    '</td>'
+                                                    stats = getStatistics(templateName, '_' & replace(dependent, '/', '.'));
+                                                    blockstats = getStatistics(templateName, '__block__' & replace(dependent, '/', '.'));
+                                                    if ( stats != null ) {
+                                                        perPageInvokes = 0.0;
+                                                        perPageDuration = stats.averageServiceDuration;
+                                                        blockDuration = 0;
+                                                        if ( topLevelInvokes != 0 ) {
+                                                            perPageInvokes = (stats.servicedCount + 0.0) / (topLevelInvokes + 0.0);
+                                                            if ( blockstats != null ) {
+                                                                blockDuration = blockstats.averageServiceDuration;
+                                                                perPageDuration = perPageDuration - blockDuration;
+                                                                if ( perPageDuration < 0 ) {
+                                                                    perPageDuration = 0;
+                                                                }
+                                                            }
+                                                            if ( perPageInvokes > 0 ) {
+                                                                perPageDuration = perPageDuration * perPageInvokes;
+                                                            }
+                                                        }
+                                                        numberFormat("####0.00");
+                                                        '<td>' perPageInvokes '</td>\n'
+                                                        '<td>'
+                                                            if ( blockstats != null ) {
+                                                                blockDuration
+                                                            } else {
+                                                                'N/A'
+                                                            }
+                                                        '</td>\n'
+                                                        '<td>'
+                                                             numberFormat("####0.00");
+                                                             perPageDuration
+                                                             numberFormat("#######");
+                                                        '</td>\n'
+                                                        percent = 0.0;
+                                                        if ( totalTime != 0 and perPageInvokes > 0 ) {
+                                                            percent = (perPageDuration / totalTime) * 100;
+                                                            netTime = netTime - perPageDuration;
+                                                        }
+                                                        '<td>'
+                                                            numberFormat("##0.0");
+                                                            percent
+                                                            numberFormat(null);
+                                                        '</td>\n'
+                                                        numberFormat("0.#");
+                                                        dataArrayTemplates = dataArrayTemplates & '{ label: "' & templateFile & '", data: ' & percent & '}';
+                                                        if ( j < info.dependents.length-1 ) {
+                                                            dataArrayTemplates = dataArrayTemplates & ', ';
+                                                        }
+                                                        numberFormat(null);
+                                                        
+                                                        netTemplateDuration = netTemplateDuration + perPageDuration;
+                                                        netTemplatePercentage = netTemplatePercentage + percent;
+                                                    } else {
+                                                        '<td></td>\n'
+                                                        '<td></td>\n'
+                                                        '<td></td>\n'
+                                                        '<td></td>\n'
+                                                    }
+                                                '</tr>\n'
+                                            }
+                                        } else {
+                                            '<tr class="oddrow">'
+                                                '<td colspan="5">None</td>\n'
+                                            '</tr>\n'
+                                        }
+
+                                        dataArrayTemplates = '[' & dataArrayTemplates & ']';
+%>
+                                    </tbody>
+                                    <tfoot>
+<%
+                                        '<tr>\n'
+                                            '<td class="right-align" colspan="3">'
+                                                'Net'
+                                            '</td>'
+                                            
+                                            '<td>'
+                                                numberFormat("####0.00");
+                                                netTemplateDuration
+                                                numberFormat(null);
+                                            '</td>'
+
+                                            '<td>'
+                                                percent = 0.0
+                                                if ( totalTime != 0 ) {
+                                                  percent = (netTime / totalTime) * 100;
+                                                }
+                                                numberFormat("##0.0");
+                                                netTemplatePercentage '%'
+                                                numberFormat("#######");
+                                            '</td>'
+                                        '</tr>'
+%>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <div class="clear"></div>
+                        </div>
+                    </div>
+
+                    <div id="template-info-functions" class="template-info-section">
+                        <div class="heading">Functions (<% info.appMethodsCalled.length %>)</div>
+                        <div class="panes">
+                            <div class="visuals">
+                                <div id="processTimeFunctions" class="processTimeText">
+                                    <div class="percentage">0.0%</div>
+                                    <div class="label">Total Process Time</div>
+                                </div>
+                                <div id="stackedChartFunctions" class="processTimeBarChart"></div>
+                                <div id="pieChartFunctions" class="processTimePieChart"></div>
+                            </div>
+                            <div class="tabular">
+                                <table cellspacing="1" cellpadding="3" class="tablehead">
+                                    <thead>
+                                        <tr class="colhead">
+                                            <th>Function</th>
+                                            <th>Calls Per</th>
+                                            <th>Sub Block Time</th>
+                                            <th>Average Time</th>
+                                            <th>% Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+<%
+                                        if ( info.appMethodsCalled.length != 0 ) {
+                                            foreach ( j in 0..info.appMethodsCalled.length-1 ) {
+                                                method = info.appMethodsCalled[j];
+                                                paramString = "(";
+                                                foreach ( k in method.params ) {
+                                                    /*
+                                                    info("method: " & method & ", param: " & k);
+                                                    p = k & "";
+                                                    if ( findLast(k, "/") != -1 ) {
+                                                       p = substring(k, findLast(k, "/") + 1, findLast(k, ";"))
+                                                    }
+                                                    */
+
+                                                    p = k.fullName;
+                                                    if ( startsWith(p, "java.lang.") ) {
+                                                        p = replaceFirst(p, "java.lang.", "");
+                                                    } else if ( startsWith(p, "java.util.") ) {
+                                                        p = replaceFirst(p, "java.util.", "");
+                                                    }
+                                                    paramString = paramString & p & ", ";
+                                                }
+                                                if ( method.params != null and method.params.length > 0 ) {
+                                                   paramString = substring(paramString, 0, paramString.length - 2);
+                                                }
+                                                paramString = paramString & ")";
+
+                                                rowClass = 'oddrow';
+                                                if ( j % 2 == 1 ) {
+                                                    rowClass = 'evenrow';
+                                                }
+
+                                                '<tr class="' rowClass '">\n'
+                                                    '<td class="methodName">'
+                                                        functionName = 'Anonymous';
+                                                        descriptor = method.descriptorStr;
+                                                        if ( descriptor != null and descriptor != '' ) {
+                                                            descriptor = replace(descriptor, '$', '.');
+                                                            descriptorFunction = getFunction(descriptor);
+                                                            if ( descriptorFunction != null ) {
+                                                                functionName = replace(descriptorFunction.descriptor.name,"$",".");
+                                                                call system.util.printMethodLink(descriptorFunction.descriptor, 1);
+                                                            } else {
+                                                                parenIndex = findFirst(descriptor, "(");
+                                                                substring(descriptor, 0, parenIndex);
+                                                            }
+                                                        }
+                                                        '<br />'
+                                                        paramString
+                                                    '</td>'
+
+                                                    stats = getStatistics(templateName, method.name);
+                                                    blockstats = getStatistics(templateName, "__block_" & method.name);
+                                                    if ( stats != null ) {
+                                                        perPageInvokes = 0.0
+                                                        perPageDuration = stats.averageServiceDuration
+                                                        blockDuration = 0
+                                                        if ( topLevelInvokes != 0 ) {
+                                                            perPageInvokes = (stats.servicedCount + 0.0) / (topLevelInvokes + 0.0);
+                                                            if ( blockstats != null ) {
+                                                                blockDuration = blockstats.averageServiceDuration;
+                                                                perPageDuration = perPageDuration - blockDuration;
+                                                                if ( perPageDuration < 0 ) {
+                                                                    perPageDuration = 0;
+                                                                }
+                                                            }
+                                                            if ( perPageInvokes > 0 ) {
+                                                                perPageDuration = perPageDuration * perPageInvokes;
+                                                            }
+                                                        }
+
+                                                        numberFormat("####0.00");
+                                                        '<td>' perPageInvokes '</td>'
+                                                        '<td>'
+                                                            if ( blockstats != null ) {
+                                                                blockDuration
+                                                            } else {
+                                                                'N/A'
+                                                            }
+                                                        '</td>'
+                                                        '<td align="right">'
+                                                            numberFormat("####0.00");
+                                                            perPageDuration
+                                                            numberFormat("#######");
+                                                        '</td>'
+                                                        percent = 0.0;
+                                                        if ( totalTime != 0 and perPageInvokes > 0 ) {
+                                                            percent = (perPageDuration / totalTime) * 100;
+                                                            netTime = netTime - perPageDuration;
+                                                        }
+                                                        '<td align="right">'
+                                                            numberFormat("##0.0");
+                                                            percent
+                                                            numberFormat("#######");
+                                                        '</td>'
+                                                        numberFormat("0.#");
+                                                        dataArrayFunctions = dataArrayFunctions & '{ label: "' & functionName & '", data: ' & percent & '}';
+                                                        if ( j < info.appMethodsCalled.length-1 ) {
+                                                            dataArrayFunctions = dataArrayFunctions & ', ';
+                                                        }
+                                                        numberFormat(null);
+
+                                                        netFunctionDuration = netFunctionDuration + perPageDuration;
+                                                        netFunctionPercentage = netFunctionPercentage + percent;
+                                                    }
+                                                    else {
+                                                        '<td></td>\n'
+                                                        '<td></td>\n'
+                                                        '<td></td>\n'
+                                                        '<td></td>\n'
+                                                    }
+                                                '</tr>'
+                                            }
+                                        } else {
+                                            '<tr class="oddrow">'
+                                                '<td colspan="5">None</td>\n'
+                                            '</tr>\n'
+                                        }
+
+                                        dataArrayFunctions = '[' & dataArrayFunctions & ']';
+%>
+                                    </tbody>
+                                    <tfoot>
+<%
+                                        '<tr>\n'
+                                            '<td class="right-align" colspan="3">'
+                                                'Net'
+                                            '</td>'
+                                            '<td>'
+                                                numberFormat("####0.00");
+                                                netFunctionDuration
+                                                numberFormat(null);
+                                            '</td>'
+                                            '<td>'
+                                                percent = 0.0
+                                                if ( totalTime != 0 ) {
+                                                  percent = (netTime / totalTime) * 100;
+                                                }
+                                                numberFormat("##0.0");
+                                                netFunctionPercentage '%'
+                                                numberFormat("#######");
+                                            '</td>'
+                                        '</tr>'
+%>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <div class="clear"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="template-info-callers" class="template-info-section">
+                        <div class="heading">Callers (<% callers.length %>)</div>
+                            <div class="tabular">
+                                <table cellspacing="1" cellpadding="3" class="tablehead">
+                                    <thead>
+                                        <tr class="colhead">
+                                            <th class="center-align" colspan="1"></th>
+                                            <th class="center-align" colspan="5">Template Stats</th>
+                                            <th class="center-align" colspan="4">Call Stats</th>
+                                        </tr>
+                                        <tr class="colhead">
+                                            <th>Template</th>
+
+                                            <th>Start</th>
+                                            <th>Duration</th>
+                                            <th>Serviced</th>
+                                            <th>Avg Time</th>
+                                            <th>Avg Stress</th>
+
+                                            <th>Calls Per</th>
+                                            <th>Sub Block Time</th>
+                                            <th>Average Time</th>
+                                            <th>% Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+<%
+                                        if ( callers.length != 0 ) {
+                                            foreach ( j in 0..callers.length-1 ) {
+                                                caller = callers[j];
+                                                callerName = caller.shortName;
+                                                
+                                                callerNamePath = callerName;
+						                        compareName = '/' & callerName;
+                                                callerNamePath = replace(callerNamePath, '/', '.');
+
+                                                callerTemplateInfo = getTemplateInfo(callerNamePath);
+                                                callerTokens = tokenize(callerName, '/');
+                                                callerFile = callerTokens[callerTokens.length-1];
+                                                callerPath = pathPrefix & replaceLast(callerName, callerFile, '');
+
+                                                rowClass = 'oddrow';
+                                                if ( j % 2 == 1 ) {
+                                                    rowClass = 'evenrow';
+                                                }
+
+                                                callerTemplateInfo = getTemplateInfo(callerNamePath);
+                                                if ( callerTemplateInfo.dependents.length != 0 ) {
+                                                    foreach ( k in 0..callerTemplateInfo.dependents.length-1 ) {
+                                                        callerDependent = callerTemplateInfo.dependents[k];
+                                                        callerDependent = replace(callerDependent, "com/go/teaservlet/template/", "");
+                                                        callerDependent = replace(callerDependent, "org/teatrove/teaservlet/template/", "");
+
+                                                        callerDependentNamePath = callerDependent;
+                                                        callerDependentNamePath = replace(callerDependentNamePath, '/', '.');
+
+                                                        callerDependentTokens = tokenize(callerDependent, '/');
+                                                        callerDependentFile = callerDependentTokens[callerDependentTokens.length-1];
+                                                        callerDependentPath = pathPrefix & replaceLast(callerDependent, callerDependentFile, '');
+
+							                            if ( callerDependentNamePath == templateName ) {
+                                                            allTemplateStats = getTemplateStats();
+                                                            if ( allTemplateStats != null ) {
+                                                                foreach ( item in allTemplateStats ) {
+                                                                    resource = item.fullTemplateName;
+
+                                                                    if ( compareName == resource ) {
+                                                                        if ( item.aggregateIntervals != null and item.aggregateIntervals.length > 0 ) {
+                                                                            overallStartTime = item.aggregateIntervals[0].startTime;
+                                                                        } else {
+                                                                            overallStartTime = item.aggregateIntervalForRawData.startTime;
+                                                                        }
+                                                                        overallStart = call system.util.getRelativeTimeText(currentTime, overallStartTime, false, null);
+                                                                        overallDuration = call system.util.getRelativeTimeText(currentTime, overallStartTime, true, null);
+
+                                                                        overallStress = call system.util.getTemplateStressValue(item);
+                                                                        overallStress = overallStress * 100;
+
+                                                                        numberFormat("#,###,###");
+                                                                        topLevelInvokesString = item.servicedCount & '';
+                                                                        numberFormat(null);
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            '<tr class="' rowClass '">\n'
+                                                                '<td>'
+                                                                    '<div class="template-pathname">'
+                                                                        '<div class="template-path">' callerPath '</div>'
+                                                                        '<div class="template-name">'
+                                                                            '<a href="?page=template_info&name=' callerNamePath '" title="Get template info">' callerFile '</a>'
+                                                                        '</div>'
+                                                                    '</div>'
+                                                                    '<div class="template-options">'
+                                                                        '<a class="web" target="_blank" href="' callerNamePath callerFile '" title="Follow template url"></a>'
+                                                                        '<a class="info" href="?page=template_info&name=' callerNamePath '" title="View template stats"></a>'
+                                                                        '<a class="compile" href="remote/reload?reloadTemplates=selected&selectedTemplates='  callerNamePath '" title="Compile template"></a>'
+                                                                        '<a class="reset" href="remote/reset?name='  callerNamePath '" title="Reset template stats"></a>'
+                                                                    '</div>'
+                                                                '</td>'
+                                                                stats = getStatistics(callerNamePath, '_' & replace(callerDependent, '/', '.'));
+                                                                tstats = getStatistics(callerNamePath, null);
+                                                                blockstats = getStatistics(callerNamePath, '__block__' & replace(callerDependent, '/', '.'));
+
+                                                                callTotalTime = 0.0;
+                                                                callLevelInvokes = 0;
+                                                                if ( tstats != null ) {
+                                                                    callTotalTime = tstats.averageServiceDuration;
+                                                                    callLevelInvokes = tstats.servicedCount;
+                                                                }
+
+                                                                tsubstats = getStatistics(callerDependentNamePath, "__substitution");
+                                                                if ( tsubstats != null ) {
+                                                                    callTotalTime = callTotalTime - tsubstats.averageServiceDuration;
+                                                                }
+
+                                                                if ( stats != null ) {
+                                                                    perPageInvokes = 0.0;
+                                                                    perPageDuration = stats.averageServiceDuration;
+                                                                    blockDuration = 0;
+                                                                    if ( callLevelInvokes != 0 ) {
+                                                                        perPageInvokes = (stats.servicedCount + 0.0) / (callLevelInvokes + 0.0);
+                                                                        if ( blockstats != null ) {
+                                                                            blockDuration = blockstats.averageServiceDuration;
+                                                                            perPageDuration = perPageDuration - blockDuration;
+                                                                            if ( perPageDuration < 0 ) {
+                                                                                perPageDuration = 0;
+                                                                            }
+                                                                        }
+                                                                        if ( perPageInvokes > 0 ) {
+                                                                            perPageDuration = perPageDuration * perPageInvokes;
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    '<td>' if ( allTemplateStats != null ) { overallStart } else { 'N/A' } '</td>\n'
+                                                                    '<td>' if ( allTemplateStats != null ) { overallDuration } else { 'N/A' } '</td>\n'
+                                                                    '<td>' if ( allTemplateStats != null ) { topLevelInvokesString } else { 'N/A' } '</td>\n'
+                                                                    numberFormat("####0.00");
+                                                                    '<td>' callTotalTime'</td>\n'
+                                                                    numberFormat(null);
+                                                                    '<td>' if ( allTemplateStats != null ) { overallStress & '%' } else { 'N/A' } '</td>\n'
+                                                                    
+                                                                    numberFormat("####0.00");
+                                                                    '<td>' perPageInvokes '</td>\n'
+                                                                    '<td>'
+                                                                        if ( blockstats != null ) {
+                                                                            blockDuration
+                                                                        } else {
+                                                                            'N/A'
+                                                                        }
+                                                                    '</td>\n'
+                                                                    '<td>'
+                                                                         numberFormat("####0.00");
+                                                                         perPageDuration
+                                                                         numberFormat("#######");
+                                                                    '</td>\n'
+                                                                    percent = 0.0;
+                                                                    if ( callTotalTime != 0 and perPageInvokes > 0 ) {
+                                                                        percent = (perPageDuration / callTotalTime) * 100;
+                                                                        netTime = netTime - perPageDuration;
+                                                                    }
+                                                                    '<td>'
+                                                                        numberFormat("##0.0");
+                                                                        percent
+                                                                        numberFormat(null);
+                                                                    '</td>\n'
+                                                                } else {
+                                                                    '<td class="center-align" colspan="9">None</td>\n'
+                                                                }
+                                                            '</tr>\n'
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            '<tr class="oddrow">'
+                                                '<td colspan="10">None</td>\n'
+                                            '</tr>\n'
+                                        }
+%>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="template-info-raw" class="template-info-section">
+                    <div class="heading">Raw (<% if ( rawData != null ) { rawData.length } else { '0' } %>)</div>
+                    <div id="lineChartRaw"></div>
+                    <div class="table-container">
+                        <table cellspacing="1" cellpadding="3" class="tablehead">
+                            <thead>
+                                <tr class="colhead">
+                                    <th class="center-align">Index</th>
+
+                                    <th class="right-align">Start</th>
+                                    <th class="right-align">Midpoint</th>
+                                    <th class="right-align">End</th>
+
+                                    <th class="right-align">Process (ms)</th>
+                                    <th class="right-align">Payload (k)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+<%
+                            rawDataPayloadJsArray = '[';
+                            rawDataProcessJsArray = '[';
+                            if ( rawData != null and rawData.length > 0 ) {
+                                foreach ( i in 0..rawData.length-1 ) {
+                                    rawDatum = rawData[i];
+
+                                    rowClass = 'oddrow';
+                                    if ( i % 2 == 1 ) {
+                                        rowClass = 'evenrow';
+                                    }
+
+                                    itemStart = call system.util.getRelativeTimeText(currentTime, rawDatum.startTime, false, null);
+                                    itemMidpoint = call system.util.getRelativeTimeText(currentTime, rawDatum.midPointTime, false, null);
+                                    itemEnd = call system.util.getRelativeTimeText(currentTime, rawDatum.endTime, false, null);
+%>
+                            <tr class="<% rowClass %>" timestamp="<% rawDatum.startTime %>">
+                                <td class="center-align"><% i %></td>
+                                <td class="right-align"><% if ( rawDatum.startTime == -1 ) { '--' } else { itemStart } %></td>
+                                <td class="right-align"><% if ( rawDatum.midPointTime == -1 ) { '--' } else { itemMidpoint } %></td>
+                                <td class="right-align"><% if ( rawDatum.endTime == -1 ) { '--' } else { itemEnd } %></td>
+
+                                <% numberFormat("#,###.00"); %>
+                                <td class="right-align"><% rawDatum.duration %></td>
+
+                                <% numberFormat("#,###.00"); %>
+                                <td class="right-align"><% rawDatum.contentLength/1024.0 %></td>
+                                <% numberFormat(null); %>
+                            </tr>
+<%
+                                    rawDataPayloadJsArray = rawDataPayloadJsArray & '[' & i & ',' & rawDatum.contentLength & ']';
+                                    rawDataProcessJsArray = rawDataProcessJsArray & '[' & i & ',' & rawDatum.duration & ']';
+
+                                    if ( i < rawData.length - 1 ) {
+                                        rawDataPayloadJsArray = rawDataPayloadJsArray & ',';
+                                        rawDataProcessJsArray = rawDataProcessJsArray & ',';
+                                    }
+                                }
+                            } else {
+                                '<tr class="oddrow">'
+                                    '<td colspan="6">None</td>\n'
+                                '</tr>\n'
+                            }
+                            rawDataPayloadJsArray = rawDataPayloadJsArray & ']';
+                            rawDataProcessJsArray = rawDataProcessJsArray & ']';
+%>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="template-info-aggregates" class="template-info-section">
+                    <div class="heading">Aggregates (<% if ( aggregateIntervals != null ) { aggregateIntervals.length } else { '0' } %>)</div>
+                    <div id="boxChartAggregates"></div>
+                    <div class="table-container">
+                        <table cellspacing="1" cellpadding="3" class="tablehead">
+                            <thead>
+                                <tr class="colhead">
+                                    <th class="center-align" rowspan="2">Aggregate</th>
+                                    <th rowspan="2">First</th>
+                                    <th class="right-align" rowspan="2">Req/Sec</th>
+                                    <th class="right-align" rowspan="2">Stress</th>
+                                    <th colspan="4" class="center-align">Process (ms)</th>
+                                    <th colspan="4" class="center-align">Payload (k)</th>
+                                </tr>
+                                <tr class="colhead">
+                                    <th class="right-align">Average</th>
+                                    <th class="right-align">Min</th>
+                                    <th class="right-align">Max</th>
+                                    <th class="right-align">StdDev</th>
+
+                                    <th class="right-align">Average</th>
+                                    <th class="right-align">Min</th>
+                                    <th class="right-align">Max</th>
+                                    <th class="right-align">StdDev</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+<%
+                                if ( templateStats != null and aggregateIntervals != null ) {
+                                    foreach ( i in 0..aggregateIntervals.length-1 ) {
+                                        item = aggregateIntervals[i];
+
+                                        rowClass = 'oddrow';
+                                        if ( i % 2 == 1 ) {
+                                            rowClass = 'evenrow';
+                                        }
+
+                                        itemStart = call system.util.getRelativeTimeText(currentTime, item.startTime, false, null);
+                                        itemEnd = call system.util.getRelativeTimeText(currentTime, item.endTime, false, null);
+
+                                        numberFormat("0.00");
+                                        stressValue = (item.durationStressMeasure*100) & '%';
+                                        numberFormat(null);
+
+                                        numberFormat("0.00");
+                                        requestsPerSecond = (item.sampleSize / ((item.endTime-item.startTime) / 1000.0)) & "";
+                                        numberFormat(null);
+
+                                        processAverage = item.durationStats.arithmeticMean;
+                                        processMin = item.durationStats.min;
+                                        processMax = item.durationStats.max;
+                                        processStdDev = item.durationStats.standardDeviation;
+
+                                        payloadAverage = item.contentLengthStats.arithmeticMean;
+                                        payloadMin = item.contentLengthStats.min;
+                                        payloadMax = item.contentLengthStats.max;
+                                        payloadStdDev = item.contentLengthStats.standardDeviation;
+
+                                        dataArrayAggregatesDuration = dataArrayAggregatesDuration & '[' & i & ', ' & processAverage & ']';
+                                        dataArrayAggregatesPayload = dataArrayAggregatesPayload & '[' & i & ', ' & payloadAverage & ']';
+
+                                        if ( i < aggregateIntervals.length-1 ) {
+                                            dataArrayAggregatesDuration = dataArrayAggregatesDuration & ', ';
+                                            dataArrayAggregatesPayload = dataArrayAggregatesPayload & ', ';
+                                        }
+%>
+                                        <tr class="<% rowClass %>" timestamp="<% item.startTime %>">
+                                            <td class="center-align"><% i %></td>
+                                            <td><% if ( item.startTime == -1 ) { '--' } else { itemStart } %></td>
+
+                                            <td class="right-align"><% requestsPerSecond %></td>
+                                            <td class="right-align"><% stressValue %></td>
+
+                                            <% numberFormat("#,###.00"); %>
+                                            <td class="right-align"><% processAverage %></td>
+                                            <% numberFormat("#,###.00"); %>
+                                            <td class="right-align"><% processMin %></td>
+                                            <td class="right-align"><% processMax %></td>
+                                            <% numberFormat("#,###.00"); %>
+                                            <td class="right-align"><% processStdDev %></td>
+
+                                            <% numberFormat("#,###.00"); %>
+                                            <td class="right-align"><% payloadAverage/1024.0 %></td>
+                                            <% numberFormat("#,###.00"); %>
+                                            <td class="right-align"><% payloadMin/1024.0 %></td>
+                                            <td class="right-align"><% payloadMax/1024.0 %></td>
+                                            <% numberFormat("#,###.00"); %>
+                                            <td class="right-align"><% if ( payloadStdDev * 1 == payloadStdDev ) { payloadStdDev/1024.0 } else { '0' } %></td>
+                                            <% numberFormat(null); %>
+                                        </tr>
+<%
+                                    }
+                                } else {
+                                    '<tr class="oddrow">'
+                                        '<td colspan="12">None</td>\n'
+                                    '</tr>\n'
+                                }
+%>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+<%
+            }
+            numberFormat("0.00");
+            netNativeDuration = (totalTime - (netTemplateDuration + netFunctionDuration)) & "";
+            netNativePercentage = (100 - (netTemplatePercentage + netFunctionPercentage)) & "";
+            numberFormat("0.0");
+%>
+			</section>
+		</article>
+		<script id="template-info-script">
+            ;(function($) {
+                var updateInterval = null;
+                
+                function initCharts () {
+                    var nativeOptions = { label: "Native", color: "#00F", data: [ [<% netNativeDuration %>, 0] ] };
+                    var templatesOptions = { label: "Templates", color: "#943734", data: [ [<% netTemplateDuration %>, 0] ] };
+                    var functionsOptions = { label: "Functions", color: "#77943D", data: [ [<% netFunctionDuration %>, 0] ] };
+
+                    var dataArray = [ nativeOptions, templatesOptions, functionsOptions ];
+
+                    var stack = 0, bars = true, lines = false, steps = false, barWidth = 0.6, borderWidth = 0, horizontal = true;
+                    var previousContents = null;
+                    $("#stackedChartGeneral").bind("plothover", function (event, pos, item) {
+                        $("#x").text(pos.x.toFixed(2));
+                        $("#y").text(pos.y.toFixed(2));
+
+                        if ( item ) {
+                            var x = item.datapoint[0].toFixed(2),
+                                y = item.datapoint[1].toFixed(2);
+                            for ( var d = 0; d < item.series.data.length; d++ ) {
+                                //console.log("d: "+d+", value: "+item.series.data[d]+", dataIndex: "+item.dataIndex);
+                            }
+                            var contents = item.series.label + ": " + item.series.data[0][0] + " ms";
+                            if ( previousContents != contents ) {
+                                previousContents = contents;
+                                $("#tooltip").remove();
+                                showTooltip(item.pageX, item.pageY, contents);
+                            }
+                        } else {
+                            $("#tooltip").remove();
+                            previousContents = null;
+                        }
+                    });
+                    $.plot(
+                        $("#stackedChartGeneral")
+                        ,dataArray
+                        ,{
+                            grid: {
+                                borderWidth: borderWidth
+                                ,show: true
+                                ,hoverable: true
+                            }
+                            ,legend: {
+                                show: false
+                                ,noColumns: 3
+                                //,position: "sw"
+                            }
+                            ,series: {
+                                stack: stack
+                                ,bars: {
+                                    show: bars
+                                    ,horizontal: horizontal
+                                }
+                            }
+                            ,xaxis: {
+                                min: 0
+                                ,autoscaleMargin: 0
+                                //tickFormatter: function(val,axis) { return val + "%"; }
+                            }
+                            ,yaxis: {
+                                autoscaleMargin: 0
+                                ,tickFormatter: function(val,axis) { return ""; }
+                            }
+                        }
+                    );
+
+                    var nativeOptions = { label: "Native", color: "#00F", data: [ [<% netNativePercentage %>, 0] ] };
+                    var templatesOptions = { label: "Templates", color: "#943734", data: [ [<% netTemplatePercentage %>, 0] ] };
+                    var functionsOptions = { label: "Functions", color: "#77943D", data: [ [<% netFunctionPercentage %>, 0] ] };
+
+                    var dataArray = [ nativeOptions, templatesOptions, functionsOptions ];
+
+                    $(".processTimeBarChart").bind("plothover", function (event, pos, item) {
+                        $("#x").text(pos.x.toFixed(2));
+                        $("#y").text(pos.y.toFixed(2));
+
+                        if ( item ) {
+                            var x = item.datapoint[0].toFixed(2),
+                                y = item.datapoint[1].toFixed(2);
+                            var contents = item.series.label + ": " + item.series.data[0][0] + "%";
+                            if ( previousContents != contents ) {
+                                previousContents = contents;
+                                $("#tooltip").remove();
+                                showTooltip(item.pageX, item.pageY, contents);
+                            }
+                        } else {
+                            $("#tooltip").remove();
+                            previousContents = null;
+                        }
+                    });
+                    $.plot(
+                        $("#stackedChartNative")
+                        ,dataArray
+                        ,{
+                            grid: {
+                                borderWidth: borderWidth
+                                ,show: true
+                                ,hoverable: true
+                            }
+                            ,legend: { show: false }
+                            ,series: {
+                                stack: stack
+                                ,bars: {
+                                    show: bars
+                                    ,barWidth: barWidth
+                                    ,horizontal: horizontal
+                                }
+                            }
+                            ,xaxis: {
+                                tickFormatter: function(val,axis) { return val + "%"; }
+                            }
+                            ,yaxis: {
+                                autoscaleMargin: 0
+                                ,tickFormatter: function(val,axis) { return ""; }
+                            }
+                        }
+                    );
+                    $.plot(
+                        $("#stackedChartTemplates")
+                        ,dataArray
+                        ,{
+                            grid: {
+                                borderWidth: borderWidth
+                                ,show: true
+                                ,hoverable: true
+                            }
+                            ,legend: { show: false }
+                            ,series: {
+                                stack: stack
+                                ,bars: {
+                                    show: bars
+                                    ,barWidth: barWidth
+                                    ,horizontal: horizontal
+                                }
+                            }
+                            ,xaxis: {
+                                tickFormatter: function(val,axis) { return val + "%"; }
+                            }
+                            ,yaxis: {
+                                autoscaleMargin: 0
+                                ,tickFormatter: function(val,axis) { return ""; }
+                            }
+                        }
+                    );
+                    $.plot(
+                        $("#stackedChartFunctions")
+                        ,dataArray
+                        ,{
+                            grid: {
+                                borderWidth: borderWidth
+                                ,show: true
+                                ,hoverable: true
+                            }
+                            ,legend: { show: false }
+                            ,series: {
+                                stack: stack
+                                ,bars: {
+                                    show: bars
+                                    ,barWidth: barWidth
+                                    ,horizontal: horizontal
+                                }
+                            }
+                            ,xaxis: {
+                                tickFormatter: function(val,axis) { return val + "%"; }
+                            }
+                            ,yaxis: {
+                                autoscaleMargin: 0
+                                ,tickFormatter: function(val,axis) { return ""; }
+                            }
+                        }
+                    );
+
+                    var dataArrayTemplates = <% dataArrayTemplates %>;
+                    $.plot(
+                        $("#pieChartTemplates")
+                        ,dataArrayTemplates
+                        ,{
+                            grid: {
+                                //hoverable: true
+                            }
+                            ,series: {
+                                pie: {
+                                    show: true
+                                    ,radius: 1
+                                    ,innerRadius: .5
+                                    ,label: {
+                                        show: true
+                                        ,radius: 2/3
+                                        ,formatter: function (label, series){
+                                            return '<div class="pieChartTooltip">'+label+'<br/>'+Math.round(series.percent)+'%</div>';
+                                        }
+                                        ,background: {
+                                            opacity: 0.5
+                                            ,color: '#000'
+                                        }
+                                        ,threshold: 0.1
+                                    }
+                                    ,highlight: {
+                                        opacity: .6
+                                    }
+                                }
+                            }
+                            ,legend: {
+                                show: false
+                            }
+                        }
+                    );
+
+                    var dataArrayFunctions = <% dataArrayFunctions %>;
+                    $.plot(
+                        $("#pieChartFunctions")
+                        ,dataArrayFunctions
+                        ,{
+                            series: {
+                                pie: {
+                                    show: true
+                                    ,radius: 1
+                                    ,innerRadius: .5
+                                    ,label: {
+                                        show: true
+                                        ,radius: 2/3
+                                        ,formatter: function (label, series){
+                                            return '<div class="pieChartTooltip">'+label+'<br/>'+Math.round(series.percent)+'%</div>';
+                                        }
+                                        ,background: {
+                                            opacity: 0.5
+                                            ,color: '#000'
+                                        }
+                                        ,threshold: 0.1
+                                    }
+                                }
+                            }
+                            ,legend: {
+                                show: false
+                            }
+                        }
+                    );
+
+                    var data = [
+                        { label: "Process", data: [<% dataArrayAggregatesDuration %>] }
+                        ,{ label: "Payload", data: [<% dataArrayAggregatesPayload %>] }
+                    ];
+
+                    var options = {
+                        series: {
+                            lines: { show: true }
+                            ,points: { show: true }
+                        }
+                        ,grid: {
+                            hoverable: true
+                            ,clickable: true
+                        }
+                        ,legend: {
+                            show: false
+                        }
+                        ,xaxis: { tickDecimals: 0 }
+                        ,yaxis: { min: 0 }
+                        //,y2axis: { tickFormatter: function (v, axis) { return v.toFixed(axis.tickDecimals) } }
+                        ,selection: { mode: "x" }
+                        ,legend: { position: 'ne' }
+                    };
+
+                    <% if ( templateStats != null and rawData != null ) { %>
+                    // raw - line chart
+
+                    var rawPlotData = [
+                        { label: "Process", data: <% rawDataProcessJsArray %> }
+                        //,{ label: "Payload", data: <% rawDataPayloadJsArray %> }
+                    ];
+
+                    var rawPlotOptions = {
+                        series: {
+                            lines: { show: true, fill: true, steps: true }
+                            ,points: { show: true }
+                        }
+                        ,grid: {
+                            hoverable: true
+                            ,clickable: true
+                        }
+                        ,legend: {
+                            show: false
+                        }
+                        //,xaxis: { tickDecimals: 0 }
+                        //,yaxis: { min: 0 }
+                        //,y2axis: { tickFormatter: function (v, axis) { return v.toFixed(axis.tickDecimals) } }
+                        //,selection: { mode: "x" }
+                        //,legend: { position: 'ne' }
+                    };
+                    //console.log(rawPlotData);
+                    
+                    var placeholder = $("#lineChartRaw");
+                    $("#lineChartRaw").bind("plotselected", function (event, ranges) {
+                            plot = $.plot(placeholder
+                                            ,rawPlotData
+                                            ,$.extend(true, {}, options, {
+                                                xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
+                                            })
+                            );
+                    });
+                    $("#lineChartRaw").bind("plothover", function (event, pos, item) {
+                        $("#x").text(pos.x.toFixed(2));
+                        $("#y").text(pos.y.toFixed(2));
+
+                        if ( item ) {
+                            var x = item.datapoint[0].toFixed(2),
+                                y = item.datapoint[1].toFixed(2);
+                            var contents = item.series.label + ": (" + x + ", " + y + ")";
+                            if ( previousContents != contents ) {
+                                previousContents = contents;
+                                $("#tooltip").remove();
+                                showTooltip(item.pageX, item.pageY, contents);
+                            }
+                        } else {
+                            $("#tooltip").remove();
+                            previousContents = null;
+                        }
+                    });
+                    var plot = $.plot(placeholder, rawPlotData, rawPlotOptions);
+                    <%
+                    }
+                    if ( templateStats != null and aggregateIntervals != null ) {
+                    %>
+                // ******************* aggregates - box chart *******************
+                    $("#boxChartAggregates").show();
+                    $.getJSON('remote/aggregates', { "templateName" : "<% templateName %>" }, function(json) {
+
+                        // parse the data
+                        var processData = [], payloadData = [], navigatorData = [], header = "", x;
+                        var useArrays = true;
+
+                        $.each(
+                            json.aggregates,
+                            function (key, val) {
+                                if ( useArrays ) {
+                                
+                                    processData.push(
+                                        [
+                                            parseFloat(val.start.millis), // date/time
+                                            parseFloat(val.processLowerQuartile), // lower quartile
+                                            parseFloat(val.processUpperWhisker), // upper whisker
+                                            parseFloat(val.processLowerWhisker), // lower whisker
+                                            parseFloat(val.processUpperQuartile), // upper quartile
+                                            parseFloat(val.processAverage), // mean
+                                            parseFloat(val.processMedian), // median
+                                            val.start.time+' '+val.start.date, // start
+                                            val.end.time+' '+val.end.date, // end
+                                            parseFloat(val.requestsPerSecond), // requests per second
+                                            parseFloat(val.stress) // stress
+                                        ]
+                                    );
+
+                                    payloadData.push(
+                                        [
+                                            parseFloat(val.start.millis), // date/time
+                                            parseFloat(val.payloadAverage) // average
+                                        ]
+                                    );
+
+                                    navigatorData.push(
+                                        [
+                                            parseFloat(val.start.millis), // date/time
+                                            parseFloat(val.requestsPerSecond) // requests per second
+                                        ]
+                                    );
+
+                                } else {
+
+                                    processData.push(
+                                        {
+                                            x : parseFloat(val.start.millis), // date/time
+                                            open : parseFloat(val.processLowerQuartile), // lower quartile
+                                            high : parseFloat(val.processUpperWhisker), // upper whisker
+                                            low : parseFloat(val.processLowerWhisker), // lower whisker
+                                            close : parseFloat(val.processUpperQuartile), // upper quartile
+                                            mean : parseFloat(val.processAverage), // mean
+                                            median : parseFloat(val.processMedian), // median
+                                            start : val.start.time+' '+val.start.date, // start
+                                            end : val.end.time+' '+val.end.date, // end
+                                            requestsPerSecond : parseFloat(val.requestsPerSecond), // requests per second
+                                            stress : parseFloat(val.stress) // stress
+                                        }
+                                    );
+
+                                    payloadData.push(
+                                        {
+                                            x : parseFloat(val.start.millis), // date/time
+                                            y : parseFloat(val.payloadAverage) // average
+                                        }
+                                    );
+
+                                    navigatorData.push(
+                                        {
+                                            x : parseFloat(val.start.millis), // date/time
+                                            //y : parseFloat(val.requestsPerSecond) // requests per second
+                                            y : parseFloat(val.stress) // stress
+                                        }
+                                    );
+
+                                }
+
+                            }
+                        );
+
+                        // set the allowed units for data grouping
+                        var groupingUnits = [
+                            [
+                                'minute',						// unit name
+                                [1, 2, 5, 10, 15, 30]			// allowed multiples
+                            ],
+                            [
+                                'hour',							// unit name
+                                [1, 2, 3, 4, 6, 8, 12]			// allowed multiples
+                            ],
+                            [
+                                'day',							// unit name
+                                [1]								// allowed multiples
+                            ]
+                        ];
+
+                        // create the chart
+                        chart = new Highcharts.StockChart({
+                            chart: {
+                                renderTo: 'boxChartAggregates',
+                                //backgroundColor: 'transparent',
+                                events: {
+                                    mouseOver: function() {
+                                        //console.log('hello');
+                                    }
+                                },
+                                alignTicks: false
+                            },
+
+                            navigator: {
+                                series: {
+                                    name: 'Requests Per Second',
+                                    data: navigatorData
+                                }
+                            },
+
+                            rangeSelector: {
+                                selected: 3
+                            },
+
+                            title: {
+                                text: 'Process Times and Payload Averages'
+                            },
+
+                            xAxis: {
+                                type: 'datetime',
+                                maxZoom: 1 * 3600000, // one day
+                                title: {
+                                    text: "Date"
+                                }
+                            },
+                            
+                            yAxis: [
+                                {
+                                    title: {
+                                        text: 'Process Time'
+                                    },
+                                    height: 200,
+                                    min: 0,
+                                    lineWidth: 2
+                                },
+                                {
+                                    title: {
+                                        text: 'Payload'
+                                    },
+                                    top: 300,
+                                    height: 100,
+                                    min: 0,
+                                    offset: 0,
+                                    lineWidth: 2
+                                }
+                            ],
+
+                            series: [
+                                {
+                                    type: 'candlestick',
+                                    name: 'Process Times',
+                                    data: processData,
+                                    dataGrouping: {
+                                        units: groupingUnits
+                                    }
+                                },
+                                {
+                                    type: 'column',
+                                    name: 'Avg Payload',
+                                    data: payloadData,
+                                    yAxis: 1,
+                                    dataGrouping: {
+                                        units: groupingUnits
+                                    }
+                                }
+                            ],
+
+                            tooltip : {
+                                enabled : true
+                            },
+
+                            credits : {
+                                enabled : false
+                            },
+
+                            global : {
+                                useUTC : false
+                            }
+                        });
+
+                        $("#highcharts-0").bind('mouseover', function (evt) {
+                            //console.log(evt);
+                            //console.log(chart);
+                            if ( chart ) {
+                                var hoverPoints = chart.hoverPoints;
+                                var selectedSeries = chart.getSelectedSeries();
+                                var extremes = chart.xAxis[0].getExtremes();
+
+                                if ( hoverPoints ) {
+                                    //console.log('hover points found!');
+                                    //console.log(hoverPoints);
+                                    var hoverX = hoverPoints[0].x;
+                                    $("#template-info-aggregates tr").each( function (i, val) {
+                                        var timestamp = $(this).attr("timestamp");
+                                        if ( timestamp ) {
+                                            timestamp = parseFloat(timestamp);
+                                            if ( timestamp == hoverX ) {
+                                                $(this).addClass('active');
+                                            } else {
+                                                $(this).removeClass('active');
+                                            }
+                                        }
+                                    });
+                                } else if ( extremes ) {
+                                    //console.log("extremes found!");
+                                    var min = parseFloat(extremes.min);
+                                    var max = parseFloat(extremes.max);
+                                    $("#template-info-aggregates tr").each( function (i, val) {
+                                        var timestamp = $(this).attr("timestamp");
+                                        if ( timestamp ) {
+                                            timestamp = parseFloat(timestamp);
+                                            if ( timestamp < min || timestamp > max ) {
+                                                $(this).hide();
+                                            } else {
+                                                $(this).show();
+                                            }
+                                        }
+                                    });
+                                } else if ( selectedSeries && selectedSeries.length ) {
+                                    //console.log('selected series found!');
+                                    //console.log(selectedSeries);
+                                }
+                            }
+                        });
+                        /*
+                        $("#boxChartAggregates").bind('mouseover', function (evt) {
+                            //console.log(evt);
+                        });
+                        chart.bind('mouseover', function (evt) {
+                            //console.log('mouseOver detected');
+                        });
+                        */
+                    });
+                    <% } %>
+                };
+                function initHandlers () {
+                    $('#buttonset-reset .ui-button').live('click', function (evt) {
+                        var text = $(this).text();
+
+                        var url = 'remote/reset';
+                        if ( text == "Template" ) {
+                            var querystring = $.deparam.querystring();
+                            if ( querystring.name ) {
+                                url += '?name=' + querystring.name;
+                            }
+                        }
+
+                        $.ajax({
+                            url: url,
+                            success: function (data) {
+                                window.location.href = window.location.href;
+                            }
+                        });
+                    });
+                    $("#buttonset-compile .ui-button").live('click', function (evt) {
+                        $(".controls-wrapper .ui-button").button( "option", "disabled", true );
+                        $('#loadingIndicator').show();
+
+                        var url = 'remote/reload';
+
+                        var qs = $.deparam.querystring();
+                        var buttonText = $(this).find('span').text();
+                        if ( buttonText == 'Template' ) {
+                            url += '?reloadTemplates=selected&selectedTemplates='+qs.name;
+                        } else if ( buttonText == "Changes" ) {
+                            url += '?reloadTemplates=changes';
+                        } else if ( buttonText == "All" ) {
+                            url += '?reloadTemplates=all';
+                        } else if ( buttonText == "Cluster" ) {
+                            url += '?reloadTemplates=changes&cluster=true';
+                        }
+
+                        $.ajax({
+                            url: url,
+                            success: function (data) {
+                                var title = buttonText;
+                                if ( buttonText == 'Template' ) {
+                                    title = qs.name;
+                                    if ( title.indexOf('.') > -1 ) {
+                                        index = title.lastIndexOf('.');
+                                        title = title.substring(index+1);
+                                    }
+                                }
+                                title = "Compile: " + title;
+                                var msg = 'No changes detected';
+                                var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-info.png';
+
+                                if ( $(data).closest('.sml-e').length > 0 ) {
+
+                                    img = 'http://labs.espndb.s3.amazonaws.com/img/notification-incorrect.png';
+                                    msg = 'Encountered errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
+
+                                } else if ( $(data).closest('.sml-c').length > 0 ) {
+
+                                    img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+                                    msg = 'Successful';
+
+                                }
+
+                                $.gritter.add({
+                                    // (string | mandatory) the heading of the notification
+                                    title: title,
+                                    // (string | mandatory) the text inside the notification
+                                    text: msg,
+                                    // (string | optional) the image to display on the left
+                                    image: img,
+                                    // (bool | optional) if you want it to fade out on its own or just sit there
+                                    sticky: false,
+                                    // (int | optional) the time you want it to be alive for before fading out
+                                    time: ''
+                                });
+                            },
+                            complete: function () {
+                                $("#buttonset-compile .ui-button").removeClass('ui-state-active');
+                                $("#buttonset-compile .ui-button").button( "option", "disabled", false );
+                                $('#loadingIndicator').hide();
+                            }
+                        });
+                    });
+                    $('#buttonset-view .ui-button').live('click', function (evt) {
+                        var index = $('#buttonset-view .ui-button').index(this);
+                        var length = $('#buttonset-view .ui-button').length;
+                        if ( index == length-1 ) {
+                            $(".template-info-section").show();
+                        } else {
+                            $(".template-info-section").hide();
+                            $(".template-info-section").eq(index).show();
+                        }
+                        
+                        var button_view = $(this).attr('id');
+                        $.bbq.pushState( { 'view' : button_view } );
+                    });
+                };
+                function getTemplateInfoUpdates () {
+                    $('#loadingIndicator').show();
+                    $.ajax({
+                        url: window.location.href,
+                        success: function (data) {
+                            var templateInfoContainer = $(data).find('#template-info-container');
+                            var templateInfoSnapshot = templateInfoContainer.find('#template-info-snapshot');
+                            $('#template-info-snapshot').replaceWith(templateInfoSnapshot);
+
+                            var templateInfoSections = templateInfoContainer.find('.template-info-section');
+                            $(templateInfoSections).each( function (i, val) {
+                                $('.template-info-section').eq(i).html($(val).html());
+                            });
+
+                            var templateInfoScript = $(data).find('#template-info-script');
+                            $('#template-info-script').replaceWith(templateInfoScript);
+                            initAll(true);
+                        },
+                        complete: function () {
+                            $('#loadingIndicator').hide();
+                        }
+                    });
+                };
+                function setTemplateInfoValues () {
+                    $("#averageStressLevel .value").text("<% averageStressLevel %>");
+                    $("#averageTime .value").text("<% averageTimeString %>");
+                    //$("#averageTime .value").text("<% totalTime %>");
+                    $("#averageThroughput .value").text("<% averageThroughput %>");
+
+                    $("#processTimeNative .percentage").text("<% netNativePercentage %>%");
+                    $("#processTimeTemplates .percentage").text("<% netTemplatePercentage %>%");
+                    $("#processTimeFunctions .percentage").text("<% netFunctionPercentage %>%");
+                };
+                function showTooltip (x, y, contents) {
+                    $('<div id="tooltip">' + contents + '</div>').css( {
+                        position: 'absolute',
+                        display: 'none',
+                        top: y + 5,
+                        left: x + 5,
+                        border: '1px solid #fdd',
+                        padding: '5px',
+                        'background-color': '#000',
+                        color: '#FFF',
+                        opacity: 0.80,
+                        'z-index': 9999,
+                        'font-size': '12px',
+                        'border-radius': '3px'
+                    }).appendTo("body").fadeIn(200);
+                };
+                function initAll (isIntervalSet) {
+                    initHandlers();
+                    setTemplateInfoValues();
+                    initCharts();
+                    if ( !isIntervalSet ) {
+                        updateInterval = setInterval(getTemplateInfoUpdates, 10000);
+                    }
+                };
+
+                $(document).ready(function () {
+                    initAll(true);
+                });
+            })(jQuery);
+        </script>

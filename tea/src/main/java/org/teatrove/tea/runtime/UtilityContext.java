@@ -35,7 +35,7 @@ public interface UtilityContext extends Context {
     public org.joda.time.DateTime currentDateTime();
 
     /**
-     * Tests if the given string starts with the given prefix.  
+     * Tests if the given string starts with the given prefix.
      * Returns true if the given string starts with the given prefix.
      *
      * @param str the source string
@@ -51,20 +51,20 @@ public interface UtilityContext extends Context {
      *
      * @param str the source string
      * @param suffix the suffix to test for
-     * 
+     *
      * @return true if the given string ends with the given suffix
      */
     public boolean endsWith(String str, String suffix);
 
     /**
      * Finds the indices for each occurrence of the given search string in the
-     * source string.  Returns an array of indices, which is empty if the 
+     * source string.  Returns an array of indices, which is empty if the
      * search string wasn't found
      *
      * @param str the source string
-     * @param search the string to search for 
-     * 
-     * @return an array of indices, which is empty if the search string 
+     * @param search the string to search for
+     *
+     * @return an array of indices, which is empty if the search string
      * wasn't found
      */
     public int[] find(String str, String search);
@@ -74,10 +74,10 @@ public interface UtilityContext extends Context {
      * source string, starting from the given index.
      *
      * @param str the source string
-     * @param search the string to search for 
+     * @param search the string to search for
      * @param fromIndex index to start the find
-     * 
-     * @return an array of indices, which is empty if the search string 
+     *
+     * @return an array of indices, which is empty if the search string
      * wasn't found
      */
     public int[] find(String str, String search, int fromIndex);
@@ -231,7 +231,8 @@ public interface UtilityContext extends Context {
      * @param source the source string
      * @param patternReplacements pattern-replacement pairs
      */
-    public String replace(String source, java.util.Map patternReplacements);
+    public <K, V> String replace(String source,
+                                 java.util.Map<K, V> patternReplacements);
 
     /**
      * Replaces the first exact match of the given pattern in the source
@@ -348,7 +349,7 @@ public interface UtilityContext extends Context {
      * two, three etc.
      *
      * @param n the number to convert
-     * 
+     *
      * @return a String containing the cardinal value of the specified number
      *
      * @hidden

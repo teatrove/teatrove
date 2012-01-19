@@ -27,6 +27,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public class NegateExpression extends Expression {
+    private static final long serialVersionUID = 1L;
+
     private Expression mExpr;
 
     public NegateExpression(SourceInfo info,
@@ -66,7 +68,7 @@ public class NegateExpression extends Expression {
     public Expression getExpression() {
         return mExpr;
     }
-    
+
     public void setExpression(Expression expr) {
         mExpr = expr;
     }

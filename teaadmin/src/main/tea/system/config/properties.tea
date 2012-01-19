@@ -1,0 +1,81 @@
+<% template properties (String page)
+
+    pageTitle = null;
+    pageSection = null;
+    
+    if ( page == 'dashboard' ) {
+
+        pageTitle = 'Dashboard';
+        pageSection = 'Dashboard';
+
+    } else if ( page == 'compile' ) {
+
+        pageTitle = 'Compile';
+        pageSection = 'Compile';
+
+    } else if ( page == 'templates' ) {
+
+        pageTitle = 'Templates';
+        pageSection = 'Explore';
+
+    } else if ( page == 'functions' ) {
+
+        pageTitle = 'Functions';
+        pageSection = 'Explore';
+
+    } else if ( page == 'applications' ) {
+
+        pageTitle = 'Applications';
+        pageSection = 'Explore';
+
+    } else if ( page == 'logs' ) {
+
+        pageTitle = 'Logs';
+        pageSection = 'Explore';
+
+    } else if ( page == 'servlet_engine' ) {
+
+        pageTitle = 'Servlet Engine';
+        pageSection = 'Analyze';
+
+    } else if ( page == 'echo_request' ) {
+
+        pageTitle = 'Echo Request';
+        pageSection = 'Analyze';
+
+    } else if ( page == 'instrumentation' ) {
+
+        pageTitle = 'Instrumentation';
+        pageSection = 'Analyze';
+
+    } else if ( page == 'template_info' ) {
+
+        pageTitle = 'Template Info';
+        pageSection = 'Analyze';
+
+    } else if ( page == 'janitor' ) {
+
+        pageTitle = 'Janitor';
+        pageSection = 'Analyze';
+
+    } else if ( page == 'system_information' ) {
+
+        pageTitle = 'System Information';
+        pageSection = 'Analyze';
+
+    } else {
+
+        pageTokens = tokenize(page, '.');
+        pageTitle = pageTokens[pageTokens.length-1];
+        pageSection = 'Other';
+
+    }
+
+    configuration = ##("page", page,
+                        "pageTitle", pageTitle,
+                        "pageSection", pageSection);
+
+    // return configuration
+    configuration
+
+%>

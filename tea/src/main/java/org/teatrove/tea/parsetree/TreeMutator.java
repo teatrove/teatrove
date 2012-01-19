@@ -16,9 +16,9 @@
 
 package org.teatrove.tea.parsetree;
 
-import org.teatrove.tea.compiler.Type;
-
 import java.util.Iterator;
+
+import org.teatrove.tea.compiler.Type;
 
 /**
  * TreeMutator is similar to {@link TreeWalker TreeWalker} in that it
@@ -207,6 +207,11 @@ public abstract class TreeMutator implements NodeVisitor {
     }
 
     private Object visit(CallExpression node) {
+        Expression expr = node.getExpression();
+        if (expr != null) {
+            node.setExpression((Expression)expr.accept(this));
+        }
+        
         node.setParams((ExpressionList)node.getParams().accept(this));
         
         Statement init = node.getInitializer();
@@ -285,6 +290,45 @@ public abstract class TreeMutator implements NodeVisitor {
         return visit((BinaryExpression)node);
     }
 
+    public Object visit(TernaryExpression node) {
+        node.setCondition(visitExpression(node.getCondition()));
+
+        Expression block = node.getThenPart();
+        if (block != null) {
+            node.setThenPart(visitExpression(block));
+        }
+
+        block = node.getElsePart();
+        if (block != null) {
+            node.setElsePart(visitExpression(block));
+        }
+
+        return node;
+    }
+    
+    public Object visit(CompareExpression node) {
+        node.setLeftExpression((Expression) node.getLeftExpression().accept(this));
+        node.setRightExpression((Expression) node.getRightExpression().accept(this));
+        
+        return node;
+    }
+
+    public Object visit(NoOpExpression node) {
+        return node;
+    }
+    
+    public Object visit(SpreadExpression node) {
+        node.setExpression((Expression) node.getExpression().accept(this));
+        node.setOperation((Expression) node.getOperation().accept(this));
+        
+        return node;
+    }
+    
+    public Object visit(TypeExpression node) {
+        node.setTypeName((TypeName) node.getTypeName().accept(this));
+        return node;
+    }
+    
     public Object visit(NullLiteral node) {
         return node;
     }
@@ -315,10 +359,10 @@ public abstract class TreeMutator implements NodeVisitor {
             Type newType = newExpr.getType();
 
             if (newType == null || !newType.equals(expr.getType())) {
-                Iterator it = expr.getConversionChain().iterator();
+                Iterator<Expression.Conversion> it =
+                    expr.getConversionChain().iterator();
                 while (it.hasNext()) {
-                    Expression.Conversion conv = 
-                        (Expression.Conversion)it.next();
+                    Expression.Conversion conv = it.next();
                     newExpr.convertTo
                         (conv.getToType(), conv.isCastPreferred());
                 }

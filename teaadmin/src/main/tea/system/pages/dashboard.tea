@@ -1,0 +1,93 @@
+<% template dashboard (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+%>
+		<article>
+			<section>
+				<div id="dashboard-container">
+					<div class="span-2 dashboard-module">
+						<div id="latest-compilations" class="mod-container mod-no-footer mod-open">
+							<div class="mod-header">
+								<h4>LATEST COMPILATIONS</h4>
+							</div>
+							<div class="mod-content">
+								<div class="col-full">
+									<ul class="bulletlinks blk-links"></ul>
+								</div>
+								<p class="footer"><a href="Admin?page=compile">Compile &#187;</a></p>
+							</div>
+						</div>
+					</div>
+					<div class="span-2 dashboard-module">
+						<div id="heaviest-templates" class="mod-container mod-no-footer mod-open">
+							<div class="mod-header">
+								<h4>HEAVIEST TEMPLATES</h4>
+							</div>
+							<div class="mod-content">
+								<div class="col-full">
+									<ul class="bulletlinks blk-links"></ul>
+								</div>
+								<p class="footer"><a href="Admin?page=instrumentation">Instrumentation &#187;</a></p>
+							</div>
+						</div>
+					</div>
+					<div class="span-2 dashboard-module">
+						<div id="most-invokes" class="mod-container mod-no-footer mod-open">
+							<div class="mod-header">
+								<h4>MOST INVOKES</h4>
+							</div>
+							<div class="mod-content">
+								<div class="col-full">
+									<ul class="bulletlinks blk-links"></ul>
+								</div>
+								<p class="footer"><a href="Admin?page=instrumentation">Instrumentation &#187;</a></p>
+							</div>
+						</div>
+					</div>
+					<div class="span-2 dashboard-module">
+						<div id="slowest-templates" class="mod-container mod-no-footer mod-open">
+							<div class="mod-header">
+								<h4>SLOWEST TEMPLATES</h4>
+							</div>
+							<div class="mod-content">
+								<div class="col-full">
+									<ul class="bulletlinks blk-links"></ul>
+								</div>
+								<p class="footer"><a href="Admin?page=instrumentation">Instrumentation &#187;</a></p>
+							</div>
+						</div>
+					</div>
+					<div class="span-2 dashboard-module">
+						<div id="uncompiled-templates" class="mod-container mod-no-footer mod-open">
+							<div class="mod-header">
+								<h4>UNCOMPILED TEMPLATES</h4>
+							</div>
+							<div class="mod-content">
+								<div class="col-full">
+									<ul class="bulletlinks blk-links"></ul>
+								</div>
+								<p class="footer"><a href="Admin?page=compile">Compile &#187;</a></p>
+							</div>
+						</div>
+					</div>
+					<div class="span-2 dashboard-module">
+						<div id="stressed-templates" class="mod-container mod-no-footer mod-open">
+							<div class="mod-header">
+								<h4>STRESSED TEMPLATES</h4>
+							</div>
+							<div class="mod-content">
+								<div class="col-full">
+									<ul class="bulletlinks blk-links"></ul>
+								</div>
+								<p class="footer"><a href="Admin?page=instrumentation">Instrumentation &#187;</a></p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="clear"></div>
+			</section>
+		</article>

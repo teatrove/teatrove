@@ -16,17 +16,16 @@
 
 package org.teatrove.tea.compiler;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 
+import org.teatrove.tea.parsetree.Name;
 import org.teatrove.tea.parsetree.Template;
 import org.teatrove.tea.parsetree.Variable;
-import org.teatrove.tea.parsetree.Name;
 import org.teatrove.tea.runtime.Substitution;
-import org.teatrove.tea.runtime.Context;
 import org.teatrove.trove.io.SourceReader;
 
 /**
@@ -39,12 +38,12 @@ import org.teatrove.trove.io.SourceReader;
  */
 public class CompiledTemplate extends CompilationUnit {
     private Template mTree;
-    private Class mTemplateClass;
+    private Class<?> mTemplateClass;
     private Method mExecuteMethod;
     private SourceInfo mCallerInfo = null;
     private CompilationUnit mCaller;
     private Variable[] mParameters;
-    private Class mRuntimeContext;
+    private Class<?> mRuntimeContext;
     private boolean mSubParam = false;
     private static final String TEMPLATE_PACKAGE = "org.teatrove.teaservlet.template";
 
@@ -82,7 +81,7 @@ public class CompiledTemplate extends CompilationUnit {
     /**
      * Load the template.
      */
-    private Class getTemplateClass() {
+    private Class<?> getTemplateClass() {
         String fqName = getTargetPackage() + "." + getName();
         try {
             mTemplateClass = getCompiler().loadClass(fqName);
@@ -114,7 +113,7 @@ public class CompiledTemplate extends CompilationUnit {
         getTemplateClass();
         if (findExecuteMethod() == null)
             throw new IllegalArgumentException("Cannot locate compiled template entry point.");
-         Class[] p = mExecuteMethod.getParameterTypes();
+         Class<?>[] p = mExecuteMethod.getParameterTypes();
          mSubParam = false;
          mRuntimeContext = p[0];
          return mRuntimeContext.isInterface();
@@ -151,7 +150,7 @@ public class CompiledTemplate extends CompilationUnit {
      * Get the runtime context of the compiled template.   This is an interface for
      * compiled templates.
      */
-    public Class getRuntimeContext() { return mRuntimeContext; }
+    public Class<?> getRuntimeContext() { return mRuntimeContext; }
 
 
     /**
@@ -184,9 +183,9 @@ public class CompiledTemplate extends CompilationUnit {
 
 
     private void reflectParameters() {
-         Class[] p = mExecuteMethod.getParameterTypes();
+         Class<?>[] p = mExecuteMethod.getParameterTypes();
          java.lang.reflect.Type[] t = mExecuteMethod.getGenericParameterTypes();
-         ArrayList list = new ArrayList();
+         ArrayList<Variable> list = new ArrayList<Variable>();
          mSubParam = false;
          mRuntimeContext = p[0];
          if (!mRuntimeContext.isInterface())

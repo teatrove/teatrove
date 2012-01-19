@@ -24,7 +24,12 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.util.Map;
 import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 
 import org.teatrove.trove.classfile.generics.GenericArrayTypeDesc;
 import org.teatrove.trove.classfile.generics.GenericTypeDesc;

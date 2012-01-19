@@ -28,8 +28,11 @@ import org.teatrove.tea.compiler.Type;
  *
  * @author Brian S O'Neill
  */
-public class ParenExpression extends Expression {
+public class ParenExpression extends Expression implements NullSafe {
+    private static final long serialVersionUID = 1L;
+
     private Expression mExpr;
+    private boolean mNullSafe;
 
     public ParenExpression(SourceInfo info, Expression expr) {
         super(info);
@@ -47,7 +50,7 @@ public class ParenExpression extends Expression {
     }
 
     public boolean isExceptionPossible() {
-        return super.isExceptionPossible() || 
+        return super.isExceptionPossible() ||
             (mExpr != null && mExpr.isExceptionPossible());
     }
 
@@ -63,7 +66,7 @@ public class ParenExpression extends Expression {
         mExpr.convertTo(toType, preferCast);
     }
 
-    public LinkedList getConversionChain() {
+    public LinkedList<Conversion> getConversionChain() {
         return mExpr.getConversionChain();
     }
 
@@ -89,5 +92,13 @@ public class ParenExpression extends Expression {
 
     public void setExpression(Expression expr) {
         mExpr = expr;
+    }
+    
+    public boolean isNullSafe() {
+        return mNullSafe;
+    }
+    
+    public void setNullSafe(boolean nullSafe) {
+        mNullSafe = nullSafe;
     }
 }

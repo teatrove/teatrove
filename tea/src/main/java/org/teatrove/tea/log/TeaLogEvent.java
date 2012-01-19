@@ -28,14 +28,16 @@ import org.teatrove.trove.log.LogEvent;
  */
 public class TeaLogEvent extends LogEvent {
 
-	private TeaStackTraceLine[] mLines;
-	
-	public TeaLogEvent(Log log, int type, TeaStackTraceLine[] lines) {
-		super(log, type, null, null, null, null);
-		mLines = lines;
-	}
-	
-	public TeaStackTraceLine[] getLines() {
-		return mLines;
-	}
+    private static final long serialVersionUID = 1L;
+
+    private TeaStackTraceLine[] mLines;
+
+    public TeaLogEvent(Log log, int type, TeaStackTraceLine[] lines) {
+        super(log, type, null, null, null, null);
+        mLines = lines;
+    }
+
+    public TeaStackTraceLine[] getLines() {
+        return mLines;
+    }
 }

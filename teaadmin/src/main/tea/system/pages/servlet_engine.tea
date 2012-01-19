@@ -1,0 +1,97 @@
+<% template servlet_engine (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+    nullFormat("None");
+
+%>
+		<article>
+			<section>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Items</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th>Item</th>
+                                <th>Version</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="oddrow">
+                                <td>Servlet Engine</td>
+                                <td><% admin.servletContext.serverInfo %></td>
+                            </tr>
+                            <tr class="evenrow">
+                                <td>Servlet API</td>
+                                <td><% admin.servletContext.majorVersion & "." & admin.servletContext.minorVersion %></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Attributes</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th>Attribute</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+<%
+                            foreach ( a in 0..admin.attributes.length-1 ) {
+                                attribute = admin.attributes[a];
+
+                                rowClass = 'evenrow';
+                                if ( a % 2 == 1 ) {
+                                    rowClass = 'oddrow';
+                                }
+
+                                '<tr class="' rowClass '">\n'
+                                    '<td>' attribute.name '</td>\n'
+                                    '<td>' attribute.value '</td>\n'
+                                '</tr>\n'
+                            }
+%>
+                        </tbody>
+                    </table>
+                </div>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Initialization Parameters</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th>Parameter</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+<%
+                            foreach ( p in 0..admin.initParameters.length-1 ) {
+                                parameter = admin.initParameters[p];
+
+                                rowClass = 'evenrow';
+                                if ( p % 2 == 1 ) {
+                                    rowClass = 'oddrow';
+                                }
+
+                                '<tr class="' rowClass '">\n'
+                                    '<td>' parameter.name '</td>\n'
+                                    '<td>' parameter.value '</td>\n'
+                                '</tr>\n'
+                            }
+%>
+                        </tbody>
+                    </table>
+                </div>
+			</section>
+		</article>

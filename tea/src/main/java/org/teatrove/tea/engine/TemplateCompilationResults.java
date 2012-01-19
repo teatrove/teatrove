@@ -30,18 +30,20 @@ import java.util.Set;
  */
 public class TemplateCompilationResults implements java.io.Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     /** True if the templates are being reloaded */
     boolean mReloadInProgress;
 
     /** The set of successfully reloaded template names */
-    Set mReloaded;
+    Set<String> mReloaded;
 
     /** Error map, where the key is the failed template name, and the
         value is a list of TemplateError objects for that template */
-    Map mErrors;
+    Map<String, List<TemplateError>> mErrors;
 
-    public TemplateCompilationResults(Set reloaded,
-                                      Map errors) {
+    public TemplateCompilationResults(Set<String> reloaded,
+                                      Map<String, List<TemplateError>> errors) {
         mErrors = errors;
         mReloaded = reloaded;
     }
@@ -57,33 +59,32 @@ public class TemplateCompilationResults implements java.io.Serializable {
         return mReloaded.add(name);
     }
 
-    public boolean appendNames(Collection names) {
+    public boolean appendNames(Collection<String> names) {
         if (names == null) {
             return false;
         }
         return mReloaded.addAll(names);
     }
 
-    public boolean appendErrors(Map errors) {
+    public boolean appendErrors(Map<String, List<TemplateError>> errors) {
         if (errors == null || errors.isEmpty())
             return false;
 
         if (mErrors == null)
-            mErrors = new Hashtable();
+            mErrors = new Hashtable<String, List<TemplateError>>();
 
-        Iterator keyIterator = errors.keySet().iterator();
+        Iterator<String> keyIterator = errors.keySet().iterator();
         while (keyIterator.hasNext()) {
-            String name = (String) keyIterator.next();
+            String name = keyIterator.next();
 
-            ArrayList templateErrors = (ArrayList) mErrors.get(name);
+            List<TemplateError> templateErrors = mErrors.get(name);
 
             if (templateErrors == null) {
-                templateErrors = new ArrayList();
+                templateErrors = new ArrayList<TemplateError>();
                 mErrors.put(name, templateErrors);
             }
 
-            List newErrors = (List) errors.get(name);
-
+            List<TemplateError> newErrors = errors.get(name);
             templateErrors.addAll(newErrors);
         }
 
@@ -95,51 +96,51 @@ public class TemplateCompilationResults implements java.io.Serializable {
             return false;
         }
 
-        ArrayList templateErrors = (ArrayList) mErrors.get(templateName);
+        List<TemplateError> templateErrors = mErrors.get(templateName);
 
         if (templateErrors == null) {
-            templateErrors = new ArrayList();
+            templateErrors = new ArrayList<TemplateError>();
             mErrors.put(templateName, templateErrors);
         }
 
         return templateErrors.add(error);
     }
 
-    public boolean appendErrors(String templateName, List errors) {
+    public boolean appendErrors(String templateName,
+                                List<TemplateError> errors) {
         if (templateName == null || errors == null || errors.isEmpty())
             return false;
 
-        ArrayList templateErrors = (ArrayList) mErrors.get(templateName);
-
+        List<TemplateError> templateErrors = mErrors.get(templateName);
         if (templateErrors == null) {
-            templateErrors = new ArrayList();
+            templateErrors = new ArrayList<TemplateError>();
             mErrors.put(templateName, templateErrors);
         }
 
         return templateErrors.addAll(errors);
     }
 
-    public Set getReloadedTemplateNames() {
+    public Set<String> getReloadedTemplateNames() {
         return mReloaded;
     }
-        
-    public Map getTemplateErrors() {
+
+    public Map<String, List<TemplateError>> getTemplateErrors() {
         return mErrors;
     }
-        
-    public List getAllTemplateErrors() {
+
+    public List<TemplateError> getAllTemplateErrors() {
         if (mErrors == null || mErrors.isEmpty())
             return null;
 
-        ArrayList errors = new ArrayList();
+        ArrayList<TemplateError> errors = new ArrayList<TemplateError>();
 
-        Iterator values = mErrors.values().iterator();
+        Iterator<List<TemplateError>> values = mErrors.values().iterator();
         while (values.hasNext())
-            errors.addAll((ArrayList) values.next());
+            errors.addAll(values.next());
 
         return errors;
     }
-        
+
     public boolean isSuccessful() {
         return (mErrors == null || mErrors.size() == 0);
     }

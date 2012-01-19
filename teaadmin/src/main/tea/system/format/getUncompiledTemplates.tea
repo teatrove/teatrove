@@ -1,0 +1,31 @@
+<% template getUncompiledTemplates ()
+
+    admin = getTeaServletAdmin();
+
+    pathPrefix = call system.util.getPathPrefix();
+
+    templatesMap = createHashMap();
+
+    reloadableTemplates = admin.reloadableTemplates;
+    if ( reloadableTemplates != null ) {
+        foreach ( reloadableTemplate in reloadableTemplates ) {
+            templatePath = reloadableTemplate.name;
+            templatePath = replace(templatePath, '.', '/');
+            templatePath = pathPrefix & templatePath;
+
+            templateName = templatePath;
+            templateTokens = tokenize(templatePath, '/');
+            if ( templateTokens != null ) {
+                templateName = templateTokens[templateTokens.length-1];
+            }
+            
+            '<li>\n'
+                '<a href="' templatePath '">' templateName '</a>'
+                if ( reloadableTemplate.signatureChanged ) {
+                    '<span> (Signature Changed)</span>\n'
+                }
+            '</li>\n'
+        }
+    }
+
+%>

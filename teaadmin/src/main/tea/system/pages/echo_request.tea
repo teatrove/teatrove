@@ -1,0 +1,223 @@
+<% template echo_request (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+    nullFormat("None");
+
+%>
+		<article>
+			<section>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Request Headers</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th align="center">Name</th>
+                                <th align="center">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <%
+                            foreach ( h in 0..request.headers.names.length-1 ) {
+                                headerName = request.headers.names[h];
+
+                                rowClass = 'evenrow';
+                                if ( h % 2 == 1 ) {
+                                    rowClass = 'oddrow';
+                                }
+
+                                '<tr class="' rowClass '">\n'
+                                    '<td>' headerName '</td>\n'
+                                    '<td>' request.headers[headerName] '</td>\n'
+                                '</tr>\n'
+                            }
+                        %>
+                        </tbody>
+                    </table>
+                </div>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Request Properties</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th align="center">Name</th>
+                                <th align="center">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <%
+                            '<tr class="oddrow">\n'
+                                '<td>Remote Address</td>\n'
+                                '<td>' request.remoteAddr '</td>\n'
+                            '</tr>\n'
+                            '<tr class="evenrow">\n'
+                                '<td>Remote Host</td>\n'
+                                '<td>' request.remoteHost '</td>\n'
+                            '</tr>\n'
+                            '<tr class="oddrow">\n'
+                                '<td>Remote User</td>\n'
+                                '<td>' request.remoteUser '</td>\n'
+                            '</tr>\n'
+                            '<tr class="evenrow">\n'
+                                '<td>Scheme</td>\n'
+                                '<td>' request.scheme '</td>\n'
+                            '</tr>\n'
+                            '<tr class="oddrow">\n'
+                                '<td>Server Name</td>\n'
+                                '<td>' request.serverName '</td>\n'
+                            '</tr>\n'
+                            '<tr class="evenrow">\n'
+                                '<td>Server Port</td>\n'
+                                '<td>' request.serverPort '</td>\n'
+                            '</tr>\n'
+                            '<tr class="oddrow">\n'
+                                '<td>Method</td>\n'
+                                '<td>' request.method '</td>\n'
+                            '</tr>\n'
+
+                            '<tr class="evenrow">\n'
+                                '<td>Protocol</td>\n'
+                                '<td>' request.protocol '</td>\n'
+                            '</tr>\n'
+                            '<tr class="oddrow">\n'
+                                '<td>Request URI</td>\n'
+                                '<td>' request.requestURI '</td>\n'
+                            '</tr>\n'
+                            '<tr class="evenrow">\n'
+                                '<td>Servlet Path</td>\n'
+                                '<td>' request.servletPath '</td>\n'
+                            '</tr>\n'
+                            '<tr class="oddrow">\n'
+                                '<td>Path Info</td>\n'
+                                '<td>' request.pathInfo '</td>\n'
+                            '</tr>\n'
+                            '<tr class="evenrow">\n'
+                                '<td>Query String</td>\n'
+                                '<td>' request.queryString '</td>\n'
+                            '</tr>\n'
+                            '<tr class="oddrow">\n'
+                                '<td>Authentication Type</td>\n'
+                                '<td>' request.authType '</td>\n'
+                            '</tr>\n'
+                        %>
+                        </tbody>
+                    </table>
+                </div>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Parameters</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th align="center">Name</th>
+                                <th align="center">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <%
+                            foreach ( p in 0..request.parameters.names.length-1 ) {
+                                parameterName = request.parameters.names[p];
+
+                                rowClass = 'evenrow';
+                                if ( p % 2 == 1 ) {
+                                    rowClass = 'oddrow';
+                                }
+
+                                '<tr class="' rowClass '">\n'
+                                    '<td>' parameterName '</td>\n'
+                                    '<td>' request.parameters[parameterName] '</td>\n'
+                                '</tr>\n'
+                            }
+                        %>
+                        </tbody>
+                    </table>
+                </div>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Cookies</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th align="center">Name</th>
+                                <th align="center">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <%
+                            foreach ( c in 0..request.cookies.all.length-1 ) {
+                                cookie = request.cookies.all[c];
+
+                                rowClass = 'evenrow';
+                                if ( c % 2 == 1 ) {
+                                    rowClass = 'oddrow';
+                                }
+
+                                '<tr class="' rowClass '">\n'
+                                    '<td>' cookie.name '</td>\n'
+                                    '<td>' cookie.value '</td>\n'
+                                '</tr>\n'
+                            }
+                        %>
+                        </tbody>
+                    </table>
+                </div>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Session</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th align="center">Name</th>
+                                <th align="center">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="oddrow">
+                                <td>Requested Session Id</td>
+                                <td><% request.requestedSessionId %></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+			    <div class="table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th colspan="2">Additional Attributes</th>
+                            </tr>
+                            <tr class="colhead">
+                                <th align="center">Name</th>
+                                <th align="center">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <%
+                            foreach ( a in 0..request.attributes.names.length-1 ) {
+                                attributeName = request.attributes.names[a];
+
+                                rowClass = 'evenrow';
+                                if ( a % 2 == 1 ) {
+                                    rowClass = 'oddrow';
+                                }
+
+                                '<tr class="' rowClass '">\n'
+                                    '<td>' attributeName '</td>\n'
+                                    '<td>' request.attributes[attributeName] '</td>\n'
+                                '</tr>\n'
+                            }
+                        %>
+                        </tbody>
+                    </table>
+                </div>
+			</section>
+		</article>

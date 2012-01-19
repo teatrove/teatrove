@@ -16,13 +16,16 @@
 
 package org.teatrove.tea.util;
 
-import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.tea.compiler.TemplateRepository;
+
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+
+import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.tea.compiler.TemplateRepository;
+import org.teatrove.tea.parsetree.Template;
 
 /**
  *
@@ -33,7 +36,7 @@ public abstract class AbstractFileCompiler extends Compiler {
         super();
     }
 
-    protected AbstractFileCompiler(Map parseTreeMap) {
+    protected AbstractFileCompiler(Map<String, Template> parseTreeMap) {
         super(parseTreeMap);
     }
 
@@ -61,23 +64,25 @@ public abstract class AbstractFileCompiler extends Compiler {
         if (!TemplateRepository.isInitialized())
             return super.compile(names);
         String[] compNames = super.compile(names);
-        ArrayList compList = new ArrayList(Arrays.asList(compNames));
+        ArrayList<String> compList =
+            new ArrayList<String>(Arrays.asList(compNames));
+
         TemplateRepository rep = TemplateRepository.getInstance();
         String[] callers = rep.getCallersNeedingRecompile(compNames, this);
         if (callers.length > 0)
             compList.addAll(Arrays.asList(super.compile(callers)));
-        String[] compiled = (String[]) compList.toArray(new String[compList.size()]);
+        String[] compiled = compList.toArray(new String[compList.size()]);
 
         // JoshY - There's a VM bug in JVM 1.4.2 that can cause the repository update to
         // throw a NullPointerException when it shouldn't.  There's a workaround in place
         // and we also put a catch here, to allow the TeaServlet init to finish just in case
         try {
-	        rep.update(compiled);
-		} catch (Exception e) {
-			System.err.println("Unable to update repository");
-			e.printStackTrace(System.err);
-		}
+            rep.update(compiled);
+        } catch (Exception e) {
+            System.err.println("Unable to update repository");
+            e.printStackTrace(System.err);
+        }
         return compiled;
     }
-    
+
 }

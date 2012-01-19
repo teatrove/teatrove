@@ -32,36 +32,36 @@ public class MergedContextSource implements ContextSource {
 
     private ClassInjector mInjector;
     private ContextSource[] mSources;
-    private Class[] mContextsInOrder;
+    private Class<?>[] mContextsInOrder;
     private boolean mProfilingEnabled = false;
-    
-    private Constructor mConstr;
+
+    private Constructor<?> mConstr;
 
     // TODO: Why use init? Constructers may make more sense.
 
-    public void init(ClassLoader loader, ContextSource[] contextSources, boolean profilingEnabled) 
+    public void init(ClassLoader loader, ContextSource[] contextSources, boolean profilingEnabled)
         throws Exception {
-        
+
         init(loader, contextSources, null, profilingEnabled);
     }
 
     /**
      * Creates a unified context source for all those passed in.  An Exception
-     * may be thrown if the call to a source's getContextType() method throws 
+     * may be thrown if the call to a source's getContextType() method throws
      * an exception.
      */
-    public void init(ClassLoader loader, 
+    public void init(ClassLoader loader,
                      ContextSource[] contextSources,
                      String[] prefixes, boolean profilingEnabled) throws Exception {
-        
-     
+
+
         mSources = contextSources;
         int len = contextSources.length;
-        ArrayList contextList = new ArrayList(len);
-        ArrayList delegateList = new ArrayList(len);
-        
+        ArrayList<Class<?>> contextList = new ArrayList<Class<?>>(len);
+        ArrayList<ClassLoader> delegateList = new ArrayList<ClassLoader>(len);
+
         for (int j = 0; j < contextSources.length; j++) {
-            Class type = contextSources[j].getContextType();
+            Class<?> type = contextSources[j].getContextType();
             if (type != null) {
                 contextList.add(type);
                 ClassLoader scout = type.getClassLoader();
@@ -71,9 +71,9 @@ public class MergedContextSource implements ContextSource {
             }
         }
 
-        mContextsInOrder = (Class[])contextList.toArray(new Class[contextList.size()]);
+        mContextsInOrder = contextList.toArray(new Class[contextList.size()]);
         ClassLoader[] delegateLoaders =
-            (ClassLoader[])delegateList.toArray(new ClassLoader[delegateList.size()]);
+            delegateList.toArray(new ClassLoader[delegateList.size()]);
 
         mInjector = new ClassInjector
             (new DelegateClassLoader(loader, delegateLoaders));
@@ -82,36 +82,40 @@ public class MergedContextSource implements ContextSource {
 
         int observerMode = profilingEnabled ? MergedClass.OBSERVER_ENABLED | MergedClass.OBSERVER_EXTERNAL : MergedClass.OBSERVER_ENABLED;
 
-        mConstr = MergedClass.getConstructor2(mInjector, 
+        mConstr = MergedClass.getConstructor2(mInjector,
                                               mContextsInOrder,
                                               prefixes,
                                               observerMode);
     }
 
-    protected Class[] getContextsInOrder() {
+    protected Class<?>[] getContextsInOrder() {
         return mContextsInOrder;
     }
 
-    /** 
+    /**
      * let subclasses get at the constructor
      */
-    protected Constructor getConstructor() {
+    protected Constructor<?> getConstructor() {
         return mConstr;
+    }
+
+    protected boolean isProfilingEnabled() {
+        return mProfilingEnabled;
     }
 
     /**
      * @return the Class of the object returned by createContext.
      */
-    public Class getContextType() {
+    public Class<?> getContextType() {
         return mConstr.getDeclaringClass();
     }
 
     /**
-     * a generic method to create context instances 
+     * a generic method to create context instances
      */
     public Object createContext(Object param) throws Exception {
 
-        Class[] params = mConstr != null ? mConstr.getParameterTypes() : new Class[0];
+        Class<?>[] params = mConstr != null ? mConstr.getParameterTypes() : new Class[0];
         if (params.length > 1 && MergedClass.InvocationEventObserver.class.equals(params[1])) {
             return mConstr.newInstance(new Object[] {
                 new MergingContextFactory(param),
@@ -126,13 +130,13 @@ public class MergedContextSource implements ContextSource {
         }
     }
 
-    private class MergingContextFactory 
+    private class MergingContextFactory
         implements MergedClass.InstanceFactory {
-        
+
         private final Object mContextParameter;
 
         MergingContextFactory(Object contextParam) {
-            mContextParameter = contextParam;            
+            mContextParameter = contextParam;
         }
 
         public Object getInstance(int i) {

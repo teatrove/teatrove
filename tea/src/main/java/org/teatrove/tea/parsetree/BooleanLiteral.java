@@ -25,6 +25,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public class BooleanLiteral extends Literal {
+    private static final long serialVersionUID = 1L;
+
     private Boolean mValue;
 
     public BooleanLiteral(SourceInfo info, boolean value) {
@@ -40,7 +42,7 @@ public class BooleanLiteral extends Literal {
     public void convertTo(Type type, boolean preferCast) {
         // No conversion need be applied for BooleanLiterals.
         setType(type);
-    }   
+    }
 
     public void setType(Type type) {
         // BooleanLiterals never evaluate to null.

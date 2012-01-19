@@ -21,14 +21,16 @@ package org.teatrove.tea.compiler;
  * @author Brian S O'Neill
  */
 public class SourceDetailedInfo extends SourceInfo {
+    private static final long serialVersionUID = 1L;
+
     private int mDetail;
 
-    public SourceDetailedInfo(int line, 
-                              int startPos, 
+    public SourceDetailedInfo(int line,
+                              int startPos,
                               int endPos,
                               int detailPos) {
         super(line, startPos, endPos);
-        
+
         mDetail = detailPos;
     }
 

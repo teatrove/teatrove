@@ -1,0 +1,39 @@
+<% template getLatestCompilations ()
+
+    admin = getTeaServletAdmin();
+
+    pathPrefix = call system.util.getPathPrefix();
+
+    templateInfos = getTemplateInfos();
+    sort(templateInfos, "lastModified", true);
+
+    maxTemplates = 10;
+    if ( maxTemplates > templateInfos.length ) {
+        maxTemplates = templateInfos.length;
+    }
+    foreach ( i in 0..maxTemplates-1 ) {
+        info = templateInfos[i];
+
+        '<li>\n'
+            templatePath = info.name;
+            templatePath = replace(templatePath, 'com/go/teaservlet/template/', '');
+            
+            templateName = info.name;
+            templateTokens = tokenize(templateName, '/');
+            if ( templateTokens != null ) {
+                templateName = templateTokens[templateTokens.length-1];
+            }
+
+            dateString = '';
+            dateFormat("yyyy-MM-dd");
+            dateString = dateString & info.lastModified & "T";
+            dateFormat("HH:mm:ss");
+            dateString = dateString & info.lastModified & "Z";
+            dateFormat(null);
+            timestamp = info.lastModified;
+
+            '<a href="' pathPrefix templatePath '" datestamp="' dateString '" timestamp="' timestamp '">' templateName '</a>\n'
+        '</li>\n'
+    }
+
+%>

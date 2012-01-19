@@ -42,6 +42,7 @@ import java.util.jar.JarFile;
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.TemplateRepository;
+import org.teatrove.tea.parsetree.Template;
 import org.teatrove.trove.io.DualOutput;
 import org.teatrove.trove.util.ClassInjector;
 
@@ -85,14 +86,14 @@ public class FileCompiler extends AbstractFileCompiler {
             return;
         }
 
-        Class context = null;
+        Class<?> context = null;
         File destDir = null;
         boolean force = false;
         String rootPackage = null;
         String encoding = null;
         boolean guardian = false;
         File rootDir = null;
-        Collection templates = new ArrayList(args.length);
+        Collection<String> templates = new ArrayList<String>(args.length);
 
         try {
             boolean parsingOptions = true;
@@ -291,16 +292,16 @@ public class FileCompiler extends AbstractFileCompiler {
                         File rootDestDir,
                         ClassInjector injector,
                         String encoding,
-                        Map parseTreeMap) {
+                        Map<String, Template> parseTreeMap) {
         super((parseTreeMap == null) ?
-              Collections.synchronizedMap(new HashMap()) : parseTreeMap);
+              Collections.synchronizedMap(new HashMap<String, Template>()) : parseTreeMap);
         init(rootSourceDirs, rootPackage, rootDestDir, injector, encoding);
     }
 
     private JarOfTemplates getJarOfTemplates(File file) throws IOException {
 
         if(mSrcJars==null) {
-            mSrcJars = Collections.synchronizedMap(new HashMap());
+            mSrcJars = Collections.synchronizedMap(new HashMap<File, JarOfTemplates>());
         }
 
         //TODO change the value of the map to a weak ref
@@ -367,7 +368,7 @@ public class FileCompiler extends AbstractFileCompiler {
     public String[] compile(String[] names) throws IOException {
 
         try {
-            ArrayList nameList = new ArrayList();
+        ArrayList<String> nameList = new ArrayList<String>();
             String[] allNames = getAllTemplateNames();
             Arrays.sort(allNames);
             for (int i = 0; i < names.length; i++) {
@@ -375,7 +376,7 @@ public class FileCompiler extends AbstractFileCompiler {
                     nameList.add(names[i]);
                 }
             }
-            return super.compile((String[])nameList.toArray(new String[nameList.size()]));
+        return super.compile(nameList.toArray(new String[nameList.size()]));
         } finally {
             if(mSrcJars!=null) for(File f:mSrcJars.keySet()) {
                 mSrcJars.remove(f).close();
@@ -389,7 +390,7 @@ public class FileCompiler extends AbstractFileCompiler {
 
     private String[] getAllTemplateNames(boolean recurse) throws IOException {
         // Using a Set to prevent duplicate template names.
-        Collection sources = new TreeSet();
+        Collection<String> sources = new TreeSet<String>();
 
         for (int i=0; i<mRootSourceDirs.length; i++) {
             if( isJarUrl(mRootSourceDirs[i] ) ) {
@@ -400,14 +401,15 @@ public class FileCompiler extends AbstractFileCompiler {
             }
         }
 
-        return (String[])sources.toArray(new String[sources.size()]);
+        return sources.toArray(new String[sources.size()]);
     }
     
     public boolean sourceExists(String name) {
         return findRootSourceDir(name) != null || findJarSrc(name)!=null;
     }
 
-    private void gatherJarSources(Collection sources, JarOfTemplates j) throws IOException {
+    private void gatherJarSources(Collection<String> sources, JarOfTemplates j) 
+        throws IOException {
 
         for(Enumeration<JarEntry> entries = j.getEntries(); entries.hasMoreElements(); ) {
             String name = entries.nextElement().getName();
@@ -428,7 +430,7 @@ public class FileCompiler extends AbstractFileCompiler {
      * @param recurse When true, recursively gathers all sources in 
      * sub-directories.
      */
-    private void gatherSources(Collection templateNames,
+    private void gatherSources(Collection<String> templateNames,
                                File sourceDir, 
                                boolean recurse)
         throws IOException
@@ -437,7 +439,7 @@ public class FileCompiler extends AbstractFileCompiler {
     }
 
 
-    private void gatherSources(Collection toCompile,
+    private void gatherSources(Collection<String> toCompile,
                                File sourceDir, 
                                String parentName, 
                                boolean recurse)
@@ -543,34 +545,23 @@ public class FileCompiler extends AbstractFileCompiler {
         return (path.startsWith("jar:") && path.endsWith("!"));
     }
 
-    public class Unit extends CompilationUnit {
-        private final String mSourceFileName;
-        private final File mSourceFile;
-        private final File mDestFile;
-
-        Unit(String name, Compiler compiler) {
+    public abstract class FileUnit extends AbstractCompilationUnit {
+        protected final File mDestFile;
+        protected final String mSourceFileName;
+        
+        FileUnit(String name, Compiler compiler) {
             super(name, compiler);
-
-            File rootSourceDir = findRootSourceDir(name);
-            if (rootSourceDir == null) {
-                // File isn't found, but set to a valid directory so that error
-                // is produced later when attempting to get a Reader.
-                rootSourceDir = mRootSourceDirs[0];
-            }
-
-            String fname = name.replace('.', '/');
-
-            mSourceFileName = fname + ".tea";
-            mSourceFile = new File(rootSourceDir, mSourceFileName);
             
-            if (mRootDestDir == null) {
-                mDestFile = null;
-            }
-            else {
+            String fname = name.replace('.', '/');
+            mSourceFileName = fname + ".tea";
+            
+            if (mRootDestDir != null) {
                 mDestFile = new File(mRootDestDir, fname + ".class");
             }
+            else { mDestFile = null; }
         }
-
+        
+        @Override
         public String getTargetPackage() {
             return mRootPackage;
         }
@@ -579,32 +570,6 @@ public class FileCompiler extends AbstractFileCompiler {
             return mSourceFileName;
         }
         
-        public File getSourceFile() {
-            return mSourceFile;
-        }
-
-        public Reader getReader() throws IOException {
-            InputStream in = new FileInputStream(mSourceFile);
-            if (mEncoding == null) {
-                return new InputStreamReader(in);
-            }
-            else {
-                return new InputStreamReader(in, mEncoding);
-            }
-        }
-        
-        public boolean shouldCompile() {
-            if (!mForce &&
-                mDestFile != null &&
-                mDestFile.exists() &&
-                mDestFile.lastModified() >= mSourceFile.lastModified()) {
-
-                return false;
-            }
-
-            return true;
-        }
-
         /**
          * @return the file that gets written by the compiler.
          */
@@ -660,23 +625,56 @@ public class FileCompiler extends AbstractFileCompiler {
                 mInjector.resetStream(getClassName());
             }
         }
+    }
+    
+    public class Unit extends FileUnit {
+        
+        private final File mSourceFile;
 
-        protected String getClassName() {
-            String className = getName();
-            String pack = getTargetPackage();
-            if (pack != null && pack.length() > 0) {
-                className = pack + '.' + className;
+        Unit(String name, Compiler compiler) {
+            super(name, compiler);
+
+            File rootSourceDir = findRootSourceDir(name);
+            if (rootSourceDir == null) {
+                // File isn't found, but set to a valid directory so that error
+                // is produced later when attempting to get a Reader.
+                rootSourceDir = mRootSourceDirs[0];
             }
 
-            return className;
+            mSourceFile = new File(rootSourceDir, mSourceFileName);
+        }
+        
+        public File getSourceFile() {
+            return mSourceFile;
+        }
+
+        public Reader getReader() throws IOException {
+            InputStream in = new FileInputStream(mSourceFile);
+            if (mEncoding == null) {
+                return new InputStreamReader(in);
+            }
+            else {
+                return new InputStreamReader(in, mEncoding);
+            }
+        }
+        
+        public boolean shouldCompile() {
+            if (!mForce &&
+                mDestFile != null &&
+                mDestFile.exists() &&
+                mDestFile.lastModified() >= mSourceFile.lastModified()) {
+
+                return false;
+            }
+
+            return true;
         }
     }
-
+    
 /////////////////////////////////
-    public class JarredUnit extends CompilationUnit {
+    public class JarredUnit extends FileUnit {
 
         private File mDestFile;
-        private String mSourceFileName;
         private JarOfTemplates mJarOfTemlates;
         private URL mUrl;
 
@@ -684,30 +682,17 @@ public class FileCompiler extends AbstractFileCompiler {
             super(name, compiler);
 
             mJarOfTemlates = getJarOfTemplates(file);
-
-            mSourceFileName = name.replace('.', '/') + ".tea";
-
-            mUrl = new URL(mJarOfTemlates.getUrl(), mJarOfTemlates.getEntry(mSourceFileName).toString());
-
-            if(mRootDestDir!=null) {
-                String filePath = name.replace('.', '/') + ".class";
-                mDestFile = new File(mRootDestDir, filePath);
-            }
+            mUrl = new URL(mJarOfTemlates.getUrl(), 
+                           mJarOfTemlates.getEntry(mSourceFileName).toString());
         }
 
         @Override
         public String getSourceFileName() {
-
             return getJarEntry().getName();
         }
 
         public JarEntry getJarEntry() {
             return (JarEntry) mJarOfTemlates.getEntry(mSourceFileName);
-        }
-
-        @Override
-        public String getTargetPackage() {
-            return mRootPackage;
         }
 
         public URL getSourceUrl() {
@@ -747,72 +732,6 @@ public class FileCompiler extends AbstractFileCompiler {
             if(mDestFile!=null) {
                 mDestFile.setLastModified(getJarEntry().getTime());
             }
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            OutputStream out1 = null;
-            OutputStream out2 = null;
-
-            if (mDestFile != null) {
-                File dir = mDestFile.getParentFile();
-                if (!dir.exists()) {
-                    dir.mkdirs();
-                }
-                out1 = new FileOutputStream(mDestFile);
-            }
-
-            if (mInjector != null) {
-                out2 = mInjector.getStream(getClassName());
-            }
-
-            OutputStream out;
-
-            if (out1 != null) {
-                if (out2 != null) {
-                    out = new DualOutput(out1, out2);
-                }
-                else {
-                    out = out1;
-                }
-            }
-            else if (out2 != null) {
-                out = out2;
-            }
-            else {
-                out = new OutputStream() {
-                    @Override
-                    public void write(int b) {}
-                    @Override
-                    public void write(byte[] b, int off, int len) {}
-                };
-            }
-
-            return new BufferedOutputStream(out);
-        }
-
-        private File getDestinationFile() {
-            return mDestFile;
-        }
-
-        public void resetOutputStream() {
-            if (mDestFile != null) {
-                mDestFile.delete();
-            }
-
-            if (mInjector != null) {
-                mInjector.resetStream(getClassName());
-            }
-        }
-
-        protected String getClassName() {
-            String className = getName();
-            String pack = getTargetPackage();
-            if (pack != null && pack.length() > 0) {
-                className = pack + '.' + className;
-            }
-
-            return className;
         }
     }
 

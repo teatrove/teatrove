@@ -24,6 +24,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  */
 public class SubstitutionStatement extends Statement {
+    private static final long serialVersionUID = 1L;
+
     public SubstitutionStatement(SourceInfo info) {
         super(info);
     }

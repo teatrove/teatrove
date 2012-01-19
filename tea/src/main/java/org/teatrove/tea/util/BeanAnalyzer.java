@@ -56,19 +56,26 @@ public class BeanAnalyzer {
     public static final String ELEMENT_TYPE_FIELD_NAME = "ELEMENT_TYPE";
 
     /** A cache of properties for classes. Maps classes to property maps. */
-    private static Map cPropertiesCache;
+    private static
+    Map<GenericType, Map<String, PropertyDescriptor>> cPropertiesCache;
 
     static {
         Introspector.setBeanInfoSearchPath(new String[0]);
-        cPropertiesCache = Collections.synchronizedMap(new IdentityMap(32768));
+        cPropertiesCache = createPropertiesCache();
     }
 
+    @SuppressWarnings("unchecked")
+    private static Map<GenericType, Map<String, PropertyDescriptor>>
+    createPropertiesCache() {
+        return Collections.synchronizedMap(new IdentityMap(32768));
+    }
+    
     /**
      * Test program.
      */
     public static void main(String[] args) throws Exception {
-        Map map = getAllProperties(new GenericType(Class.forName(args[0])));
-        Iterator keys = map.keySet().iterator();
+        Map<String, PropertyDescriptor> map = getAllProperties(new GenericType(Class.forName(args[0])));
+        Iterator<String> keys = map.keySet().iterator();
         while (keys.hasNext()) {
             String key = (String)keys.next();
             PropertyDescriptor desc = (PropertyDescriptor)map.get(key);
@@ -101,10 +108,12 @@ public class BeanAnalyzer {
      * PropertyDescriptor objects.
      *
      */
-    public static Map getAllProperties(GenericType root)
+    public static Map<String, PropertyDescriptor>
+    getAllProperties(GenericType root)
         throws IntrospectionException {
 
-        Map properties = (Map)cPropertiesCache.get(root);
+        Map<String, PropertyDescriptor> properties =
+            cPropertiesCache.get(root);
         if (properties == null) {
             GenericType rootType = root.getRootType();
             if (rootType == null) {
@@ -120,10 +129,12 @@ public class BeanAnalyzer {
         return properties;
     }
 
-    private static Map createProperties(GenericType root, GenericType type)
+    private static Map<String, PropertyDescriptor>
+    createProperties(GenericType root, GenericType type)
         throws IntrospectionException {
 
-        Map properties = new HashMap();
+        Map<String, PropertyDescriptor> properties =
+            new HashMap<String, PropertyDescriptor>();
 
         Class<?> clazz = type.getRawType().getType();
         if (clazz == null || clazz.isPrimitive()) {
@@ -158,7 +169,7 @@ public class BeanAnalyzer {
         }
 
         // Ensure that all implemented interfaces are properly analyzed.
-        Class[] interfaces = clazz.getInterfaces();
+        Class<?>[] interfaces = clazz.getInterfaces();
         Type[] generics = clazz.getGenericInterfaces();
         for (int i=0; i<interfaces.length; i++) {
             properties.putAll
@@ -180,7 +191,7 @@ public class BeanAnalyzer {
         // Strings also have a "length" property.
         if (String.class.isAssignableFrom(clazz)) {
             try {
-                Method readMethod = String.class.getMethod("length", null);
+                Method readMethod = String.class.getMethod("length");
                 property = new PropertyDescriptor
                     (LENGTH_PROPERTY_NAME, readMethod, null);
                 properties.put(LENGTH_PROPERTY_NAME, property);
@@ -193,7 +204,7 @@ public class BeanAnalyzer {
         // Collections also have a "length" property.
         if (Collection.class.isAssignableFrom(clazz)) {
             try {
-                Method readMethod = Collection.class.getMethod("size", null);
+                Method readMethod = Collection.class.getMethod("size");
                 property = new PropertyDescriptor
                     (LENGTH_PROPERTY_NAME, readMethod, null);
                 properties.put(LENGTH_PROPERTY_NAME, property);
@@ -203,10 +214,23 @@ public class BeanAnalyzer {
             }
         }
 
+        // Maps also have a "length" property.
+        if (Map.class.isAssignableFrom(clazz)) {
+            try {
+                Method readMethod = Map.class.getMethod("size");
+                property = new PropertyDescriptor
+                    (LENGTH_PROPERTY_NAME, readMethod, null);
+                properties.put(LENGTH_PROPERTY_NAME, property);
+            }
+            catch (NoSuchMethodException e) {
+                throw new LinkageError(e.toString());
+            }
+        }
+        
         // Analyze design patterns for keyed properties.
 
         KeyedPropertyDescriptor keyed = new KeyedPropertyDescriptor();
-        List keyedMethods = new ArrayList();
+        List<Method> keyedMethods = new ArrayList<Method>();
 
         if (type.isArray()) {
             keyed.setKeyedPropertyType(type.getComponentType());
@@ -225,9 +249,9 @@ public class BeanAnalyzer {
             if (Modifier.isPublic(m.getModifiers()) &&
                 "get".equals(m.getName())) {
 
-                Class ret = m.getReturnType();
+                Class<?> ret = m.getReturnType();
                 if (ret != null && ret != void.class) {
-                    Class[] params = m.getParameterTypes();
+                    Class<?>[] params = m.getParameterTypes();
                     if (params.length == 1) {
                         GenericType retType =
                             new GenericType(root, m.getReturnType(),
@@ -287,7 +311,7 @@ public class BeanAnalyzer {
                 if (field.getType() == Class.class &&
                     Modifier.isStatic(field.getModifiers())) {
 
-                    Class elementType = (Class)field.get(null);
+                    Class<?> elementType = (Class<?>) field.get(null);
                     if (keyed.getKeyedPropertyType().getRawType().getType()
                         .isAssignableFrom(elementType)) {
 
@@ -307,7 +331,7 @@ public class BeanAnalyzer {
         }
 
         // Filter out properties with names that contain '$' characters.
-        Iterator it = properties.keySet().iterator();
+        Iterator<String> it = properties.keySet().iterator();
         while (it.hasNext()) {
             String propertyName = (String)it.next();
             if (propertyName.indexOf('$') >= 0) {
@@ -319,11 +343,12 @@ public class BeanAnalyzer {
     }
 
     private static class ArrayLengthProperty extends PropertyDescriptor {
-        public ArrayLengthProperty(Class clazz) throws IntrospectionException {
+        public ArrayLengthProperty(Class<?> clazz)
+            throws IntrospectionException {
             super(LENGTH_PROPERTY_NAME, clazz, null, null);
         }
 
-        public Class getPropertyType() {
+        public Class<?> getPropertyType() {
             return int.class;
         }
     }

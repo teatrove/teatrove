@@ -16,31 +16,25 @@
 
 package org.teatrove.teaservlet.util;
 
-import org.teatrove.tea.compiler.CompilationUnit;
-import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.tea.compiler.TemplateRepository;
-import org.teatrove.tea.util.AbstractFileCompiler;
-import org.teatrove.trove.io.DualOutput;
-import org.teatrove.trove.net.HttpClient;
-import org.teatrove.trove.net.PlainSocketFactory;
-import org.teatrove.trove.net.PooledSocketFactory;
-import org.teatrove.trove.net.SocketFactory;
-import org.teatrove.trove.util.ClassInjector;
-
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StreamTokenizer;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.trove.net.HttpClient;
+import org.teatrove.trove.net.PlainSocketFactory;
+import org.teatrove.trove.net.PooledSocketFactory;
+import org.teatrove.trove.net.SocketFactory;
+import org.teatrove.trove.util.ClassInjector;
 
 /**
  * RemoteCompiler compiles tea source files by reading them from a remote 
@@ -58,19 +52,14 @@ import java.util.TreeMap;
  * <!--$$Revision:--> 16 <!-- $--> 21 <!-- $$JustDate:-->  3/19/04 <!-- $-->
  * @see ClassInjector
  */
-public class RemoteCompiler extends AbstractFileCompiler {
+public class RemoteCompiler extends AbstractCompiler {
     
     public static final String TEMPLATE_LOAD_PROTOCOL = "http://";
+
     private String[] mRemoteSourceDirs;
-    private String mRootPackage;
-    private File mRootDestDir;
-    private ClassInjector mInjector;
-    private String mEncoding;
-    private boolean mForce = false;
-    private Map mTemplateMap;
-    private Map mSocketFactories;
+    private Map<String, TemplateSourceInfo> mTemplateMap;
+    private Map<String, SocketFactory> mSocketFactories;
     private long mTimeout;
-    private long mPrecompiledTolerance;
 
     public RemoteCompiler(String[] rootSourceDirs,
                           String rootPackage,
@@ -80,34 +69,13 @@ public class RemoteCompiler extends AbstractFileCompiler {
                           long timeout,
                           long precompiledTolerance) {
                           	
-        super();
+        super(rootPackage, rootDestDir, injector, encoding, precompiledTolerance);
         mRemoteSourceDirs = rootSourceDirs;
-        mRootPackage = rootPackage;
-        mRootDestDir = rootDestDir;
-        mInjector = injector;
-        mEncoding = encoding;
         mTimeout = timeout;
-        mPrecompiledTolerance = precompiledTolerance;
-
-        if (mRootDestDir != null && 
-            !mRootDestDir.isDirectory()) {
-            throw new IllegalArgumentException
-                ("Destination is not a directory: " + rootDestDir);
-        }
-        mSocketFactories = new HashMap();
+        mSocketFactories = new HashMap<String, SocketFactory>();
         mTemplateMap = retrieveTemplateMap();
-
-        if (! TemplateRepository.isInitialized())
-            TemplateRepository.init(rootDestDir, rootPackage);
     }
 
-    /**
-     * @param force When true, compile all source, even if up-to-date
-     */
-    public void setForceCompile(boolean force) {
-        mForce = force;
-    }       
-    
     /**
      * Checks that the source code for a specified template exists.
      */
@@ -198,8 +166,9 @@ public class RemoteCompiler extends AbstractFileCompiler {
      * creates a map relating the templates found on the template server
      * to the timestamp on the sourcecode
      */
-    private Map retrieveTemplateMap() {
-        Map templateMap = new TreeMap();
+    private Map<String, TemplateSourceInfo> retrieveTemplateMap() {
+        Map<String, TemplateSourceInfo> templateMap = 
+        	new TreeMap<String, TemplateSourceInfo>();
         for (int j=(mRemoteSourceDirs.length-1); j >= 0; j--) {
             String remoteSource = mRemoteSourceDirs[j];
             if (!remoteSource.endsWith("/")) {
@@ -279,52 +248,14 @@ public class RemoteCompiler extends AbstractFileCompiler {
         }
     }
     
-    public class Unit extends CompilationUnit {
+    public class Unit extends AbstractUnit {
 
-
-        private String mSourceFilePath;
-        private String mDotPath;
-        private File mDestDir;
-        private File mDestFile;
-        private String mSourceUrl;
-        
         Unit(String name, Compiler compiler) {
-            super(name,compiler);
-            mDotPath = name;
-            String slashPath = name.replace('.','/');
-            if (slashPath.endsWith("/")) {
-                slashPath = slashPath.substring(0, slashPath.length() - 1);
-            }
-            if (mRootDestDir != null) {
-                if (slashPath.lastIndexOf('/') >= 0) {
-                    mDestDir = new File
-                        (mRootDestDir,
-                         slashPath.substring(0,slashPath.lastIndexOf('/')));
-                }
-                else {
-                    mDestDir = mRootDestDir;
-                }
-                mDestDir.mkdirs();          
-                mDestFile = new File
-                    (mDestDir,
-                     slashPath.substring(slashPath.lastIndexOf('/') + 1) 
-                     + ".class");
-            /*
-            try {
-                if (mDestFile.createNewFile()) {
-                    System.out.println(mDestFile.getPath() + " created");
-                }
-                else {
-                    System.out.println(mDestFile.getPath() + " NOT created");
-                }
-            }
-            catch (IOException ioe) {ioe.printStackTrace();}
-            */
-            }
-            mSourceFilePath = slashPath;
-            
-            TemplateSourceInfo info = (TemplateSourceInfo) mTemplateMap.get(mDotPath);
-            if(info==null) {
+        	super(name, compiler);
+            TemplateSourceInfo info = 
+            	(TemplateSourceInfo) mTemplateMap.get(mDotPath);
+
+            if (info==null) {
                 mSourceUrl = getSourceFileName();
             } else if(info.server.trim().endsWith("/")) {
                 mSourceUrl = info.server.trim() + getSourceFileName();
@@ -333,37 +264,8 @@ public class RemoteCompiler extends AbstractFileCompiler {
             }
         }
 
-        public String getTargetPackage() {
-            return mRootPackage;
-        }
-
-        public String getSourceFileName() {
-            return mSourceFilePath + ".tea";
-        }
-
-        /**
-         * comparable to the getSourceFile() method of FileCompiler
-         */
-        public String getSourceUrl() {
-            return mSourceUrl;
-        }
-
-        public Reader getReader() throws IOException {
-            Reader reader = null;
-            InputStream in = getTemplateSource(mDotPath);
-            if (mEncoding == null) {
-                reader = new InputStreamReader(in);
-            }
-            else {
-                reader = new InputStreamReader(in, mEncoding);
-            }
-            return reader;
-        }
-
         public boolean shouldCompile() {
             long remoteTimeStamp = ((TemplateSourceInfo) mTemplateMap.get(mDotPath)).timestamp;
-            final TemplateRepository.TemplateInfo templateInfo = TemplateRepository.getInstance()
-                    .getTemplateInfo(mDotPath);
 
             boolean isWindows = System.getProperty("os.name").startsWith("Windows");
             if (!mForce &&
@@ -376,115 +278,16 @@ public class RemoteCompiler extends AbstractFileCompiler {
                 return false;
             } else
             // Try to defer to the template repository (and possibly precompiled templates)
-            if(
-                    !mForce &&
-                        (mDestFile == null || !mDestFile.exists()) &&
-                        templateInfo != null &&
-                        gteq(templateInfo.getLastModified(), remoteTimeStamp, mPrecompiledTolerance))
-            {
-                return false;
-            }
-
-
-            return true;
-        }
-
-        /**
-         * Returns the truth that a is greater than or equal to b assuming the given tolerance.
-         * <p>
-         * ex. tolerance = 10, a = 1000 and b = 2000, returns false<br/>
-         * ex. tolerance = 10, a = 1989 and b = 2000, returns false<br/>
-         * ex. tolerance = 10, a = 1990 and b = 2000, returns true<br/>
-         * ex. tolerance = 10, a = 2000 and b = 2000, returns true<br/>
-         * ex. tolerance = 10, a = 3000 and b = 2000, returns true<br/>
-         * </p>
-         *
-         * @param a
-         * @param b
-         * @param tolerance
-         * @return
-         */
-        private boolean gteq(long a, long b, long tolerance) {
-            return a >= b - tolerance;
-        }
-
-
-        /**
-         * @return the file that gets written by the compiler.
-         */
-        public File getDestinationFile() {
-            return mDestFile;
-        }
-
-        public OutputStream getOutputStream() throws IOException {
-            OutputStream out1 = null;
-            OutputStream out2 = null;
-
-            if (mDestDir != null) {
-                if (!mDestDir.exists()) {
-                    mDestDir.mkdirs();
-                }
-
-                out1 = new FileOutputStream(mDestFile);
-            }
-
-            if (mInjector != null) {
-                String className = getName();
-                String pack = getTargetPackage();
-                if (pack != null && pack.length() > 0) {
-                    className = pack + '.' + className;
-                }
-                out2 = mInjector.getStream(className);
-            }
-
-            OutputStream out;
-
-            if (out1 != null) {
-                if (out2 != null) {
-                    out = new DualOutput(out1, out2);
-                }
-                else {
-                    out = out1;
-                }
-            }
-            else if (out2 != null) {
-                out = out2;
-            }
-            else {
-                out = new OutputStream() {
-                    public void write(int b) {}
-                    public void write(byte[] b, int off, int len) {}
-                };
-            }
-
-            return new BufferedOutputStream(out);
-        }
-        
-        public void resetOutputStream() {
-            if (mDestFile != null) {
-                mDestFile.delete();
-            }
-
-            if (mInjector != null) {
-                mInjector.resetStream(getClassName());
-            }
-        }
-        
-        protected String getClassName() {
-            String className = getName();
-            String pack = getTargetPackage();
-            if (pack != null && pack.length() > 0) {
-                className = pack + '.' + className;
-            }
-
-            return className;
+            return shouldCompile(remoteTimeStamp);
         }
         
         /**
          * get a input stream containing the template source data.
          */
-        private InputStream getTemplateSource(String templateSourceName) 
-                                                        throws IOException {
+        @Override
+        protected InputStream getTemplateSource(String templateSourceName) 
+        	throws IOException {
+        	
             TemplateSourceInfo tsInfo = (TemplateSourceInfo)mTemplateMap
                                                 .get(templateSourceName);
 

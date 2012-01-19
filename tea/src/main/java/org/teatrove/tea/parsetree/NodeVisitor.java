@@ -79,6 +79,11 @@ public interface NodeVisitor {
     public Object visit(RelationalExpression node);
     public Object visit(AndExpression node);
     public Object visit(OrExpression node);
+    public Object visit(TernaryExpression node);
+    public Object visit(CompareExpression node);
+    public Object visit(NoOpExpression node);
+    public Object visit(SpreadExpression node);
+    public Object visit(TypeExpression node);
 
     public Object visit(NullLiteral node);
     public Object visit(BooleanLiteral node);

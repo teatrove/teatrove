@@ -26,13 +26,15 @@ import java.lang.reflect.Method;
  * @see TemplateCallExpression
  */
 public class FunctionCallExpression extends CallExpression {
+    private static final long serialVersionUID = 1L;
+
     private Method mCalledMethod;
 
     public FunctionCallExpression(SourceInfo info, 
-                                  Name target, 
+                                  Expression expression, Name target,
                                   ExpressionList params,
                                   Block subParam) {
-        super(info, target, params, subParam);
+        super(info, expression, target, params, subParam);
     }
 
     public Object accept(NodeVisitor visitor) {

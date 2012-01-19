@@ -1,0 +1,102 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.teatrove</groupId>
+    <artifactId>teatrove</artifactId>
+    <version>4.1.1-SNAPSHOT</version>
+  </parent>
+  
+  <groupId>org.teatrove</groupId>
+  <artifactId>teaadmin</artifactId>
+  <version>4.1.1-SNAPSHOT</version>
+  
+  <packaging>jar</packaging>
+
+  <name>TeaAdmin</name>
+  
+  <url>http://www.teatrove.org</url>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+  
+  <dependencies>
+    
+    <!-- tea stuff -->
+
+    <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>teaservlet</artifactId>
+      <version>${teaservlet.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>teaapps</artifactId>
+      <version>${teaapps.version}</version>
+    </dependency>
+
+    <!-- general -->
+	
+  </dependencies>
+
+  <build>
+	<plugins>
+    
+        <!-- TODO Add back in -->
+        <plugin>
+            <groupId>org.teatrove</groupId>
+            <artifactId>teacompiler-maven-plugin</artifactId>
+            <version>${teacompiler.version}</version>
+            <configuration>
+                <force>true</force>
+                <guardian>true</guardian>
+                <contextClassBuilder implementation="org.teatrove.maven.plugins.teacompiler.contextclassbuilder.MergedContextClassBuilder">
+                     <mergedClassName>org.teatrove.teaservlet.admin.MergedAdminContext</mergedClassName>
+                     <contexts>
+                        <context>org.teatrove.teaservlet.AdminHttpContext</context>
+                        <context>org.teatrove.teaapps.contexts.StringContext</context>
+                        <context>org.teatrove.teaapps.contexts.MapContext</context>
+                        <context>org.teatrove.teaapps.contexts.ListContext</context>
+                        <context>org.teatrove.teaapps.contexts.DateContext</context>
+                        <context>org.teatrove.teaapps.contexts.MathContext</context>
+                        <context>org.teatrove.teaapps.contexts.NumberFormatContext</context>
+                        <context>org.teatrove.teaapps.contexts.ListContext</context>
+                        <context>org.teatrove.teaapps.contexts.JMXContext</context>
+                    </contexts>
+                </contextClassBuilder>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>compile-tea</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <dependencies>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>tea</artifactId>
+                    <version>${tea.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>trove</artifactId>
+                    <version>${trove.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>teaapps</artifactId>
+                    <version>${teaapps.version}</version>
+                </dependency>
+            </dependencies>
+        </plugin>
+
+    </plugins>
+  </build>
+  
+</project>

@@ -21,12 +21,14 @@ package org.teatrove.tea.compiler;
  * @author Brian S O'Neill
  */
 class LongToken extends Token {
+    private static final long serialVersionUID = 1L;
+
     private long mValue;
 
     LongToken(int sourceLine,
-              int sourceStartPos, 
+              int sourceStartPos,
               int sourceEndPos,
-              long value) 
+              long value)
     {
         super(sourceLine, sourceStartPos, sourceEndPos, Token.NUMBER);
         mValue = value;

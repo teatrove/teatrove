@@ -1,0 +1,36 @@
+<% template getMostTemplateInvokes ()
+
+    admin = getTeaServletAdmin();
+
+    pathPrefix = call system.util.getPathPrefix();
+
+    templates = admin.knownTemplates;
+    sort(templates, "templateInvokes", true);
+
+    foreach ( i in 0..templates.length-1 ) {
+        if ( i < 10 ) {
+            knownTemplate = templates[i];
+
+            templatePath = knownTemplate.name;
+            templatePath = replace(templatePath, '.', '/');
+            templatePath = pathPrefix & templatePath;
+
+            templateName = templatePath;
+            templateTokens = tokenize(templatePath, '/');
+            if ( templateTokens != null ) {
+                templateName = templateTokens[templateTokens.length-1];
+            }
+
+            numberFormat("###,###,###");
+            templateInvokes = knownTemplate.templateInvokes & '';
+            numberFormat(null);
+
+            '<li>\n'
+                '<a href="' templatePath '">' templateName '</a><span> (' templateInvokes ')</span>\n'
+            '</li>\n'
+        } else {
+            break;
+        }
+    }
+    
+%>

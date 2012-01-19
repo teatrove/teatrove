@@ -25,6 +25,8 @@ import org.teatrove.tea.compiler.Type;
  * @author Brian S O'Neill
  */
 public class NullLiteral extends Literal {
+    private static final long serialVersionUID = 1L;
+
     public NullLiteral(SourceInfo info) {
         super(info);
         setType(Type.NULL_TYPE);

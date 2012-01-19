@@ -1,0 +1,14 @@
+<% template cleanString (String source)
+
+    cleanString = replace(source, ##("&", "&amp;",
+                       " ", "&nbsp;",
+                       "<", "&lt;",
+                       ">", "&gt;",
+                       "\n", "<br>",
+                       "\r", "<br>",
+                       "\r\n", "<br>"));
+
+    // return clean string
+    cleanString
+                       
+%>

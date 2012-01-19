@@ -28,6 +28,7 @@ import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.DynamicContextSource;
 import org.teatrove.tea.engine.MergedContextSource;
 import org.teatrove.tea.engine.ContextCreationException;
+import org.teatrove.teaservlet.management.HttpContextManagement;
 
 /**
  * 
@@ -47,9 +48,10 @@ public class TeaServletContextSource extends MergedContextSource {
                             ServletContext servletContext,
                             Log log,
                             boolean prependWithHttpContext,
-                            boolean profilingEnabled)
-        throws Exception
-    {
+                            boolean httpContextMBeanEnabled,
+                            int httpContextMBeanCacheSize,
+                            boolean profilingEnabled) throws Exception {
+        
         int len = prependWithHttpContext ? 1 : 0;
 
         mLog = log;
@@ -65,9 +67,13 @@ public class TeaServletContextSource extends MergedContextSource {
         String[] mungedPrefixes = new String[contextSources.length];
 
         if (prependWithHttpContext) {
-            contextSources[0] = new HttpContextSource(servletContext,
-                                                      log);
-
+            // Create the Http context MBean if it is configured to do so.
+            HttpContextManagement httpContextMBean = null;
+            if (httpContextMBeanEnabled) {
+                httpContextMBean = HttpContextManagement.create(httpContextMBeanCacheSize);                
+            }
+            
+            contextSources[0] = new HttpContextSource(servletContext, log, httpContextMBean);
             mungedPrefixes[0] = "HttpContext$";
         }
 

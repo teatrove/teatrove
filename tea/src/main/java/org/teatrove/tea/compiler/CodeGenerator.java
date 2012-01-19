@@ -16,12 +16,13 @@
 
 package org.teatrove.tea.compiler;
 
-import java.io.OutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+
 import org.teatrove.tea.parsetree.Template;
 
 /**
- * 
+ *
  * @author Brian S O'Neill
  */
 public abstract class CodeGenerator {

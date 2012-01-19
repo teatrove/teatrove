@@ -1,0 +1,36 @@
+<% template getStressedTemplates ()
+
+    admin = getTeaServletAdmin();
+
+    pathPrefix = call system.util.getPathPrefix();
+
+    allTemplateStats = getTemplateStats();
+    sort(allTemplateStats, "aggregateIntervalForRawData.durationStressMeasure", true);
+
+    if ( allTemplateStats != null ) {
+        count = 0;
+        foreach ( t in 0..allTemplateStats.length-1 ) {
+            if ( count < 10 ) {
+                stats = allTemplateStats[t];
+
+                templateNamePath = stats.fullTemplateName;
+                templateName = stats.templateName;
+                templatePath = pathPrefix & replace(stats.templatePath, '.', '/');
+                if ( findLast(stats.templatePath, '.') > -1 ) {
+                    templatePath = templatePath & '/';
+                }
+
+                numberFormat("0.00");
+                if ( stats != null ) {
+                    stress = call system.util.getTemplateStressValue(stats);
+                    '<li><a href="' & templateName & '">' & templateName & '</a><span> (' & (stress*100) & '%)</span></li>\n';
+                }
+                numberFormat(null);
+                count = count + 1;
+            } else {
+                break;
+            }
+        }
+    }
+    
+%>

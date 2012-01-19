@@ -1,0 +1,16 @@
+<% template reset (String name)
+
+    admin = getTeaServletAdmin();
+
+    if ( name != null ) {
+        resetStatistics(name, null);
+        resetTemplateStats(name);
+    } else {
+        resetStatistics();
+        resetTemplateStats();
+    }
+
+    // return string
+    'Success'
+
+ %>

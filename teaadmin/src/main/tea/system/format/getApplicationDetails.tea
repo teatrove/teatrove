@@ -1,0 +1,109 @@
+<% template getApplicationDetails (String context)
+
+    admin = getTeaServletAdmin();
+
+    info = getHandyClassInfo(context);
+
+    if ( info == null ) {
+        'Context not found: ' context;
+    } else {
+        descriptions = info.teaContextMethodDescriptors;
+
+        '<div class="table-container">'
+            '<table class="tablehead" cellpadding="3" cellspacing="1" style="border: 1px solid #CDCDCD; border-collapse: separate;">'
+                '<thead>'
+                    '<tr class="stathead">'
+                        '<th colspan="2" class="left-align">'
+                            'Summary for <strong>' context '</strong>'
+                        '</th>'
+                    '</tr>'
+                '</thead>'
+                '<tbody>'
+                if ( info.description != "" ) {
+                    '<tr class="colhead">'
+                        '<td colspan="3" class="left-align">'
+                            'Description'
+                        '</td>'
+                    '</tr>'
+                    '<tr>'
+                        '<td colspan="3" class="left-align">'
+                            info.description
+                        '</td>'
+                    '</tr>'
+                }
+                if ( descriptions != null and descriptions.length > 0 ) {
+                    '<tr class="colhead">'
+                        '<td>'
+                            'Methods'
+                        '</td>'
+                    '</tr>'
+
+                    rowClass = 'oddrow';
+                    foreach ( metDesc in descriptions ) {
+                        if ( metDesc isa java.beans.MethodDescriptor ) {
+
+                            if ( rowClass == 'oddrow' ) {
+                                rowClass = 'evenrow';
+                            } else {
+                                rowClass = 'oddrow';
+                            }
+                            
+                            '<tr class="' rowClass '">'
+                                '<td>'
+                                    '<div>'
+                                        call system.util.printMethodLink(metDesc, 1)
+                                        '&nbsp;'
+                                        '('
+                                        parameterTypes = metDesc.method.parameterTypes;
+                                        parameterDescriptors = metDesc.parameterDescriptors;
+                                        link = true;
+                                        if ( parameterTypes == null or parameterTypes.length == 0 ) {
+                                            if ( parameterDescriptors != null ) {
+                                                foreach ( index in 0..parameterDescriptors.length-1 ) {
+                                                    if ( index > 0 ) {
+                                                        ', '
+                                                    }
+                                                    name = parameterDescriptors[index]
+                                                    if ( name != null ) {
+                                                        call system.util.printClassLink(getClassForName(name.displayName), link)
+
+                                                        '&nbsp;' name.name
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            foreach ( index in 0..parameterTypes.length - 1 ) {
+                                                if ( index > 0 ) {
+                                                    ', '
+                                                }
+                                                call system.util.printClassLink(parameterTypes[index], link)
+                                                if ( parameterDescriptors != null ) {
+                                                    name = parameterDescriptors[index]
+                                                    if ( name != null ) {
+                                                        '&nbsp;' name.name
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        ')'
+                                    '</div>'
+                                    if ( metDesc.shortDescription != null and metDesc.shortDescription != '' and metDesc.shortDescription != metDesc.method.name ) {
+                                        '<div class="italic left-margin-20 top-margin-10">'
+                                            getFirstSentence(metDesc.shortDescription);
+                                        '</div>'
+                                    }
+                                    if ( metDesc.method.returnType.name != 'void' ) {
+                                        '<div class="left-margin-20 top-margin-10">'
+                                            'Returns: ' call system.util.printClassLink(metDesc.method.returnType, true)
+                                        '</div>'
+                                    }
+                                '</td>'
+                            '</tr>'
+                        }
+                    }
+                }
+                '</tbody>'
+            '</table>'
+        '</div>'
+    }
+%>

@@ -4,12 +4,12 @@
   <parent>
     <groupId>org.teatrove</groupId>
     <artifactId>build-tools</artifactId>
-    <version>4.0-SNAPSHOT</version>
+    <version>4.1.1-SNAPSHOT</version>
   </parent>
 
   <groupId>org.teatrove</groupId>
   <artifactId>toolbox</artifactId>
-  <version>4.0-SNAPSHOT</version>
+  <version>4.1.1-SNAPSHOT</version>
   
   <packaging>jar</packaging>
 

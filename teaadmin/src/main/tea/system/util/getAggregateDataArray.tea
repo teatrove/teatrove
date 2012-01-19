@@ -1,0 +1,75 @@
+<% template getAggregateDataArray (org.teatrove.teaservlet.stats.AggregateInterval[] intervals, String variable,
+                                    Boolean useIndex, Boolean useReverse, Integer limit)
+
+    if ( useIndex == null ) {
+        useIndex = false;
+    }
+    if ( useReverse == null ) {
+        useReverse = false;
+    }
+
+    result = '[';
+    if ( intervals != null ) {
+        if ( limit == null ) {
+            limit = intervals.length;
+        }
+        if ( limit > intervals.length ) {
+            limit = intervals.length;
+        }
+        
+        firstIndex = 0;
+        lastIndex = intervals.length-1;
+        if ( intervals.length > limit ) {
+            lastIndex = limit-1;
+        }
+        
+        if ( useReverse ) {
+            foreach ( index in firstIndex..lastIndex reverse ) {
+                if ( variable == "duration" or variable == "payload" ) {
+                    interval = intervals[index];
+                    if ( useIndex ) {
+                        result = result & '[' & index & ',';
+                    }
+                    if ( variable == "duration" ) {
+                        result = result & interval.durationStats.median;
+                    } else if ( variable == "payload" ) {
+                        result = result & interval.contentLengthStats.median;
+                    }
+                    if ( useIndex ) {
+                        result = result & ']';
+                    }
+
+                    if ( index > firstIndex ) {
+                        result = result & ',';
+                    }
+                }
+            }
+        } else {
+            foreach ( index in firstIndex..lastIndex ) {
+                if ( variable == "duration" or variable == "payload" ) {
+                    interval = intervals[index];
+                    if ( useIndex ) {
+                        result = result & '[' & index & ',';
+                    }
+                    if ( variable == "duration" ) {
+                        result = result & interval.durationStats.median;
+                    } else if ( variable == "payload" ) {
+                        result = result & interval.contentLengthStats.median;
+                    }
+                    if ( useIndex ) {
+                        result = result & ']';
+                    }
+
+                    if ( index < lastIndex ) {
+                        result = result & ',';
+                    }
+                }
+            }
+        }
+    }
+	result = result & ']';
+
+    // return result array
+    result
+
+%>

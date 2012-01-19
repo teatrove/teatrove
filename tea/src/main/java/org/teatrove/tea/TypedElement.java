@@ -22,7 +22,7 @@ import java.lang.annotation.Target;
 import java.lang.annotation.Retention;
 
 /**
- * Specifies a contained element type for values returned by "getter" 
+ * Specifies a contained element type for values returned by "getter"
  * bean methods referenced in Tea templates.
  *
  * @author Guy A. Molinari
@@ -30,5 +30,5 @@ import java.lang.annotation.Retention;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface TypedElement {
-    Class value();
+    Class<?> value();
 }

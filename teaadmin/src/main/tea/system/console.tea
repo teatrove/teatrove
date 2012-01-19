@@ -1,0 +1,74 @@
+<% template console (String page)
+
+    admin = getTeaServletAdmin();
+
+    if ( page == null ) {
+        sendRedirect('console?page=instrumentation');
+    }
+    
+    configuration = call config.properties(page);
+
+    call format.shell(configuration) {
+
+        if ( page == 'dashboard' ) {
+
+            call pages.dashboard(configuration);
+
+        } else if ( page == 'compile' ) {
+
+            call pages.compile(configuration);
+
+        } else if ( page == 'templates' ) {
+
+            call pages.templates(configuration);
+
+        } else if ( page == 'functions' ) {
+
+            call pages.functions(configuration);
+
+        } else if ( page == 'applications' ) {
+
+            call pages.applications(configuration);
+
+        } else if ( page == 'logs' ) {
+
+            call pages.logs(configuration);
+
+        } else if ( page == 'servlet_engine' ) {
+
+            call pages.servlet_engine(configuration);
+
+        } else if ( page == 'echo_request' ) {
+
+            call pages.echo_request(configuration);
+
+        } else if ( page == 'instrumentation' ) {
+
+            call pages.instrumentation(configuration);
+
+        } else if ( page == 'template_info' ) {
+
+            call pages.template_info(configuration);
+
+        } else if ( page == 'janitor' ) {
+
+            call pages.janitor(configuration);
+
+        } else if ( page == 'system_information' ) {
+
+            call pages.system_information(configuration);
+
+        } else {
+
+            '<article>\n'
+                '<section>\n'
+                    dynamicTemplateCall(page);
+                '</section>\n'
+            '</article>\n'
+
+        }
+        
+    }
+
+
+%>

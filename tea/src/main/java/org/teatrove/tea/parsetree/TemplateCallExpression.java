@@ -27,13 +27,15 @@ import org.teatrove.tea.compiler.CompilationUnit;
  * @see FunctionCallExpression
  */
 public class TemplateCallExpression extends CallExpression {
+    private static final long serialVersionUID = 1L;
+
     private CompilationUnit mCalledTemplate;
 
     public TemplateCallExpression(SourceInfo info, 
-                                  Name target, 
+                                  Expression expression, Name target,
                                   ExpressionList params,
                                   Block subParam) {
-        super(info, target, params, subParam);
+        super(info, expression, target, params, subParam);
     }
 
     public Object accept(NodeVisitor visitor) {

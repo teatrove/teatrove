@@ -34,12 +34,15 @@ import java.lang.reflect.Method;
  * @author Brian S O'Neill
  * @see org.teatrove.tea.util.BeanAnalyzer
  */
-public class ArrayLookup extends Expression {
+public class ArrayLookup extends Expression implements NullSafe {
+    private static final long serialVersionUID = 1L;
+
     private Expression mExpr;
     private Token mToken;
     private Expression mLookupIndex;
     private Method mMethod;
-
+    private boolean mNullSafe;
+    
     public ArrayLookup(SourceInfo info, Expression expr, Token lookupToken,
                        Expression lookupIndex) {
         super(info);
@@ -79,8 +82,8 @@ public class ArrayLookup extends Expression {
 
     /**
      * Returns the method to invoke in order to perform the lookup. This is
-     * filled in by the type checker. If the expression type is an array, the 
-     * read method is null. A code generator must still be able to get 
+     * filled in by the type checker. If the expression type is an array, the
+     * read method is null. A code generator must still be able to get
      * elements from an array.
      */
     public Method getReadMethod() {
@@ -97,5 +100,13 @@ public class ArrayLookup extends Expression {
 
     public void setReadMethod(Method m) {
         mMethod = m;
+    }
+    
+    public boolean isNullSafe() {
+        return mNullSafe;
+    }
+    
+    public void setNullSafe(boolean nullSafe) {
+        mNullSafe = nullSafe;
     }
 }

@@ -23,6 +23,8 @@ package org.teatrove.tea.compiler;
  * @author Brian S O'Neill
  */
 public class SourceInfo implements Cloneable, java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int mLine;
     private int mStartPosition;
     private int mEndPosition;
@@ -39,9 +41,9 @@ public class SourceInfo implements Cloneable, java.io.Serializable {
     public int getLine() {
         return mLine;
     }
-    
+
     /**
-     * @return The character position in the source file where this object 
+     * @return The character position in the source file where this object
      * started. The first position of the source file is zero.
      */
     public int getStartPosition() {
@@ -49,7 +51,7 @@ public class SourceInfo implements Cloneable, java.io.Serializable {
     }
 
     /**
-     * @return The character position in the source file where this object 
+     * @return The character position in the source file where this object
      * ended. The first position of the source file is zero.
      */
     public int getEndPosition() {
@@ -57,7 +59,7 @@ public class SourceInfo implements Cloneable, java.io.Serializable {
     }
 
     /**
-     * @return A character position detailing this object. Usually is the same 
+     * @return A character position detailing this object. Usually is the same
      * as the start position.
      */
     public int getDetailPosition() {

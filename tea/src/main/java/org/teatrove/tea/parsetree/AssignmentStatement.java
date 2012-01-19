@@ -26,6 +26,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  */
 public class AssignmentStatement extends Statement {
+    private static final long serialVersionUID = 1L;
+
     private VariableRef mLvalue;
     private Expression mRvalue;
 
@@ -33,7 +35,7 @@ public class AssignmentStatement extends Statement {
                                VariableRef lvalue,
                                Expression rvalue) {
         super(info);
-        
+
         mLvalue = lvalue;
         mRvalue = rvalue;
     }

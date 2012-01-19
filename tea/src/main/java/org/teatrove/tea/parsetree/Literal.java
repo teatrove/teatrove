@@ -24,6 +24,8 @@ import org.teatrove.tea.compiler.SourceInfo;
  * @author Brian S O'Neill
  */
 public abstract class Literal extends Expression {
+    private static final long serialVersionUID = 1L;
+
     protected Literal(SourceInfo info) {
         super(info);
     }

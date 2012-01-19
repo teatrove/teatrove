@@ -1,0 +1,26 @@
+<% template index() 
+
+dir = getFiles()
+if (dir != null) {
+    if (dir.length > 0) {%>
+        <h2>Files in <%dir[0].parent%></h2>
+            
+        <a href="index?path=<%replace(dir[0].parent,"\\","/")%>/..">
+        <font color="#800000">[-UP-]</a></font><br>   
+        <%   foreach (file in dir) {
+         nobackslashpath = replace(file.absolutePath,"\\","/")
+            if(file.file){
+                '<a href=\"file://'nobackslashpath'\"><font color=\"#000080\">'
+                file.name'</a></font><br>'   
+            } else {
+                '<a href=\"index?path='nobackslashpath'\"><font color=\"#800000\">['
+                file.name']</a></font><br>'
+            }
+                
+         }
+    } else {%>
+    <h2>Empty Directory</h2>
+    <%}
+} else {%>
+    <h2>Not a Directory</h2>
+<%}%>

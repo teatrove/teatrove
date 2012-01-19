@@ -16,10 +16,12 @@
 
 package org.teatrove.tea.parsetree;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import org.teatrove.tea.compiler.SourceInfo;
 import org.teatrove.tea.compiler.Token;
 import org.teatrove.tea.compiler.Type;
-import java.lang.reflect.Method;
 
 /**
  * A Lookup can access properties on objects. A Bean Introspector is used to
@@ -31,13 +33,17 @@ import java.lang.reflect.Method;
  * @author Brian S O'Neill
  * @see java.beans.Introspector
  */
-public class Lookup extends Expression {
+public class Lookup extends Expression implements NullSafe {
+    private static final long serialVersionUID = 1L;
+
     private Expression mExpr;
     private Token mDot;
     private Name mLookupName;
     private Method mMethod;
-
-    public Lookup(SourceInfo info, Expression expr, Token dot, 
+    private Field mProperty;
+    private boolean mNullSafe;
+    
+    public Lookup(SourceInfo info, Expression expr, Token dot,
                   Name lookupName) {
         super(info);
 
@@ -60,14 +66,17 @@ public class Lookup extends Expression {
         if (super.isExceptionPossible()) {
             return true;
         }
-        
+
         if (mExpr != null) {
             if (mExpr.isExceptionPossible()) {
                 return true;
             }
-            Type type = mExpr.getType();
-            if (type != null && type.isNullable()) {
-                return true;
+            
+            if (!mNullSafe) {
+                Type type = mExpr.getType();
+                if (type != null && type.isNullable()) {
+                    return true;
+                }
             }
         }
 
@@ -86,6 +95,10 @@ public class Lookup extends Expression {
         return mLookupName;
     }
 
+    public void setExpression(Expression expr) {
+        mExpr = expr;
+    }
+
     /**
      * Returns the method to invoke in order to perform the lookup. This is
      * filled in by the type checker. If the lookup name is "length" and
@@ -96,11 +109,28 @@ public class Lookup extends Expression {
         return mMethod;
     }
 
-    public void setExpression(Expression expr) {
-        mExpr = expr;
-    }
-
     public void setReadMethod(Method m) {
         mMethod = m;
+    }
+
+    /**
+     * Returns the field to use in order to perform the lookup. This is filled
+     * in by the type checker when a static constant is being referenced rather
+     * than a variable lookup.
+     */
+    public Field getReadProperty() {
+    	return mProperty;
+    }
+    
+    public void setReadProperty(Field f) {
+    	mProperty = f;
+    }
+    
+    public boolean isNullSafe() {
+        return mNullSafe;
+    }
+    
+    public void setNullSafe(boolean nullSafe) {
+        mNullSafe = nullSafe;
     }
 }
