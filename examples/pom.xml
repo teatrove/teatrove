@@ -5,7 +5,7 @@
     <parent>
     	<groupId>org.teatrove</groupId>
         <artifactId>teatrove</artifactId>
-        <version>4.1-SNAPSHOT</version>
+        <version>4.1.1-SNAPSHOT</version>
     </parent>    
 
     <groupId>org.teatrove</groupId>
@@ -31,6 +31,15 @@
                 </configuration>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>maven-jetty-plugin</artifactId>
+                    <version>6.1.26</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
 </project>

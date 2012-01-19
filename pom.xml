@@ -6,13 +6,15 @@
 
     <groupId>org.teatrove</groupId>
     <artifactId>teatrove</artifactId>
-    <version>4.1-SNAPSHOT</version>
+    <version>4.1.1-SNAPSHOT</version>
 
     <modules>
+        <module>build-tools</module>
+        <module>trove</module>
         <module>tea</module>
         <module>teaservlet</module>
-        <module>trove</module>
-        <module>build-tools</module>
+        <module>teaapps</module>
+        <module>teaadmin</module>
         <module>examples</module>
     </modules>
 
@@ -34,13 +36,15 @@
            when you update the <version> of that child pom, you only need to update it one other place, here,
            and all references to the child artifact will be updated accordingly.
        -->
-      <package-info-maven-plugin.version>4.1-SNAPSHOT</package-info-maven-plugin.version>
-      <teacompiler.version>4.1-SNAPSHOT</teacompiler.version>
-      <teatools.version>4.1-SNAPSHOT</teatools.version>
-      <toolbox.version>4.1-SNAPSHOT</toolbox.version>
-      <tea.version>4.1-SNAPSHOT</tea.version>
-      <teaservlet.version>4.1-SNAPSHOT</teaservlet.version>
-      <trove.version>4.1-SNAPSHOT</trove.version>
+      <package-info-maven-plugin.version>4.1.1-SNAPSHOT</package-info-maven-plugin.version>
+      <teacompiler.version>4.1.1-SNAPSHOT</teacompiler.version>
+      <teatools.version>4.1.1-SNAPSHOT</teatools.version>
+      <toolbox.version>4.1.1-SNAPSHOT</toolbox.version>
+      <tea.version>4.1.1-SNAPSHOT</tea.version>
+      <teaapps.version>4.1.1-SNAPSHOT</teaapps.version>
+      <teaadmin.version>4.1.1-SNAPSHOT</teaadmin.version>
+      <teaservlet.version>4.1.1-SNAPSHOT</teaservlet.version>
+      <trove.version>4.1.1-SNAPSHOT</trove.version>
     </properties>
 
     <prerequisites>

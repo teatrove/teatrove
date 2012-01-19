@@ -539,17 +539,33 @@ implements HttpContext {
     public void debug(String s) {
         mLog.debug(s);
     }
+    
+    public void debug(Throwable t) {
+        mLog.debug(t);
+    }
 
     public void error(String s) {
         mLog.error(s);
+    }
+    
+    public void error(Throwable t) {
+        mLog.error(t);
     }
 
     public void info(String s) {
         mLog.info(s);
     }
+    
+    public void info(Throwable t) {
+        mLog.info(t);
+    }
 
     public void warn(String s) {
         mLog.warn(s);
+    }
+    
+    public void warn(Throwable t) {
+        mLog.warn(t);
     }
 
 

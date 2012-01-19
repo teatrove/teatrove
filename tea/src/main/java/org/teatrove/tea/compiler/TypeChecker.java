@@ -222,7 +222,7 @@ public class TypeChecker {
 
     public void typeCheck(Visitor visitor) {
 
-    	Template template = mUnit.getParseTree();
+        Template template = mUnit.getParseTree();
         Name name = template.getName();
 
         if (name != null) {
@@ -295,7 +295,7 @@ public class TypeChecker {
         private Scope exitScope() {
             return mScope = mScope.getParent();
         }
-        
+
         private void defineVariable(VariableRef ref, Type type) {
             Variable v = ref.getVariable();
             boolean staticallyTyped = v != null ? v.isStaticallyTyped() : false;
@@ -401,7 +401,7 @@ public class TypeChecker {
                     else
                         clazz = loadClass(checkName);
                     checkAccess(clazz, node);
-                    
+
                     // Found class, check if should be array.
                     if (dim > 0) {
                         clazz =
@@ -413,7 +413,7 @@ public class TypeChecker {
                         if (! mHasImports) {
                             return clazz;
                         }
-                        
+
                         resolved = true;
                         resolvedClass = clazz;
                         if (i > 0) {
@@ -423,27 +423,27 @@ public class TypeChecker {
                     }
                     else {
                         if (i >= 0) {
-                            error("typename.package.conflict", name, 
-                            	  resolvedPackage, mImports[i], node);
+                            error("typename.package.conflict", name,
+                                  resolvedPackage, mImports[i], node);
                         }
                         return clazz;
                     }
-	            }
-	            catch (ClassNotFoundException e) {
-	                if (errorMsg == null) {
-	                    errorMsg = mFormatter.format("typename.unknown", name);
-	                }
-	            }
-	            catch (RuntimeException e) {
-	                error(e.toString(), node);
-	                return null;
-	            }
-	            catch (LinkageError e) {
-	                error(e.toString(), node);
-	                return null;
-	            }
+                }
+                catch (ClassNotFoundException e) {
+                    if (errorMsg == null) {
+                        errorMsg = mFormatter.format("typename.unknown", name);
+                    }
+                }
+                catch (RuntimeException e) {
+                    error(e.toString(), node);
+                    return null;
+                }
+                catch (LinkageError e) {
+                    error(e.toString(), node);
+                    return null;
+                }
             }
-            
+
             // Fall through to here only if class wasn't found.
             if (!resolved && errorMsg != null && node != null) {
                 error(errorMsg, node);
@@ -452,13 +452,13 @@ public class TypeChecker {
             // return resolved if found
             return resolvedClass;
         }
-        
+
         public Object visit(TypeName node) {
             // Check that type name is a valid java class.
             String name = node.getName();
             Class<?> clazz = lookupType(name, node.getDimensions(), node);
             if (clazz != null) {
-            	checkGenericTypeNames(clazz, node);
+                checkGenericTypeNames(clazz, node);
             }
 
             return null;
@@ -1097,12 +1097,12 @@ public class TypeChecker {
                           mReturnType.getSimpleName(), node);
                 }
                 mReturnType = newType;
-                
+
                 if (expr != null) {
                     expr.convertTo(mReturnType);
                 }
             }
-            
+
             return null;
         }
 
@@ -1166,7 +1166,7 @@ public class TypeChecker {
                     catch (IntrospectionException e) {
                     }
                 }
-                
+
                 node.setType(arrayType);
             }
 
@@ -1210,13 +1210,13 @@ public class TypeChecker {
             Block subParam = node.getSubstitutionParam();
             Compiler compiler = mUnit.getCompiler();
             String name = node.getTarget().getName();
-            
+
             // Look for Java function to call.
             name = name.replace('.', '$');
 
             Method m = null;
             Expression expr = node.getExpression();
-            
+
             // Look for Context Method or Invoked Method
             if (m == null) {
                 if (subParam != null) {
@@ -1229,7 +1229,7 @@ public class TypeChecker {
 
                 Method[] methods = new Method[0];
                 if (expr == null) {
-                	methods = compiler.getRuntimeContextMethods();
+                    methods = compiler.getRuntimeContextMethods();
                 }
                 else {
                     Type exprType = expr.getType();
@@ -1237,7 +1237,7 @@ public class TypeChecker {
                         methods = exprType.getObjectClass().getMethods();
                     }
                 }
-                
+
                 int cnt = MethodMatcher.match(methods, name, actualTypes);
                 if (cnt <= 0) {
                     error("functioncallexpression.not.found", node);
@@ -1246,10 +1246,10 @@ public class TypeChecker {
 
                 m = methods[0];
             }
-            
+
             node.setCalledMethod(m);
             for (int i=0; i<length; i++) {
-                Type converted = 
+                Type converted =
                     MethodMatcher.getMethodParam(m, i, exprs[i].getType());
                 exprs[i].convertTo(converted, false);
             }
@@ -1276,7 +1276,7 @@ public class TypeChecker {
             if (retClass == void.class && !node.isVoidPermitted()) {
                 error("functioncallexpression.function.void", node);
             }
-            
+
             return null;
 
         }
@@ -1368,7 +1368,7 @@ public class TypeChecker {
                 retType = Type.VOID_TYPE;
             }
             node.setType(retType);
-            
+
             if (Type.VOID_TYPE.equals(retType) &&
                 !node.isVoidPermitted()) {
 
@@ -1383,61 +1383,61 @@ public class TypeChecker {
          * Returns false if initial checks failed.
          */
         private boolean initialCallExpressionCheck(CallExpression node) {
-        	// handle expressions
+            // handle expressions
             Expression expr = node.getExpression();
-            
+
             // if expression is a variable handle as either a variable or as a
             // reference to a fully-qualified application
             if (expr instanceof VariableRef) {
-            	String name = ((VariableRef) expr).getName();
-            	
-            	// if variable not defined, attempt to lookup as a 
-            	// fully-qualifed application or type reference
-            	if (mScope.getDeclaredVariable(name) == null) {
-            		// check if type reference
-            		Class<?> type = lookupType(name, 0, null);
-                	if (type != null) {
-                		expr = checkForTypeExpression(expr);
-                		if (expr == null) {
-                			return false;
-                		}
-                		
-                		node.setExpression(expr);
-                	}
-                	
-                	// otherwise, assume fully-qualified application target
-                	else {
-	            		Name target = node.getTarget();
-	            		String tname = name + '.' + target.getName();
-	            		
-	            		expr = null;
-	            		node.setExpression(null);
-	            		node.setTarget(new Name(target.getSourceInfo(), tname));
-                	}
-            	}
-            	
-            	// otherwise, assume standard function on the variable
-            	else { 
-            		// nothing to do...check will ensure proper type.
-            	}
+                String name = ((VariableRef) expr).getName();
+
+                // if variable not defined, attempt to lookup as a
+                // fully-qualifed application or type reference
+                if (mScope.getDeclaredVariable(name) == null) {
+                    // check if type reference
+                    Class<?> type = lookupType(name, 0, null);
+                    if (type != null) {
+                        expr = checkForTypeExpression(expr);
+                        if (expr == null) {
+                            return false;
+                        }
+
+                        node.setExpression(expr);
+                    }
+
+                    // otherwise, assume fully-qualified application target
+                    else {
+                        Name target = node.getTarget();
+                        String tname = name + '.' + target.getName();
+
+                        expr = null;
+                        node.setExpression(null);
+                        node.setTarget(new Name(target.getSourceInfo(), tname));
+                    }
+                }
+
+                // otherwise, assume standard function on the variable
+                else {
+                    // nothing to do...check will ensure proper type.
+                }
             }
-            
+
             // handle lookups by determining if static field or normal function
             // call on a looked up property
             else if (expr instanceof Lookup) {
-            	expr = checkForTypeExpression(expr);
-            	if (expr == null) {
-            		return false;
-            	}
-            	
-            	node.setExpression(expr);
+                expr = checkForTypeExpression(expr);
+                if (expr == null) {
+                    return false;
+                }
+
+                node.setExpression(expr);
             }
-            
+
             // check expression if available
             if (expr != null) {
                 check(expr);
             }
-            
+
             // check params list
             ExpressionList params = node.getParams();
             check(params);
@@ -1529,110 +1529,110 @@ public class TypeChecker {
             // if the variable reference is actually a type reference
             // NOTE: variables take precedence, so ensure no active variable.
             if (expr instanceof VariableRef) {
-            	String name = ((VariableRef) expr).getName();
+                String name = ((VariableRef) expr).getName();
                 if (mScope.getDeclaredVariable(name) == null) {
-                	// determine if variable is a class and return as type expr
-                	Class<?> type = lookupType(name, 0, null);
-                	if (type != null) {
-                		SourceInfo info = expr.getSourceInfo();
-                		TypeName typeName = new TypeName(info, type.getName());
-                		return new TypeExpression(info, typeName);
-                	}
+                    // determine if variable is a class and return as type expr
+                    Class<?> type = lookupType(name, 0, null);
+                    if (type != null) {
+                        SourceInfo info = expr.getSourceInfo();
+                        TypeName typeName = new TypeName(info, type.getName());
+                        return new TypeExpression(info, typeName);
+                    }
 
                     // otherwise, fail with unknown variable
                     error("variable.not.declared", expr);
                     return null;
                 }
             }
-            
+
             // otherwise, determine if the expression is a series of lookups
             // bound to a variable reference that may be a fully-qualified
             // reference.
             else if (expr instanceof Lookup) {
-            	
-            	// walk each lookup section to determine fully-qualified path
-            	Expression parent = expr;
-            	List<Lookup> lookups = new ArrayList<Lookup>(10);
-            	while (parent instanceof Lookup) {
-            		lookups.add(0, (Lookup) parent);
-            		parent = ((Lookup) parent).getExpression();
-            	}
-            	
-            	// first node must be a variable/type reference to be able to
-            	// convert to a fully-qualified path
-            	if (parent instanceof VariableRef) {
 
-            		// check if variable is referenced and handle as normal
-            		// lookup and do not handle as a type expression as
-            		// variables always have precedence
-            		String name = ((VariableRef) parent).getName();
+                // walk each lookup section to determine fully-qualified path
+                Expression parent = expr;
+                List<Lookup> lookups = new ArrayList<Lookup>(10);
+                while (parent instanceof Lookup) {
+                    lookups.add(0, (Lookup) parent);
+                    parent = ((Lookup) parent).getExpression();
+                }
+
+                // first node must be a variable/type reference to be able to
+                // convert to a fully-qualified path
+                if (parent instanceof VariableRef) {
+
+                    // check if variable is referenced and handle as normal
+                    // lookup and do not handle as a type expression as
+                    // variables always have precedence
+                    String name = ((VariableRef) parent).getName();
                     if (mScope.getDeclaredVariable(name) != null) {
-                    	return expr;
+                        return expr;
                     }
-                    
+
                     // otherwise, check if the first token references a class
                     // and handle as a type expression
                     Class<?> type = lookupType(name, 0, null);
                     if (type != null) {
-                    	SourceInfo info = parent.getSourceInfo();
-                    	TypeName typeName = new TypeName(info, type.getName());
-                    	TypeExpression typeExpr = 
-                    		new TypeExpression(info, typeName);
-                    	lookups.get(0).setExpression(typeExpr);
-                    	return expr;
+                        SourceInfo info = parent.getSourceInfo();
+                        TypeName typeName = new TypeName(info, type.getName());
+                        TypeExpression typeExpr =
+                            new TypeExpression(info, typeName);
+                        lookups.get(0).setExpression(typeExpr);
+                        return expr;
                     }
-                    
+
                     // otherwise, check if the first token references a package
                     // and walk the package tree for the static class lookup
-                	String fqName = name;
-                	int size = lookups.size();
-                	for (int i = 0; i < size; i++) {
-                		Lookup lookup = lookups.get(i);
-                		String section = lookup.getLookupName().getName();
-                		fqName = fqName.concat(".".concat(section));
-                		
-                		// determine if fully-qualified class name and
-                		// attempt static field lookup
-                		type = lookupType(fqName, 0, null);
-                		if (type != null) {
-                			SourceInfo info = lookup.getSourceInfo();
-                			TypeName typeName = new TypeName(info, type.getName());
-                			TypeExpression typeExpr =
-                				new TypeExpression(info, typeName);
+                    String fqName = name;
+                    int size = lookups.size();
+                    for (int i = 0; i < size; i++) {
+                        Lookup lookup = lookups.get(i);
+                        String section = lookup.getLookupName().getName();
+                        fqName = fqName.concat(".".concat(section));
 
-                			if (i + 1 < size) {
-                				lookups.get(i + 1).setExpression(typeExpr);
-                				return expr;
-                			}
-                			else { return typeExpr; }
-                		}
-                	}
-                	
+                        // determine if fully-qualified class name and
+                        // attempt static field lookup
+                        type = lookupType(fqName, 0, null);
+                        if (type != null) {
+                            SourceInfo info = lookup.getSourceInfo();
+                            TypeName typeName = new TypeName(info, type.getName());
+                            TypeExpression typeExpr =
+                                new TypeExpression(info, typeName);
+
+                            if (i + 1 < size) {
+                                lookups.get(i + 1).setExpression(typeExpr);
+                                return expr;
+                            }
+                            else { return typeExpr; }
+                        }
+                    }
+
                     // otherwise, fail with unknown variable
                     error("variable.not.declared", expr);
                     return null;
-            	}
+                }
             }
-            
+
             // unhandled, so handle normally
             return expr;
         }
-        
-        public Object visit(Lookup node) {
-        	// check for type expression to resolve static fields against
-        	Expression expr = checkForTypeExpression(node.getExpression());
-        	if (expr == null) {
-        		return null;
-        	}
 
-        	// validate expression
-        	node.setExpression(expr);
+        public Object visit(Lookup node) {
+            // check for type expression to resolve static fields against
+            Expression expr = checkForTypeExpression(node.getExpression());
+            if (expr == null) {
+                return null;
+            }
+
+            // validate expression
+            node.setExpression(expr);
             check(expr);
 
             // now check if expression type class contains the lookup name
             Type type = expr.getType();
             String lookupName = node.getLookupName().getName();
-            
+
             if (type != null && lookupName != null) {
                 Class<?> clazz = type.getObjectClass();
                 // Lookup can only work on objects.
@@ -1640,56 +1640,47 @@ public class TypeChecker {
                 expr.convertTo(type);
 
                 if (expr instanceof TypeExpression) {
-            		String property = node.getLookupName().getName();
-            		
-            		// lookup field and error out if invalid
-            		Field field = null;
-            		try { field = clazz.getField(property); }
-            		catch (Exception exception) {
-            			error("property.not.found", node);
-            			return true;
-            		}
-            		
-                	// ensure field is static
-                	if (!Modifiers.isStatic(field.getModifiers())) {
-                		error("field.not.static", node);
-                		return true;
-                	}
-                	
-            		// save static field and type
-            		node.setReadProperty(field);
-            		node.setType(new Type(field.getType(),
-            				              field.getGenericType()));
+                    String property = node.getLookupName().getName();
+
+                    // lookup field and error out if invalid
+                    Field field = null;
+                    try { field = clazz.getField(property); }
+                    catch (Exception exception) {
+                        error("property.not.found", node);
+                        return true;
+                    }
+
+                    // ensure field is static
+                    if (!Modifiers.isStatic(field.getModifiers())) {
+                        error("field.not.static", node);
+                        return true;
+                    }
+
+                    // save static field and type
+                    node.setReadProperty(field);
+                    node.setType(new Type(field.getType(),
+                                          field.getGenericType()));
+
+                    // return success
+                    return null;
                 }
                 else if ("length".equals(lookupName)) {
                     if (clazz == String.class) {
                         node.setType(Type.INT_TYPE);
                         try {
-                            node.setReadMethod
-                                (String.class.getMethod("length",
-                                                        new Class[0]));
+                            node.setReadMethod(clazz.getMethod("length"));
+                            return null;
                         }
                         catch (NoSuchMethodException e) {
                             throw new LinkageError(e.toString());
                         }
                     }
-                    else if (Collection.class.isAssignableFrom(clazz)) {
+                    else if (Collection.class.isAssignableFrom(clazz) ||
+                             Map.class.isAssignableFrom(clazz)) {
                         node.setType(Type.INT_TYPE);
                         try {
-                            node.setReadMethod
-                                (Collection.class.getMethod("size",
-                                                            new Class[0]));
-                        }
-                        catch (NoSuchMethodException e) {
-                            throw new LinkageError(e.toString());
-                        }
-                    }
-                    else if (Map.class.isAssignableFrom(clazz)) {
-                        node.setType(Type.INT_TYPE);
-                        try {
-                            node.setReadMethod
-                                (Map.class.getMethod("size",
-                                                     new Class[0]));
+                            node.setReadMethod(clazz.getMethod("size"));
+                            return null;
                         }
                         catch (NoSuchMethodException e) {
                             throw new LinkageError(e.toString());
@@ -1697,90 +1688,91 @@ public class TypeChecker {
                     }
                     else if (clazz.isArray()) {
                         node.setType(Type.INT_TYPE);
+                        return null;
                     }
                     // TODO: consider checking if public field named
                 }
-                else {
-                    Map<String, PropertyDescriptor> properties;
-                    try {
-                        properties =
-                            BeanAnalyzer.getAllProperties(type.getGenericType());
-                    }
-                    catch (IntrospectionException e) {
-                        error(e.toString(), node);
-                        return null;
-                    }
-    
-                    PropertyDescriptor prop = properties.get(lookupName);
-                    // TODO: consider checking if public field named lookupName
-                    if (prop == null) {
-                        error("lookup.undefined", lookupName, type.getSimpleName(),
+
+                // attempt to lookup by property
+                Map<String, PropertyDescriptor> properties;
+                try {
+                    properties =
+                        BeanAnalyzer.getAllProperties(type.getGenericType());
+                }
+                catch (IntrospectionException e) {
+                    error(e.toString(), node);
+                    return null;
+                }
+
+                PropertyDescriptor prop = properties.get(lookupName);
+                // TODO: consider checking if public field named lookupName
+                if (prop == null) {
+                    error("lookup.undefined", lookupName, type.getSimpleName(),
+                          node.getLookupName());
+                    return null;
+                }
+
+                Type nodeType = null;
+                if (prop instanceof GenericPropertyDescriptor) {
+                    nodeType = new Type(((GenericPropertyDescriptor) prop)
+                                            .getGenericPropertyType());
+                }
+
+                Method rmethod = null;
+                if (prop != null) {
+                    rmethod = prop.getReadMethod();
+                    if (rmethod == null) {
+                        error("lookup.unreadable", lookupName,
                               node.getLookupName());
                         return null;
                     }
-    
-                    Type nodeType = null;
-                    if (prop instanceof GenericPropertyDescriptor) {
-                        nodeType = new Type(((GenericPropertyDescriptor) prop)
-                                                .getGenericPropertyType());
+
+                    Class<?> retClass = rmethod.getReturnType();
+                    if (retClass == null) {
+                        error("lookup.array.only", lookupName,
+                              node.getLookupName());
+                        return null;
                     }
-    
-                    Method rmethod = null;
-                    if (prop != null) {
-                        rmethod = prop.getReadMethod();
-                        if (rmethod == null) {
-                            error("lookup.unreadable", lookupName,
-                                  node.getLookupName());
-                            return null;
+
+                    if (nodeType == null) {
+                        TypedElement te = null;
+                        java.lang.reflect.Type ge = null;
+                        if (rmethod != null) {
+                            ge = rmethod.getGenericReturnType();
+                            te = rmethod.getAnnotation(TypedElement.class);
                         }
-    
-                        Class<?> retClass = rmethod.getReturnType();
-                        if (retClass == null) {
-                            error("lookup.array.only", lookupName,
-                                  node.getLookupName());
-                            return null;
-                        }
-    
-                        if (nodeType == null) {
-                            TypedElement te = null;
-                            java.lang.reflect.Type ge = null;
-                            if (rmethod != null) {
-                                ge = rmethod.getGenericReturnType();
-                                te = rmethod.getAnnotation(TypedElement.class);
-                            }
-    
-                            nodeType = (te != null ? new Type(retClass, ge, te)
-                                                   : new Type(retClass, ge));
-                        }
+
+                        nodeType = (te != null ? new Type(retClass, ge, te)
+                                               : new Type(retClass, ge));
                     }
-    
-                    Class<?> nodeClass = nodeType.getNaturalClass();
-                    Type genericType = Generics.findType(nodeType, type);
-                    if (genericType != null) {
-                        nodeClass = nodeType.getObjectClass();
-                        node.setType(Type.OBJECT_TYPE);
-                    }
-    
-                    checkAccess(nodeClass, node.getLookupName());
-    
-                    if (genericType == null) {
-                        node.setType(nodeType);
-                    }
-                    else {
-                        node.forceConversion(genericType, true);
-                    }
-    
-                    if (nodeClass == char.class) {
-                        // Convert any returned char to a String.
-                        node.convertTo(Type.NON_NULL_STRING_TYPE);
-                    }
-                    else if (nodeClass == Character.class) {
-                        // Convert any returned Character to a String.
-                        node.convertTo(Type.STRING_TYPE);
-                    }
-    
-                    node.setReadMethod(rmethod);
                 }
+
+                Class<?> nodeClass = nodeType.getNaturalClass();
+                Type genericType = Generics.findType(nodeType, type);
+                if (genericType != null) {
+                    nodeClass = nodeType.getObjectClass();
+                    node.setType(Type.OBJECT_TYPE);
+                }
+
+                checkAccess(nodeClass, node.getLookupName());
+
+                if (genericType == null) {
+                    node.setType(nodeType);
+                }
+                else {
+                    node.forceConversion(genericType, true);
+                }
+
+                if (nodeClass == char.class) {
+                    // Convert any returned char to a String.
+                    node.convertTo(Type.NON_NULL_STRING_TYPE);
+                }
+                else if (nodeClass == Character.class) {
+                    // Convert any returned Character to a String.
+                    node.convertTo(Type.STRING_TYPE);
+                }
+
+                node.setReadMethod(rmethod);
             }
 
             return null;
@@ -2196,7 +2188,7 @@ public class TypeChecker {
 
             // TODO: allow condition to support isa and propogate the type
             //       into the variables of then/else similar to if-statement
-            
+
             // set expression to common type of if/else statement
             Type type = null;
             Type thenType = thenPart.getType();
@@ -2204,7 +2196,7 @@ public class TypeChecker {
             if (thenType == null) { type = elseType; }
             else if (elseType == null) { type = thenType; }
             else { type = thenType.getCompatibleType(elseType); }
-            
+
             node.setType(type);
             if (thenPart != null) {
                 thenPart.convertTo(type);
@@ -2212,19 +2204,19 @@ public class TypeChecker {
             if (elsePart != null) {
                 elsePart.convertTo(type);
             }
-            
+
             return null;
         }
-        
+
         public Object visit(CompareExpression node) {
-        
+
             Expression left = node.getLeftExpression();
             Expression right = node.getRightExpression();
-            
+
             // check expressions
             check(left);
             check(right);
-            
+
             // determine compatibility
             Type ltype = left.getType();
             Type rtype = right.getType();
@@ -2233,43 +2225,43 @@ public class TypeChecker {
                 error("compare.not.convertible", node);
                 return null;
             }
-            
+
             // TODO: this will return object if either is object
             // however, we can optimize by moving to primitive if object is
             // non-null.  Even if non-null, we can branch logic and if not
             // null, convert to primitive, then evalutae rather than going to
             // object which is more expensive
-            
+
             Type compatible = null;
             if (ltype != null && rtype != null) {
                 compatible = ltype.getCompatibleType(rtype);
                 left.convertTo(compatible);
                 right.convertTo(compatible);
             }
-            
+
             node.setType(Type.INT_TYPE);
             return null;
         }
-        
+
         public Object visit(NoOpExpression node) {
             return null;
         }
-        
+
         public Object visit(TypeExpression node) {
-        	TypeName typeName = node.getTypeName();
-        	if (typeName != null) {
-        		check(typeName);
-        		node.setType(typeName.getType());
-        	}
-        	
-        	return null;
+            TypeName typeName = node.getTypeName();
+            if (typeName != null) {
+                check(typeName);
+                node.setType(typeName.getType());
+            }
+
+            return null;
         }
-        
+
         public Object visit(SpreadExpression node) {
             // check associated expression
             Expression expr = node.getExpression();
             check(expr);
-            
+
             // get element type
             Type elementType = null;
             Type exprType = expr.getType();
@@ -2278,7 +2270,7 @@ public class TypeChecker {
                 throw new IllegalStateException(
                     "unable to lookup spread array element type", exception);
             }
-            
+
             // validate element type
             if (elementType == null) {
                 error("spread.missing.type", node);
@@ -2306,7 +2298,7 @@ public class TypeChecker {
                 error("spread.operation.unsupported", node);
                 return null;
             }
-            
+
             // check operation for type
             check(operation);
 
@@ -2314,10 +2306,10 @@ public class TypeChecker {
             if (!exprClass.isArray()) {
                 operation.convertTo(operation.getType().toNonPrimitive());
             }
-            
+
             // get resulting operation type
             Type operationType = node.getOperation().getType();
-            
+
             // update node types based on operation type
             if (Collection.class.isAssignableFrom(exprClass)) {
                 Class<?> listType = ArrayList.class;
@@ -2328,23 +2320,23 @@ public class TypeChecker {
                     listType = HashSet.class;
                 }
                 */
-                
+
                 Type type = new Type
                 (
-                    listType, 
+                    listType,
                     new ParameterizedTypeImpl
                     (
-                        listType, 
+                        listType,
                         new java.lang.reflect.Type[] { operationType.getGenericClass() }
                     )
                 );
-                
+
                 try { type = type.setArrayElementType(operationType); }
                 catch (IntrospectionException exception) {
                     throw new IllegalStateException(
                         "unable to set spread array element type", exception);
                 }
-                
+
                 node.setType(type);
             }
             else if (exprClass.isArray()) {
@@ -2359,11 +2351,11 @@ public class TypeChecker {
 
                 node.setType(arrayType);
             }
-            
+
             // done
             return null;
         }
-        
+
         public Object visit(NullLiteral node) {
             return null;
         }

@@ -16,14 +16,20 @@
 
 package org.teatrove.maven.plugins.packageinfo;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-
-import java.io.*;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * @goal create-package-infos
@@ -63,12 +69,12 @@ public class PackageInfoMojo
     private File basedir;
 
     /** The repository where the source code of the project lives
-     * @parameter expression="tea-legacy" */
+     * @parameter expression="teatrove" */
     private String srcRepo;
 
     /** The local root of where the .java files are
      * @parameter expression="${project.build.sourceDirectory}" */
-    private File srcRoot;
+    //private File srcRoot;
 
     /** The base package to start writing package info in
      * @parameter expression="" */
@@ -109,6 +115,8 @@ public class PackageInfoMojo
 
     private String mBuildMachine;
 
+    private File mSrcRoot;
+    
     private String mSrcRootPath;
 
     private File mPackageRootDir;
@@ -124,44 +132,7 @@ public class PackageInfoMojo
         throws MojoExecutionException, MojoFailureException
     {
 
-        // validate some things
-        if ( !srcRoot.exists() )
-            throw new MojoExecutionException( "srcRoot does not exist: " + srcRoot );
-
-        // Add the generated files as a source directory to compile against
-        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
-
-        File outputRootDir;
-
-        if ( packageRoot != null && packageRoot.trim().length() > 0 )
-        {
-            final String packageRootPath = packageRoot.replace('.', File.separatorChar);
-            mPackageRootDir = new File( srcRoot, packageRootPath);
-            outputRootDir = new File(outputDirectory, packageRootPath);
-        }
-        else
-        {
-            mPackageRootDir = srcRoot;
-            outputRootDir = outputDirectory;
-        }
-        getLog().debug( "packageRoot dir: " + mPackageRootDir );
-        getLog().debug( "outputDirectory dir: " + outputRootDir );
-
-        if ( !mPackageRootDir.exists() ) {
-            throw new MojoExecutionException( "packageRoot does not exist: " + packageRoot );
-        }
-
-        try
-        {
-            mSrcRootPath = srcRoot.getCanonicalPath();
-        }
-        catch ( IOException e )
-        {
-            throw new MojoExecutionException( "error calling getCanonicalPath() on File object: " + srcRoot, e );
-        }
-
-        getLog().debug( "srcRoot path: " + mSrcRootPath );
-
+        // Lookup build machine info
         try
         {
             InetAddress address = InetAddress.getLocalHost();
@@ -170,12 +141,52 @@ public class PackageInfoMojo
         catch ( UnknownHostException e )
         {
             //throw new MojoExecutionException( "could not get the host name", e );
-        	mBuildMachine = "Unknown host";
+            mBuildMachine = "Unknown host";
         }
 
-        getLog().debug( "srcRoot path: " + mSrcRootPath );
+        File outputRootDir;
+        List<String> srcRoots = project.getCompileSourceRoots();
+        for (String srcRoot : srcRoots) 
+        {
+            // validate some things
+            mSrcRoot = new File(srcRoot);
+            if ( !mSrcRoot.exists() )
+                throw new MojoExecutionException( "srcRoot does not exist: " + mSrcRoot );
 
-        writePackageInfos( mPackageRootDir, outputRootDir );
+            // setup paths
+            if ( packageRoot != null && packageRoot.trim().length() > 0 )
+            {
+                final String packageRootPath = packageRoot.replace('.', File.separatorChar);
+                mPackageRootDir = new File( srcRoot, packageRootPath);
+                outputRootDir = new File(outputDirectory, packageRootPath);
+            }
+            else
+            {
+                mPackageRootDir = mSrcRoot;
+                outputRootDir = outputDirectory;
+            }
+            getLog().debug( "packageRoot dir: " + mPackageRootDir );
+            getLog().debug( "outputDirectory dir: " + outputRootDir );
+    
+            if ( !mPackageRootDir.exists() ) {
+                throw new MojoExecutionException( "packageRoot does not exist: " + packageRoot );
+            }
+    
+            try
+            {
+                mSrcRootPath = mSrcRoot.getCanonicalPath();
+            }
+            catch ( IOException e )
+            {
+                throw new MojoExecutionException( "error calling getCanonicalPath() on File object: " + srcRoot, e );
+            }
+    
+            getLog().debug( "srcRoot path: " + mSrcRootPath );
+            writePackageInfos( mPackageRootDir, outputRootDir );
+        }
+        
+        // Add the generated files as a source directory to compile against
+        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
     }
 
     /** recurse into rootDir writing PackageInfos on the way in.
@@ -319,7 +330,7 @@ public class PackageInfoMojo
     private void writePackageDeclaration( PrintWriter out, File packageDir )
         throws IOException
     {
-        if ( !srcRoot.equals( packageDir ) )
+        if ( !mSrcRoot.equals( packageDir ) )
         {
 
             String pkgPath = packageDir.getCanonicalPath();
@@ -407,12 +418,12 @@ public class PackageInfoMojo
         writeVarAndGetter( out, "".getClass(), varName, varValue, getterName, null );
     }
 
-    private void writeVarAndGetter( PrintWriter out, Class type, String varName, Object varValue, String getterName )
+    private void writeVarAndGetter( PrintWriter out, Class<?> type, String varName, Object varValue, String getterName )
     {
         writeVarAndGetter( out, type, varName, varValue, getterName, null );
     }
 
-    private void writeVarAndGetter( PrintWriter out, Class type, String varName, Object varValue, String getterName,
+    private void writeVarAndGetter( PrintWriter out, Class<?> type, String varName, Object varValue, String getterName,
                                    String comment )
     {
 
