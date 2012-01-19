@@ -6,6 +6,7 @@
 
     pageTitle = configuration["pageTitle"] as java.lang.String;
     servletName = call system.util.getServletName();
+    pathPrefix = call system.util.getPathPrefix();
 
     request = getRequest();
 
@@ -129,10 +130,7 @@
                                                         linkLocation = replaceFirst(linkLocation, '/', '');
                                                     }
                                                     linkLocation = replace(linkLocation, '/', '.');
-                                                    linkLocation = pathPlusParam & linkLocation;
-                                                    if ( servletName != '' ) {
-                                                        linkLocation = '/' & servletName & linkLocation;
-                                                    }
+                                                    linkLocation = pathPrefix & pathPlusParam & linkLocation;
 
                                                     '<a href="' linkLocation '">' link.name '</a>\n'
                                                 '</li>\n'
