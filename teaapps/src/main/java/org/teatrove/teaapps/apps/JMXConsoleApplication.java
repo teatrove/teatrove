@@ -23,7 +23,6 @@ import org.teatrove.teaservlet.AppAdminLinks;
 import org.teatrove.teaservlet.ApplicationConfig;
 import org.teatrove.teaservlet.ApplicationRequest;
 import org.teatrove.teaservlet.ApplicationResponse;
-import org.teatrove.teaservlet.RegionCachingContext;
 import org.teatrove.trove.log.Log;
 
 
@@ -44,7 +43,7 @@ public class JMXConsoleApplication implements AdminApp {
     public void destroy() {}
 
     /**
-     * Returns an instance of {@link RegionCachingContext}.
+     * Returns an instance of {@link JMXContext}.
      */
     public Object createContext(ApplicationRequest request,
                                 ApplicationResponse response) {
@@ -52,7 +51,7 @@ public class JMXConsoleApplication implements AdminApp {
     }
 
     /**
-     * Returns {@link RegionCachingContext}.class.
+     * Returns {@link JMXContext}.class.
      */
     public Class<JMXContext> getContextType() {
         return JMXContext.class;
