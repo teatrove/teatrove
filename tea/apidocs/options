@@ -1,0 +1,28 @@
+-classpath
+'/Users/jacksbrr/Dropbox/Projects/teatrove/tea/target/classes:/Users/jacksbrr/.m2/repositoryDefault/commons-lang/commons-lang/2.3/commons-lang-2.3.jar:/Users/jacksbrr/Dropbox/Projects/teatrove/trove/target/classes:/Users/jacksbrr/.m2/repositoryDefault/joda-time/joda-time/1.6.2/joda-time-1.6.2.jar:/Users/jacksbrr/.m2/repositoryDefault/org/jdom/jdom/1.1/jdom-1.1.jar:/Users/jacksbrr/.m2/repositoryDefault/junit/junit/4.8.2/junit-4.8.2.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'/Users/jacksbrr/Dropbox/Projects/teatrove/tea/src/main/java'
+-author
+-bottom
+'Copyright &#169; 1997-2012 <a href="http://teatrove.org">TeaTrove.org</a>. All Rights Reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/jacksbrr/Dropbox/Projects/teatrove/tea/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Tea 4.1.1-SNAPSHOT API'
+-link
+'http://java.sun.com/javase/6/docs/api'
+-linkoffline
+'http://teatrove.org/build-tools/package-info-maven-plugin/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/package-info-maven-plugin/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/trove/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/trove/target/site/apidocs'
+-use
+-version
+-windowtitle
+'Tea 4.1.1-SNAPSHOT API'
