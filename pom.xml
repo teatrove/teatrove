@@ -28,6 +28,7 @@
 
     <name>Trove, Tea and TeaServlet</name>
     <description>The Tea language along with supporting projects.</description>
+    <url>http://teatrove.org</url>
 
     <licenses>
         <license>
@@ -259,7 +260,7 @@
 
     <scm>
         <url>https://github.com/jaxzin/teatrove</url>
-        <connection>scm:git:git@github.com:jaxzin/teatrove.git</connection>
+        <connection>scm:git:https://github.com/jaxzin/teatrove.git</connection>
         <developerConnection>scm:git:git@github.com:jaxzin/teatrove.git</developerConnection>
     </scm>
 
