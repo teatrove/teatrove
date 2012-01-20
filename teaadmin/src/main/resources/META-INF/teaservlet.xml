@@ -1,0 +1,12 @@
+<teaservlet>
+	
+    <!-- define list of administration applications -->
+    <applications>
+
+        <TeaServletAdmin>
+            <class>org.teatrove.teaservlet.AdminApplication</class>
+        </TeaServletAdmin>
+
+    </applications>
+
+</teaservlet>

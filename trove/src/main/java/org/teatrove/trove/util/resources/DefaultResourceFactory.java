@@ -56,6 +56,7 @@ public class DefaultResourceFactory implements ResourceFactory {
     /**
      * {@inheritDoc}
      */
+    @Override
     public URL getResource(String path)
         throws MalformedURLException {
         
@@ -71,6 +72,7 @@ public class DefaultResourceFactory implements ResourceFactory {
     /**
      * {@inheritDoc}
      */
+    @Override
     public InputStream getResourceAsStream(String path) {
         try { return new FileInputStream(path); }
         catch (FileNotFoundException fnfe) {
@@ -81,6 +83,7 @@ public class DefaultResourceFactory implements ResourceFactory {
     /**
      * {@inheritDoc}
      */
+    @Override
     public PropertyMap getResourceAsProperties(String path) 
         throws IOException {
         
@@ -90,12 +93,38 @@ public class DefaultResourceFactory implements ResourceFactory {
     /**
      * {@inheritDoc}
      */
+    @Override
+    public PropertyMap getResourceAsProperties(String path, InputStream input) 
+        throws IOException {
+    
+        return getResourceAsProperties(path, input,
+                                       SubstitutionFactory.getDefaults());
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public PropertyMap getResourceAsProperties(String path, 
                                                PropertyMap substitutions)
         throws IOException {
         
         // get associated resource
         InputStream input = getResourceAsStream(path);
+        if (input == null) { return null; }
+        
+        // lookup properties
+        return getResourceAsProperties(path, input, substitutions);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PropertyMap getResourceAsProperties(String path, InputStream input,
+                                               PropertyMap substitutions)
+        throws IOException {
+        
         if (input == null) { return null; }
         Reader reader = new InputStreamReader(input);
         

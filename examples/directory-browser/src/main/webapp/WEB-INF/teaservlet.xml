@@ -41,67 +41,6 @@
 	
     <applications>
 
-		<!-- 
-		load the standard TeaServlet administration console and methods
-		-->
-		
-        <TeaServletAdmin>
-            <class>org.teatrove.teaservlet.AdminApplication</class>
-        </TeaServletAdmin>
-        
-        <!-- 
-        load the main applications required by the admin interface
-        -->
-        
-        <StringApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.StringContext</contextClass>
-            </init>
-        </StringApplication>
-
-        <ListApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.ListContext</contextClass>
-            </init>
-        </ListApplication>
-                
-        <MapApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.MapContext</contextClass>
-            </init>
-        </MapApplication>
-        
-        <DateApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.DateContext</contextClass>
-            </init>
-        </DateApplication>
-        
-        <MathApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.MathContext</contextClass>
-            </init>
-        </MathApplication>
-        
-        <NumberFormatApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.NumberFormatContext</contextClass>
-            </init>
-        </NumberFormatApplication>
-        
-        <JMXApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.JMXContext</contextClass>
-            </init>
-        </JMXApplication>
-        
         <!-- 
         load our custom DirectoryBrowserApplication that provides access to
         functionality to traverse a directory structure.  The <init> block may 

@@ -1,25 +1,6 @@
 <teaservlet>
 
 	<!-- 
-	define the default template when just the directory is provided 
-	-->
-    
-    <template>
-        <default>index</default>
-    </template>
-
-	<!-- 
-	define the logging states for the TeaServlet 
-	-->
-    
-    <log>
-        <debug>false</debug>
-        <info>true</info>
-        <warn>true</warn>
-        <error>true</error>
-    </log>
-
-	<!-- 
 	define the administration key required to access the administration pages
 	ie: http://[host]:[port]/[context]/system/teaservlet/Admin?[key]=[value]
 	-->
@@ -40,67 +21,6 @@
 	-->
 	
     <applications>
-
-		<!-- 
-		load the standard TeaServlet administration console and methods
-		-->
-		
-        <TeaServletAdmin>
-            <class>org.teatrove.teaservlet.AdminApplication</class>
-        </TeaServletAdmin>
-
-        <!-- 
-        load the main applications required by the admin interface
-        -->
-        
-        <StringApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.StringContext</contextClass>
-            </init>
-        </StringApplication>
-
-        <ListApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.ListContext</contextClass>
-            </init>
-        </ListApplication>
-                
-        <MapApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.MapContext</contextClass>
-            </init>
-        </MapApplication>
-        
-        <DateApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.DateContext</contextClass>
-            </init>
-        </DateApplication>
-        
-        <MathApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.MathContext</contextClass>
-            </init>
-        </MathApplication>
-        
-        <NumberFormatApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.NumberFormatContext</contextClass>
-            </init>
-        </NumberFormatApplication>
-        
-        <JMXApplication>
-            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
-            <init>
-                <contextClass>org.teatrove.teaapps.contexts.JMXContext</contextClass>
-            </init>
-        </JMXApplication>
                 
         <!-- 
         load our custom HelloWorldApplication that provides access and registers
