@@ -1,0 +1,156 @@
+<teaservlet>
+	
+    <!-- define list of default applications -->
+    <applications>
+
+        <CaptureApplication>
+            <class>org.teatrove.teaapps.apps.CaptureApplication</class>
+        </CaptureApplication>
+
+        <ThrowableCatcherApplication>
+            <class>org.teatrove.teaapps.apps.ThrowableCatcherApplication</class>
+        </ThrowableCatcherApplication>
+        
+        <ArrayApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.ArrayContext</contextClass>
+            </init>
+        </ArrayApplication>
+        
+        <BeanApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.BeanContext</contextClass>
+            </init>
+        </BeanApplication>
+        
+        <CastApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.CastContext</contextClass>
+            </init>
+        </CastApplication>
+        
+        <CryptoApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.CryptoContext</contextClass>
+            </init>
+        </CryptoApplication>
+        
+        <DateApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.DateContext</contextClass>
+            </init>
+        </DateApplication>
+        
+        <EncodingApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.EncodingContext</contextClass>
+            </init>
+        </EncodingApplication>
+        
+        <FileSystemApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.FileSystemContext</contextClass>
+            </init>
+        </FileSystemApplication>
+        
+        <HttpApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.HttpContext</contextClass>
+            </init>
+        </HttpApplication>
+        
+        <JMXApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.JMXContext</contextClass>
+            </init>
+        </JMXApplication>
+        
+        <ListApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.ListContext</contextClass>
+            </init>
+        </ListApplication>
+        
+        <MapApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.MapContext</contextClass>
+            </init>
+        </MapApplication>
+        
+        <MathApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.MathContext</contextClass>
+            </init>
+        </MathApplication>
+        
+        <NumberFormatApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.NumberFormatContext</contextClass>
+            </init>
+        </NumberFormatApplication>
+        
+        <ObjectCacheApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.ObjectCacheContext</contextClass>
+            </init>
+        </ObjectCacheApplication>
+        
+        <PluginAccessorApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.PluginAccessorContext</contextClass>
+            </init>
+        </PluginAccessorApplication>
+        
+        <RandomApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.RandomContext</contextClass>
+            </init>
+        </RandomApplication>
+        
+        <SetApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.SetContext</contextClass>
+            </init>
+        </SetApplication>
+        
+        <SortApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.SortContext</contextClass>
+            </init>
+        </SortApplication>
+        
+        <StringApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.StringContext</contextClass>
+            </init>
+        </StringApplication>
+        
+        <TemplateExceptionApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.TemplateExceptionContext</contextClass>
+            </init>
+        </TemplateExceptionApplication>
+                
+    </applications>
+
+</teaservlet>
