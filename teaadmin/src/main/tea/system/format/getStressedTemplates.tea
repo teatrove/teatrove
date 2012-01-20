@@ -20,10 +20,11 @@
                     templatePath = templatePath & '/';
                 }
 
-                numberFormat("0.00");
+                numberFormat("0.00", "--", "--");
                 if ( stats != null ) {
                     stress = call system.util.getTemplateStressValue(stats);
-                    '<li><a href="' & templateName & '">' & templateName & '</a><span> (' & (stress*100) & '%)</span></li>\n';
+                    //'<li><a href="' & templateName & '">' & templateName & '</a><span> (' & (stress*100) & '%)</span></li>\n';
+                    '<li><a href="?page=template_info&name='  stats.fullTemplateName '" title="View template stats">' templateName '</a><span> (' & (stress*100) & '%)</span></li>\n';
                 }
                 numberFormat(null);
                 count = count + 1;

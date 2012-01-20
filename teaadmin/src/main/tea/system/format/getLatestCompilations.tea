@@ -32,7 +32,8 @@
             dateFormat(null);
             timestamp = info.lastModified;
 
-            '<a href="' pathPrefix templatePath '" datestamp="' dateString '" timestamp="' timestamp '">' templateName '</a>\n'
+            // '<a href="' pathPrefix templatePath '" datestamp="' dateString '" timestamp="' timestamp '">' templateName '</a>\n'
+            '<a href="?page=template_info&name='  info.name '" datestamp="' dateString '" timestamp="' timestamp '" title="View template stats">' templateName '</a>'
         '</li>\n'
     }
 

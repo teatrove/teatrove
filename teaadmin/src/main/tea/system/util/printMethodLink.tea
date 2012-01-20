@@ -15,7 +15,6 @@
         text = replace(md.name,"$",".");
         //link = link & 'href=' & pathPrefix & 'system/teaservlet/Admin?subTemplate=system.teaservlet.ContextDetail&context=' & md.method.declaringClass.name;
         //link = link & '#' & value;
-        //link = link & 'href=' & pathPrefix & 'system/teaservlet/new/format/getContextFunctionDetails?context=' & md.method.declaringClass.name & '&function=' & value;
         link = link & 'href=' & pathPrefix & 'system/format/getContextFunctionDetails?context=' & md.method.declaringClass.name & '&function=' & value;
     } else if ( target == 2 ){
         text = replace(md.name,"$",".");

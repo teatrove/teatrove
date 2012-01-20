@@ -209,10 +209,11 @@
         });
         $("#details-container a").live('click', function (evt) {
             var href = $(this).attr('href');
-            if ( href && href != '#' ) {
+            var target = $(this).attr('target');
+            if ( !target && href && href != '#' ) {
                 $('#details-container').load(href);
+                evt.preventDefault();
             }
-            evt.preventDefault();
         });
     };
 
