@@ -1,0 +1,12 @@
+org.teatrove.trove.classfile
+org.teatrove.trove.classfile.generics
+org.teatrove.trove.file
+org.teatrove.trove.generics
+org.teatrove.trove.io
+org.teatrove.trove.log
+org.teatrove.trove.net
+org.teatrove.trove.util
+org.teatrove.trove.util.plugin
+org.teatrove.trove.util.properties
+org.teatrove.trove.util.resources
+org.teatrove.trove.util.tq
