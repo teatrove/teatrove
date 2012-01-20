@@ -4,6 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>6</version>
+    </parent>
+
     <groupId>org.teatrove</groupId>
     <artifactId>teatrove</artifactId>
     <version>4.1.1-SNAPSHOT</version>
@@ -22,29 +28,134 @@
 
     <name>Trove, Tea and TeaServlet</name>
     <description>The Tea language along with supporting projects.</description>
+    <url>http://teatrove.org</url>
+    <inceptionYear>1997</inceptionYear>
+    <organization>
+        <name>TeaTrove.org</name>
+        <url>http://teatrove.org</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>LICENSE.txt</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>nicholashagen</id>
+            <name>Nicholas Hagen</name>
+            <organization>ESPN</organization>
+            <organizationUrl>http://espn.go.com</organizationUrl>
+            <timezone>-5</timezone>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>jappy</id>
+            <name>Scott Jappinen</name>
+            <organization>ESPN</organization>
+            <organizationUrl>http://espn.go.com</organizationUrl>
+            <timezone>-5</timezone>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>erikhaddad</id>
+            <name>Erik Haddad</name>
+            <organization>ESPN</organization>
+            <organizationUrl>http://espn.go.com</organizationUrl>
+            <timezone>-5</timezone>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>jaxzin</id>
+            <email>brian@jaxzin.com</email>
+            <organization>ESPN</organization>
+            <organizationUrl>http://espn.go.com</organizationUrl>
+            <timezone>-5</timezone>
+            <roles>
+                <role>Committer</role>
+            </roles>
+        </developer>
+
+        <developer>
+            <name>Brian O'Neill</name>
+            <roles>
+                <role>Author of Tea</role>
+                <role>Lead Developer</role>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Reece Wilton</name>
+            <roles>
+                <role>TeaServlet Creator</role>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Jonathan Colwell</name>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Guy Molinari</name>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Erik Earle</name>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Michael Rathjen</name>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>markmasse</id>
+            <name>Mark S. Masse</name>
+            <timezone>-8</timezone>
+            <roles>
+                <role>Retired</role>
+            </roles>
+        </developer>
+    </developers>
 
     <properties>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-      <maven.version>3.0</maven.version>
-      <slf4j.version>1.6.1</slf4j.version>
+        <maven.version>3.0</maven.version>
+        <slf4j.version>1.6.1</slf4j.version>
 
-      <!-- The following properties centralize the definition of child module versions.
-           It is critical that these version numbers are kept in lockstep with the <version> elements
-           of their respective child poms, otherwise the build will be break.  The convenience is that
-           when you update the <version> of that child pom, you only need to update it one other place, here,
-           and all references to the child artifact will be updated accordingly.
-       -->
-      <package-info-maven-plugin.version>4.1.1-SNAPSHOT</package-info-maven-plugin.version>
-      <teacompiler.version>4.1.1-SNAPSHOT</teacompiler.version>
-      <teatools.version>4.1.1-SNAPSHOT</teatools.version>
-      <toolbox.version>4.1.1-SNAPSHOT</toolbox.version>
-      <tea.version>4.1.1-SNAPSHOT</tea.version>
-      <teaapps.version>4.1.1-SNAPSHOT</teaapps.version>
-      <teaadmin.version>4.1.1-SNAPSHOT</teaadmin.version>
-      <teaservlet.version>4.1.1-SNAPSHOT</teaservlet.version>
-      <trove.version>4.1.1-SNAPSHOT</trove.version>
+        <!-- The following properties centralize the definition of child module versions.
+            It is critical that these version numbers are kept in lockstep with the <version> elements
+            of their respective child poms, otherwise the build will be break.  The convenience is that
+            when you update the <version> of that child pom, you only need to update it one other place, here,
+            and all references to the child artifact will be updated accordingly.
+        -->
+        <package-info-maven-plugin.version>4.1.1-SNAPSHOT</package-info-maven-plugin.version>
+        <teacompiler.version>4.1.1-SNAPSHOT</teacompiler.version>
+        <teatools.version>4.1.1-SNAPSHOT</teatools.version>
+        <toolbox.version>4.1.1-SNAPSHOT</toolbox.version>
+        <tea.version>4.1.1-SNAPSHOT</tea.version>
+        <teaapps.version>4.1.1-SNAPSHOT</teaapps.version>
+        <teaadmin.version>4.1.1-SNAPSHOT</teaadmin.version>
+        <teaservlet.version>4.1.1-SNAPSHOT</teaservlet.version>
+        <trove.version>4.1.1-SNAPSHOT</trove.version>
     </properties>
 
     <prerequisites>
@@ -52,6 +163,25 @@
     </prerequisites>
 
     <build>
+
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.scm</groupId>
+                <artifactId>maven-scm-provider-gitexe</artifactId>
+                <version>1.3</version>
+            </extension>
+            <extension>
+                <groupId>org.apache.maven.scm</groupId>
+                <artifactId>maven-scm-manager-plexus</artifactId>
+                <version>1.3</version>
+            </extension>
+            <extension>
+                <groupId>org.kathrynhuxtable.maven.wagon</groupId>
+                <artifactId>wagon-gitsite</artifactId>
+                <version>0.3.1</version>
+            </extension>
+        </extensions>
+
         <plugins>
 
             <!-- Maven 3.x Site generation -->
@@ -133,6 +263,28 @@
         </pluginManagement>
     </build>
 
+    <scm>
+        <url>https://github.com/teatrove/teatrove</url>
+        <connection>scm:git:https://github.com/teatrove/teatrove.git</connection>
+        <developerConnection>scm:git:git@github.com:teatrove/teatrove.git</developerConnection>
+    </scm>
+
+    <distributionManagement>
+        <!--
+            For site distribution to work, you need to add this to your settings.xml:
+            <servers>
+              <server>
+                <id>github-project-site</id>
+                <username>git</username>
+              </server>
+            </servers>
+        -->
+        <site>
+            <id>github-project-site</id>
+            <url>gitsite:git@github.com/teatrove/teatrove.git</url>
+        </site>
+    </distributionManagement>
+
     <profiles>
         <profile>
             <id>release</id>
@@ -153,22 +305,22 @@
                         </executions>
                     </plugin>
                     <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-javadoc-plugin</artifactId>
-                      <version>2.7</version>
-                      <inherited>true</inherited>
-                      <configuration>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.7</version>
+                        <inherited>true</inherited>
+                        <configuration>
                             <!-- Override the project source directories so we don't run javadoc against generated sources -->
                             <sourcepath>${project.basedir}/src/main/java</sourcepath>
-                      </configuration>
-                      <executions>
-                        <execution>
-                          <goals>
-                            <goal>jar</goal>
-                            <goal>test-jar</goal>
-                          </goals>
-                        </execution>
-                      </executions>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>jar</goal>
+                                    <goal>test-jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -190,7 +342,7 @@
                     <systemPath>${java.home}/../lib/tools.jar</systemPath>
                 </dependency>
             </dependencies>
-        </profile>        
+        </profile>
     </profiles>
 
 </project>
