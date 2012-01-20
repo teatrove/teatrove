@@ -265,8 +265,8 @@
 
     <scm>
         <url>https://github.com/teatrove/teatrove</url>
-        <connection>scm:git:https://github.com/jaxzin/teatrove.git</connection>
-        <developerConnection>scm:git:git@github.com:jaxzin/teatrove.git</developerConnection>
+        <connection>scm:git:https://github.com/teatrove/teatrove.git</connection>
+        <developerConnection>scm:git:git@github.com:teatrove/teatrove.git</developerConnection>
     </scm>
 
     <distributionManagement>
@@ -281,7 +281,7 @@
         -->
         <site>
             <id>github-project-site</id>
-            <url>gitsite:git@github.com/jaxzin/teatrove.git</url>
+            <url>gitsite:git@github.com/teatrove/teatrove.git</url>
         </site>
     </distributionManagement>
 
