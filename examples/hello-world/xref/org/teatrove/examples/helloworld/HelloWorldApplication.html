@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>HelloWorldApplication xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<div id="overview"><a href="../../../../../apidocs/org/teatrove/examples/helloworld/HelloWorldApplication.html">View Javadoc</a></div><pre>
+
+<a class="jxr_linenumber" name="1" href="#1">1</a>   <strong class="jxr_keyword">package</strong> org.teatrove.examples.helloworld;
+<a class="jxr_linenumber" name="2" href="#2">2</a>   
+<a class="jxr_linenumber" name="3" href="#3">3</a>   <strong class="jxr_keyword">import</strong> javax.servlet.ServletException;
+<a class="jxr_linenumber" name="4" href="#4">4</a>   
+<a class="jxr_linenumber" name="5" href="#5">5</a>   <strong class="jxr_keyword">import</strong> org.teatrove.teaservlet.Application;
+<a class="jxr_linenumber" name="6" href="#6">6</a>   <strong class="jxr_keyword">import</strong> org.teatrove.teaservlet.ApplicationConfig;
+<a class="jxr_linenumber" name="7" href="#7">7</a>   <strong class="jxr_keyword">import</strong> org.teatrove.teaservlet.ApplicationRequest;
+<a class="jxr_linenumber" name="8" href="#8">8</a>   <strong class="jxr_keyword">import</strong> org.teatrove.teaservlet.ApplicationResponse;
+<a class="jxr_linenumber" name="9" href="#9">9</a>   
+<a class="jxr_linenumber" name="10" href="#10">10</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="11" href="#11">11</a>  <em class="jxr_javadoccomment"> * This is a simple Hello World TeaServlet application that provides access to </em>
+<a class="jxr_linenumber" name="12" href="#12">12</a>  <em class="jxr_javadoccomment"> * the {@link HelloWorldContext}. This application may be registered within Tea</em>
+<a class="jxr_linenumber" name="13" href="#13">13</a>  <em class="jxr_javadoccomment"> * to provide templates access to the public methods within the associated</em>
+<a class="jxr_linenumber" name="14" href="#14">14</a>  <em class="jxr_javadoccomment"> * context.</em>
+<a class="jxr_linenumber" name="15" href="#15">15</a>  <em class="jxr_javadoccomment"> * &lt;br /&gt;&lt;br /&gt;</em>
+<a class="jxr_linenumber" name="16" href="#16">16</a>  <em class="jxr_javadoccomment"> * The application registers its context type via {@link #getContextType()}.</em>
+<a class="jxr_linenumber" name="17" href="#17">17</a>  <em class="jxr_javadoccomment"> * This example always returns the HelloWorldContext type. TeaServlet will</em>
+<a class="jxr_linenumber" name="18" href="#18">18</a>  <em class="jxr_javadoccomment"> * invoke {@link #createContext(ApplicationRequest, ApplicationResponse)} per</em>
+<a class="jxr_linenumber" name="19" href="#19">19</a>  <em class="jxr_javadoccomment"> * request to actually provide access to the associated context. This particular</em>
+<a class="jxr_linenumber" name="20" href="#20">20</a>  <em class="jxr_javadoccomment"> * request is a singleton and stateless and therefore always returns the same</em>
+<a class="jxr_linenumber" name="21" href="#21">21</a>  <em class="jxr_javadoccomment"> * context as created during {@link #init(ApplicationConfig) initialization}.</em>
+<a class="jxr_linenumber" name="22" href="#22">22</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="23" href="#23">23</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a href="../../../../org/teatrove/examples/helloworld/HelloWorldApplication.html">HelloWorldApplication</a> <strong class="jxr_keyword">implements</strong> Application {
+<a class="jxr_linenumber" name="24" href="#24">24</a>  
+<a class="jxr_linenumber" name="25" href="#25">25</a>  	<em class="jxr_comment">// Define the particular context for this application</em>
+<a class="jxr_linenumber" name="26" href="#26">26</a>  	<strong class="jxr_keyword">private</strong> <a href="../../../../org/teatrove/examples/helloworld/HelloWorldContext.html">HelloWorldContext</a> context;
+<a class="jxr_linenumber" name="27" href="#27">27</a>  	
+<a class="jxr_linenumber" name="28" href="#28">28</a>  	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="29" href="#29">29</a>  <em class="jxr_javadoccomment">	 * Default constructor. Tea expects a default constructor to create an</em>
+<a class="jxr_linenumber" name="30" href="#30">30</a>  <em class="jxr_javadoccomment">	 * instance of the application.</em>
+<a class="jxr_linenumber" name="31" href="#31">31</a>  <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="32" href="#32">32</a>  	<strong class="jxr_keyword">public</strong> <a href="../../../../org/teatrove/examples/helloworld/HelloWorldApplication.html">HelloWorldApplication</a>() {
+<a class="jxr_linenumber" name="33" href="#33">33</a>  		<strong class="jxr_keyword">super</strong>();
+<a class="jxr_linenumber" name="34" href="#34">34</a>  	}
+<a class="jxr_linenumber" name="35" href="#35">35</a>  	
+<a class="jxr_linenumber" name="36" href="#36">36</a>  	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="37" href="#37">37</a>  <em class="jxr_javadoccomment">	 * Initialization routine that is invoked by TeaServlet after invoking the</em>
+<a class="jxr_linenumber" name="38" href="#38">38</a>  <em class="jxr_javadoccomment">	 * default constructor to allow the application to configure itself. The</em>
+<a class="jxr_linenumber" name="39" href="#39">39</a>  <em class="jxr_javadoccomment">	 * supplied configuration may be used to get access to the TeaServlet</em>
+<a class="jxr_linenumber" name="40" href="#40">40</a>  <em class="jxr_javadoccomment">	 * environment as well as to get access to the configuraton properties</em>
+<a class="jxr_linenumber" name="41" href="#41">41</a>  <em class="jxr_javadoccomment">	 * provided in the application configuration defined in the TeaServlet</em>
+<a class="jxr_linenumber" name="42" href="#42">42</a>  <em class="jxr_javadoccomment">	 * configuration file (ie: the &amp;lt;init&amp;gt; block of the application).</em>
+<a class="jxr_linenumber" name="43" href="#43">43</a>  <em class="jxr_javadoccomment">	 * </em>
+<a class="jxr_linenumber" name="44" href="#44">44</a>  <em class="jxr_javadoccomment">	 * @param config The application configuration and TeaServlet environment</em>
+<a class="jxr_linenumber" name="45" href="#45">45</a>  <em class="jxr_javadoccomment">	 * </em>
+<a class="jxr_linenumber" name="46" href="#46">46</a>  <em class="jxr_javadoccomment">	 * @throws ServletException if a critical error occurs during initialization</em>
+<a class="jxr_linenumber" name="47" href="#47">47</a>  <em class="jxr_javadoccomment">	 *                          that should stop TeaServlet from continuing</em>
+<a class="jxr_linenumber" name="48" href="#48">48</a>  <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="49" href="#49">49</a>  	@Override
+<a class="jxr_linenumber" name="50" href="#50">50</a>  	<strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> init(ApplicationConfig config) <strong class="jxr_keyword">throws</strong> ServletException {
+<a class="jxr_linenumber" name="51" href="#51">51</a>  		<em class="jxr_comment">// get the configuration properties and get the "greeting" configuration</em>
+<a class="jxr_linenumber" name="52" href="#52">52</a>  		<em class="jxr_comment">// if not provided, it will default to "Hello"</em>
+<a class="jxr_linenumber" name="53" href="#53">53</a>  		String greeting = config.getProperties().getString(<span class="jxr_string">"greeting"</span>, <span class="jxr_string">"Hello"</span>);
+<a class="jxr_linenumber" name="54" href="#54">54</a>  		
+<a class="jxr_linenumber" name="55" href="#55">55</a>  		<em class="jxr_comment">// create the singleton/stateless instance</em>
+<a class="jxr_linenumber" name="56" href="#56">56</a>  		<strong class="jxr_keyword">this</strong>.context = <strong class="jxr_keyword">new</strong> <a href="../../../../org/teatrove/examples/helloworld/HelloWorldContext.html">HelloWorldContext</a>(greeting);
+<a class="jxr_linenumber" name="57" href="#57">57</a>  	}
+<a class="jxr_linenumber" name="58" href="#58">58</a>  
+<a class="jxr_linenumber" name="59" href="#59">59</a>  	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="60" href="#60">60</a>  <em class="jxr_javadoccomment">	 * Destroy routine that is invoked by TeaServlet when the servlet is being</em>
+<a class="jxr_linenumber" name="61" href="#61">61</a>  <em class="jxr_javadoccomment">	 * shutdown. This allows the application to clean up after itself such as</em>
+<a class="jxr_linenumber" name="62" href="#62">62</a>  <em class="jxr_javadoccomment">	 * closing any active connections.</em>
+<a class="jxr_linenumber" name="63" href="#63">63</a>  <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="64" href="#64">64</a>  	@Override
+<a class="jxr_linenumber" name="65" href="#65">65</a>  	<strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> destroy() {
+<a class="jxr_linenumber" name="66" href="#66">66</a>  		<em class="jxr_comment">// nothing to do</em>
+<a class="jxr_linenumber" name="67" href="#67">67</a>  	}
+<a class="jxr_linenumber" name="68" href="#68">68</a>  
+<a class="jxr_linenumber" name="69" href="#69">69</a>  	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="70" href="#70">70</a>  <em class="jxr_javadoccomment">	 * Get the type of context that this application will create. The TeaServlet</em>
+<a class="jxr_linenumber" name="71" href="#71">71</a>  <em class="jxr_javadoccomment">	 * will register any public/non-static methods of the specified context</em>
+<a class="jxr_linenumber" name="72" href="#72">72</a>  <em class="jxr_javadoccomment">	 * type in the list of available functions that may be invoked from within</em>
+<a class="jxr_linenumber" name="73" href="#73">73</a>  <em class="jxr_javadoccomment">	 * templates. Note that the </em>
+<a class="jxr_linenumber" name="74" href="#74">74</a>  <em class="jxr_javadoccomment">	 * {@link #createContext(ApplicationRequest, ApplicationResponse)} method</em>
+<a class="jxr_linenumber" name="75" href="#75">75</a>  <em class="jxr_javadoccomment">	 * must return an instance that is compatible with this type. If not, a</em>
+<a class="jxr_linenumber" name="76" href="#76">76</a>  <em class="jxr_javadoccomment">	 * runtime exception will occur.</em>
+<a class="jxr_linenumber" name="77" href="#77">77</a>  <em class="jxr_javadoccomment">	 * </em>
+<a class="jxr_linenumber" name="78" href="#78">78</a>  <em class="jxr_javadoccomment">	 * @return The context that this application maintains that should be</em>
+<a class="jxr_linenumber" name="79" href="#79">79</a>  <em class="jxr_javadoccomment">	 *         registered with the TeaServlet</em>
+<a class="jxr_linenumber" name="80" href="#80">80</a>  <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="81" href="#81">81</a>  	@Override
+<a class="jxr_linenumber" name="82" href="#82">82</a>  	<strong class="jxr_keyword">public</strong> Class&lt;?&gt; getContextType() {
+<a class="jxr_linenumber" name="83" href="#83">83</a>  		<em class="jxr_comment">// return the type of the context</em>
+<a class="jxr_linenumber" name="84" href="#84">84</a>  		<strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">this</strong>.context.getClass();
+<a class="jxr_linenumber" name="85" href="#85">85</a>  	}
+<a class="jxr_linenumber" name="86" href="#86">86</a>  	
+<a class="jxr_linenumber" name="87" href="#87">87</a>  	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="88" href="#88">88</a>  <em class="jxr_javadoccomment">	 * Create an instance of the associated {@link #getContextType() context}</em>
+<a class="jxr_linenumber" name="89" href="#89">89</a>  <em class="jxr_javadoccomment">	 * type per the given request/response. This is invoked per request by the</em>
+<a class="jxr_linenumber" name="90" href="#90">90</a>  <em class="jxr_javadoccomment">	 * TeaServlet to get the associated context instance. This may return a</em>
+<a class="jxr_linenumber" name="91" href="#91">91</a>  <em class="jxr_javadoccomment">	 * stateless context or create a new context with the given request/response</em>
+<a class="jxr_linenumber" name="92" href="#92">92</a>  <em class="jxr_javadoccomment">	 * each time. The returned type, however, MUST be compatible with the</em>
+<a class="jxr_linenumber" name="93" href="#93">93</a>  <em class="jxr_javadoccomment">	 * asociated context type. Otherwise, a runtime exception will occur.</em>
+<a class="jxr_linenumber" name="94" href="#94">94</a>  <em class="jxr_javadoccomment">	 * </em>
+<a class="jxr_linenumber" name="95" href="#95">95</a>  <em class="jxr_javadoccomment">	 * @param request The active TeaServlet request</em>
+<a class="jxr_linenumber" name="96" href="#96">96</a>  <em class="jxr_javadoccomment">	 * @param response The active TeaServlet response</em>
+<a class="jxr_linenumber" name="97" href="#97">97</a>  <em class="jxr_javadoccomment">	 * </em>
+<a class="jxr_linenumber" name="98" href="#98">98</a>  <em class="jxr_javadoccomment">	 * @return The associated context instance</em>
+<a class="jxr_linenumber" name="99" href="#99">99</a>  <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="100" href="#100">100</a> 	@Override
+<a class="jxr_linenumber" name="101" href="#101">101</a> 	<strong class="jxr_keyword">public</strong> Object createContext(ApplicationRequest request,
+<a class="jxr_linenumber" name="102" href="#102">102</a>                                 ApplicationResponse response) {
+<a class="jxr_linenumber" name="103" href="#103">103</a> 		<strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">this</strong>.context;
+<a class="jxr_linenumber" name="104" href="#104">104</a> 	}
+<a class="jxr_linenumber" name="105" href="#105">105</a> }
+</pre>
+<hr/><div id="footer">This page was automatically generated by <a href="http://maven.apache.org/">Maven</a></div></body>
+</html>
+
