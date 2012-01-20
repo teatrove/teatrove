@@ -26,7 +26,8 @@
             numberFormat(null);
 
             '<li>\n'
-                '<a href="' templatePath '">' templateName '</a><span> (' templateTime ')</span>\n'
+                // '<a href="' templatePath '">' templateName '</a><span> (' templateTime ')</span>\n'
+                '<a href="?page=template_info&name='  knownTemplate.name '" title="View template stats">' templateName '</a><span> (' templateTime ')</span>\n'
             '</li>\n'
         } else {
             break;

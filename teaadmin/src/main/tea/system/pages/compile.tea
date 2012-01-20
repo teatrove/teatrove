@@ -104,6 +104,17 @@
 
                                     uri = pathPrefix & replace(tea.name, '.', '/') & extension;
 
+                                    needsReload = true;
+                                    /*
+                                    foreach ( reloadableTemplate in admin.reloadableTemplates ) {
+                                        dotPath = replace(reloadableTemplate.name, "/", ".");
+                                        if ( stats.fullTemplateName == dotPath ) {
+                                            needsReload = true;
+                                            break;
+                                        }
+                                    }
+                                    */
+                                
                                     rowClass = 'evenrow';
 						            if ( t % 2 == 1 ) {
                                         rowClass = 'oddrow';
@@ -144,7 +155,21 @@
                                     }
 
                                     '<tr class="' rowClass '">\n'
-                                        '<td class="left-align"><a class="methodName" href="' uri '" template="' tea.name '">' uri '</a></td>\n'
+                                        '<td class="left-align">'
+                                            '<div class="template-pathname" style="line-height: 22px;">'
+                                                '<a class="methodName" href="' uri '" template="' tea.name '" title="Follow template url">' uri '</a>'
+                                            '</div>'
+                                            '<div class="template-options" style="padding: 2px 0 4px 0;">'
+                                                if ( needsReload ) {
+                                                    '<a class="compile" href="remote/reload?reloadTemplates=selected&selectedTemplates='  tea.name '" title="Compile template"></a>'
+                                                } else {
+                                                    '<span class="blank"></span>'
+                                                }
+                                                '<a class="web" target="_blank" href="' uri '" title="Follow template url"></a>'
+                                                '<a class="info" href="?page=template_info&name='  tea.name '" title="View template stats"></a>'
+                                                '<a class="reset" href="remote/reset?name='  tea.name '" title="Reset template stats"></a>'
+                                            '</div>'
+                                        '</td>\n'
                                         '<td class="right-align">' templateTime '</td>\n'
                                         '<td class="right-align">' templateInvokes '</td>\n'
                                         '<td class="right-align">' templateWeight '</td>\n'
