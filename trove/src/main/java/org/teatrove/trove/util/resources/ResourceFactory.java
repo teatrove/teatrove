@@ -73,6 +73,26 @@ public interface ResourceFactory {
     
     /**
      * Get the associated resource as a {@link PropertyMap} per the specified
+     * path.  This will load the resource per the given input stream and
+     * if the resource is not valid, then <code>null</code> is returned.  By
+     * default, any properties will be auto-substituted by the default
+     * substitutions per {@link SubstitutionFactory#getDefaults()}.  The type of
+     * resource is determined by the path.  For examples, 'properties' files
+     * use a properties resource loader whereas 'xml' files use a XML resource
+     * loader.  For more information, see {@link PropertyMapFactoryProvider}.
+     * 
+     * @param path  The name or path of the resource
+     * @param input  The associated stream to load
+     * 
+     * @return  The associated list of properties
+     * 
+     * @throws IOException   If an error occurs loading or parsing the resource
+     */
+    PropertyMap getResourceAsProperties(String path, InputStream input) 
+        throws IOException;
+    
+    /**
+     * Get the associated resource as a {@link PropertyMap} per the specified
      * path.  This will load the resource per {@link #getResource(String)} and
      * if the resource is not valid, then <code>null</code> is returned.  Any 
      * properties will be auto-substituted by the specified substitutions.  The
@@ -89,5 +109,26 @@ public interface ResourceFactory {
      * @throws IOException   If an error occurs loading or parsing the resource
      */
     PropertyMap getResourceAsProperties(String path, PropertyMap substitutions)
+        throws IOException;
+    
+    /**
+     * Get the associated resource as a {@link PropertyMap} per the specified
+     * path.  This will load the resource per the given input stream and
+     * if the resource is not valid, then <code>null</code> is returned.  Any 
+     * properties will be auto-substituted by the specified substitutions.  The
+     * type of resource is determined by the path.  For examples, 'properties' 
+     * files use a properties resource loader whereas 'xml' files use a XML 
+     * resource loader.  For more information, see 
+     * {@link PropertyMapFactoryProvider}.
+     * 
+     * @param path  The name or path of the resource
+     * @param substitutions  The map of substitutions to replace properties with
+     * 
+     * @return  The associated list of properties
+     * 
+     * @throws IOException   If an error occurs loading or parsing the resource
+     */
+    PropertyMap getResourceAsProperties(String path, InputStream input,
+                                        PropertyMap substitutions)
         throws IOException;
 }
