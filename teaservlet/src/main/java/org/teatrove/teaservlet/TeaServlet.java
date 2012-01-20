@@ -16,13 +16,10 @@
 
 package org.teatrove.teaservlet;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
-import java.net.JarURLConnection;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -32,8 +29,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -118,6 +115,8 @@ public class TeaServlet extends HttpServlet {
     private static final String WAR_TEMPLATE_SOURCE_PATH = "/WEB-INF/tea";
     private static final String WAR_TEMPLATE_CLASS_PATH = "/WEB-INF/teaclasses";
 
+    private boolean mDebugEnabled;
+    
     private Log mLog;
     /** Captured log events that were likely also written to a log file. */
     private List<LogEvent> mLogEvents;
@@ -148,10 +147,13 @@ public class TeaServlet extends HttpServlet {
         String ver = System.getProperty("java.version");
         if (ver.startsWith("0.") || ver.startsWith("1.2") ||
             ver.startsWith("1.3")) {
-            System.err.println
-                ("The TeaServlet requires Java 1.4 or higher to run properly");
+            config.getServletContext()
+                .log("The TeaServlet requires Java 1.4 or higher to run properly");
         }
 
+        mServletContext = setServletContext(config);
+        mServletName = setServletName(config);
+        
         mProperties = new PropertyMap();
         mSubstitutions = SubstitutionFactory.getDefaults();
         mResourceFactory = 
@@ -163,12 +165,17 @@ public class TeaServlet extends HttpServlet {
             String key = (String) e.nextElement();
             String value = 
                 SubstitutionFactory.substitute(config.getInitParameter(key));
+            
+            if (key.equals("debug")) {
+                mDebugEnabled = Boolean.parseBoolean(value);
+                continue;
+            }
+
             mProperties.put(key, value);
         }
 
         loadDefaults();
-        mServletContext = setServletContext(config);
-        mServletName = setServletName(config);
+        discoverProperties();
         createLog(mServletContext);
         mLog.applyProperties(mProperties.subMap("log"));
         createMemoryLog(mLog);
@@ -454,14 +461,89 @@ public class TeaServlet extends HttpServlet {
         }
     }
 
+    private void discoverProperties() throws ServletException {
+        // load our class loader to resolve resources
+        ClassLoader cloader = TeaServlet.class.getClassLoader();
+        
+        // specify list of configs to load
+        final String[] configNames = { 
+            "META-INF/teaservlet.xml", "META-INF/teaservlet.properties" 
+        };
+
+        // load each set of configs and process accordingly
+        for (String configName : configNames) {
+
+            if (mDebugEnabled) {
+                mServletContext.log("Searching for " + configName + " configurations");
+            }
+            
+            // attempt to load all resources of given name
+            Enumeration<URL> configs = null;
+            try { configs = cloader.getResources(configName); }
+            catch (IOException ioe) {
+                throw new ServletException(
+                    "unable to load " + configName + " from classpath", ioe);
+            }
+            
+            while (configs.hasMoreElements()) {
+                InputStream input = null;
+                PropertyMap properties = null;
+                
+                // load associated properties of config
+                URL url = configs.nextElement();
+                if (mDebugEnabled) {
+                    mServletContext.log("Loading configuration " + url.toExternalForm());
+                }
+
+                try { 
+                    input = url.openStream();
+                    properties = mResourceFactory.getResourceAsProperties
+                    (
+                         url.getPath(), input
+                    );
+                }
+                catch (IOException ioe) {
+                    throw new ServletException(
+                        "unable to load " + url.toExternalForm(), ioe);
+                }
+                
+                // merge in properties into application properties
+                mergeProperties(properties);
+    
+                // TODO: scan annotations within associated JAR/class path
+            }
+        }
+    }
+
+    private void additiveMerge(PropertyMap properties, String property,
+                               String separator) {
+        String merging = properties.getString(property);
+        if (merging != null) {
+            String existing = mProperties.getString(property);
+            if (existing == null || existing.length() == 0) {
+                mProperties.put(property, merging);
+            }
+            else {
+                mProperties.put(property, existing + separator + merging);
+            }
+        }
+    }
+
+    private void mergeProperties(PropertyMap properties) {
+        
+        // merge in properties w/o overwriting
+        mProperties.putDefaults(properties);
+
+        // custom merges
+        additiveMerge(properties, "template.path", ";");
+    }
+    
     private void loadDefaults() throws ServletException {
         try {
             loadDefaults(mProperties, new HashSet<String>());
         }
         catch (Exception e) {
-        	e.printStackTrace();
-            mLog.warn(e);
-            mLog.warn(e.getCause().fillInStackTrace());
+        	mServletContext.log("unable to load defaults", e);
         }
     }
     
@@ -472,7 +554,10 @@ public class TeaServlet extends HttpServlet {
         PropertyMapFactory factory = null;
         if (factoryProps != null && factoryProps.size() > 0
             && (className = factoryProps.getString("class")) != null) {
-            System.out.println("Using property factory: " + className);
+            if (mDebugEnabled) {
+                mServletContext.log("Using property factory: " + className);
+            }
+            
             // Load and use custom PropertyMapFactory.
             Class<?> factoryClass = Class.forName(className);
             java.lang.reflect.Constructor<?> ctor =
@@ -480,18 +565,26 @@ public class TeaServlet extends HttpServlet {
             factory = (PropertyMapFactory)
                 ctor.newInstance(new Object[]{factoryProps.subMap("init")});
         } else if (factoryProps == null){
-        	System.out.println("factoryProps is null.");
+        	if (mDebugEnabled) {
+        	    mServletContext.log("factoryProps is null.");
+        	}
     	} else if (factoryProps.size() == 0) {
-    		System.out.println("factory props size is 0.");
+    	    if (mDebugEnabled) {
+    	        mServletContext.log("factory props size is 0.");
+    	    }
     	} else if (className == null) {
-    		System.out.println("className is null");
+    	    if (mDebugEnabled) {
+    	        mServletContext.log("className is null");
+    	    }
     	}
         
         // return properties
         PropertyMap result = null;
         if (factory != null) {
         	result = factory.createProperties();
-        	System.out.println("properties: " + result);
+        	if (mDebugEnabled) {
+        	    mServletContext.log("properties: " + result);
+        	}
         }
         return result;
     }
@@ -517,7 +610,10 @@ public class TeaServlet extends HttpServlet {
 
         // Get file and perform substitution of env variables/system props
         String fileName = properties.getString("properties.file");
-        System.out.println("properties.file: " + fileName);
+        if (mDebugEnabled) {
+            mServletContext.log("properties.file: " + fileName);
+        }
+        
         if (fileName != null) {
             fileName = SubstitutionFactory.substitute(fileName, mSubstitutions);            
         }
@@ -540,7 +636,6 @@ public class TeaServlet extends HttpServlet {
         else {
             PropertyMap factoryProps = 
                 properties.subMap("properties.factory");
-            System.out.println("properties.factory: " + factoryProps);
             if (factoryProps != null && factoryProps.size() > 0) {
             	PropertyMap map = loadProperties(factoryProps);
                 properties.putAll(map);
