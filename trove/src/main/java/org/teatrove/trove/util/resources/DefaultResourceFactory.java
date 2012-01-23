@@ -60,6 +60,9 @@ public class DefaultResourceFactory implements ResourceFactory {
     public URL getResource(String path)
         throws MalformedURLException {
         
+        // support any protocol (file:, http:, etc)
+        // support classpath: protocol
+        // support web: protocol
         File file = new File(path);
         if (file.exists()) {
             return file.toURI().toURL();
