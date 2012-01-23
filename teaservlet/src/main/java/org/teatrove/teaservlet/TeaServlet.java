@@ -534,6 +534,7 @@ public class TeaServlet extends HttpServlet {
 
         // custom merges
         additiveMerge(properties, "template.path", ";");
+        additiveMerge(properties, "template.imports", ";");
     }
     
     private void loadDefaults() throws ServletException {
