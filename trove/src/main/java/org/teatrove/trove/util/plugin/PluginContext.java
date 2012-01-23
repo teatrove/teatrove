@@ -155,6 +155,20 @@ public class PluginContext implements ResourceFactory {
      * {@inheritDoc}
      */
     @Override
+    public PropertyMap getResourceAsProperties(String path, InputStream input) 
+        throws IOException {
+        
+        if (mResourceFactory == null) {
+            return null;
+        }
+        
+        return mResourceFactory.getResourceAsProperties(path, input);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public PropertyMap getResourceAsProperties(String path, 
                                                PropertyMap substitutions)
         throws IOException {
@@ -164,6 +178,22 @@ public class PluginContext implements ResourceFactory {
         }
         
         return mResourceFactory.getResourceAsProperties(path, substitutions);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PropertyMap getResourceAsProperties(String path, InputStream input,
+                                               PropertyMap substitutions)
+        throws IOException {
+        
+        if (mResourceFactory == null) {
+            return null;
+        }
+        
+        return mResourceFactory.getResourceAsProperties(path, input,
+                                                        substitutions);
     }
     
     /* Notifies all PluginListeners of a Plugin being added to this class.

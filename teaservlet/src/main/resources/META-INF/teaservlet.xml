@@ -1,0 +1,22 @@
+<teaservlet>
+
+    <!-- 
+    define the default template when just the directory is provided 
+    -->
+    
+    <template>
+        <default>index</default>
+    </template>
+
+    <!-- 
+    define the logging states for the TeaServlet 
+    -->
+    
+    <log>
+        <debug>false</debug>
+        <info>true</info>
+        <warn>true</warn>
+        <error>true</error>
+    </log>
+
+</teaservlet>
