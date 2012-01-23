@@ -6,10 +6,6 @@
     <servlet>
         <servlet-name>TeaServlet</servlet-name>
         <servlet-class>org.teatrove.teaservlet.TeaServlet</servlet-class>
-        <init-param>
-            <param-name>properties.file</param-name>
-            <param-value>/WEB-INF/teaservlet.xml</param-value>
-        </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
