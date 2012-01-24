@@ -140,6 +140,10 @@
 
         <maven.version>3.0</maven.version>
         <slf4j.version>1.6.1</slf4j.version>
+        
+        <!-- BEGIN ESPN UPDATE: add version for repackaging plugin -->
+        <repackaging.plugin.version>1.0.6</repackaging.plugin.version>
+        <!-- END ESPN UPDATE -->
 
         <!-- The following properties centralize the definition of child module versions.
             It is critical that these version numbers are kept in lockstep with the <version> elements
@@ -161,6 +165,12 @@
     <prerequisites>
         <maven>3.0</maven>
     </prerequisites>
+
+    <scm>
+        <url>https://github.com/espn/teatrove</url>
+        <connection>scm:git:https://github.com/espn/teatrove.git</connection>
+        <developerConnection>scm:git:git@github.com:espn/teatrove.git</developerConnection>
+    </scm>
 
     <build>
 

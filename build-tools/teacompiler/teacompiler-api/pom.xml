@@ -36,4 +36,28 @@
           <version>1.0-alpha-9-stable-1</version>
         </dependency>
     </dependencies>
+    
+    <build>
+    <plugins>
+
+      <!-- BEGIN ESPN UPDATE: add repackaging plugin -->
+      <plugin>
+        <groupId>com.espn.maven.plugins</groupId>
+        <artifactId>teatrove-legacy-repackager</artifactId>
+        <version>${repackaging.plugin.version}</version>
+        <executions>
+            <execution>
+                <goals>
+                    <goal>repackage-sources</goal>
+                </goals>
+            </execution>
+        </executions>
+        <configuration>
+            <outputDirectory>${project.build.directory}/repackaged-sources</outputDirectory>
+        </configuration>  
+      </plugin>
+      <!-- END ESPN UPDATE -->
+
+    </plugins>
+    </build>
 </project>

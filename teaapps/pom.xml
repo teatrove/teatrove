@@ -64,6 +64,24 @@
   <build>
 	<plugins>
 
+      <!-- BEGIN ESPN UPDATE: add repackaging plugin -->
+      <plugin>
+        <groupId>com.espn.maven.plugins</groupId>
+        <artifactId>teatrove-legacy-repackager</artifactId>
+        <version>${repackaging.plugin.version}</version>
+        <executions>
+            <execution>
+                <goals>
+                    <goal>repackage-sources</goal>
+                </goals>
+            </execution>
+        </executions>
+        <configuration>
+            <outputDirectory>${project.build.directory}/repackaged-sources</outputDirectory>
+        </configuration>  
+      </plugin>
+      <!-- END ESPN UPDATE -->
+      
       <!-- this plugin is bound to the "generate-sources" phase -->
       <!-- creates updated PackageInfo.java files for the project -->
       <plugin>        
@@ -71,7 +89,9 @@
         <artifactId>package-info-maven-plugin</artifactId>
         <version>${package-info-maven-plugin.version}</version>
         <configuration>
-          <packageRoot>org.teatrove.teaapps</packageRoot>
+          <!-- BEGIN ESPN UPDATE: rename from org.teatrove to com.go -->
+          <packageRoot>com.go.teaapps</packageRoot>
+          <!-- END ESPN UPDATE -->
         </configuration>
         <executions>
           <execution>
@@ -92,11 +112,16 @@
                     <id>generate-beaninfo</id>
                     <phase>generate-sources</phase>
                     <configuration>
+                        <!-- BEGIN ESPN UPDATE: update source path to repackaged sources -->
+                        <sourcepath>${project.build.directory}/repackaged-sources/src/main/java</sourcepath>
+                        <!-- END ESPN UPDATE -->
                         <useStandardDocletOptions>false</useStandardDocletOptions>
                         <reportOutputDirectory>${project.build.directory}/generated-sources/beaninfo
                         </reportOutputDirectory>
                         <destDir>.</destDir>
-                        <doclet>org.teatrove.toolbox.beandoc.BeanDocDoclet</doclet>
+                        <!-- BEGIN ESPN UPDATE: change org.teatrove to com.go -->
+                        <doclet>com.go.toolbox.beandoc.BeanDocDoclet</doclet>
+                        <!-- END ESPN UPDATE -->
                         <docletArtifact>
                             <groupId>org.teatrove</groupId>
                             <artifactId>toolbox</artifactId>

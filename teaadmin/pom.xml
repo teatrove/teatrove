@@ -46,6 +46,27 @@
   <build>
 	<plugins>
     
+        <!-- BEGIN ESPN UPDATE: add repackaging plugin -->
+        <plugin>
+            <groupId>com.espn.maven.plugins</groupId>
+            <artifactId>teatrove-legacy-repackager</artifactId>
+            <version>${repackaging.plugin.version}</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>repackage-sources</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <outputDirectory>${project.build.directory}/repackaged-sources</outputDirectory>
+                <additionalRoots>
+                    <param>src/main/tea</param>
+                </additionalRoots>
+            </configuration>  
+        </plugin>
+        <!-- END ESPN UPDATE -->
+      
         <!-- TODO Add back in -->
         <plugin>
             <groupId>org.teatrove</groupId>
@@ -54,19 +75,24 @@
             <configuration>
                 <force>true</force>
                 <guardian>true</guardian>
-                <contextClassBuilder implementation="org.teatrove.maven.plugins.teacompiler.contextclassbuilder.MergedContextClassBuilder">
-                     <mergedClassName>org.teatrove.teaservlet.admin.MergedAdminContext</mergedClassName>
+                <!-- BEGIN ESPN UPDATE: use repackaged sources -->
+                <defaultSourceDirectory>${project.build.directory}/repackaged-sources/src/main/tea</defaultSourceDirectory>
+                <!-- END ESPN UPDATE -->
+                <!-- BEGIN ESPN UPDATE: rename org.teatrove to com.go in merged class names and app names -->
+                <contextClassBuilder implementation="com.go.maven.plugins.teacompiler.contextclassbuilder.MergedContextClassBuilder">
+                     <!-- <mergedClassName>com.go.teaservlet.admin.MergedAdminContext</mergedClassName> -->
                      <contexts>
-                        <context>org.teatrove.teaservlet.AdminHttpContext</context>
-                        <context>org.teatrove.teaapps.contexts.StringContext</context>
-                        <context>org.teatrove.teaapps.contexts.MapContext</context>
-                        <context>org.teatrove.teaapps.contexts.ListContext</context>
-                        <context>org.teatrove.teaapps.contexts.DateContext</context>
-                        <context>org.teatrove.teaapps.contexts.MathContext</context>
-                        <context>org.teatrove.teaapps.contexts.NumberFormatContext</context>
-                        <context>org.teatrove.teaapps.contexts.JMXContext</context>
+                        <context>com.go.teaservlet.AdminHttpContext</context>
+                        <context>com.go.teaapps.contexts.StringContext</context>
+                        <context>com.go.teaapps.contexts.MapContext</context>
+                        <context>com.go.teaapps.contexts.ListContext</context>
+                        <context>com.go.teaapps.contexts.DateContext</context>
+                        <context>com.go.teaapps.contexts.MathContext</context>
+                        <context>com.go.teaapps.contexts.NumberFormatContext</context>
+                        <context>com.go.teaapps.contexts.JMXContext</context>
                     </contexts>
                 </contextClassBuilder>
+                <!-- END ESPN UPDATE -->
             </configuration>
             <executions>
                 <execution>

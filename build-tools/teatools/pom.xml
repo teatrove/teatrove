@@ -46,12 +46,32 @@
     <build>
     <plugins>
 
+      <!-- BEGIN ESPN UPDATE: add repackaging plugin -->
+      <plugin>
+        <groupId>com.espn.maven.plugins</groupId>
+        <artifactId>teatrove-legacy-repackager</artifactId>
+        <version>${repackaging.plugin.version}</version>
+        <executions>
+            <execution>
+                <goals>
+                    <goal>repackage-sources</goal>
+                </goals>
+            </execution>
+        </executions>
+        <configuration>
+            <outputDirectory>${project.build.directory}/repackaged-sources</outputDirectory>
+        </configuration>  
+      </plugin>
+      <!-- END ESPN UPDATE -->
+      
       <plugin>
         <groupId>org.teatrove</groupId>
         <artifactId>package-info-maven-plugin</artifactId>
         <version>${package-info-maven-plugin.version}</version>
         <configuration>
-          <packageRoot>org.teatrove.teatools</packageRoot>
+          <!-- BEGIN ESPN UPDATE: rename from org.teatrove to com.go -->
+          <packageRoot>com.go.teatools</packageRoot>
+          <!-- END ESPN UPDATE -->
         </configuration>
         <executions>
           <execution>

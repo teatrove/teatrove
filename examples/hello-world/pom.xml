@@ -35,4 +35,48 @@
 
     </dependencies>
 
+    <build>
+        <plugins>
+            <!-- BEGIN ESPN UPDATE: add repackaging plugin -->
+            <plugin>
+                <groupId>com.espn.maven.plugins</groupId>
+                <artifactId>teatrove-legacy-repackager</artifactId>
+                <version>${repackaging.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage-sources</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <outputDirectory>${project.build.directory}/repackaged-sources</outputDirectory>
+                    <additionalRoots>
+                        <param>src/main/webapp</param>
+                    </additionalRoots>
+                </configuration>                
+            </plugin>
+            <!-- END ESPN UPDATE -->
+            <!-- BEGIN ESPN UPDATE: add war plugin configuration to use repackaged sources -->
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <version>2.1.1</version>
+                <configuration>
+                    <warSourceDirectory>${project.build.directory}/repackaged-sources/src/main/webapp</warSourceDirectory>
+                </configuration>
+            </plugin>
+            <!-- END ESPN UPDATE -->
+            <!-- BEGIN ESPN UPDATE: add jetty plugin to use repackaged source directory -->
+            <plugin>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>maven-jetty-plugin</artifactId>
+                <configuration>
+                    <webAppSourceDirectory>${project.build.directory}/repackaged-sources/src/main/webapp</webAppSourceDirectory> 
+                </configuration>
+            </plugin>
+            <!-- END ESPN UPDATE -->            
+        </plugins>
+    </build>
+    
 </project>
