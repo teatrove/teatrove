@@ -4,12 +4,12 @@
   
   <groupId>org.teatrove</groupId>
   <artifactId>trove</artifactId>
-  <version>4.1.1-SNAPSHOT</version>
+  <version>4.1.1-espn-1-SNAPSHOT</version>
 
   <parent>
     <groupId>org.teatrove</groupId>
     <artifactId>teatrove</artifactId>
-    <version>4.1.1-SNAPSHOT</version>
+    <version>4.1.1-espn-1-SNAPSHOT</version>
   </parent>
 
   <packaging>jar</packaging>
