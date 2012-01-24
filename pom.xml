@@ -166,12 +166,6 @@
         <maven>3.0</maven>
     </prerequisites>
 
-    <scm>
-        <url>https://github.com/espn/teatrove</url>
-        <connection>scm:git:https://github.com/espn/teatrove.git</connection>
-        <developerConnection>scm:git:git@github.com:espn/teatrove.git</developerConnection>
-    </scm>
-
     <build>
 
         <extensions>
@@ -273,27 +267,33 @@
         </pluginManagement>
     </build>
 
+    <!-- BEGIN ESPN UPDATE: change source control management -->
     <scm>
-        <url>https://github.com/teatrove/teatrove</url>
-        <connection>scm:git:https://github.com/teatrove/teatrove.git</connection>
-        <developerConnection>scm:git:git@github.com:teatrove/teatrove.git</developerConnection>
+        <url>https://github.com/espn/teatrove</url>
+        <connection>scm:git:https://github.com/espn/teatrove.git</connection>
+        <developerConnection>scm:git:git@github.com:espn/teatrove.git</developerConnection>
     </scm>
+    <!-- END ESPN UPDATE -->
 
+    <!-- BEGIN ESPN UPDATE: change distribution management -->
     <distributionManagement>
-        <!--
-            For site distribution to work, you need to add this to your settings.xml:
-            <servers>
-              <server>
-                <id>github-project-site</id>
-                <username>git</username>
-              </server>
-            </servers>
-        -->
+        <repository>
+            <id>espn.releases</id>
+            <name>ESPN3 Maven2 Release Repository</name>
+            <url>http://maven2.corp.espn3.com/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>espn.snapshots</id>
+            <name>ESPN3 Maven2 Snapshot Repository</name>
+            <url>http://maven2.corp.espn3.com/content/repositories/snapshots/</url>
+        </snapshotRepository>
         <site>
-            <id>github-project-site</id>
-            <url>gitsite:git@github.com/teatrove/teatrove.git</url>
+            <id>espn.project.site</id>
+            <name>ESPN Maven2 Projects Site</name>
+            <url>scp://mavendocs.corp.espn3.com/Volumes/DataDisk/wwwroot/maven2/</url>
         </site>
     </distributionManagement>
+    <!-- END ESPN UPDATE -->
 
     <profiles>
         <profile>
