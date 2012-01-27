@@ -17,13 +17,11 @@
 package org.teatrove.teaservlet.management;
 
 import java.util.ArrayList;
-//import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Set;
-//import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.teatrove.trove.util.LRUCache;
+import org.teatrove.trove.util.Cache;
 
 /**
  * 
@@ -37,7 +35,7 @@ public class HttpContextManagement implements HttpContextManagementMBean {
     //
     
     private static HttpContextManagement __Instance; 
-    private static LRUCache __UrlMap;
+    private static Cache __UrlMap;
     
     //
     // Private fields
@@ -55,7 +53,7 @@ public class HttpContextManagement implements HttpContextManagementMBean {
         
         } else {
             if (__UrlMap.getMaxRecent() != cacheSize) {
-                __UrlMap.setMaxMemoryUsedPercent(cacheSize);
+                // TODO: __UrlMap.setMaxRecent(cacheSize);
             }
         }
     
@@ -67,7 +65,7 @@ public class HttpContextManagement implements HttpContextManagementMBean {
     //
     
     private HttpContextManagement(int cacheSize) {
-        __UrlMap = new LRUCache(cacheSize);
+        __UrlMap = new Cache(cacheSize);
         readUrlLoggingEnabled = true;
     }
     
@@ -128,7 +126,7 @@ public class HttpContextManagement implements HttpContextManagementMBean {
         }
 
         //
-        // Because LRUCache doesn't take advantage of the underlying concurrentMap, this code either has to (1)introduce 
+        // Because Cache doesn't take advantage of the underlying concurrentMap, this code either has to (1)introduce 
         // sync block to synchronize addReadUrl requests which would negatively impact all templates calling addReadUrl
         // or (2) accept potential race condition during the first add call on the same Url. This implementation takes
         // (2) approach as this feature is more for reporting and hence not worth the performance degradation . Also, 

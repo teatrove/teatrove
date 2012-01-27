@@ -1,25 +1,6 @@
 <teaservlet>
 
 	<!-- 
-	define the default template when just the directory is provided 
-	-->
-    
-    <template>
-        <default>index</default>
-    </template>
-
-	<!-- 
-	define the logging states for the TeaServlet 
-	-->
-    
-    <log>
-        <debug>false</debug>
-        <info>true</info>
-        <warn>true</warn>
-        <error>true</error>
-    </log>
-
-	<!-- 
 	define the administration key required to access the administration pages
 	ie: http://[host]:[port]/[context]/system/teaservlet/Admin?[key]=[value]
 	-->
@@ -40,15 +21,7 @@
 	-->
 	
     <applications>
-
-		<!-- 
-		load the standard TeaServlet administration console and methods
-		-->
-		
-        <TeaServletAdmin>
-            <class>org.teatrove.teaservlet.AdminApplication</class>
-        </TeaServletAdmin>
-        
+                
         <!-- 
         load our custom HelloWorldApplication that provides access and registers
         the HelloWorldContext. The <init> block may be used to provide config

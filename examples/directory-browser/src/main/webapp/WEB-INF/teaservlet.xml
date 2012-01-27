@@ -41,14 +41,6 @@
 	
     <applications>
 
-		<!-- 
-		load the standard TeaServlet administration console and methods
-		-->
-		
-        <TeaServletAdmin>
-            <class>org.teatrove.teaservlet.AdminApplication</class>
-        </TeaServletAdmin>
-        
         <!-- 
         load our custom DirectoryBrowserApplication that provides access to
         functionality to traverse a directory structure.  The <init> block may 

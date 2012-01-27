@@ -243,7 +243,7 @@
                                     inlineStressClass = 'yellow';
                                 }
 
-                                numberFormat("0.00");
+                                numberFormat("0.00", "--", "--");
                                 stress = (stress*100.0) & '%';
                                 numberFormat(null);
                                 trendChart = '<span id="raw-sparkline-' & d & '">Loading...</span>';
@@ -344,13 +344,13 @@
                                             '<div class="template-path">' templatePath '</div>'
                                             '<div class="template-name">'
                                                 //'<a target="_blank" href="' templatePath templateName '" title="Follow template url">' templateName '</a>'
-                                                '<a href="?page=template_info&name='  templateNamePath '" title="Follow template url">' templateName '</a>'
+                                                '<a href="?page=template_info&name='  templateNamePath '" title="View template stats">' templateName '</a>'
                                                 if ( needsReload ) {
                                                     '<span class="reloadableTemplate" style="margin-left: 4px; color: red;">&#187;</span>'
                                                 }
                                             '</div>'
                                         '</div>'
-                                        '<div class="template-options">'
+                                        '<div class="template-options" style="margin-top: 16px;">'
                                             if ( needsReload ) {
                                                 '<a class="compile" href="remote/reload?reloadTemplates=selected&selectedTemplates='  templateNamePath '" title="Compile template"></a>'
                                             } else {
