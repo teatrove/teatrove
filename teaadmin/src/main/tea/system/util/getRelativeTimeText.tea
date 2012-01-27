@@ -10,67 +10,79 @@
         showTimeZone = false;
     }
 
+    roundDown = true;
+
     text = '';
 
     if ( current != null and value != null ) {
         difference = current - value;
 
+        SECOND = 1000L;
+        MINUTE = 60 * SECOND;
+        HOUR = 60 * MINUTE;
+        DAY = 24 * HOUR;
+        WEEK = 7 * DAY;
+        MONTH = 30 * DAY;
+        YEAR = 365 * DAY;
+
         // If less than a minute...
-        if ( difference < (60 * 1000L) ) {
+        if ( difference < MINUTE ) {
             unit = 'second';
             format = "HH:mm:ss";
             // Round to nearest second.
-            time = (difference + 500) / (1000L);
+            time = (difference + SECOND) / SECOND;
         }
         // If less than 1 hour...
-        else if ( difference < (60 * 60 * 1000L) ) {
+        else if ( difference < HOUR ) {
             unit = 'minute';
             format = "HH:mm:ss";
             // Round to nearest minute.
-            time = (difference + 30 * 1000L) / (60 * 1000L);
+            time = (difference + MINUTE) / MINUTE;
         }
-        // If less than 1 day...
-        else if ( difference < (60 * 60 * 24 * 1000L) ) {
+        // If less than 1 day or same day...
+        else if ( difference < (2 * DAY) ) {
             unit = 'hour';
             format = "HH:mm:ss";
             // Round to nearest hour.
-            time = (difference + 30 * 60 * 1000L) / (60 * 60 * 1000L);
-        }
-        // If same day...
-        else if ( difference < (2 * 60 * 60 * 24 * 1000L) and useRelative ) {
-            unit = 'hour';
-            format = "HH:mm:ss";
-            // Round to nearest hour.
-            time = (difference + 30 * 60 * 1000L) / (60 * 60 * 1000L);
+            time = (difference + HOUR) / (HOUR);
         }
         // If same week...
-        else if ( difference < (7 * 60 * 60 * 24 * 1000L) and useRelative ) {
+        else if ( difference < WEEK ) {
             unit = 'day';
-            format = "EEE HH:mm:ss";
-            // Round to nearest hour.
-            time = (difference + 30 * 60 * 24 * 1000L) / (60 * 60 * 24 * 1000L);
+            if ( useRelative ) {
+                format = "EEE HH:mm:ss";
+            } else {
+                format = "MM.dd HH:mm:ss";
+            }
+            // Round to nearest day.
+            time = (difference + DAY) / DAY;
         }
         // If less than 1 month...
-        else if ( difference < (31 * 60 * 60 * 24 * 1000L) ) {
+        else if ( difference < MONTH ) {
             unit = 'day';
             format = "MM.dd HH:mm:ss";
             // Round to nearest day.
-            time = (difference + 30 * 60 * 24 * 1000L) / (60 * 60 * 24 * 1000L);
+            time = (difference + DAY) / DAY;
         }
         // If less than 1 year...
-        else if ( difference < (366 * 60 * 60 * 24 * 1000L) ) {
+        else if ( difference < YEAR ) {
             unit = 'month';
             format = "MM.dd HH:mm:ss";
-            // Round to nearest day.
-            time = (difference + 30 * 60 * 24 * 1000L) / (60 * 60 * 24 * 1000L);
+            // Round to nearest month.
+            time = (difference + MONTH) / MONTH;
         }
         else {
             unit = 'month';
             format = "yyyy.MM.dd HH:mm:ss";
-            // Round to nearest day.
-            time = (difference + 30 * 60 * 24 * 1000L) / (60 * 60 * 24 * 1000L);
+            // Round to nearest month.
+            time = (difference + MONTH) / MONTH;
         }
 
+        // round down
+        if ( roundDown ) {
+            time = time - 1;
+        }
+        
         if ( useRelative ) {
             //text = text & '~' & time & '&nbsp;' & unit;
             text = text & time & '&nbsp;' & unit;
@@ -87,7 +99,7 @@
             dateFormat(null);
         }
     }
-    
+
     // return time text
     text
     
