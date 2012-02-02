@@ -17,10 +17,12 @@
 package org.teatrove.teaservlet;
 
 import java.util.Map;
-import javax.servlet.*;
+
+import javax.servlet.ServletConfig;
+
 import org.teatrove.trove.log.Log;
-import org.teatrove.trove.util.PropertyMap;
 import org.teatrove.trove.util.Config;
+import org.teatrove.trove.util.PropertyMap;
 import org.teatrove.trove.util.plugin.Plugin;
 
 /**
@@ -55,5 +57,5 @@ public interface ApplicationConfig extends ServletConfig, Config {
     /**
      * Returns a mapping of all plugins by their names.
      */
-    public Map getPlugins();    
+    public Map<String, Plugin> getPlugins();    
 }
