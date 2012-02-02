@@ -595,6 +595,12 @@ public class TypeChecker {
                         }
                         rvalue.convertTo(type.toNullable());
                     }
+                    else if (rclass == lclass) {
+                        // nothing to convert (already same type)
+                    }
+                    else if (lclass != null && rclass != null && lclass.isAssignableFrom(rclass)) {
+                        rvalue.convertTo(dvar.getType().toNullable());
+                    }
                     else if (rclass != lclass) {
                         error("assignmentstatement.cast.invalid", rclass.getName(), lclass.getName(), node);
                         return null;

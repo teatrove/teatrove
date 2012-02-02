@@ -16,6 +16,7 @@ public class GenericsTest extends AbstractTemplateTest {
     @Test
     public void testGenerics() throws Exception {
         // setup params
+        List<Integer> integers = Arrays.asList(Integer.valueOf(1));
         List<List<Integer[]>> numbers = new ArrayList<List<Integer[]>>();
         numbers.add(Collections.singletonList(new Integer[] {
             Integer.valueOf(5), Integer.valueOf(3), Integer.valueOf(1)
@@ -25,16 +26,25 @@ public class GenericsTest extends AbstractTemplateTest {
         states.put("test", Arrays.asList("going", "going", "gone"));
 
         String result1 =
-            executeSource(TEST_SOURCE_1, TEST_SOURCE_PARAMS, numbers, states);
+            executeSource(TEST_SOURCE_1, TEST_SOURCE_PARAMS, 
+                          numbers, states, integers);
         assertEquals("531", result1);
 
         String result2 =
-            executeSource(TEST_SOURCE_2, TEST_SOURCE_PARAMS, numbers, states);
+            executeSource(TEST_SOURCE_2, TEST_SOURCE_PARAMS, 
+                          numbers, states, integers);
         assertEquals("goinggoinggone", result2);
+        
+        String result3 =
+            executeSource(TEST_SOURCE_3, TEST_SOURCE_PARAMS, 
+                          numbers, states, integers);
+        assertEquals("1", result3);
     }
 
     protected static final String TEST_SOURCE_PARAMS =
-        "List<List<Integer[]>> numbers, Map<String, List<String>> states";
+        "List<List<Integer[]>> numbers, " +
+        "Map<String, List<String>> states, " +
+        "List<Integer> integers";
 
     protected static final String TEST_SOURCE_1 =
         "if (numbers != null) {" +
@@ -51,5 +61,11 @@ public class GenericsTest extends AbstractTemplateTest {
         "state = states['test']" +
         "foreach (s in state) {" +
             "s" +
+        "}";
+    
+    protected static final String TEST_SOURCE_3 =
+        "foreach (integer in integers) {" +
+            "num = integer as Number; " +
+            "num" +
         "}";
 }
