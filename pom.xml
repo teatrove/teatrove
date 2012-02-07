@@ -232,10 +232,4 @@
         </profile>        
     </profiles>
 
-   <scm>
-        <url>https://github.com/nicholas/teatrove</url>
-        <connection>scm:git:https://github.com/nicholas/teatrove.git</connection>
-        <developerConnection>scm:git:git@github.com:nicholas/teatrove.git</developerConnection>
-    </scm>
-
 </project>
