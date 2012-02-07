@@ -4,7 +4,6 @@
   
     <groupId>org.teatrove.examples</groupId>
     <artifactId>hello-world</artifactId>
-    <version>4.1.1-SNAPSHOT</version>
 
     <parent>
         <groupId>org.teatrove</groupId>
@@ -30,7 +29,6 @@
         <dependency>
             <groupId>org.teatrove</groupId>
             <artifactId>teaservlet</artifactId>
-            <version>4.1.1-SNAPSHOT</version>
         </dependency> 
 
     </dependencies>

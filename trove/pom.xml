@@ -4,7 +4,6 @@
   
   <groupId>org.teatrove</groupId>
   <artifactId>trove</artifactId>
-  <version>4.1.1-SNAPSHOT</version>
 
   <parent>
     <groupId>org.teatrove</groupId>
@@ -111,7 +110,7 @@
       <plugin>
         <groupId>org.teatrove</groupId>
         <artifactId>package-info-maven-plugin</artifactId>
-        <version>${package-info-maven-plugin.version}</version>
+        <version>${project.version}</version>
         <configuration>
           <packageRoot>org.teatrove.trove</packageRoot>
         </configuration>
