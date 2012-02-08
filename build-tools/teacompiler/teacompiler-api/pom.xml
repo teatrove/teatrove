@@ -3,7 +3,6 @@
     
     <groupId>org.teatrove</groupId>
     <artifactId>teacompiler-api</artifactId>
-    <version>4.1.1-espn-1-SNAPSHOT</version>
     <name>Tea Compiler API</name>
     
     <parent>

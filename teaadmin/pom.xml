@@ -10,7 +10,6 @@
   
   <groupId>org.teatrove</groupId>
   <artifactId>teaadmin</artifactId>
-  <version>4.1.1-espn-1-SNAPSHOT</version>
   
   <packaging>jar</packaging>
 
@@ -30,13 +29,11 @@
     <dependency>
       <groupId>org.teatrove</groupId>
       <artifactId>teaservlet</artifactId>
-      <version>${teaservlet.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.teatrove</groupId>
       <artifactId>teaapps</artifactId>
-      <version>${teaapps.version}</version>
     </dependency>
 
     <!-- general -->
@@ -71,7 +68,7 @@
         <plugin>
             <groupId>org.teatrove</groupId>
             <artifactId>teacompiler-maven-plugin</artifactId>
-            <version>${teacompiler.version}</version>
+            <version>${project.version}</version>
             <configuration>
                 <force>true</force>
                 <guardian>true</guardian>
@@ -106,17 +103,17 @@
                 <dependency>
                     <groupId>org.teatrove</groupId>
                     <artifactId>tea</artifactId>
-                    <version>${tea.version}</version>
+                    <version>${project.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.teatrove</groupId>
                     <artifactId>trove</artifactId>
-                    <version>${trove.version}</version>
+                    <version>${project.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.teatrove</groupId>
                     <artifactId>teaapps</artifactId>
-                    <version>${teaapps.version}</version>
+                    <version>${project.version}</version>
                 </dependency>
             </dependencies>
         </plugin>

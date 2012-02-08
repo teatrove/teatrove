@@ -9,7 +9,6 @@
 
   <groupId>org.teatrove</groupId>
   <artifactId>teatools</artifactId>
-  <version>4.1.1-espn-1-SNAPSHOT</version>
   
   <packaging>jar</packaging>
 
@@ -21,13 +20,11 @@
     <dependency>
       <groupId>org.teatrove</groupId>
       <artifactId>tea</artifactId>
-      <version>${tea.version}</version>
     </dependency>
   
     <dependency>
       <groupId>org.teatrove</groupId>
       <artifactId>trove</artifactId>
-      <version>${trove.version}</version>
     </dependency>
     
     <dependency>
@@ -67,7 +64,7 @@
       <plugin>
         <groupId>org.teatrove</groupId>
         <artifactId>package-info-maven-plugin</artifactId>
-        <version>${package-info-maven-plugin.version}</version>
+        <version>${project.version}</version>
         <configuration>
           <!-- BEGIN ESPN UPDATE: rename from org.teatrove to com.go -->
           <packageRoot>com.go.teatools</packageRoot>
