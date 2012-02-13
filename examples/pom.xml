@@ -4,7 +4,7 @@
     <parent>
     	<groupId>org.teatrove</groupId>
         <artifactId>teatrove</artifactId>
-        <version>4.1.1-espn-2</version>
+        <version>4.1.1-espn-3-SNAPSHOT</version>
     </parent>    
 
     <groupId>org.teatrove</groupId>
