@@ -33,15 +33,15 @@ import org.apache.commons.codec.binary.Hex;
  */
 public class EncodingContext {
     
-    public static String encodeBase64(String str) {
+    public String encodeBase64(String str) {
         return Base64.encodeBase64URLSafeString(str.getBytes());
     }
     
-    public static String decodeBase64(String str) {
+    public String decodeBase64(String str) {
         return new String(Base64.decodeBase64(str));
     }
     
-    public static String encodeIntArray(int[] input) throws IOException {
+    public String encodeIntArray(int[] input) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(bos);
         int length = input.length;
@@ -52,7 +52,7 @@ public class EncodingContext {
         return new String(Base64.encodeBase64URLSafe(bos.toByteArray()));
     }
     
-    public static int[] decodeIntArray(String input) throws IOException {
+    public int[] decodeIntArray(String input) throws IOException {
         int[] result = null;
         ByteArrayInputStream bis = 
             new ByteArrayInputStream(Base64.decodeBase64(input));
@@ -124,15 +124,15 @@ public class EncodingContext {
     }
 
     
-    public static String encodeHex(byte[] bytes) {
+    public String encodeHex(byte[] bytes) {
         return new String(Hex.encodeHex(bytes));
     }
 
-    public static byte[] decodeHex(String str) throws DecoderException {
+    public byte[] decodeHex(String str) throws DecoderException {
         return Hex.decodeHex(str.toCharArray());
     }
     
-    public static String decodeHexToString(String str) throws DecoderException {
+    public String decodeHexToString(String str) throws DecoderException {
         String result = null;
         byte[] bytes = Hex.decodeHex(str.toCharArray());
         if (bytes != null && bytes.length > 0) {
