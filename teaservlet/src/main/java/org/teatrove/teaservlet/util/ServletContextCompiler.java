@@ -95,7 +95,7 @@ public class ServletContextCompiler extends AbstractCompiler {
     			listTemplates(root, path, templates);
     		}
     		else if (path.endsWith(".tea")) {
-    			String name = path.substring(root.length(), path.length() - 4).replace("[/\\]", ".");
+    			String name = path.substring(root.length(), path.length() - 4).replaceAll("[\\\\/]+", ".");
     			templates.put(name, path);
     		}
     	}
@@ -106,8 +106,6 @@ public class ServletContextCompiler extends AbstractCompiler {
         Unit(String name, Compiler compiler) {
             super(name, compiler);
         }
-
-
 
         public boolean shouldCompile() {
         	long remoteTimeStamp = 0L;
