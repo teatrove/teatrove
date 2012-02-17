@@ -22,27 +22,27 @@ import java.util.Comparator;
 
 public class SortContext {
     
-    public static void sort(Object[] array, String onColumn, boolean reverse) {
+    public void sort(Object[] array, String onColumn, boolean reverse) {
         Class objClass = getObjectClass(array);
         if (objClass != null) {
             sort(array, objClass, onColumn, reverse);
         }
     }
     
-    public static void sort(Object[] array, String[] onColumns,  boolean[] reverse) {
+    public void sort(Object[] array, String[] onColumns,  boolean[] reverse) {
         Class arrayType = getObjectClass(array);
         if (arrayType != null) {
             sort(array, arrayType, onColumns, reverse);
         }       
     }
     
-    public static void sort(String[] array, boolean reverse, boolean ignoreCase) {
+    public void sort(String[] array, boolean reverse, boolean ignoreCase) {
     	StringComparator comparator = new StringComparator(reverse, ignoreCase);
     	Arrays.sort(array, comparator);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void sort(Object[] array, boolean sortAscending) {
+	public void sort(Object[] array, boolean sortAscending) {
     	Class<?> arrayType = getObjectClass(array);
         if (arrayType != null) {
         	Comparator comparator = null;
@@ -62,35 +62,35 @@ public class SortContext {
         }
     }
     
-    public static void sortAscending(Object[] array) {
+    public void sortAscending(Object[] array) {
     	Arrays.sort(array);
     }
     
-    public static void sortAscending(int[] array) {
+    public void sortAscending(int[] array) {
     	Arrays.sort(array);
     }
     
-    public static void sortAscending(double[] array) {
+    public void sortAscending(double[] array) {
     	Arrays.sort(array);
     }
     
-    public static void sortAscending(float[] array) {
+    public void sortAscending(float[] array) {
     	Arrays.sort(array);
     }
     
-    public static void sortAscending(byte[] array) {
+    public void sortAscending(byte[] array) {
     	Arrays.sort(array);
     }
     
-    public static void sortAscending(short[] array) {
+    public void sortAscending(short[] array) {
     	Arrays.sort(array);
     }
     
-    public static void sortAscending(long[] array) {
+    public void sortAscending(long[] array) {
     	Arrays.sort(array);
     }
     
-    private static void sort(Object[] array, Class arrayType, String onColumn, boolean reverse) {
+    private void sort(Object[] array, Class arrayType, String onColumn, boolean reverse) {
         BeanComparator comparator = BeanComparator.forClass(arrayType);
         if (onColumn != null && !onColumn.equals("")) {
             comparator = comparator.orderBy(onColumn);
@@ -101,7 +101,7 @@ public class SortContext {
         Arrays.sort(array, comparator);
     }   
     
-    private static void sort(Object[] array, Class arrayType, String[] onColumns, boolean[] reverse) {
+    private void sort(Object[] array, Class arrayType, String[] onColumns, boolean[] reverse) {
         BeanComparator comparator = BeanComparator.forClass(arrayType);
         for (int i = 0; i < onColumns.length; i++) {
             comparator = comparator.orderBy(onColumns[i]);
@@ -112,7 +112,7 @@ public class SortContext {
         Arrays.sort(array, comparator);
     }
 
-    private static Class getObjectClass(Object[] array) {
+    private Class getObjectClass(Object[] array) {
         Class result = null;
         if (array != null) {
             for (int i = 0; i < array.length; i++) {
@@ -126,7 +126,7 @@ public class SortContext {
     }
     
     @SuppressWarnings("rawtypes")
-	public static class GenericComparator implements Comparator<Comparable> {
+	public class GenericComparator implements Comparator<Comparable> {
     	
     	protected boolean sortAscending = true;
     	
@@ -150,7 +150,7 @@ public class SortContext {
 	    }
     }
     
-    public static class StringComparator implements Comparator<String> {
+    public class StringComparator implements Comparator<String> {
     	
     	protected boolean sortAscending = true;
     	protected boolean ignoreCase = true;
