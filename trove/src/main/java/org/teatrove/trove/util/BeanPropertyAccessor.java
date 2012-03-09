@@ -37,8 +37,9 @@ import org.teatrove.trove.classfile.*;
 public abstract class BeanPropertyAccessor {
     private static final boolean DEBUG;
 
-    // Maps classes to BeanPropertyAccessors.
-    private static Map cAccessors = new IdentityMap();
+    @SuppressWarnings("unchecked")
+    private static Map<Class<?>, BeanPropertyAccessor> cAccessors = 
+        new IdentityMap();
 
     static {
         DEBUG = Boolean.getBoolean
@@ -48,10 +49,9 @@ public abstract class BeanPropertyAccessor {
     /**
      * Returns a new or cached BeanPropertyAccessor for the given class.
      */
-    public static BeanPropertyAccessor forClass(Class clazz) {
+    public static BeanPropertyAccessor forClass(Class<?> clazz) {
         synchronized (cAccessors) {
-            BeanPropertyAccessor bpa =
-                (BeanPropertyAccessor)cAccessors.get(clazz);
+            BeanPropertyAccessor bpa = cAccessors.get(clazz);
             if (bpa != null) {
                 return bpa;
             }
@@ -61,9 +61,10 @@ public abstract class BeanPropertyAccessor {
         }
     }
 
-    private static BeanPropertyAccessor generate(Class beanType) {
+    private static BeanPropertyAccessor generate(Class<?> beanType) {
+        
         ClassInjector injector = new ClassInjector
-            (beanType.getClassLoader(), (File)null, null);
+            (Thread.currentThread().getContextClassLoader(), (File)null, null);
 
         int id = beanType.hashCode();
 
@@ -110,7 +111,7 @@ public abstract class BeanPropertyAccessor {
         }
 
         try {
-            Class clazz = injector.loadClass(cf.getClassName());
+            Class<?> clazz = injector.loadClass(cf.getClassName());
             return (BeanPropertyAccessor)clazz.newInstance();
         }
         catch (ClassNotFoundException e) {
@@ -125,7 +126,7 @@ public abstract class BeanPropertyAccessor {
     }
 
     private static ClassFile generateClassFile(String className,
-                                               Class beanType)
+                                               Class<?> beanType)
     {
         PropertyDescriptor[][] props = getBeanProperties(beanType);
 
@@ -150,7 +151,7 @@ public abstract class BeanPropertyAccessor {
     }
 
     private static void generateMethod(ClassFile cf,
-                                       Class beanType,
+                                       Class<?> beanType,
                                        PropertyDescriptor[] properties,
                                        boolean forRead)
     {
@@ -204,10 +205,10 @@ public abstract class BeanPropertyAccessor {
 
             Label[] switchLabels = new Label[caseCount];
             Label noMatch = builder.createLabel();
-            List[] caseMethods = caseMethods(caseCount, properties);
+            List<PropertyDescriptor>[] caseMethods = caseMethods(caseCount, properties);
 
             for (int i=0; i<caseCount; i++) {
-                List matches = caseMethods[i];
+                List<PropertyDescriptor> matches = caseMethods[i];
                 if (matches == null || matches.size() == 0) {
                     switchLabels[i] = noMatch;
                 }
@@ -232,7 +233,7 @@ public abstract class BeanPropertyAccessor {
             TypeDesc[] params = {objectType};
 
             for (int i=0; i<caseCount; i++) {
-                List matches = caseMethods[i];
+                List<PropertyDescriptor> matches = caseMethods[i];
                 if (matches == null || matches.size() == 0) {
                     continue;
                 }
@@ -241,7 +242,7 @@ public abstract class BeanPropertyAccessor {
 
                 int matchCount = matches.size();
                 for (int j=0; j<matchCount; j++) {
-                    PropertyDescriptor pd = (PropertyDescriptor)matches.get(j);
+                    PropertyDescriptor pd = matches.get(j);
 
                     // Test against name to find exact match.
 
@@ -297,7 +298,7 @@ public abstract class BeanPropertyAccessor {
     private static void loadPropertyAsObject(CodeBuilder builder,
                                              LocalVariable beanVar,
                                              Method m) {
-        Class returnType = m.getReturnType();
+        Class<?> returnType = m.getReturnType();
         Type genericType = m.getGenericReturnType();
 
         if (!returnType.isPrimitive()) {
@@ -336,7 +337,7 @@ public abstract class BeanPropertyAccessor {
                                                LocalVariable beanVar,
                                                LocalVariable valueVar,
                                                Method m) {
-        Class valueType = m.getParameterTypes()[0];
+        Class<?> valueType = m.getParameterTypes()[0];
 
         if (!valueType.isPrimitive()) {
             builder.loadLocal(beanVar);
@@ -390,17 +391,20 @@ public abstract class BeanPropertyAccessor {
      * matches a switch case, the second index provides a list of all the
      * PropertyDescriptors whose name hash matched on the case.
      */
-    private static List[] caseMethods(int caseCount,
-                                      PropertyDescriptor[] props) {
-        List[] cases = new List[caseCount];
+    @SuppressWarnings("unchecked")
+    private static 
+    List<PropertyDescriptor>[] caseMethods(int caseCount,
+                                           PropertyDescriptor[] props) {
+        List<PropertyDescriptor>[] cases = new List[caseCount];
 
         for (int i=0; i<props.length; i++) {
             PropertyDescriptor prop = props[i];
             int hashCode = prop.getName().hashCode();
             int caseValue = (hashCode & 0x7fffffff) % caseCount;
-            List matches = cases[caseValue];
+            List<PropertyDescriptor> matches = cases[caseValue];
             if (matches == null) {
-                matches = cases[caseValue] = new ArrayList();
+                matches = cases[caseValue] = 
+                    new ArrayList<PropertyDescriptor>();
             }
             matches.add(prop);
         }
@@ -412,14 +416,17 @@ public abstract class BeanPropertyAccessor {
      * Returns two arrays of PropertyDescriptors. Array 0 has contains read
      * PropertyDescriptors, array 1 contains the write PropertyDescriptors.
      */
-    private static PropertyDescriptor[][] getBeanProperties(Class beanType) {
-        List readProperties = new ArrayList();
-        List writeProperties = new ArrayList();
+    private static PropertyDescriptor[][] getBeanProperties(Class<?> beanType) {
+        List<PropertyDescriptor> readProperties = 
+            new ArrayList<PropertyDescriptor>();
+        
+        List<PropertyDescriptor> writeProperties = 
+            new ArrayList<PropertyDescriptor>();
 
         try {
-            Map map = CompleteIntrospector.getAllProperties(beanType);
+            Map<?, ?> map = CompleteIntrospector.getAllProperties(beanType);
 
-            Iterator it = map.values().iterator();
+            Iterator<?> it = map.values().iterator();
             while (it.hasNext()) {
                 PropertyDescriptor pd = (PropertyDescriptor)it.next();
                 if (pd.getReadMethod() != null) {
