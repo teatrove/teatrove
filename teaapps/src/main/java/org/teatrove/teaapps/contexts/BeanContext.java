@@ -25,15 +25,72 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * The BeanContext is a Tea context that allows dynamic lookup and setting of
+ * Java beans.  Tea does not support direct dynamic lookup of beans in order to
+ * be highly performant.  The BeanContext provides this behavior by utilizing a
+ * specially built dynamic class that performs fast and efficient property
+ * lookups to decrease the performance impact.
+ * 
+ * The context works by returning a special object that wraps a given bean and
+ * uses a special Tea notation to allow map-based lookups.  The lookups may be
+ * either simple bean properties (ie: name, location, etc) or may be composite
+ * properties in dot-notation (ie: venue.city.name).  By default, if any portion
+ * of the composite lookup is <code>null</code>, then <code>null</code> is
+ * returned.  You can alter this behavior by passing in <code>true</code> for
+ * the <code>failOnNulls</code> parameter.  In this case, if any portion of the
+ * composite graph is <code>null</code>, then a {@link BeanContextException}
+ * is thrown.
+ * 
+ * Example:
+ * <code>
+ *     bean = getBeanMap(myObject)
+ *     'Name: ' bean['name']
+ * </code>
+ *  
  * @author Scott Jappinen
  */
 public class BeanContext {
     
-    private Map<String,MethodTypePair> mMethodTypePairMap = new HashMap<String,MethodTypePair>();
+    private Map<String,MethodTypePair> mMethodTypePairMap =
+        new HashMap<String,MethodTypePair>();
 
+    /**
+     * Get an object wrapping the given bean that allows dynamic property
+     * lookups.
+     * 
+     * <code>bean = getBeanMap(bean); bean['name']</code>
+     * 
+     * @param bean The bean to wrap and return
+     * 
+     * @return The object allowing dynamic lookups on the bean
+     */
     public BeanMap getBeanMap(Object bean) {
-        BeanPropertyAccessor accessor = BeanPropertyAccessor.forClass(bean.getClass());
-        return new BeanMap(bean, accessor);
+        return getBeanMap(bean, false);
+    }
+    
+    /**
+     * Get an object wrapping the given bean that allows dynamic property
+     * lookups.  The <code>failOnNulls</code> parameter may be used to cause
+     * an exception to be thrown when portions of the composite graph are
+     * <code>null</code>.
+     * 
+     * <code>bean = getBeanMap(bean); bean['name']</code>
+     * 
+     * @param bean The bean to wrap and return
+     * @param failOnNulls The state of whether to throw exceptions on null graph
+     * 
+     * @return The object allowing dynamic lookups on the bean
+     * 
+     * @throws BeanContextException If any portion of the composite graph is
+     *         <code>null</code> such as city being null in 'team.city.name'. 
+     *         This is only thrown if failOnNulls is <code>true</code>
+     */
+    public BeanMap getBeanMap(Object bean, boolean failOnNulls) 
+        throws BeanContextException {
+        
+        BeanPropertyAccessor accessor = 
+            BeanPropertyAccessor.forClass(bean.getClass());
+        return new BeanMap(bean, accessor, failOnNulls);
     }
 
     /**
@@ -42,36 +99,43 @@ public class BeanContext {
      * the attribute name to set, and the attribute value.  To get a 
      * listing of attribute values that can be set for a given object, 
      * see the createObject method for the object.
-     * <P>
+     * 
      * @param object The object to set an attribute value for.
      * @param attributeName The name of the attribute to set.
      * @param attributeValue The value of the attribute to set.
      */
     public void set(Object object, String attributeName, Object attributeValue)
-        throws IllegalAccessException, InvocationTargetException, BeanContextException
+        throws IllegalAccessException, InvocationTargetException, 
+               BeanContextException
     {
         Class<?> objectClass = object.getClass();
-        String methodName = "set" + attributeName.substring(0,1).toUpperCase() + attributeName.substring(1);        
+        String methodName = 
+            "set" + attributeName.substring(0,1).toUpperCase() + 
+            attributeName.substring(1);
+        
         String methodKey = objectClass.getName() + "." + methodName;
-        MethodTypePair pair = (MethodTypePair) mMethodTypePairMap.get(methodKey);
+        MethodTypePair pair = mMethodTypePairMap.get(methodKey);
         if (pair == null) {
             pair = getMethodTypePair(objectClass, methodName, attributeValue);
             mMethodTypePairMap.put(methodKey, pair);
         }
+        
         if (pair != null) {        
             Object[] params = {convertObjectType(attributeValue, pair.type)};
             pair.method.invoke(object, params);            
         } else {
-            if (objectClass != null) {
-                throw new BeanContextException("A method " + objectClass.getName() + ".");
-            }
-            if (methodName != null && attributeValue != null) {
-                throw new BeanContextException(methodName + "(" + attributeValue.getClass() + ") could not be found.");
-            }
+            throw new BeanContextException
+            (
+                methodName + "(" + 
+                (attributeValue == null ? "null" : attributeValue.getClass()) + 
+                ") could not be found."
+            );
         }
     }
 
-    private static MethodTypePair getMethodTypePair(Class<?> objectClass, String methodName, Object attributeValue) {
+    private static MethodTypePair getMethodTypePair(Class<?> objectClass, 
+        String methodName, Object attributeValue) {
+        
         MethodTypePair result = null;
         Method method;
         Class<?> valueClass = null;
@@ -86,12 +150,14 @@ public class BeanContext {
                 if (compatibleClasses != null) {
                     for (int i=0; i < compatibleClasses.length; i++) {
                         try {
-                            Class<?>[] param = new Class[] {toPrimitiveType(compatibleClasses[i])};
+                            Class<?>[] param = new Class[] {
+                                toPrimitiveType(compatibleClasses[i])
+                            };
+                            
                             method = objectClass.getMethod(methodName, param);
                             result = new MethodTypePair(method, compatibleClasses[i]);
                             break;
-                        } catch (NoSuchMethodException e2) {
-                        }
+                        } catch (NoSuchMethodException e2) { /* ignore */ }
                     }
                 }
             }
@@ -141,7 +207,9 @@ public class BeanContext {
         return result;
     }
 
-    private static Object convertObjectType(Object value, Class<?> typeToCastInto) {
+    private static Object convertObjectType(Object value, 
+        Class<?> typeToCastInto) {
+        
         Object result = value;
         if (value != null) {
             Class<?> valueClass = value.getClass();
@@ -177,19 +245,66 @@ public class BeanContext {
     
     public class BeanMap {
         private Object mBean;
+        private boolean mFailOnNulls;
         private BeanPropertyAccessor mAccessor;
         
-        public BeanMap(Object bean, BeanPropertyAccessor accessor) {
+        public BeanMap(Object bean, BeanPropertyAccessor accessor,
+                       boolean failOnNulls) {
             mBean = bean;
             mAccessor = accessor;
+            mFailOnNulls = failOnNulls;
         }
         
         public Object get(String property) {
-            return mAccessor.getPropertyValue(mBean, property);
+            // verify
+            if (property == null || property.length() == 0) {
+                throw new IllegalArgumentException(
+                    "BeanAccessor.get: invalid property on bean " +
+                    mBean.getClass().getName()
+                );
+            }
+
+            // TODO: support ?. syntax for null-safe operation
+            
+            // check if single property and short circuit
+            int idx = property.indexOf('.');
+            if (idx < 0) {
+                return mAccessor.getPropertyValue(mBean, property);
+            }
+
+            // otherwise, walk composite property
+            int last = 0;
+            Object bean = mBean;
+            BeanPropertyAccessor accessor = mAccessor;
+            do {
+                // get next property
+                String prop = property.substring(last, idx);
+                bean = accessor.getPropertyValue(bean, prop);
+                if (bean == null) {
+                    if (mFailOnNulls) {
+                        throw new IllegalStateException(
+                            "BeanAccessor.get: null value for property " + 
+                            prop + " on bean " + mBean.getClass().getName()
+                        );
+                    }
+
+                    return null;
+                }
+
+                // update to next accessor
+                accessor = BeanPropertyAccessor.forClass(bean.getClass());
+
+                // update to next index
+                last = idx + 1;
+                idx = property.indexOf('.', last);
+            } while (idx >= 0);
+
+            // return last result
+            return accessor.getPropertyValue(bean, property.substring(last));
         }
     }
     
-    public class BeanContextException extends Exception {
+    public class BeanContextException extends RuntimeException {
         
         public static final long serialVersionUID = 1234567890L;
         
