@@ -324,13 +324,15 @@
                                 numberFormat(null);
 
                                 needsReload = false;
-                                foreach ( reloadableTemplate in admin.reloadableTemplates ) {
-                                    dotPath = replace(reloadableTemplate.name, "/", ".");
-                                    if ( stats.fullTemplateName == dotPath ) {
-                                        needsReload = true;
-                                        break;
-                                    }
-                                }
+								if ( admin.reloadableTemplates != null ) {
+                                	foreach ( reloadableTemplate in admin.reloadableTemplates ) {
+	                                    dotPath = replace(reloadableTemplate.name, "/", ".");
+	                                    if ( stats.fullTemplateName == dotPath ) {
+	                                        needsReload = true;
+	                                        break;
+	                                    }
+	                                }
+								}
 
                                 if ( rowClass == 'evenrow' ) {
                                     rowClass = 'oddrow';
