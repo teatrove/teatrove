@@ -30,6 +30,7 @@ import javax.servlet.ServletContext;
 
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.tea.util.AbstractCompiler;
 import org.teatrove.trove.util.ClassInjector;
 
 public class ServletContextCompiler extends AbstractCompiler {
@@ -45,7 +46,8 @@ public class ServletContextCompiler extends AbstractCompiler {
                           		  ClassInjector injector,
                           		  String encoding,
                           		  long precompiledTolerance) {
-        super(rootPackage, rootDestDir, injector, encoding, precompiledTolerance);                  	
+        super(injector, rootPackage, rootDestDir, encoding, 
+              precompiledTolerance, null);
 
         mServletContext = servletContext;
         mSourceDirs = rootSourceDirs;
@@ -54,12 +56,12 @@ public class ServletContextCompiler extends AbstractCompiler {
         	if (!sourceDir.startsWith("/")) {
         		throw new IllegalStateException("expected paths to begin with leading slash");
         	}
-        	
+
         	if (!sourceDir.endsWith("/")) {
         		mSourceDirs[i] = sourceDir.concat("/");
         	}
         }
-        
+
         mTemplates = loadTemplates();
     }
 
@@ -107,7 +109,7 @@ public class ServletContextCompiler extends AbstractCompiler {
             super(name, compiler);
         }
 
-        public boolean shouldCompile() {
+        protected long getLastModified() {
         	long remoteTimeStamp = 0L;
         	try {
         		String path = mTemplates.get(mDotPath);
@@ -122,10 +124,10 @@ public class ServletContextCompiler extends AbstractCompiler {
         	catch (Exception exception) {
         		mServletContext.log("unable to compile: " + 
         				getSourceFileName(), exception);
-        		return false;
+        		remoteTimeStamp = -1;
         	}
             
-            return shouldCompile(remoteTimeStamp);
+            return remoteTimeStamp;
         }
         
         /**

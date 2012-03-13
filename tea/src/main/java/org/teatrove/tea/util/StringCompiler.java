@@ -16,15 +16,13 @@
 
 package org.teatrove.tea.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.OutputStream;
+import java.io.InputStream;
 import java.util.Hashtable;
 
-import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.trove.util.ClassInjector;
 
 /**
@@ -34,11 +32,9 @@ import org.teatrove.trove.util.ClassInjector;
  *
  * @author Brian S O'Neill
  */
-public class StringCompiler extends Compiler {
+public class StringCompiler extends AbstractCompiler {
 
-    private ClassInjector mInjector;
-    private String mPackagePrefix;
-    private Hashtable<String, String> mTemplateSources;
+    private Hashtable<String, TemplateSource> mTemplateSources;
 
     /**
      * @param injector ClassInjector to feed generated classes into
@@ -52,16 +48,22 @@ public class StringCompiler extends Compiler {
      * @param packagePrefix The target package for the compiled templates
      */
     public StringCompiler(ClassInjector injector, String packagePrefix) {
-        super();
-        mInjector = injector;
-        mPackagePrefix = packagePrefix;
-        mTemplateSources = new Hashtable<String, String>();
+        super(injector, packagePrefix);
+        mTemplateSources = new Hashtable<String, TemplateSource>();
     }
 
     public boolean sourceExists(String name) {
         return mTemplateSources.containsKey(name);
     }
 
+    @Override
+    public String[] getAllTemplateNames() 
+        throws IOException {
+        
+        return mTemplateSources.keySet().toArray(
+            new String[mTemplateSources.size()]);
+    }
+    
     protected CompilationUnit createCompilationUnit(String name) {
         return new Unit(name, this);
     }
@@ -71,38 +73,37 @@ public class StringCompiler extends Compiler {
      * @param source The source code for the template
      */
     public void setTemplateSource(String name, String source) {
-        mTemplateSources.put(name, source);
+        mTemplateSources.put(name, new TemplateSource(source));
     }
 
-    private class Unit extends AbstractCompilationUnit {
-        private String mSourceFileName;
-
+    private class Unit extends AbstractUnit {
         public Unit(String name, Compiler compiler) {
             super(name, compiler);
-
-            mSourceFileName =
-                name.substring(name.lastIndexOf('.') + 1) + ".tea";
         }
 
-        public String getSourceFileName() {
-            return mSourceFileName;
+        protected long getLastModified() {
+            TemplateSource source = mTemplateSources.get(getName());
+            return source == null ? 0 : source.getTimestamp();
         }
+        
+        protected InputStream getTemplateSource(String templateSourceName) 
+            throws IOException {
 
-        public String getTargetPackage() {
-            return mPackagePrefix;
+            TemplateSource source = mTemplateSources.get(getName());
+            return new ByteArrayInputStream(source.getSource().getBytes("UTF-8"));
         }
-
-        public Reader getReader() throws IOException {
-            String source = (String)mTemplateSources.get(getName());
-            return new StringReader(source);
+    }
+    
+    private static class TemplateSource {
+        private String mSource;
+        private long mTimestamp;
+        
+        public TemplateSource(String source) {
+            this.mSource = source;
+            this.mTimestamp = System.currentTimeMillis();
         }
-
-        public OutputStream getOutputStream() throws IOException {
-            return mInjector.getStream(getClassName());
-        }
-
-        public void resetOutputStream() {
-            mInjector.resetStream(getClassName());
-        }
+        
+        public String getSource() { return this.mSource; }
+        public long getTimestamp() { return this.mTimestamp; }
     }
 }

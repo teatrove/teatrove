@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-package org.teatrove.teaservlet.util;
+package org.teatrove.tea.util;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -25,32 +25,67 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.TemplateRepository;
-import org.teatrove.tea.util.AbstractFileCompiler;
+import org.teatrove.tea.parsetree.Template;
 import org.teatrove.trove.io.DualOutput;
 import org.teatrove.trove.util.ClassInjector;
 
-public abstract class AbstractCompiler extends AbstractFileCompiler {
+public abstract class AbstractCompiler extends Compiler {
 
     protected String mRootPackage;
     protected File mRootDestDir;
     protected ClassInjector mInjector;
     protected String mEncoding;
-    protected boolean mForce = false;
+    protected boolean mForce;
     protected long mPrecompiledTolerance;
 
-    public AbstractCompiler(String rootPackage, File rootDestDir,
-                            ClassInjector injector, String encoding,
-                            long precompiledTolerance) {
-	            	
-		super();
-		
-		mRootPackage = rootPackage;
+    public AbstractCompiler(ClassInjector injector) {
+        this(injector, null);
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public AbstractCompiler(ClassInjector injector, String rootPackage) {
+        this(injector, rootPackage, (Map) null);
+    }
+    
+    public AbstractCompiler(ClassInjector injector, String rootPackage,
+                            Map<String, Template> parseTreeMap) {
+        this(injector, rootPackage, null, null, parseTreeMap);
+    }
+
+    public AbstractCompiler(ClassInjector injector, String rootPackage, 
+                            File rootDestDir) {
+        this(injector, rootPackage, rootDestDir, null);
+    }
+    
+    public AbstractCompiler(ClassInjector injector, String rootPackage, 
+                            File rootDestDir, String encoding) {
+        this(injector, rootPackage, rootDestDir, encoding, null);
+    }
+
+    public AbstractCompiler(ClassInjector injector, String rootPackage, 
+                            File rootDestDir, String encoding,
+                            Map<String, Template> parseTreeMap) {
+        this(injector, rootPackage, rootDestDir, encoding, 0L, parseTreeMap);
+    }
+    
+    public AbstractCompiler(ClassInjector injector, String rootPackage, 
+                            File rootDestDir, String encoding,
+                            long precompiledTolerance,
+                            Map<String, Template> parseTreeMap) {
+		super((parseTreeMap == null) ?
+            Collections.synchronizedMap(new HashMap<String, Template>()) : parseTreeMap);
+
+        mInjector = injector;
+        mRootPackage = rootPackage;
 		mRootDestDir = rootDestDir;
 		mInjector = injector;
 		mEncoding = encoding;
@@ -73,14 +108,71 @@ public abstract class AbstractCompiler extends AbstractFileCompiler {
         mForce = force;
     }       
 
+    /**
+     * Get the root target package for all templates. All templates will be 
+     * based on this root package and extended from it.
+     * 
+     * @return The root or base package to use for templates
+     */
+    public String getRootPackage() {
+        return mRootPackage;
+    }
+    
+    /**
+     * Overrides Compiler class implementation (TemplateRepository integration).
+     */
+    public String[] compile(String[] names) 
+        throws IOException {
+
+        if (!TemplateRepository.isInitialized()) {
+            return super.compile(names);
+        }
+        
+        String[] compNames = super.compile(names);
+        ArrayList<String> compList =
+            new ArrayList<String>(Arrays.asList(compNames));
+
+        TemplateRepository rep = TemplateRepository.getInstance();
+        String[] callers = rep.getCallersNeedingRecompile(compNames, this);
+        if (callers.length > 0)
+            compList.addAll(Arrays.asList(super.compile(callers)));
+        String[] compiled = compList.toArray(new String[compList.size()]);
+
+        // JoshY - There's a VM bug in JVM 1.4.2 that can cause the repository 
+        // update to throw a NullPointerException when it shouldn't.  There's a 
+        // workaround in place and we also put a catch here, to allow the 
+        // TeaServlet init to finish just in case
+        try { rep.update(compiled); } catch (Exception e) {
+            System.err.println("Unable to update repository");
+            e.printStackTrace(System.err);
+        }
+        
+        return compiled;
+    }
+    
+    /**
+     * Recursively compiles all files in the source directory.
+     *
+     * @return The names of all the compiled sources
+     */
+    public String[] compileAll() throws IOException {
+        return compile(getAllTemplateNames());
+    }
+
+    /**
+     * Returns all sources (template names) available from the source
+     * directory and in all sub-directories.
+     */
+    public abstract String[] getAllTemplateNames() throws IOException;
+    
     public abstract class AbstractUnit extends CompilationUnit {
         protected String mSourceFilePath;
+        protected String mSourceFileName;
         protected String mDotPath;
         protected File mDestDir;
         protected File mDestFile;
-        protected String mSourceUrl;
         
-        AbstractUnit(String name, Compiler compiler) {
+        protected AbstractUnit(String name, Compiler compiler) {
             super(name, compiler);
             mDotPath = name;
             String slashPath = name.replace('.', '/');
@@ -97,25 +189,17 @@ public abstract class AbstractCompiler extends AbstractFileCompiler {
                 else {
                     mDestDir = mRootDestDir;
                 }
+                
                 mDestDir.mkdirs();          
-                mDestFile = new File
-                    (mDestDir,
-                     slashPath.substring(slashPath.lastIndexOf('/') + 1) 
-                     + ".class");
-            /*
-            try {
-                if (mDestFile.createNewFile()) {
-                    System.out.println(mDestFile.getPath() + " created");
-                }
-                else {
-                    System.out.println(mDestFile.getPath() + " NOT created");
-                }
+                mDestFile = new File(
+                    mDestDir,
+                    slashPath.substring(slashPath.lastIndexOf('/') + 1) + 
+                        ".class"
+                );
             }
-            catch (IOException ioe) {ioe.printStackTrace();}
-            */
-            }
+            
             mSourceFilePath = slashPath;
-            mSourceUrl = getSourceFileName();
+            mSourceFileName = slashPath.concat(".tea");
         }
 
         public String getTargetPackage() {
@@ -123,14 +207,7 @@ public abstract class AbstractCompiler extends AbstractFileCompiler {
         }
 
         public String getSourceFileName() {
-            return mSourceFilePath + ".tea";
-        }
-        
-        /**
-         * comparable to the getSourceFile() method of FileCompiler
-         */
-        public String getSourceUrl() {
-            return mSourceUrl;
+            return mSourceFileName;
         }
         
         public Reader getReader() throws IOException {
@@ -142,23 +219,48 @@ public abstract class AbstractCompiler extends AbstractFileCompiler {
             else {
                 reader = new InputStreamReader(in, mEncoding);
             }
+            
             return reader;
         }
         
-        protected boolean shouldCompile(long timestamp) {
-            final TemplateRepository.TemplateInfo templateInfo = 
-            	TemplateRepository.getInstance().getTemplateInfo(mDotPath);
+        public boolean shouldCompile() {
+            return mForce || shouldCompile(getDestinationLastModified());
+        }
 
-            if(!mForce &&
-                (mDestFile == null || !mDestFile.exists()) &&
-                templateInfo != null &&
-                gteq(templateInfo.getLastModified(), timestamp, 
-                		mPrecompiledTolerance)) {
-            	
+        protected boolean shouldCompile(long timestamp) {
+            if (mForce || (mDestFile != null && !mDestFile.exists())) {
+                return true;
+            }
+
+            long lastModified = getLastModified();
+            if (timestamp > 0 && lastModified > 0 &&
+                gteq(timestamp, lastModified, mPrecompiledTolerance)) {
+
             	return false;
             }
 
             return true;
+        }
+
+        protected abstract long getLastModified();
+        
+        protected long getDestinationLastModified() {
+            /*
+            if (mDestFile == null) {
+                TemplateRepository.TemplateInfo templateInfo = 
+                    TemplateRepository.getInstance().getTemplateInfo(mDotPath);
+                
+                if (templateInfo != null) {
+                    return templateInfo.getLastModified();
+                }
+            }
+            */
+            
+            if (mDestFile != null && mDestFile.exists()) {
+                return mDestFile.lastModified();
+            }
+            
+            return 0L;
         }
         
         /**
@@ -242,10 +344,18 @@ public abstract class AbstractCompiler extends AbstractFileCompiler {
         }
         
         protected String getClassName() {
+            return getClassName(null);
+        }
+
+        protected String getClassName(String innerClass) {
             String className = getName();
             String pack = getTargetPackage();
             if (pack != null && pack.length() > 0) {
                 className = pack + '.' + className;
+            }
+
+            if (innerClass != null) {
+                className = className + '$' + innerClass;
             }
 
             return className;

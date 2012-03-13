@@ -16,15 +16,10 @@
 
 package org.teatrove.tea.util;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -43,7 +38,6 @@ import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.parsetree.Template;
-import org.teatrove.trove.io.DualOutput;
 import org.teatrove.trove.util.ClassInjector;
 
 /**
@@ -60,7 +54,7 @@ import org.teatrove.trove.util.ClassInjector;
  * @author Brian S O'Neill
  * @see ClassInjector
  */
-public class FileCompiler extends AbstractFileCompiler {
+public class FileCompiler extends AbstractCompiler {
     /**
      * Entry point for a command-line tool suitable for compiling Tea
      * templates to be bundled with a product. Templates are read from files
@@ -179,7 +173,7 @@ public class FileCompiler extends AbstractFileCompiler {
             names = compiler.compileAll(true);
         }
         else {
-            names = (String[])templates.toArray(new String[templates.size()]);
+            names = templates.toArray(new String[templates.size()]);
             names = compiler.compile(names);
         }
 
@@ -214,11 +208,6 @@ public class FileCompiler extends AbstractFileCompiler {
     }
 
     private File[] mRootSourceDirs;
-    private String mRootPackage;
-    private File mRootDestDir;
-    private ClassInjector mInjector;
-    private String mEncoding;
-    private boolean mForce = false;
     private Map<File, JarOfTemplates> mSrcJars;
     
     /**
@@ -274,8 +263,8 @@ public class FileCompiler extends AbstractFileCompiler {
                         File rootDestDir,
                         ClassInjector injector,
                         String encoding) {
-        super();
-        init(rootSourceDirs, rootPackage, rootDestDir, injector, encoding);
+        super(injector, rootPackage);
+        init(rootSourceDirs, rootDestDir, encoding);
     }
 
     /**
@@ -293,9 +282,8 @@ public class FileCompiler extends AbstractFileCompiler {
                         ClassInjector injector,
                         String encoding,
                         Map<String, Template> parseTreeMap) {
-        super((parseTreeMap == null) ?
-              Collections.synchronizedMap(new HashMap<String, Template>()) : parseTreeMap);
-        init(rootSourceDirs, rootPackage, rootDestDir, injector, encoding);
+        super(injector, rootPackage, parseTreeMap);
+        init(rootSourceDirs, rootDestDir, encoding);
     }
 
     private JarOfTemplates getJarOfTemplates(File file) throws IOException {
@@ -316,14 +304,10 @@ public class FileCompiler extends AbstractFileCompiler {
     }
 
     private void init(File[] rootSourceDirs,
-                      String rootPackage,
                       File rootDestDir,
-                      ClassInjector injector,
                       String encoding) {
-        mRootSourceDirs = (File[])rootSourceDirs.clone();
-        mRootPackage = rootPackage;
+        mRootSourceDirs = rootSourceDirs.clone();
         mRootDestDir = rootDestDir;
-        mInjector = injector;
         mEncoding = encoding;
 
         rootSourceLoop:for (int i=0; i<rootSourceDirs.length; i++) {
@@ -344,7 +328,7 @@ public class FileCompiler extends AbstractFileCompiler {
         }
 
         if (! TemplateRepository.isInitialized())
-            TemplateRepository.init(rootDestDir, rootPackage);
+            TemplateRepository.init(rootDestDir, getRootPackage());
     }
 
     /**
@@ -545,85 +529,9 @@ public class FileCompiler extends AbstractFileCompiler {
         return (path.startsWith("jar:") && path.endsWith("!"));
     }
 
-    public abstract class FileUnit extends AbstractCompilationUnit {
-        protected final File mDestFile;
-        protected final String mSourceFileName;
-        
+    public abstract class FileUnit extends AbstractUnit {
         FileUnit(String name, Compiler compiler) {
             super(name, compiler);
-            
-            String fname = name.replace('.', '/');
-            mSourceFileName = fname + ".tea";
-            
-            if (mRootDestDir != null) {
-                mDestFile = new File(mRootDestDir, fname + ".class");
-            }
-            else { mDestFile = null; }
-        }
-        
-        @Override
-        public String getTargetPackage() {
-            return mRootPackage;
-        }
-        
-        public String getSourceFileName() {
-            return mSourceFileName;
-        }
-        
-        /**
-         * @return the file that gets written by the compiler.
-         */
-        public File getDestinationFile() {
-            return mDestFile;
-        }
-
-        public OutputStream getOutputStream() throws IOException {
-            OutputStream out1 = null;
-            OutputStream out2 = null;
-
-            if (mDestFile != null) {
-                File dir = mDestFile.getParentFile();
-                if (!dir.exists()) {
-                    dir.mkdirs();
-                }
-                out1 = new FileOutputStream(mDestFile);
-            }
-
-            if (mInjector != null) {
-                out2 = mInjector.getStream(getClassName());
-            }
-
-            OutputStream out;
-
-            if (out1 != null) {
-                if (out2 != null) {
-                    out = new DualOutput(out1, out2);
-                }
-                else {
-                    out = out1;
-                }
-            }
-            else if (out2 != null) {
-                out = out2;
-            }
-            else {
-                out = new OutputStream() {
-                    public void write(int b) {}
-                    public void write(byte[] b, int off, int len) {}
-                };
-            }
-
-            return new BufferedOutputStream(out);
-        }
-        
-        public void resetOutputStream() {
-            if (mDestFile != null) {
-                mDestFile.delete();
-            }
-
-            if (mInjector != null) {
-                mInjector.resetStream(getClassName());
-            }
         }
     }
     
@@ -648,42 +556,32 @@ public class FileCompiler extends AbstractFileCompiler {
             return mSourceFile;
         }
 
-        public Reader getReader() throws IOException {
-            InputStream in = new FileInputStream(mSourceFile);
-            if (mEncoding == null) {
-                return new InputStreamReader(in);
-            }
-            else {
-                return new InputStreamReader(in, mEncoding);
-            }
+        @Override
+        protected InputStream getTemplateSource(String templateSourceName) 
+            throws IOException {
+         
+            return new FileInputStream(mSourceFile);
         }
-        
-        public boolean shouldCompile() {
-            if (!mForce &&
-                mDestFile != null &&
-                mDestFile.exists() &&
-                mDestFile.lastModified() >= mSourceFile.lastModified()) {
 
-                return false;
-            }
-
-            return true;
+        protected long getLastModified() {
+            return mSourceFile.lastModified();            
         }
     }
     
 /////////////////////////////////
     public class JarredUnit extends FileUnit {
 
-        private File mDestFile;
-        private JarOfTemplates mJarOfTemlates;
+        private JarOfTemplates mJarOfTemplates;
         private URL mUrl;
 
-        public JarredUnit(File file, String name, Compiler compiler) throws IOException {
+        public JarredUnit(File file, String name, Compiler compiler) 
+            throws IOException {
+            
             super(name, compiler);
 
-            mJarOfTemlates = getJarOfTemplates(file);
-            mUrl = new URL(mJarOfTemlates.getUrl(), 
-                           mJarOfTemlates.getEntry(mSourceFileName).toString());
+            mJarOfTemplates = getJarOfTemplates(file);
+            mUrl = new URL(mJarOfTemplates.getUrl(), 
+                           mJarOfTemplates.getEntry(mSourceFileName).toString());
         }
 
         @Override
@@ -692,40 +590,26 @@ public class FileCompiler extends AbstractFileCompiler {
         }
 
         public JarEntry getJarEntry() {
-            return (JarEntry) mJarOfTemlates.getEntry(mSourceFileName);
+            return mJarOfTemplates.getEntry(mSourceFileName);
         }
 
         public URL getSourceUrl() {
             return mUrl;
         }
-
+        
         @Override
-        public Reader getReader() throws IOException {
-
-            InputStream in = mJarOfTemlates.getInputStream(getJarEntry());
-            if (mEncoding == null) {
-                return new InputStreamReader(in);
-            }
-            else {
-                return new InputStreamReader(in, mEncoding);
-            }
+        protected InputStream getTemplateSource(String templateSourceName) 
+            throws IOException {
+            
+            return mJarOfTemplates.getInputStream(getJarEntry());
         }
-
-        @Override
-        public boolean shouldCompile() {
-            if(getJarEntry()==null) {
-                return false;
+        
+        protected long getLastModified() {
+            if (getJarEntry() == null) {
+                return -1;
             }
-
-            if (!mForce &&
-                mDestFile != null &&
-                mDestFile.exists() &&
-                mDestFile.lastModified() >= getJarEntry().getTime()) {
-
-                return false;
-            }
-
-            return true;
+            
+            return getJarEntry().getTime();            
         }
 
         public void syncTimes() {

@@ -1,4 +1,4 @@
-package org.teatrove.tea;
+package org.teatrove.tea.templates;
 
 import static org.junit.Assert.assertEquals;
 
@@ -131,19 +131,19 @@ public class FunctionsTest extends AbstractTemplateTest {
     	"Collections.singletonList('test')[0]";
     
     protected static final String TEST_STATIC_SOURCE_5 =
-    	"org.teatrove.tea.FunctionsTest.INSTANCE.getFunction().getGreeting()";
+    	"org.teatrove.tea.templates.FunctionsTest.INSTANCE.getFunction().getGreeting()";
     
     protected static final String TEST_STATIC_SOURCE_6 =
-    	"org.teatrove.tea.FunctionsTest.INSTANCE.function.getGreeting()";
+    	"org.teatrove.tea.templates.FunctionsTest.INSTANCE.function.getGreeting()";
     
     protected static final String TEST_STATIC_SOURCE_7 =
-    	"org.teatrove.tea.FunctionsTest.INSTANCE.function.greeting";
+    	"org.teatrove.tea.templates.FunctionsTest.INSTANCE.function.greeting";
     
     protected static final String TEST_STATIC_SOURCE_8 =
-    	"org.teatrove.tea.FunctionsTest.INSTANCE.function.greeting.length";
+    	"org.teatrove.tea.templates.FunctionsTest.INSTANCE.function.greeting.length";
     
     protected static final String TEST_STATIC_SOURCE_9 =
-    	"org.teatrove.tea.FunctionsTest$Interface.GREETING";
+    	"org.teatrove.tea.templates.FunctionsTest$Interface.GREETING";
     
     public static interface Interface {
     	public static final String GREETING = TEST_GREETING;

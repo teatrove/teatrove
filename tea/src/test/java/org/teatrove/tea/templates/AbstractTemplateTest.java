@@ -1,4 +1,4 @@
-package org.teatrove.tea;
+package org.teatrove.tea.templates;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

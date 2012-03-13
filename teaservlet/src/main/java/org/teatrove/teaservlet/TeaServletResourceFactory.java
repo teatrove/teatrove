@@ -16,7 +16,6 @@
 
 package org.teatrove.teaservlet;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -29,7 +28,6 @@ import org.teatrove.trove.util.resources.DefaultResourceFactory;
 
 public class TeaServletResourceFactory extends DefaultResourceFactory {
 
-    private PropertyMap substitutions;
     private ServletContext servletContext;
     
     public TeaServletResourceFactory(ServletContext servletContext) {
@@ -38,9 +36,8 @@ public class TeaServletResourceFactory extends DefaultResourceFactory {
     
     public TeaServletResourceFactory(ServletContext servletContext,
                                      PropertyMap substitutions) {
-        super();
+        super(substitutions);
         this.servletContext = servletContext;
-        this.substitutions = substitutions;
     }
     
     public ServletContext getServletContext() {
@@ -65,11 +62,5 @@ public class TeaServletResourceFactory extends DefaultResourceFactory {
         }
         
         return input;
-    }
-    
-    public PropertyMap getResourceAsProperties(String path) 
-        throws IOException {
-        
-        return this.getResourceAsProperties(path, substitutions);
     }
 }
