@@ -453,9 +453,9 @@ public class TeaServlet extends HttpServlet {
             });
 
             logVersionInfo(TeaServlet.class, "TeaServlet", log);
-            log.info("Copyright (C) 1999-2011 TeaTrove http://teatrove.org");
+            log.info("Copyright (C) 1999-2012 TeaTrove http://teatrove.org");
             logVersionInfo(TemplateLoader.class, "Tea", log);
-            log.info("Copyright (C) 1997-2011 TeaTrove http://teatrove.org");
+            log.info("Copyright (C) 1997-2012 TeaTrove http://teatrove.org");
         }
     }
 
