@@ -120,7 +120,7 @@
       <dependency>
         <groupId>org.teatrove</groupId>
         <artifactId>toolbox</artifactId>
-          <scope>provided</scope>
+        <scope>provided</scope>
       </dependency>
 
 
