@@ -234,7 +234,7 @@ public abstract class AbstractCompiler extends Compiler {
 
             long lastModified = getLastModified();
             if (timestamp > 0 && lastModified > 0 &&
-                gteq(lastModified, timestamp, mPrecompiledTolerance)) {
+                gteq(timestamp, lastModified, mPrecompiledTolerance)) {
 
             	return false;
             }
