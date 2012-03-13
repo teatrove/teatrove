@@ -30,6 +30,7 @@ import java.util.TreeMap;
 
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.tea.util.AbstractCompiler;
 import org.teatrove.trove.net.HttpClient;
 import org.teatrove.trove.net.PlainSocketFactory;
 import org.teatrove.trove.net.PooledSocketFactory;
@@ -69,7 +70,9 @@ public class RemoteCompiler extends AbstractCompiler {
                           long timeout,
                           long precompiledTolerance) {
                           	
-        super(rootPackage, rootDestDir, injector, encoding, precompiledTolerance);
+        super(injector, rootPackage, rootDestDir, encoding, 
+              precompiledTolerance, null);
+
         mRemoteSourceDirs = rootSourceDirs;
         mTimeout = timeout;
         mSocketFactories = new HashMap<String, SocketFactory>();
@@ -84,7 +87,7 @@ public class RemoteCompiler extends AbstractCompiler {
     }
     
     public String[] getAllTemplateNames() {
-        return (String[])mTemplateMap.keySet().toArray(new String[0]);
+        return mTemplateMap.keySet().toArray(new String[0]);
     }
 
     /**
@@ -110,7 +113,7 @@ public class RemoteCompiler extends AbstractCompiler {
      * to account for differences between the machine clocks.
      */
     private void syncSources(String name) {
-        TemplateSourceInfo info = (TemplateSourceInfo)mTemplateMap.get(name);
+        TemplateSourceInfo info = mTemplateMap.get(name);
         Unit compUnit = (Unit)this.getCompilationUnit(name,null);
         File destFile = compUnit.getDestinationFile();
         if (destFile != null) {
@@ -122,7 +125,7 @@ public class RemoteCompiler extends AbstractCompiler {
      * returns a socket connected to a host running the TemplateServerServlet
      */
     HttpClient getTemplateServerClient(String remoteSource) throws IOException {
-        SocketFactory factory = (SocketFactory)mSocketFactories.get(remoteSource);
+        SocketFactory factory = mSocketFactories.get(remoteSource);
 
         if (factory == null) {
             int port = 80;
@@ -229,7 +232,7 @@ public class RemoteCompiler extends AbstractCompiler {
                 ioe.printStackTrace();
             }
         }
-        //System.out.println("retrieving templateMap");
+
         return templateMap;
     }
     
@@ -252,33 +255,11 @@ public class RemoteCompiler extends AbstractCompiler {
 
         Unit(String name, Compiler compiler) {
         	super(name, compiler);
-            TemplateSourceInfo info = 
-            	(TemplateSourceInfo) mTemplateMap.get(mDotPath);
-
-            if (info==null) {
-                mSourceUrl = getSourceFileName();
-            } else if(info.server.trim().endsWith("/")) {
-                mSourceUrl = info.server.trim() + getSourceFileName();
-            } else {
-                mSourceUrl = info.server.trim() + "/" + getSourceFileName();
-            }
         }
 
-        public boolean shouldCompile() {
-            long remoteTimeStamp = ((TemplateSourceInfo) mTemplateMap.get(mDotPath)).timestamp;
-
-            boolean isWindows = System.getProperty("os.name").startsWith("Windows");
-            if (!mForce &&
-                mDestFile != null &&
-                mDestFile.exists() && 
-                ((isWindows && mDestFile.lastModified() >= remoteTimeStamp) ||
-                (!isWindows && Math.max(mDestFile.lastModified(), remoteTimeStamp) - 
-                    Math.min(mDestFile.lastModified(), remoteTimeStamp) < 1000L))) {
-
-                return false;
-            } else
-            // Try to defer to the template repository (and possibly precompiled templates)
-            return shouldCompile(remoteTimeStamp);
+        protected long getLastModified() {
+            long remoteTimeStamp = mTemplateMap.get(mDotPath).timestamp;
+            return remoteTimeStamp;
         }
         
         /**
@@ -288,12 +269,12 @@ public class RemoteCompiler extends AbstractCompiler {
         protected InputStream getTemplateSource(String templateSourceName) 
         	throws IOException {
         	
-            TemplateSourceInfo tsInfo = (TemplateSourceInfo)mTemplateMap
-                                                .get(templateSourceName);
+            TemplateSourceInfo tsInfo = mTemplateMap.get(templateSourceName);
 
             HttpClient client = getTemplateServerClient(tsInfo.server);
             HttpClient.Response response = client
-                .setURI(createTemplateServerRequest(tsInfo.server,tsInfo.name + ".tea"))
+                .setURI(createTemplateServerRequest(tsInfo.server,
+                                                    tsInfo.name + ".tea"))
                 .setPersistent(true).getResponse();            
             InputStream in = response.getInputStream();
             return in;

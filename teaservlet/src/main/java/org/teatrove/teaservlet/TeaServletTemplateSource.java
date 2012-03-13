@@ -100,9 +100,9 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
             StringTokenizer sourcePathTokenizer =
                     new StringTokenizer(sourcePathString, ",;");
 
-            Vector remoteVec = new Vector();
-            Vector localVec = new Vector();
-            Vector servletVec = new Vector();
+            Vector<String> remoteVec = new Vector<String>();
+            Vector<File> localVec = new Vector<File>();
+            Vector<String> servletVec = new Vector<String>();
 
             // Sort out the local directories from those using http.
             while (sourcePathTokenizer.hasMoreTokens()) {
@@ -118,25 +118,29 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 }
             }
 
-            localDirs = (File[]) localVec.toArray(new File[localVec.size()]);
-            remoteDirs = (String[]) remoteVec.toArray(new String[remoteVec.size()]);
-            servletDirs = (String[]) servletVec.toArray(new String[servletVec.size()]);
+            localDirs = localVec.toArray(new File[localVec.size()]);
+            remoteDirs = remoteVec.toArray(new String[remoteVec.size()]);
+            servletDirs = servletVec.toArray(new String[servletVec.size()]);
         }
 
         return new TeaServletTemplateSource(tsConfig, localDirs,
                 remoteDirs, servletContext, servletDirs, destDir, customTemplateSources);
     }
 
+    @SuppressWarnings("unchecked")
     private static TemplateSource[] createCustomTemplateSources(final TemplateSourceConfig config) {
 
         final PropertyMap props = config.getProperties().subMap("sources");
-        List results = new Vector();
-        Iterator nameIt = props.subMapKeySet().iterator();
+        List<TemplateSource> results = new Vector<TemplateSource>();
+        Iterator<String> nameIt = props.subMapKeySet().iterator();
         while (nameIt.hasNext()) {
             try {
-                final String name = (String) nameIt.next();
+                final String name = nameIt.next();
                 String className = props.getString(name + ".class");
-                Class tsClass = config.getContextSource().getContextType().getClassLoader().loadClass(className);
+                Class<?> tsClass = 
+                        config.getContextSource().getContextType().
+                            getClassLoader().loadClass(className);
+                
                 TemplateSource tsObj = (TemplateSource) tsClass.newInstance();
                 tsObj.init(new TemplateSourceConfig() {
 
@@ -168,11 +172,8 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 config.getLog().warn(e);
             }
         }
-        if (results == null) {
-            config.getLog().debug("null results vector");
-        }
 
-        TemplateSource[] tSrc = (TemplateSource[]) results.toArray(new TemplateSource[results.size()]);
+        TemplateSource[] tSrc = results.toArray(new TemplateSource[results.size()]);
         if (tSrc == null) {
             config.getLog().debug("null results array");
             tSrc = new TemplateSource[0];
@@ -315,7 +316,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 compiler.setForceCompile(true);
             }
 
-            List callerList = new ArrayList();
+            List<TemplateInfo> callerList = new ArrayList<TemplateInfo>();
 
             templateLoop:
             for (int i = 0; i < templates.length; i++) {
@@ -337,8 +338,8 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
 
             compiler.setForceCompile(true);
             callerLoop:
-            for (Iterator it = callerList.iterator(); it.hasNext();) {
-                TemplateInfo tInfo = (TemplateInfo) it.next();
+            for (Iterator<TemplateInfo> it = callerList.iterator(); it.hasNext();) {
+                TemplateInfo tInfo = it.next();
                 String caller = tInfo.getShortName().replace('/', '.');
                 if (results.getReloadedTemplateNames().contains(caller)) {
                     continue callerLoop;
@@ -384,7 +385,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 compiler.setForceCompile(true);
             }
 
-            List callerList = new ArrayList();
+            List<TemplateInfo> callerList = new ArrayList<TemplateInfo>();
 
             templateLoop:
             for (int i = 0; i < templates.length; i++) {
@@ -406,8 +407,8 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
 
             compiler.setForceCompile(true);
             callerLoop:
-            for (Iterator it = callerList.iterator(); it.hasNext();) {
-                TemplateInfo tInfo = (TemplateInfo) it.next();
+            for (Iterator<TemplateInfo> it = callerList.iterator(); it.hasNext();) {
+                TemplateInfo tInfo = it.next();
                 String caller = tInfo.getShortName().replace('/', '.');
                 if (results.getReloadedTemplateNames().contains(caller)) {
                     continue callerLoop;
@@ -505,7 +506,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                     .removeAll(templateCompilationResults.getTemplateErrors().keySet());
 
             String[] succeeded
-                    = (String[]) templateCompilationResults.getReloadedTemplateNames()
+                    = templateCompilationResults.getReloadedTemplateNames()
                         .toArray(new String[templateCompilationResults.getReloadedTemplateNames().size()]);
 
             mResults = results;
@@ -549,11 +550,11 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
             }
 
             if ( ! templateCompilationResults.isSuccessful()) {
-                List errors = templateCompilationResults.getAllTemplateErrors();
+                List<TemplateError> errors = templateCompilationResults.getAllTemplateErrors();
                 mLog.warn(errors.size() + " errors encountered.");
-                Iterator errorIt = errors.iterator();
+                Iterator<TemplateError> errorIt = errors.iterator();
                 while (errorIt.hasNext()) {
-                    TemplateError error = (TemplateError) errorIt.next();
+                    TemplateError error = errorIt.next();
                     mLog.warn(error.getDetailedErrorMessage() + " : " + error.getSourceLine());
                 }
             }
@@ -725,10 +726,8 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
     }
 
     @Override
-    public Map listTouchedTemplates() throws Exception {
-        TemplateRepository tRepo = TemplateRepository.getInstance();
-
-        Map touchedTemplateMap = super.listTouchedTemplates();
+    public Map<String, Boolean> listTouchedTemplates() throws Exception {
+        Map<String, Boolean> touchedTemplateMap = super.listTouchedTemplates();
 
         RemoteCompiler compiler = new RemoteCompiler(mRemoteTemplateURLs, TEMPLATE_PACKAGE, mCompiledDir, null, mEncoding, mTimeout, mPrecompiledTolerance);
         compiler.addImportedPackages(getImports());
@@ -781,13 +780,13 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
 
             String templateName = unit.getName();
 
-            ArrayList errors = (ArrayList) mTemplateErrors.get(templateName);
+            List<TemplateError> errors = mTemplateErrors.get(templateName);
             if (errors == null) {
-                errors = new ArrayList();
+                errors = new ArrayList<TemplateError>();
                 mTemplateErrors.put(templateName, errors);
             }
 
-            String sourcePath = unit.getSourceUrl();
+            String sourcePath = unit.getSourceFileName();
 
             TemplateError templateError = createTemplateError(sourcePath, event);
 
