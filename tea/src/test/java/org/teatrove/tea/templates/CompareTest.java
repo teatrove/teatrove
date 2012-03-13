@@ -1,4 +1,4 @@
-package org.teatrove.tea;
+package org.teatrove.tea.templates;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

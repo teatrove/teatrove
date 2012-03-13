@@ -124,7 +124,7 @@ public abstract class Compiler {
 
         synchronized (mErrorListeners) {
             for (int i = 0; i < mErrorListeners.size(); i++) {
-                ((ErrorListener)mErrorListeners.elementAt(i)).compileError(e);
+                mErrorListeners.elementAt(i).compileError(e);
             }
         }
     }
@@ -144,8 +144,7 @@ public abstract class Compiler {
     private void dispatchCompileStatus(StatusEvent e) {
         synchronized (mStatusListeners) {
             for(int i = 0; i < mStatusListeners.size(); i++) {
-                ((StatusListener)mStatusListeners.elementAt(i)).
-                        statusUpdate(e);
+                mStatusListeners.elementAt(i).statusUpdate(e);
             }
         }
     }
@@ -321,7 +320,7 @@ public abstract class Compiler {
         if (fqName == null)
             return null;
 
-        CompilationUnit unit = (CompilationUnit)mCompilationUnitMap.get(fqName);
+        CompilationUnit unit = mCompilationUnitMap.get(fqName);
         if (unit == null) {
             if (!compiled) {
                 unit = createCompilationUnit(fqName);
@@ -407,7 +406,7 @@ public abstract class Compiler {
             mRuntimeMethods = getRuntimeContext().getMethods();
         }
 
-        return (Method[])mRuntimeMethods.clone();
+        return mRuntimeMethods.clone();
     }
 
     /**
@@ -474,7 +473,7 @@ public abstract class Compiler {
                     Class<?> type = m.getParameterTypes()[0];
                     int j;
                     for (j=0; j<customSize; j++) {
-                        Method cm = (Method)methods.elementAt(j);
+                        Method cm = methods.elementAt(j);
                         if (cm.getParameterTypes()[0] == type) {
                             break;
                         }
@@ -490,7 +489,7 @@ public abstract class Compiler {
             methods.copyInto(mStringConverters);
         }
 
-        return (Method[])mStringConverters.clone();
+        return mStringConverters.clone();
     }
 
     /**
@@ -501,7 +500,7 @@ public abstract class Compiler {
      * @param from optional CompilationUnit
      */
     private String determineQualifiedName(String name, CompilationUnit from) {
-        if (from != null || name.charAt(0) == '.') {
+        if (from != null) {
             // Determine qualified name as being relative to "from"
 
             String fromName = from.getName();
@@ -582,7 +581,7 @@ public abstract class Compiler {
 
     private Template getParseTree0(CompilationUnit unit) {
         String name = unit.getName();
-        Template tree = (Template)mParseTreeMap.get(name);
+        Template tree = mParseTreeMap.get(name);
         if (tree != null) {
             return tree;
         }

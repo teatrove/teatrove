@@ -37,11 +37,25 @@ public class DefaultResourceFactory implements ResourceFactory {
     private static final DefaultResourceFactory INSTANCE = 
         new DefaultResourceFactory();
     
+    private PropertyMap substitutions;
+    
     /**
-     * Default constructor.
+     * Default constructor that uses default substitutions.
+     * 
+     * #see SubstitutionFactory#getDefaults()
      */
     public DefaultResourceFactory() {
-        super();
+        this(SubstitutionFactory.getDefaults());
+    }
+    
+    /**
+     * Create a resource factory that defaults to the given substitutions
+     * unless explicitly stated otherwise.
+     * 
+     * @param substitutions  The default substitutions
+     */
+    public DefaultResourceFactory(PropertyMap substitutions) {
+        this.substitutions = substitutions;
     }
     
     /**
@@ -90,7 +104,7 @@ public class DefaultResourceFactory implements ResourceFactory {
     public PropertyMap getResourceAsProperties(String path) 
         throws IOException {
         
-        return getResourceAsProperties(path, SubstitutionFactory.getDefaults());
+        return getResourceAsProperties(path, this.substitutions);
     }
     
     /**
@@ -100,8 +114,7 @@ public class DefaultResourceFactory implements ResourceFactory {
     public PropertyMap getResourceAsProperties(String path, InputStream input) 
         throws IOException {
     
-        return getResourceAsProperties(path, input,
-                                       SubstitutionFactory.getDefaults());
+        return getResourceAsProperties(path, input, this.substitutions);
     }
     
     /**
