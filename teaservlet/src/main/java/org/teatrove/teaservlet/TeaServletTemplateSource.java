@@ -112,7 +112,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 } else if (nextPath.startsWith("/")) {
                 	servletVec.add(nextPath);
                 } else if (nextPath.startsWith("file:")){
-                    localVec.add(new File(nextPath));
+                    localVec.add(new File(nextPath.substring(5)));
                 } else {
                 	throw new IllegalStateException("unsupported template path: " + nextPath);
                 }

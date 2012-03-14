@@ -21,6 +21,7 @@ import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
 import org.teatrove.tea.engine.TemplateSource;
+import org.teatrove.teaservlet.assets.AssetEngine;
 import org.teatrove.teaservlet.management.HttpContextManagement;
 import org.teatrove.teaservlet.management.HttpContextManagementMBean;
 import org.teatrove.trove.log.Log;
@@ -54,6 +55,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
     private ServletContext mServletContext;
     private String mServletName;
 
+    private AssetEngine mAssetEngine;
     private ApplicationDepot mApplicationDepot;
     private TeaServletTemplateSource mTemplateSource;
     private List mLogEvents;
@@ -100,6 +102,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
             setLog(log);
             setLogEvents(memLog);
             setPluginContext(plug);
+            setAssetEngine(servletContext, properties);
             mApplicationDepot = new ApplicationDepot(this);
             
             // Initialize the HttpContext JMX angent
@@ -179,7 +182,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
     private void setPluginContext(PluginContext pContext) {
         mPluginContext = pContext;
     }
-
+    
     public PropertyMap getProperties() {
         return mProperties;
     }
@@ -290,6 +293,22 @@ public class TeaServletEngineImpl implements TeaServletEngine {
         return mApplicationDepot;
     }
 
+    public AssetEngine getAssetEngine() {
+        return mAssetEngine;
+    }
+    
+    private synchronized void setAssetEngine(ServletContext servletContext, 
+            PropertyMap properties) 
+        throws ServletException {
+         
+        mAssetEngine = new AssetEngine(servletContext);
+        try { mAssetEngine.init(mLog, properties.subMap("assets")); }
+        catch (Exception exception) {
+            throw new ServletException("unable to create asset engine", 
+                                       exception);
+        }
+    }
+    
     public synchronized TeaServletTemplateSource getTemplateSource() {
         if (mTemplateSource == null) {
             mTemplateSource =

@@ -17,15 +17,17 @@
 package org.teatrove.teaservlet;
 
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.teatrove.trove.log.LogEvent;
-import org.teatrove.trove.util.PropertyMap;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
 import org.teatrove.tea.engine.TemplateSource;
+import org.teatrove.teaservlet.assets.AssetEngine;
+import org.teatrove.trove.log.LogEvent;
+import org.teatrove.trove.util.PropertyMap;
 
 /**
  * This interface allows other servlets to create
@@ -74,6 +76,8 @@ public interface TeaServletEngine extends ApplicationConfig {
 
     public ApplicationDepot getApplicationDepot();
 
+    public AssetEngine getAssetEngine();
+    
     public TeaServletTemplateSource getTemplateSource();
 
     public TemplateCompilationResults reloadContextAndTemplates(boolean all)
