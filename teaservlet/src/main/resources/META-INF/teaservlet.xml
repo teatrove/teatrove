@@ -9,6 +9,20 @@
     </template>
 
     <!-- 
+    define the default mime types
+    -->
+    
+    <assets>
+        <mimeTypes>
+            <png>image/png</png>
+            <gif>image/gif</gif>
+            <jpg>image/jpeg</jpg>
+            <js>text/javascript</js>
+            <css>text/css</css>
+        </mimeTypes>
+    </assets>
+    
+    <!-- 
     define the logging states for the TeaServlet 
     -->
     

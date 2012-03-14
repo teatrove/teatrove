@@ -29,6 +29,10 @@ public class ServletContextAssetFactory extends AbstractAssetFactory {
         // lookup base path, if provided
         String base = properties.getString("basePath");
         if (base != null) {
+            if (!base.endsWith("/")) {
+                base = base.concat("/");
+            }
+            
             this.basePath = base;
         }
         

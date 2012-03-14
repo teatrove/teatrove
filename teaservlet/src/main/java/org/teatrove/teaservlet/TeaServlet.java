@@ -20,10 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,6 +42,7 @@ import org.teatrove.tea.log.TeaLog;
 import org.teatrove.tea.log.TeaLogEvent;
 import org.teatrove.tea.log.TeaLogListener;
 import org.teatrove.tea.runtime.TemplateLoader;
+import org.teatrove.teaservlet.assets.Asset;
 import org.teatrove.teaservlet.stats.TeaServletRequestStats;
 import org.teatrove.teaservlet.stats.TemplateStats;
 import org.teatrove.teaservlet.util.FilteredServletContext;
@@ -535,6 +534,7 @@ public class TeaServlet extends HttpServlet {
         // custom merges
         additiveMerge(properties, "template.path", ";");
         additiveMerge(properties, "template.imports", ";");
+        additiveMerge(properties, "assets.path", ",");
     }
     
     private void loadDefaults() throws ServletException {
@@ -571,7 +571,7 @@ public class TeaServlet extends HttpServlet {
     	    if (mDebugEnabled) {
     	        mServletContext.log("factory props size is 0.");
     	    }
-    	} else if (className == null) {
+    	} else {
     	    if (mDebugEnabled) {
     	        mServletContext.log("className is null");
     	    }
@@ -675,78 +675,6 @@ public class TeaServlet extends HttpServlet {
                                     ApplicationResponse appResponse) 
         throws IOException {
         
-        // loop through asset loaders
-            // if asset not null, serve resource w/ mime type; return true
-        // return false
-        
-        // look in assets section
-        /*
-
-        AssetLoader(mimeTypes, assetFactories)
-            getResource(path)
-                get extension(path)
-                if ext in mimeTypes, serve with mimeType
-                else notfoundexception
-                
-                foreach factory
-                    getResource
-                    if != null, serve
-                    
-                if not found, notfoundexception
-
-        <assets>
-            <mimeTypes>
-                <defaults>true
-                <mimeType>png=image/png</mimeType>
-            </mimeTypes>
-            <path>...</path>
-            <factory.class>...</factory.class>
-            
-            <loader>
-                <factory>
-                    <class>....AssetFactory</class>
-                    <init>...</init>
-                </factory>
-                <mimeTypes></mimeTypes>
-            </loader>
-            <loader>
-                <path>/WEB-INF/assets</path>
-                <mimeTypes>
-                    <defaults>true</defaults>
-                    <mimeType>png=image/png</mimeType>
-                </mimeTypes>
-            </loader>
-        </assets>
-        
-        */
-        
-        // look into each inherited teaservlet
-        /*
-        <assets>
-            <path>classpath:/system/teaservlet/assets</path>
-        </assets>
-         */
-        
-        // TODO: make this configurable
-        // teaservlet.resources.suffixes
-        // teaservlet.resources.paths
-        
-        // TODO: this is really only for the admin pages, so maybe allow an
-        // AdminApp to return a list of valid resources that get specially
-        // encoded and redirected here?
-        
-        // validate the suffix as valid
-        Map<String, String> validSuffix = new HashMap<String, String>();
-        validSuffix.put("png", "image/png");
-        validSuffix.put("gif", "image/gif");
-        validSuffix.put("jpg", "image/jpg");
-        validSuffix.put("js", "text/javascript");
-        validSuffix.put("css", "text/css");
-        
-        // validate the path is valid
-        List<String> validPath = 
-            Arrays.asList("/system/");
-        
         // get the associated system path
         String context = appRequest.getContextPath();
         String requestURI = appRequest.getRequestURI();
@@ -754,39 +682,19 @@ public class TeaServlet extends HttpServlet {
             requestURI = requestURI.substring(context.length());
         }
 
-        // get suffix and verify valid
-        int extIndex = requestURI.lastIndexOf('.');
-        if (extIndex < 0) { return false; }
-        
-        String extension = requestURI.substring(extIndex + 1);
-        if (!validSuffix.containsKey(extension)) { return false; }
-        
-        // ensure valid path
-        boolean found = false;
-        for (String path : validPath) {
-            if (requestURI.startsWith(path)) {
-                found = true;
-                break;
-            }
-        }
-        
-        if (!found) { return false; }
-        
-        // load resource (/WEB-INF or class only)
-        InputStream input = getServletContext().getResourceAsStream(requestURI);
-        if (input == null) {
-            input = TeaServlet.class.getResourceAsStream(requestURI);
-            if (input == null) {
-                return false;
-            }
+        // check for valid asset
+        Asset asset = getEngine().getAssetEngine().getAsset(requestURI);
+        if (asset == null) {
+            return false;
         }
         
         // set mime type
-        appResponse.setContentType(validSuffix.get(extension));
+        appResponse.setContentType(asset.getMimeType());
         
         // write contents
         int read = -1;
         byte[] contents = new byte[1024];
+        InputStream input = asset.getInputStream();
         ServletOutputStream output = appResponse.getOutputStream();
         while ((read = input.read(contents)) >= 0) {
             output.write(contents, 0, read);
@@ -832,10 +740,11 @@ public class TeaServlet extends HttpServlet {
         long startTime = 0L;
         long contentLength = 0;
 
-        TemplateStats templateStats = null;
+        TemplateStats templateStats = 
+            mTeaServletRequestStats.getStats(template.getName());
+        
         try {
 	        Object[] params = null;
-	        templateStats = mTeaServletRequestStats.getStats(template.getName());
 	        try {    
 	            // Fill in the parameters to pass to the template.
 	        	templateStats.incrementServicing();

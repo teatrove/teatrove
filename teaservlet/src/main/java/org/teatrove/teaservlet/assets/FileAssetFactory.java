@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.teatrove.trove.log.Syslog;
 import org.teatrove.trove.util.PropertyMap;
 
 public class FileAssetFactory extends AbstractAssetFactory {
@@ -51,13 +52,12 @@ public class FileAssetFactory extends AbstractAssetFactory {
         // load file relative to directory
         File file = new File(directory, path);
         if (!file.exists()) {
-            // TODO: LOG.error("asset does not exist: " + path);
             return null;
         }
         
         // ensure file is a valid file
         if (!file.isFile()) {
-            // TODO: LOG.error("assets must be files: " + path);
+            Syslog.error("assets must be files: " + file.getAbsolutePath());
             return null;
         }
         
@@ -66,8 +66,10 @@ public class FileAssetFactory extends AbstractAssetFactory {
             String filePath = file.getCanonicalPath();
             String dirPath = directory.getCanonicalPath();
             if (!filePath.startsWith(dirPath.concat(File.separator))) {
-                // TODO: LOG.error(
-                //    "file paths must be relative to directory: " + path);
+                Syslog.error(
+                    "file paths must be relative to directory: " + 
+                    directory.getAbsolutePath() + ":" + path
+                );
                 return null;
             }
             
@@ -75,7 +77,8 @@ public class FileAssetFactory extends AbstractAssetFactory {
             return new FileInputStream(file);
         }
         catch (IOException ioe) {
-            // TODO: LOG.error("unable to retrieve asset: " + path, ioe);
+            Syslog.error("unable to retrieve asset: ".concat(path));
+            Syslog.error(ioe);
             return null;
         }
     }

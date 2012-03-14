@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.teatrove.trove.log.Syslog;
 import org.teatrove.trove.util.PropertyMap;
 
 public class UrlAssetFactory extends AbstractAssetFactory {
@@ -13,6 +14,10 @@ public class UrlAssetFactory extends AbstractAssetFactory {
     
     public UrlAssetFactory() {
         super();
+    }
+    
+    public UrlAssetFactory(String baseUrl) throws MalformedURLException {
+        this(new URL(baseUrl));
     }
     
     public UrlAssetFactory(URL baseUrl) {
@@ -32,6 +37,10 @@ public class UrlAssetFactory extends AbstractAssetFactory {
         // lookup base path, if provided
         String base = properties.getString("baseUrl");
         if (base != null) {
+            if (!base.endsWith("/")) {
+                base = base.concat("/");
+            }
+
             this.baseUrl = new URL(base);
         }
         
@@ -50,7 +59,10 @@ public class UrlAssetFactory extends AbstractAssetFactory {
         URL resourceUrl = null;
         try { resourceUrl = new URL(baseUrl.toExternalForm().concat(path)); }
         catch (MalformedURLException exception) {
-            // TODO: LOG.error("invalid asset path: " + path, exception);
+            Syslog.debug(
+                "invalid asset path url: " + baseUrl.toExternalForm() + path
+            );
+            Syslog.debug(exception);
             return null;
         }
         
@@ -58,15 +70,19 @@ public class UrlAssetFactory extends AbstractAssetFactory {
         String basePath = baseUrl.toExternalForm();
         String resourcePath = resourceUrl.toExternalForm();
         if (!resourcePath.startsWith(basePath)) {
-            // TODO: LOG.error(
-            //     "url paths must be relative to base url: " + path);
+            Syslog.error(
+                "url paths must be relative to base url: " + 
+                baseUrl.toExternalForm() + ":" + path
+            );
             return null;
         }
 
         // open stream for associated url
         try { return resourceUrl.openStream(); }
         catch (IOException ioe) {
-            // TODO: LOG.error("unable to open asset stream: " + path, ioe);
+            Syslog.debug(
+                "unable to open asset stream: " + resourceUrl.toExternalForm());
+            Syslog.debug(ioe);
             return null;
         }
     }

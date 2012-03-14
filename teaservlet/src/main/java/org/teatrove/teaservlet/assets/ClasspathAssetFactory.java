@@ -18,8 +18,13 @@ public class ClasspathAssetFactory extends AbstractAssetFactory {
     }
     
     public ClasspathAssetFactory(ClassLoader classLoader, String rootPackage) {
-        if (rootPackage != null && !rootPackage.endsWith("/")) {
-            rootPackage = rootPackage.concat("/");
+        if (rootPackage != null) {
+            if (!rootPackage.endsWith("/")) {
+                rootPackage = rootPackage.concat("/");
+            }
+            if (rootPackage.startsWith("/")) {
+                rootPackage = rootPackage.substring(1);
+            }
         }
         
         this.classLoader = classLoader;
@@ -32,8 +37,16 @@ public class ClasspathAssetFactory extends AbstractAssetFactory {
         String rootPkg = properties.getString("rootPackage");
         if (rootPkg != null) {
             this.rootPackage = rootPkg;
+            
+            // cleanup package
+            if (!rootPackage.endsWith("/")) {
+                rootPackage = rootPackage.concat("/");
+            }
+            if (rootPackage.startsWith("/")) {
+                rootPackage = rootPackage.substring(1);
+            }
         }
-        
+
         // validate root package
         if (this.rootPackage == null || this.rootPackage.isEmpty()) {
             throw new IllegalStateException("missing root package");
@@ -45,8 +58,13 @@ public class ClasspathAssetFactory extends AbstractAssetFactory {
         // validate path
         path = validatePath(path);
         
+        // allow path to contain either root package or an extension of it
+        String resource = path;
+        if (!resource.startsWith(rootPackage)) {
+            resource = rootPackage.concat(path);
+        }
+        
         // lookup resource
-        String resource = rootPackage.concat(path);
         InputStream input = classLoader.getResourceAsStream(resource);
         if (input == null) {
             return null;
