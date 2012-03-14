@@ -675,6 +675,58 @@ public class TeaServlet extends HttpServlet {
                                     ApplicationResponse appResponse) 
         throws IOException {
         
+        // loop through asset loaders
+            // if asset not null, serve resource w/ mime type; return true
+        // return false
+        
+        // look in assets section
+        /*
+
+        AssetLoader(mimeTypes, assetFactories)
+            getResource(path)
+                get extension(path)
+                if ext in mimeTypes, serve with mimeType
+                else notfoundexception
+                
+                foreach factory
+                    getResource
+                    if != null, serve
+                    
+                if not found, notfoundexception
+
+        <assets>
+            <mimeTypes>
+                <defaults>true
+                <mimeType>png=image/png</mimeType>
+            </mimeTypes>
+            <path>...</path>
+            <factory.class>...</factory.class>
+            
+            <loader>
+                <factory>
+                    <class>....AssetFactory</class>
+                    <init>...</init>
+                </factory>
+                <mimeTypes></mimeTypes>
+            </loader>
+            <loader>
+                <path>/WEB-INF/assets</path>
+                <mimeTypes>
+                    <defaults>true</defaults>
+                    <mimeType>png=image/png</mimeType>
+                </mimeTypes>
+            </loader>
+        </assets>
+        
+        */
+        
+        // look into each inherited teaservlet
+        /*
+        <assets>
+            <path>classpath:/system/teaservlet/assets</path>
+        </assets>
+         */
+        
         // TODO: make this configurable
         // teaservlet.resources.suffixes
         // teaservlet.resources.paths

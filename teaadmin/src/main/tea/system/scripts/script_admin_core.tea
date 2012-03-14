@@ -1,5 +1,7 @@
 <% template script_admin_core ()
 
+    pathPrefix = call system.util.getPathPrefix();
+
     setContentType("text/javascript;charset=utf-8");
 
 %>
@@ -326,26 +328,53 @@
         $("#switch-autocompile").iphoneSwitch(
             "off",
             function() {
-                $('#label-validate').hide();
-                $('#buttonset-validate').hide();
-                $('#label-compile').hide();
-                $('#buttonset-compile').hide();
+                $('#label-validate').fadeOut('fast');
+                $('#buttonset-validate').fadeOut('fast');
+                $('#label-compile').fadeOut('fast');
+                $('#buttonset-compile').fadeOut('fast');
 
+                if (!$("#switch-autorefresh").hasClass('state-on')) {
+                    $("#switch-autorefresh").click();
+                }
+                
                 $("#switch-autocompile").removeClass('state-off').addClass('state-on');
                 clearInterval(templateInterval);
                 templateInterval = setInterval(autocompileTemplates, 5000);
             },
             function() {
-                $('#label-validate').show();
-                $('#buttonset-validate').show();
-                $('#label-compile').show();
-                $('#buttonset-compile').show();
+                $('#label-validate').fadeIn('fast');
+                $('#buttonset-validate').fadeIn('fast');
+                $('#label-compile').fadeIn('fast');
+                $('#buttonset-compile').fadeIn('fast');
 
                 $("#switch-autocompile").removeClass('state-on').addClass('state-off');
+                
                 clearInterval(templateInterval);
-                templateInterval = setInterval(getTemplateUpdates, 10000);
+                var state = $("#switch-autorefresh").hasClass('state-on');
+                if (state) {
+                    templateInterval = setInterval(getTemplateUpdates, 10000);
+                }
 			}
 		);
+		$("#switch-autorefresh").iphoneSwitch(
+            "on",
+            function() {
+                $("#switch-autorefresh").removeClass('state-on').addClass('state-off');
+                
+                clearInterval(templateInterval);
+                var state = $("#switch-autocompile").hasClass('state-on');
+                if (state) {
+                    templateInterval = setInterval(autocompileTemplates, 5000);
+                }
+                else {
+                    templateInterval = setInterval(getTemplateUpdates, 10000);
+                }                
+            },
+            function() {
+                $("#switch-autorefresh").removeClass('state-off').addClass('state-on');
+                clearInterval(templateInterval);
+            }
+        );
         $("#buttonset-validate .ui-button").click( function (evt) {
             $(".controls-wrapper .ui-button").button( "option", "disabled", true );
             $('#loadingIndicator').show();
@@ -617,16 +646,16 @@
                     var title = "Compile: " + buttonText;
 
                     var msg = 'No changes detected';
-                    var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-info.png';
+                    var img = pathPrefix & 'system/assets/images/notification-info.png';
 
                     if ( $(data).closest('.sml-e').length > 0 ) {
 
-                        img = 'http://labs.espndb.s3.amazonaws.com/img/notification-incorrect.png';
+                        img = pathPrefix & 'system/assets/images/notification-incorrect.png';
                         msg = 'Encountered errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
                     } else if ( $(data).closest('.sml-c').length > 0 ) {
 
-                        img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+                        img = pathPrefix & 'system/assets/images/notification-correct.png';
                         msg = 'Successful';
 
                     }
@@ -687,16 +716,16 @@
 								name = name.substring(index+1);
 							}
 							var msg = 'No changes detected.';
-							var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-info.png';
+							var img = pathPrefix & 'system/assets/images/notification-info.png';
 
 							if ( $(data).closest('.sml-e').length > 0 ) {
 
-								img = 'http://labs.espndb.s3.amazonaws.com/img/notification-incorrect.png';
+								img = pathPrefix & 'system/assets/images/notification-incorrect.png';
 								msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
 							} else if ( $(data).closest('.sml-c').length > 0 ) {
 
-								img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+								img = pathPrefix & 'system/assets/images/notification-correct.png';
 								msg = 'Template compiled successfully!';
 
 							}
@@ -721,7 +750,7 @@
 									name = name.substring(index+1);
 								}
 								var msg = 'Template stats were reset.';
-								var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+								var img = pathPrefix & 'system/assets/images/notification-correct.png';
 
 								$.gritter.add({
 									// (string | mandatory) the heading of the notification
@@ -773,16 +802,16 @@
 								name = name.substring(index+1);
 							}
 							var msg = 'No changes detected.';
-							var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-info.png';
+							var img = pathPrefix & 'system/assets/images/notification-info.png';
 
 							if ( $(data).closest('.sml-e').length > 0 ) {
 
-								img = 'http://labs.espndb.s3.amazonaws.com/img/notification-incorrect.png';
+								img = pathPrefix & 'system/assets/images/notification-incorrect.png';
 								msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
 							} else if ( $(data).closest('.sml-c').length > 0 ) {
 
-								img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+								img = pathPrefix & 'system/assets/images/notification-correct.png';
 								msg = 'Template compiled successfully!';
 
 							}
@@ -807,7 +836,7 @@
 									name = name.substring(index+1);
 								}
 								var msg = 'Template stats were reset.';
-								var img = 'http://labs.espndb.s3.amazonaws.com/img/notification-correct.png';
+								var img = pathPrefix & 'system/assets/images/notification-correct.png';
 
 								$.gritter.add({
 									// (string | mandatory) the heading of the notification
