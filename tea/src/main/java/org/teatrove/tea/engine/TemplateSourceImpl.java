@@ -63,11 +63,35 @@ public class TemplateSourceImpl implements TemplateSource {
      * @return the directory or null if the directory is not there or
      * if it cannot be written to.
      */
-    public static File createTemplateClassesDir(String dirPath, Log log) {
+    public static File createTemplateClassesDir(File tmpDir, String dirPath, 
+                                                Log log) {
         File destDir = null;
+        if (dirPath != null && !dirPath.isEmpty()) {
+            
+            // handle file-based paths
+            if (dirPath.startsWith("file:")) {
+                destDir = new File(dirPath.substring(5));
+            }
+            
+            // otherwise, assume relative path to tmp dir
+            else {
+                destDir = new File(tmpDir, dirPath);
+                try {
+                    if (!destDir.getCanonicalPath().startsWith(
+                            tmpDir.getCanonicalPath().concat(File.separator))) {
+                        throw new IllegalStateException(
+                            "invalid template classes directory: " + dirPath
+                        );
+                    }
+                }
+                catch (IOException ioe) {
+                    throw new IllegalStateException(
+                        "invalid template classes directory: " + dirPath, 
+                        ioe
+                    );
+                }
+            }
 
-        if (dirPath != null) {
-            destDir = new File(dirPath);
             if (!destDir.isDirectory()) {
                 // try creating it but not the parents.
                 if (!destDir.mkdir()) {
@@ -140,7 +164,9 @@ public class TemplateSourceImpl implements TemplateSource {
 
         mTemplateResources = chopString(mProperties.getString("resource"), ";,");
 
-        mCompiledDir = createTemplateClassesDir(mProperties.getString("classes"), mLog);
+        mCompiledDir = 
+            createTemplateClassesDir(new File("."), 
+                                     mProperties.getString("classes"), mLog);
     }
 
     public String[] getImports() {
