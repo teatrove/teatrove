@@ -6,6 +6,7 @@
     
     <template>
         <default>index</default>
+        <classes>/teaClasses</classes>
     </template>
 
     <!-- 
