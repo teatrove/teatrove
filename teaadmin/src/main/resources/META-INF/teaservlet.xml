@@ -1,5 +1,15 @@
 <teaservlet>
 	
+    <!-- define system resources -->
+    <assets>
+        <loaders>
+            <TeaAdmin>
+                <basePath>/system/assets/images/</basePath>
+                <path>classpath:/system/assets/images/</path>
+            </TeaAdmin>
+        </loaders>
+    </assets>
+    
     <!-- define list of administration applications -->
     <applications>
 
