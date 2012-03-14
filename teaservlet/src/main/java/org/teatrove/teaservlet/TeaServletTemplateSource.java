@@ -17,6 +17,7 @@
 package org.teatrove.teaservlet;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -54,6 +55,8 @@ import org.teatrove.trove.util.PropertyMap;
  */
 public class TeaServletTemplateSource extends TemplateSourceImpl {
 
+    private final static String SERVLET_TMP_DIR = "javax.servlet.context.tempdir";
+    
     /** Package for templates */
     public final static String TEMPLATE_PACKAGE = "org.teatrove.teaservlet.template";
     /** Short package for system templates */
@@ -85,8 +88,18 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 properties,
                 log);
 
-        File destDir = TemplateSourceImpl.createTemplateClassesDir(properties.getString("classes"), log);
-
+        File tmpDir = (File) servletContext.getAttribute(SERVLET_TMP_DIR);
+        if (tmpDir == null) {
+            log.error("Servlet container does not provide temporary " +
+            		  "directory, defaulting to local file system");
+            
+            tmpDir = new File(".");  
+        }
+        
+        File destDir = TemplateSourceImpl.createTemplateClassesDir
+        (
+            tmpDir, properties.getString("classes"), log
+        );
 
         TemplateSource[] customTemplateSources =
                 createCustomTemplateSources(tsConfig);
