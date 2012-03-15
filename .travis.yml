@@ -1,1 +1,7 @@
 language: java
+
+notifications:
+  email:
+    - brian@jaxzin.com
+  irc:
+    - irc.freenode.org#teatrove
