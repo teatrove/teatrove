@@ -76,6 +76,14 @@
     sparklineDimensions = 'width: 20, height: 20';
     sparklineJS = '';
 
+    reloadableTemplates = createHashMap()
+    if ( admin.reloadableTemplates != null ) {
+        foreach ( reloadableTemplate in admin.reloadableTemplates ) {
+            dotPath = replace(reloadableTemplate.name, "/", ".");
+            put(reloadableTemplates, dotPath, null)
+        }
+    }
+
 %>
         <table cellspacing="1" cellpadding="3" class="tablehead">
             <thead>
@@ -323,16 +331,7 @@
                                 overallProcess = stats.averageServiceDuration & "";
                                 numberFormat(null);
 
-                                needsReload = false;
-								if ( admin.reloadableTemplates != null ) {
-                                	foreach ( reloadableTemplate in admin.reloadableTemplates ) {
-	                                    dotPath = replace(reloadableTemplate.name, "/", ".");
-	                                    if ( stats.fullTemplateName == dotPath ) {
-	                                        needsReload = true;
-	                                        break;
-	                                    }
-	                                }
-								}
+                                needsReload = containsKey(reloadableTemplates, stats.fullTemplateName);
 
                                 if ( rowClass == 'evenrow' ) {
                                     rowClass = 'oddrow';

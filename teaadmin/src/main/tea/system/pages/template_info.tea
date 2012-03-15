@@ -1140,7 +1140,7 @@
                         }
                     );
 
-                    var dataArrayTemplates = <% dataArrayTemplates %>;
+                    var dataArrayTemplates = <% dataArrayTemplates ?: '[]' %>; //tmp
                     $.plot(
                         $("#pieChartTemplates")
                         ,dataArrayTemplates
@@ -1582,16 +1582,16 @@
                                 }
                                 title = "Compile: " + title;
                                 var msg = 'No changes detected';
-                                var img = pathPrefix & 'system/assets/images/notification-info.png';
+                                var img = '<% pathPrefix %>system/assets/images/notification-info.png';
 
                                 if ( $(data).closest('.sml-e').length > 0 ) {
 
-                                    img = pathPrefix & 'system/assets/images/notification-incorrect.png';
+                                    img = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
                                     msg = 'Encountered errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
                                 } else if ( $(data).closest('.sml-c').length > 0 ) {
 
-                                    img = pathPrefix & 'system/assets/images/notification-correct.png';
+                                    img = '<% pathPrefix %>system/assets/images/notification-correct.png';
                                     msg = 'Successful';
 
                                 }
