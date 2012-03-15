@@ -21,6 +21,16 @@ body {
 }
 /* Header */
 header {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 0px 5px 10px #888;
+    -webkit-box-shadow: 0px 5px 10px #888;
+    -moz-box-shadow: 0px 5px 10px #888;
+    -ie-box-shadow: 0px 5px 10px #888;
+    
     background: #000;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#555555', endColorstr='#000000');
 	background: -webkit-gradient( linear, left bottom, left top, color-stop(1, #555), color-stop(0, #000) );
@@ -30,7 +40,6 @@ header {
     border-top: 4px solid #FF0000;
     clear: both;
     padding: 0 33px;
-    width: auto;
 }
 header section {
 	margin: 0 auto;
@@ -192,6 +201,7 @@ aside, article, footer {
 	margin: 0 45px;
 }
 aside {
+    margin-top: 60px;
     z-index: 2;
 }
 aside section, article section, footer section {
@@ -331,7 +341,6 @@ article section .signature {
 
 /* table styles */
 .table-container {
-	border: 1px solid #CDCDCD;
 	margin-bottom: 10px;
 }
 .tablehead {

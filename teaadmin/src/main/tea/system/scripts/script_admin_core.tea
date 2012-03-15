@@ -646,16 +646,16 @@
                     var title = "Compile: " + buttonText;
 
                     var msg = 'No changes detected';
-                    var img = pathPrefix & 'system/assets/images/notification-info.png';
+                    var img = '<% pathPrefix %>system/assets/images/notification-info.png';
 
                     if ( $(data).closest('.sml-e').length > 0 ) {
 
-                        img = pathPrefix & 'system/assets/images/notification-incorrect.png';
+                        img = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
                         msg = 'Encountered errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
                     } else if ( $(data).closest('.sml-c').length > 0 ) {
 
-                        img = pathPrefix & 'system/assets/images/notification-correct.png';
+                        img = '<% pathPrefix %>system/assets/images/notification-correct.png';
                         msg = 'Successful';
 
                     }
@@ -716,16 +716,16 @@
 								name = name.substring(index+1);
 							}
 							var msg = 'No changes detected.';
-							var img = pathPrefix & 'system/assets/images/notification-info.png';
+							var img = '<% pathPrefix %>system/assets/images/notification-info.png';
 
 							if ( $(data).closest('.sml-e').length > 0 ) {
 
-								img = pathPrefix & 'system/assets/images/notification-incorrect.png';
+								img = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
 								msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
 							} else if ( $(data).closest('.sml-c').length > 0 ) {
 
-								img = pathPrefix & 'system/assets/images/notification-correct.png';
+								img = '<% pathPrefix %>system/assets/images/notification-correct.png';
 								msg = 'Template compiled successfully!';
 
 							}
@@ -750,7 +750,7 @@
 									name = name.substring(index+1);
 								}
 								var msg = 'Template stats were reset.';
-								var img = pathPrefix & 'system/assets/images/notification-correct.png';
+								var img = '<% pathPrefix %>system/assets/images/notification-correct.png';
 
 								$.gritter.add({
 									// (string | mandatory) the heading of the notification
@@ -802,16 +802,16 @@
 								name = name.substring(index+1);
 							}
 							var msg = 'No changes detected.';
-							var img = pathPrefix & 'system/assets/images/notification-info.png';
+							var img = '<% pathPrefix %>system/assets/images/notification-info.png';
 
 							if ( $(data).closest('.sml-e').length > 0 ) {
 
-								img = pathPrefix & 'system/assets/images/notification-incorrect.png';
+								img = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
 								msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
 							} else if ( $(data).closest('.sml-c').length > 0 ) {
 
-								img = pathPrefix & 'system/assets/images/notification-correct.png';
+								img = '<% pathPrefix %>system/assets/images/notification-correct.png';
 								msg = 'Template compiled successfully!';
 
 							}
@@ -836,7 +836,7 @@
 									name = name.substring(index+1);
 								}
 								var msg = 'Template stats were reset.';
-								var img = pathPrefix & 'system/assets/images/notification-correct.png';
+								var img = '<% pathPrefix %>system/assets/images/notification-correct.png';
 
 								$.gritter.add({
 									// (string | mandatory) the heading of the notification
