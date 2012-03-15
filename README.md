@@ -23,3 +23,17 @@ TeaTrove is a fork of the SourceForge Tea Trove project. This fork represents al
 
 Continuous builds are hosted on http://travis-ci.org.
 
+## Contributing
+
+1. Fork it.
+2. Create a branch (`git checkout -b fix-issue-xyz`)
+3. Make your changes
+4. Run a build (`mvn install`)
+5. Commit your changes (`git commit -am "Fixes #xyz, that bug I found."`)
+6. Push to the branch (`git push origin fix-issue-xyz`)
+7. Create a [Pull Request](http://help.github.com/pull-requests/) from your branch.
+
+## Collaborating
+
+Find us in the [teatrove-users](https://groups.google.com/forum/#!forum/teatrove-users) Google Group or on [irc.freenode.org#teatrove](irc:irc.freenode.org:6667/teatrove).
+
