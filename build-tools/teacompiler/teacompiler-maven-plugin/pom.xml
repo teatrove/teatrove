@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.teatrove</groupId>
         <artifactId>teacompiler</artifactId>
-        <version>4.1.1-espn-4-SNAPSHOT</version>
+        <version>4.1.1-espn-4</version>
     </parent>
 
     <dependencies>
