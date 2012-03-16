@@ -15,7 +15,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Tea Compiler API 4.1.1-SNAPSHOT API'
+'Tea Compiler API 4.1.2 API'
 -link
 'http://java.sun.com/javase/6/docs/api'
 -linkoffline
@@ -26,7 +26,21 @@
 'http://teatrove.org/tea/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/tea/target/site/apidocs'
 -linkoffline
 'http://teatrove.org/build-tools/teatools/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teatools/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/build-tools/teacompiler/teacompiler-maven-plugin/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teacompiler/teacompiler-maven-plugin/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/build-tools/toolbox/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/toolbox/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/teaservlet/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaservlet/target/site/apidocs'
+-linkoffline
+'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaapps/target/site/apidocs'
+-linkoffline
+'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaadmin/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/examples/hello-world/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/hello-world/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/examples/directory-browser/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/directory-browser/target/site/apidocs'
 -use
 -version
 -windowtitle
-'Tea Compiler API 4.1.1-SNAPSHOT API'
+'Tea Compiler API 4.1.2 API'
