@@ -15,14 +15,34 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Trove 4.1.1-SNAPSHOT Test API'
+'Trove 4.1.2 Test API'
 -link
 '../apidocs'
 -link
 'http://java.sun.com/javase/6/docs/api'
 -linkoffline
 'http://teatrove.org/build-tools/package-info-maven-plugin/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/package-info-maven-plugin/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/tea/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/tea/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/build-tools/teatools/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teatools/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/build-tools/teacompiler/teacompiler-api/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teacompiler/teacompiler-api/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/build-tools/teacompiler/teacompiler-maven-plugin/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teacompiler/teacompiler-maven-plugin/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/build-tools/toolbox/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/toolbox/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/teaservlet/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaservlet/target/site/testapidocs'
+-linkoffline
+'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaapps/target/site/testapidocs'
+-linkoffline
+'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaadmin/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/examples/hello-world/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/hello-world/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/examples/directory-browser/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/directory-browser/target/site/testapidocs'
 -use
 -version
 -windowtitle
-'Trove 4.1.1-SNAPSHOT Test API'
+'Trove 4.1.2 Test API'
