@@ -15,7 +15,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'TeaApps 4.1.1-SNAPSHOT Test API'
+'TeaApps 4.1.2 Test API'
 -link
 '../apidocs'
 -link
@@ -36,7 +36,13 @@
 'http://teatrove.org/build-tools/toolbox/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/toolbox/target/site/testapidocs'
 -linkoffline
 'http://teatrove.org/teaservlet/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaservlet/target/site/testapidocs'
+-linkoffline
+'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaadmin/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/examples/hello-world/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/hello-world/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/examples/directory-browser/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/directory-browser/target/site/testapidocs'
 -use
 -version
 -windowtitle
-'TeaApps 4.1.1-SNAPSHOT Test API'
+'TeaApps 4.1.2 Test API'

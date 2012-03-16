@@ -43,15 +43,15 @@
 <a class="jxr_linenumber" name="33" href="#33">33</a>  <em class="jxr_javadoccomment"> */</em>
 <a class="jxr_linenumber" name="34" href="#34">34</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a href="../../../../org/teatrove/teaapps/contexts/EncodingContext.html">EncodingContext</a> {
 <a class="jxr_linenumber" name="35" href="#35">35</a>      
-<a class="jxr_linenumber" name="36" href="#36">36</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String encodeBase64(String str) {
+<a class="jxr_linenumber" name="36" href="#36">36</a>      <strong class="jxr_keyword">public</strong> String encodeBase64(String str) {
 <a class="jxr_linenumber" name="37" href="#37">37</a>          <strong class="jxr_keyword">return</strong> Base64.encodeBase64URLSafeString(str.getBytes());
 <a class="jxr_linenumber" name="38" href="#38">38</a>      }
 <a class="jxr_linenumber" name="39" href="#39">39</a>      
-<a class="jxr_linenumber" name="40" href="#40">40</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String decodeBase64(String str) {
+<a class="jxr_linenumber" name="40" href="#40">40</a>      <strong class="jxr_keyword">public</strong> String decodeBase64(String str) {
 <a class="jxr_linenumber" name="41" href="#41">41</a>          <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> String(Base64.decodeBase64(str));
 <a class="jxr_linenumber" name="42" href="#42">42</a>      }
 <a class="jxr_linenumber" name="43" href="#43">43</a>      
-<a class="jxr_linenumber" name="44" href="#44">44</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String encodeIntArray(<strong class="jxr_keyword">int</strong>[] input) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="44" href="#44">44</a>      <strong class="jxr_keyword">public</strong> String encodeIntArray(<strong class="jxr_keyword">int</strong>[] input) <strong class="jxr_keyword">throws</strong> IOException {
 <a class="jxr_linenumber" name="45" href="#45">45</a>          ByteArrayOutputStream bos = <strong class="jxr_keyword">new</strong> ByteArrayOutputStream();
 <a class="jxr_linenumber" name="46" href="#46">46</a>          DataOutputStream dos = <strong class="jxr_keyword">new</strong> DataOutputStream(bos);
 <a class="jxr_linenumber" name="47" href="#47">47</a>          <strong class="jxr_keyword">int</strong> length = input.length;
@@ -62,7 +62,7 @@
 <a class="jxr_linenumber" name="52" href="#52">52</a>          <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> String(Base64.encodeBase64URLSafe(bos.toByteArray()));
 <a class="jxr_linenumber" name="53" href="#53">53</a>      }
 <a class="jxr_linenumber" name="54" href="#54">54</a>      
-<a class="jxr_linenumber" name="55" href="#55">55</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">int</strong>[] decodeIntArray(String input) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="55" href="#55">55</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong>[] decodeIntArray(String input) <strong class="jxr_keyword">throws</strong> IOException {
 <a class="jxr_linenumber" name="56" href="#56">56</a>          <strong class="jxr_keyword">int</strong>[] result = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="57" href="#57">57</a>          ByteArrayInputStream bis = 
 <a class="jxr_linenumber" name="58" href="#58">58</a>              <strong class="jxr_keyword">new</strong> ByteArrayInputStream(Base64.decodeBase64(input));
@@ -134,15 +134,15 @@
 <a class="jxr_linenumber" name="124" href="#124">124</a>     }
 <a class="jxr_linenumber" name="125" href="#125">125</a> 
 <a class="jxr_linenumber" name="126" href="#126">126</a>     
-<a class="jxr_linenumber" name="127" href="#127">127</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String encodeHex(byte[] bytes) {
+<a class="jxr_linenumber" name="127" href="#127">127</a>     <strong class="jxr_keyword">public</strong> String encodeHex(byte[] bytes) {
 <a class="jxr_linenumber" name="128" href="#128">128</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> String(Hex.encodeHex(bytes));
 <a class="jxr_linenumber" name="129" href="#129">129</a>     }
 <a class="jxr_linenumber" name="130" href="#130">130</a> 
-<a class="jxr_linenumber" name="131" href="#131">131</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> byte[] decodeHex(String str) <strong class="jxr_keyword">throws</strong> DecoderException {
+<a class="jxr_linenumber" name="131" href="#131">131</a>     <strong class="jxr_keyword">public</strong> byte[] decodeHex(String str) <strong class="jxr_keyword">throws</strong> DecoderException {
 <a class="jxr_linenumber" name="132" href="#132">132</a>         <strong class="jxr_keyword">return</strong> Hex.decodeHex(str.toCharArray());
 <a class="jxr_linenumber" name="133" href="#133">133</a>     }
 <a class="jxr_linenumber" name="134" href="#134">134</a>     
-<a class="jxr_linenumber" name="135" href="#135">135</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String decodeHexToString(String str) <strong class="jxr_keyword">throws</strong> DecoderException {
+<a class="jxr_linenumber" name="135" href="#135">135</a>     <strong class="jxr_keyword">public</strong> String decodeHexToString(String str) <strong class="jxr_keyword">throws</strong> DecoderException {
 <a class="jxr_linenumber" name="136" href="#136">136</a>         String result = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="137" href="#137">137</a>         byte[] bytes = Hex.decodeHex(str.toCharArray());
 <a class="jxr_linenumber" name="138" href="#138">138</a>         <strong class="jxr_keyword">if</strong> (bytes != <strong class="jxr_keyword">null</strong> &amp;&amp; bytes.length &gt; 0) {
