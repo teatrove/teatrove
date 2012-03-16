@@ -1,0 +1,46 @@
+-classpath
+'/Users/jacksbrr/Dropbox/Projects/teatrove/teaadmin/target/classes:/Users/jacksbrr/.m2/repositoryDefault/commons-lang/commons-lang/2.3/commons-lang-2.3.jar:/Users/jacksbrr/Dropbox/Projects/teatrove/teaservlet/target/classes:/Users/jacksbrr/.m2/repositoryDefault/org/apache/commons/commons-math/2.1/commons-math-2.1.jar:/Users/jacksbrr/.m2/repositoryDefault/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar:/Users/jacksbrr/.m2/repositoryDefault/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1.jar:/Users/jacksbrr/.m2/repositoryDefault/junit/junit/4.8.2/junit-4.8.2.jar:/Users/jacksbrr/.m2/repositoryDefault/net/sf/scannotation/scannotation/1.0.2/scannotation-1.0.2.jar:/Users/jacksbrr/.m2/repositoryDefault/javassist/javassist/3.6.0.GA/javassist-3.6.0.GA.jar:/Users/jacksbrr/Dropbox/Projects/teatrove/trove/target/classes:/Users/jacksbrr/.m2/repositoryDefault/joda-time/joda-time/1.6.2/joda-time-1.6.2.jar:/Users/jacksbrr/.m2/repositoryDefault/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar:/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teatools/target/classes:/Users/jacksbrr/Dropbox/Projects/teatrove/teaapps/target/classes:/Users/jacksbrr/.m2/repositoryDefault/org/jdom/jdom/1.1/jdom-1.1.jar:/Users/jacksbrr/Dropbox/Projects/teatrove/tea/target/classes:/Users/jacksbrr/.m2/repositoryDefault/commons-codec/commons-codec/1.5/commons-codec-1.5.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'/Users/jacksbrr/Dropbox/Projects/teatrove/teaadmin/src/main/java'
+-author
+-bottom
+'Copyright &#169; 1997-2012 <a href="http://teatrove.org">TeaTrove.org</a>. All Rights Reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/jacksbrr/Dropbox/Projects/teatrove/teaadmin/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'TeaAdmin 4.1.2 API'
+-link
+'http://java.sun.com/javase/6/docs/api'
+-linkoffline
+'http://teatrove.org/build-tools/package-info-maven-plugin/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/package-info-maven-plugin/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/trove/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/trove/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/tea/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/tea/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/build-tools/teatools/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teatools/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/build-tools/teacompiler/teacompiler-api/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teacompiler/teacompiler-api/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/build-tools/teacompiler/teacompiler-maven-plugin/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/teacompiler/teacompiler-maven-plugin/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/build-tools/toolbox/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/build-tools/toolbox/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/teaservlet/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaservlet/target/site/apidocs'
+-linkoffline
+'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaapps/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/examples/hello-world/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/hello-world/target/site/apidocs'
+-linkoffline
+'http://teatrove.org/examples/directory-browser/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/directory-browser/target/site/apidocs'
+-use
+-version
+-windowtitle
+'TeaAdmin 4.1.2 API'
