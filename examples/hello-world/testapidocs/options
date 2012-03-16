@@ -15,7 +15,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Hello World TeaTrove Example 4.1.1-SNAPSHOT Test API'
+'Hello World TeaTrove Example 4.1.2 Test API'
 -link
 '../apidocs'
 -link
@@ -38,7 +38,11 @@
 'http://teatrove.org/teaservlet/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaservlet/target/site/testapidocs'
 -linkoffline
 'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaapps/target/site/testapidocs'
+-linkoffline
+'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaadmin/target/site/testapidocs'
+-linkoffline
+'http://teatrove.org/examples/directory-browser/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/directory-browser/target/site/testapidocs'
 -use
 -version
 -windowtitle
-'Hello World TeaTrove Example 4.1.1-SNAPSHOT Test API'
+'Hello World TeaTrove Example 4.1.2 Test API'
