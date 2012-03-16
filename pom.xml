@@ -270,6 +270,7 @@
                 <configuration>
                     <!-- We use Git and will push the release commits manually to GitHub. -->
                     <pushChanges>false</pushChanges>
+                    <localCheckout>true</localCheckout>
                     <!-- Due to http://jira.codehaus.org/browse/MSITE-614 we can't run site-deploy during a release -->
                     <goals>clean deploy</goals>
                 </configuration>
