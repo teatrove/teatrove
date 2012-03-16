@@ -15,7 +15,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Directory Browser TeaTrove Example 4.1.1-SNAPSHOT API'
+'Directory Browser TeaTrove Example 4.1.2 API'
 -link
 'http://java.sun.com/javase/6/docs/api'
 -linkoffline
@@ -37,8 +37,10 @@
 -linkoffline
 'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaapps/target/site/apidocs'
 -linkoffline
+'http://www.teatrove.org/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/teaadmin/target/site/apidocs'
+-linkoffline
 'http://teatrove.org/examples/hello-world/apidocs' '/Users/jacksbrr/Dropbox/Projects/teatrove/examples/hello-world/target/site/apidocs'
 -use
 -version
 -windowtitle
-'Directory Browser TeaTrove Example 4.1.1-SNAPSHOT API'
+'Directory Browser TeaTrove Example 4.1.2 API'
