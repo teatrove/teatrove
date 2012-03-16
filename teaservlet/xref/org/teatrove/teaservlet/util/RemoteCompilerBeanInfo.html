@@ -11,7 +11,7 @@
 <a class="jxr_linenumber" name="1" href="#1">1</a>   <em class="jxr_comment">/*</em>
 <a class="jxr_linenumber" name="2" href="#2">2</a>   <em class="jxr_comment"> * RemoteCompilerBeanInfo.java</em>
 <a class="jxr_linenumber" name="3" href="#3">3</a>   <em class="jxr_comment"> *</em>
-<a class="jxr_linenumber" name="4" href="#4">4</a>   <em class="jxr_comment"> * BeanDoc generated on Thu Jan 19 at 10:17:51 EST 02012.</em>
+<a class="jxr_linenumber" name="4" href="#4">4</a>   <em class="jxr_comment"> * BeanDoc generated on Fri Mar 16 at 02:22:13 EDT 02012.</em>
 <a class="jxr_linenumber" name="5" href="#5">5</a>   <em class="jxr_comment"> * </em>
 <a class="jxr_linenumber" name="6" href="#6">6</a>   <em class="jxr_comment"> * See RemoteCompiler.java for copyright information.</em>
 <a class="jxr_linenumber" name="7" href="#7">7</a>   <em class="jxr_comment"> */</em>
@@ -73,7 +73,7 @@
 <a class="jxr_linenumber" name="63" href="#63">63</a>  
 <a class="jxr_linenumber" name="64" href="#64">64</a>      <em class="jxr_javadoccomment">/**</em>
 <a class="jxr_linenumber" name="65" href="#65">65</a>  <em class="jxr_javadoccomment">     * Returns a BeanInfo array containing BeanInfo object's for:&lt;br&gt;</em>
-<a class="jxr_linenumber" name="66" href="#66">66</a>  <em class="jxr_javadoccomment">     * &lt;code&gt;org.teatrove.teaservlet.util.AbstractCompiler&lt;/code&gt;&lt;br&gt;      </em>
+<a class="jxr_linenumber" name="66" href="#66">66</a>  <em class="jxr_javadoccomment">     * &lt;code&gt;org.teatrove.tea.util.AbstractCompiler&lt;/code&gt;&lt;br&gt;      </em>
 <a class="jxr_linenumber" name="67" href="#67">67</a>  <em class="jxr_javadoccomment">     */</em>  
 <a class="jxr_linenumber" name="68" href="#68">68</a>      <strong class="jxr_keyword">public</strong> BeanInfo[] getAdditionalBeanInfo() {
 <a class="jxr_linenumber" name="69" href="#69">69</a>  
@@ -133,7 +133,7 @@
 <a class="jxr_linenumber" name="123" href="#123">123</a>         bd.setName(<span class="jxr_string">"RemoteCompiler"</span>);
 <a class="jxr_linenumber" name="124" href="#124">124</a>         bd.setDisplayName(<span class="jxr_string">"RemoteCompiler"</span>);
 <a class="jxr_linenumber" name="125" href="#125">125</a>         bd.setShortDescription(<span class="jxr_string">"RemoteCompiler compiles tea source files by reading them from a remote \n location specified by a URL. The compiled code can be written as class files\n to a given destination directory, they can be passed to a ClassInjector, or\n they can be sent to both.\n\n &lt;p&gt;When given a URL, RemoteCompiler compiles all files with the\n extension \&quot;.tea\&quot;. If a destination directory is used, tea files that have a\n matching class file that is more up-to-date will not be compiled, unless\n they are forced to be re-compiled."</span>);        
-<a class="jxr_linenumber" name="126" href="#126">126</a>         bd.setValue(<span class="jxr_string">"BeanDoc"</span>, <span class="jxr_string">"4.1.1-SNAPSHOT"</span>);
+<a class="jxr_linenumber" name="126" href="#126">126</a>         bd.setValue(<span class="jxr_string">"BeanDoc"</span>, <span class="jxr_string">"4.1.2"</span>);
 <a class="jxr_linenumber" name="127" href="#127">127</a>         
 <a class="jxr_linenumber" name="128" href="#128">128</a>         <strong class="jxr_keyword">return</strong> bd;
 <a class="jxr_linenumber" name="129" href="#129">129</a>     }
@@ -147,7 +147,7 @@
 <a class="jxr_linenumber" name="137" href="#137">137</a>         bi = <strong class="jxr_keyword">null</strong>;
 <a class="jxr_linenumber" name="138" href="#138">138</a>         <strong class="jxr_keyword">try</strong> {
 <a class="jxr_linenumber" name="139" href="#139">139</a>             <em class="jxr_comment">// Get the BeanInfo for the superclass</em>
-<a class="jxr_linenumber" name="140" href="#140">140</a>             bi = Introspector.getBeanInfo(org.teatrove.teaservlet.util.AbstractCompiler.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="140" href="#140">140</a>             bi = Introspector.getBeanInfo(org.teatrove.tea.util.AbstractCompiler.<strong class="jxr_keyword">class</strong>);
 <a class="jxr_linenumber" name="141" href="#141">141</a>         }
 <a class="jxr_linenumber" name="142" href="#142">142</a>         <strong class="jxr_keyword">catch</strong> (Throwable t) {
 <a class="jxr_linenumber" name="143" href="#143">143</a>             t.printStackTrace();

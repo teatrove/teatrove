@@ -1,4 +1,5 @@
 org.teatrove.teaservlet
+org.teatrove.teaservlet.assets
 org.teatrove.teaservlet.io
 org.teatrove.teaservlet.management
 org.teatrove.teaservlet.stats
