@@ -1,4 +1,4 @@
-README for Trove/3.9.x
+README for Trove/4.1.x
 
 Copyright (C) 1997-2011 TeaTrove.org
  
