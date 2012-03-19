@@ -6,6 +6,16 @@ Trove contains a rich cache of useful utilities used by both Tea and the TeaServ
 
 Change History
 
+4.0.0 to 4.1.2
+===============================
+- Bug fixes
+
+3.9.0 to 4.0.0
+===============================
+- Add generics support to generate generics in class files and reference generics
+- Add substitution factory to load property files with substitution parameters
+- Support XMl and legacy property file formats natively
+
 1.7.5-espn-legacy-branch to 3.9.0
 ===============================
 - Changed version to match that of the entire TeaTrove project, from here on the project
