@@ -1245,7 +1245,11 @@ public class TypeChecker {
                 }
 
                 int cnt = MethodMatcher.match(methods, name, actualTypes);
-                if (cnt <= 0) {
+                if (cnt == MethodMatcher.AMBIGUOUS) {
+                    error("functioncallexpression.ambiguous", node);
+                    return null;
+                }
+                else if (cnt <= 0) {
                     error("functioncallexpression.not.found", node);
                     return null;
                 }

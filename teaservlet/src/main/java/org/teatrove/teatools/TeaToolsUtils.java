@@ -913,6 +913,8 @@ implements TeaToolsConstants {
             for (int i = 0; i < methodDescriptors.length; i++) {
             
                 MethodDescriptor md = methodDescriptors[i];
+                if (md.getMethod().isBridge()) { continue; }
+                
                 Class declaringClass = md.getMethod().getDeclaringClass();
 
                 if (declaringClass != Object.class &&

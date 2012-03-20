@@ -26,6 +26,8 @@ import java.lang.reflect.Method;
  * @author Brian S O'Neill
  */
 public class MethodMatcher {
+    public static final int AMBIGUOUS = -1;
+    
     /**
      * The best result candidates are stored in the Method array passed in.
      * The int returned indicates the number of candidates in the array. Zero
@@ -189,13 +191,13 @@ public class MethodMatcher {
     		// check if non-match (ie: multiple matching methods), and return
         	// ambiguous (-1)
         	else if (!last.equals(paramResults[i])) {
-        		return -1;
+        		return AMBIGUOUS;
         	}
         }
         
         // check if all ambiguous..no matches
         if (last == null) {
-        	return -1;
+        	return AMBIGUOUS;
         }
         
         // ensure first result is set to match

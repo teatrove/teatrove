@@ -583,6 +583,9 @@ public class MergedClass {
             for (int j=0; j<methods.length; j++) {
 
                 Method method = methods[j];
+                if (method.isBridge())
+                    continue;
+                
                 String name = method.getName();
                 if ("getObserverMode".equals(name) || "getInvocationObserver".equals(name))
                     continue; // don't wrap this.
