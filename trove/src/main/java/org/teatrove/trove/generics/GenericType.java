@@ -51,14 +51,14 @@ public class GenericType {
     }
 
     public GenericType(GenericType rootType, Class<?> type) {
-        this.rootType = rootType;
         this.type = type;
         this.genericType = type;
+        this.rootType = rootType == null ? this : rootType;
     }
 
     public GenericType(GenericType rootType, Type genericType) {
-        this.rootType = rootType;
         this.genericType = genericType;
+        this.rootType = rootType == null ? this : rootType;
 
         // lookup base type from handler
         // NOTE: this ignores the root type and just tries to resolve
@@ -76,9 +76,9 @@ public class GenericType {
 
     public GenericType(GenericType rootType,
                        Class<?> type, Type genericType) {
-        this.rootType = rootType;
         this.type = type;
         this.genericType = (genericType == null ? type : genericType);
+        this.rootType = rootType == null ? this : rootType;
     }
 
     public GenericType getRootType() {
@@ -130,6 +130,10 @@ public class GenericType {
         return this.getHandler().getRawType();
     }
 
+    public boolean isInterface() {
+        return this.type.isInterface();
+    }
+    
     public boolean isArray() {
         return this.getDimensions() > 0;
     }

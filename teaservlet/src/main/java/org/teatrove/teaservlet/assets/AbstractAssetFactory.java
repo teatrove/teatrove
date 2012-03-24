@@ -1,16 +1,29 @@
 package org.teatrove.teaservlet.assets;
 
+import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.PropertyMap;
 
 public abstract class AbstractAssetFactory implements AssetFactory {
 
+    protected Log log;
+    protected PropertyMap properties;
+    
     public AbstractAssetFactory() {
         super();
     }
 
     @Override
-    public void init(PropertyMap properties) throws Exception {
-        // nothing to do
+    public void init(Log log, PropertyMap properties) throws Exception {
+        this.log = log;
+        this.properties = properties;
+    }
+    
+    public Log getLog() {
+        return this.log;
+    }
+    
+    public PropertyMap getProperties() {
+        return this.properties;
     }
     
     protected String validatePath(String path) {
