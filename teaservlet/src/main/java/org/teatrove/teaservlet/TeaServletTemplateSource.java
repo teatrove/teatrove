@@ -17,7 +17,6 @@
 package org.teatrove.teaservlet;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -30,6 +29,7 @@ import java.util.Vector;
 
 import javax.servlet.ServletContext;
 
+import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.ErrorEvent;
 import org.teatrove.tea.compiler.StatusListener;
@@ -443,6 +443,54 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         return results;
     }
 
+    @Override
+    protected void createCompilers(List<Compiler> compilers,
+                                   ClassInjector injector, 
+                                   String packagePrefix) {
+        // add parent class compilers
+        // TODO: how do we determine order of path between different types:
+        //       ie: /WEB-INF/templates;http://remote/templates;/WEB-INF/others
+        super.createCompilers(compilers, injector, packagePrefix);
+        
+        // add remote compiler if available
+        Compiler rcompiler = createRemoteCompiler(injector, packagePrefix);
+        if (rcompiler != null) {
+            compilers.add(rcompiler);
+        }
+        
+        // add servlet context compiler if available
+        Compiler scompiler = createServletContextCompiler(injector, packagePrefix);
+        if (scompiler != null) {
+            compilers.add(scompiler);
+        }
+    }
+    
+    protected Compiler createRemoteCompiler(ClassInjector injector,
+                                            String packagePrefix) {
+        if (mRemoteTemplateURLs != null && mRemoteTemplateURLs.length > 0) {
+            RemoteCompiler compiler = new RemoteCompiler(
+                mRemoteTemplateURLs, packagePrefix, mCompiledDir, injector,
+                mEncoding, mTimeout, mPrecompiledTolerance);
+            
+            return compiler;
+        }
+        
+        return null;
+    }
+    
+    protected Compiler createServletContextCompiler(ClassInjector injector,
+                                                    String packagePrefix) {
+        if (mServletTemplatePaths != null && mServletTemplatePaths.length > 0) {
+            ServletContextCompiler compiler = new ServletContextCompiler(
+                mServletContext, mServletTemplatePaths, packagePrefix,
+                mCompiledDir, injector, mEncoding, mPrecompiledTolerance);
+            
+            return compiler;
+        }
+        
+        return null;
+    }
+    
     private TemplateCompilationResults compileTemplates(
             ClassInjector commonInjector,
             boolean all,
