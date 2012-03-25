@@ -60,6 +60,10 @@ public abstract class CompilationUnit implements ErrorListener {
     public Compiler getCompiler() {
         return mCompiler;
     }
+    
+    public void setCompiler(Compiler compiler) {
+        mCompiler = compiler;
+    }
 
     /**
      * The retrieves the runtime context.  The default behavior is to delegate

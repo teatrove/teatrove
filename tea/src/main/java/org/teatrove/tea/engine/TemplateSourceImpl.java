@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -36,7 +35,6 @@ import java.util.TreeSet;
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.ErrorEvent;
-import org.teatrove.tea.compiler.ErrorListener;
 import org.teatrove.tea.compiler.MergedCompiler;
 import org.teatrove.tea.compiler.SourceInfo;
 import org.teatrove.tea.compiler.StatusEvent;
@@ -280,7 +278,7 @@ public class TemplateSourceImpl implements TemplateSource {
         Compiler compiler = createCompiler(injector, packagePrefix);
 
         // create error listener
-        ErrorListener errorListener = createErrorListener();
+        TemplateErrorListener errorListener = createErrorListener();
         
         // setup compiler
         compiler.setClassLoader(injector);
@@ -402,8 +400,7 @@ public class TemplateSourceImpl implements TemplateSource {
 
         if (mResults != null &&
             (templates = mResults.getWrappedTemplates()) != null) {
-            return (Template[]) templates.values().toArray
-                (new Template[templates.size()]);
+            return templates.values().toArray(new Template[templates.size()]);
         }
 
         return new Template[0];
@@ -425,8 +422,7 @@ public class TemplateSourceImpl implements TemplateSource {
                 long lastModifiedTime = 0;
 
                 if (mTemplateSourceFileInfo != null) {
-                    sourceFileInfo = (TemplateSourceFileInfo)
-                        mTemplateSourceFileInfo.get(name);
+                    sourceFileInfo = mTemplateSourceFileInfo.get(name);
                 }
 
                 if (sourceFileInfo != null) {
@@ -506,11 +502,23 @@ public class TemplateSourceImpl implements TemplateSource {
     
     protected Compiler createStringCompiler(ClassInjector injector,
                                             String packagePrefix) {
-        // TODO: inject template strings, find source and name and update
-        // see compileFromStrings method
         if (mTemplateStrings != null && mTemplateStrings.length > 0) {
             StringCompiler compiler = new StringCompiler(
                 injector, packagePrefix);
+            
+            String[] templateNames = new String[mTemplateStrings.length];
+
+            // extract the template name from the template source string.
+            for (int j = 0; j < templateNames.length; j++) {
+                String template = "template ";
+                int index = 
+                    mTemplateStrings[j].indexOf(template) + template.length();
+                templateNames[j] = mTemplateStrings[j].substring
+                    (index, mTemplateStrings[j].indexOf('(', index));
+
+                compiler.setTemplateSource(templateNames[j], 
+                                           mTemplateStrings[j]);
+            }
             
             return compiler;
         }
@@ -586,7 +594,8 @@ public class TemplateSourceImpl implements TemplateSource {
     {
         TemplateErrorListener errorListener = createErrorListener();
         try {
-            return actuallyCompileTemplates(injector, false, false, errorListener, listener, selectedTemplates);
+            return actuallyCompileTemplates(injector, false, false, 
+                errorListener, listener, selectedTemplates);
         }
         finally {
             errorListener.close();
@@ -629,17 +638,8 @@ public class TemplateSourceImpl implements TemplateSource {
             compiler.addStatusListener(listener);
         }
 
-        // TODO: this is tied to file compiler with mTemplateRootDirs???
         if (mLogCompileStatus) {
-            // file version
-            compiler.addStatusListener(new CompilerStatusLogger(
-                Arrays.toString(mTemplateRootDirs)));
-            
-            // string version
-            // scomp.addStatusListener(new CompilerStatusLogger("String sources"));
-            
-            // resource version
-            // rcomp.addStatusListener(new CompilerStatusLogger(Arrays.toString(resourcePaths)));
+            compiler.addStatusListener(new CompilerStatusLogger(null));
         }
         
         // get list of all known templates
@@ -791,103 +791,6 @@ public class TemplateSourceImpl implements TemplateSource {
         }
 
         return sourceFileInfo;
-    }
-
-    private String[] compileFromResourcePaths(Class<?> contextType,
-                                              ClassInjector injector,
-                                              ErrorListener errorListener,
-                                              String packagePrefix,
-                                              String[] resourcePaths,
-                                              boolean guardian)
-        throws Exception
-    {
-        ResourceCompiler rcomp = new ResourceCompiler(injector, packagePrefix);
-        rcomp.addImportedPackages(getImports());
-        rcomp.setClassLoader(injector);
-        rcomp.setRuntimeContext(contextType);
-        rcomp.setExceptionGuardianEnabled(guardian);
-        rcomp.addErrorListener(errorListener);
-
-        if(mLogCompileStatus) {
-            rcomp.addStatusListener(new CompilerStatusLogger(Arrays.toString(resourcePaths)));
-        }
-
-        String[] result = rcomp.compile(mTemplateResources);
-
-        // show error count and messages
-        mLog.info(rcomp.getErrorCount() + " Resource compilation errors.");
-
-        mLog.info(Integer.toString(result.length));
-        for (int j = 0;j < result.length; j++) {
-            mLog.info(result[j]);
-        }
-
-        return result;
-    }
-
-    private String[] compileFromStrings(Class<?> contextType,
-                                        ClassInjector injector,
-                                        ErrorListener errorListener,
-                                        String packagePrefix,
-                                        String[] templateSourceStrings,
-                                        boolean guardian)
-        throws Exception
-    {
-        StringCompiler scomp = new StringCompiler(injector, packagePrefix);
-
-        scomp.addImportedPackages(getImports());
-        scomp.setClassLoader(injector);
-        scomp.setRuntimeContext(contextType);
-        scomp.setExceptionGuardianEnabled(guardian);
-        scomp.addErrorListener(errorListener);
-
-        if(mLogCompileStatus) {
-            scomp.addStatusListener(new CompilerStatusLogger("String sources"));
-        }
-
-        String[] templateNames = new String[mTemplateStrings.length];
-
-        // extract the template name from the template source string.
-        for (int j = 0; j < templateNames.length; j++) {
-            int index = mTemplateStrings[j].indexOf("template ") +
-                "template ".length();
-            templateNames[j] = mTemplateStrings[j].substring
-                (index, mTemplateStrings[j].indexOf('(', index));
-
-            //prepend the template's name with the package prefix
-            /*
-              if (mPackagePrefix != null) {
-              templateNames[j] = mPackagePrefix + '.'
-              + templateNames[j];
-              }
-            */
-
-            scomp.setTemplateSource(templateNames[j], mTemplateStrings[j]);
-        }
-
-        String[] result = scomp.compile(templateNames);
-
-        /*
-         * now strip the package prefix since the TemplateLoader will
-         * prepending it.
-
-         if (mPackagePrefix != null) {
-         for (int k = 0; k < result.length; k++) {
-         result[k] = result[k]
-         .substring(mPackagePrefix.length() + 1);
-         }
-         }
-        */
-
-        // show error count and messages.
-        mLog.info(scomp.getErrorCount() + " String compilation errors.");
-
-        mLog.info(Integer.toString(result.length));
-        for (int j = 0;j < result.length; j++) {
-            mLog.info(result[j]);
-        }
-
-        return result;
     }
 
     public Map<String, Boolean> listTouchedTemplates() throws Exception {

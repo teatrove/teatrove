@@ -212,7 +212,8 @@ public class CompiledTemplate extends CompilationUnit {
      * into.
      */
     public String getTargetPackage() {
-        return mCaller.getTargetPackage() != null ? mCaller.getTargetPackage() : TEMPLATE_PACKAGE;
+        return mCaller != null && mCaller.getTargetPackage() != null ? 
+            mCaller.getTargetPackage() : TEMPLATE_PACKAGE;
     }
 
 

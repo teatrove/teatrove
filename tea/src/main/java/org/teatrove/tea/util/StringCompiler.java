@@ -57,7 +57,7 @@ public class StringCompiler extends AbstractCompiler {
     }
 
     @Override
-    public String[] getAllTemplateNames() 
+    public String[] getAllTemplateNames(boolean recurse) 
         throws IOException {
         
         return mTemplateSources.keySet().toArray(

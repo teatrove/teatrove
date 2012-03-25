@@ -47,11 +47,24 @@ public class MergedCompiler extends Compiler {
     }
 
     @Override
+    public String[] getAllTemplateNames(boolean recurse) throws IOException {
+        Set<String> templates = new HashSet<String>();
+        for (Compiler compiler : this.compilers) {
+            Collections.addAll(templates, compiler.getAllTemplateNames(recurse));
+        }
+        
+        return templates.toArray(new String[templates.size()]);
+    }
+    
+    @Override
     protected CompilationUnit createCompilationUnit(String name) {
         // search for matching compiler
         for (Compiler compiler : this.compilers) {
             if (compiler.sourceExists(name)) {
-                return compiler.createCompilationUnit(name);
+                CompilationUnit unit = compiler.createCompilationUnit(name);
+                if (unit != null) {
+                    unit.setCompiler(this);
+                }
             }
         }
         
@@ -181,6 +194,8 @@ public class MergedCompiler extends Compiler {
         
         // each merged compiler
         for (Compiler compiler : this.compilers) {
+            // TODO: only compile the templates where sourceExists for given names
+            // so we don't attempt to compile each for each compiler
             compiled = compiler.compile(names);
             Collections.addAll(results, compiled);
         }
@@ -206,7 +221,10 @@ public class MergedCompiler extends Compiler {
         if (unit == null) {
             for (Compiler compiler : this.compilers) {
                 unit = compiler.getCompilationUnit(name, from);
-                if (unit != null) { break ;}
+                if (unit != null) { 
+                    unit.setCompiler(this);
+                    break;
+                }
             }
         }
         

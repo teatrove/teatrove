@@ -372,7 +372,7 @@ public class FileCompiler extends AbstractCompiler {
         return getAllTemplateNames(true);
     }
 
-    private String[] getAllTemplateNames(boolean recurse) throws IOException {
+    public String[] getAllTemplateNames(boolean recurse) throws IOException {
         // Using a Set to prevent duplicate template names.
         Collection<String> sources = new TreeSet<String>();
 

@@ -55,14 +55,21 @@ import org.teatrove.trove.util.PropertyMap;
  */
 public class TeaServletTemplateSource extends TemplateSourceImpl {
 
-    private final static String SERVLET_TMP_DIR = "javax.servlet.context.tempdir";
-    
+    /** Servlet constant for referencing temporary servlet directory. */
+    private final static String SERVLET_TMP_DIR = 
+        "javax.servlet.context.tempdir";
+
     /** Package for templates */
-    public final static String TEMPLATE_PACKAGE = "org.teatrove.teaservlet.template";
+    public final static String TEMPLATE_PACKAGE = 
+        "org.teatrove.teaservlet.template";
+    
     /** Short package for system templates */
     public final static String SYSTEM_PACKAGE = "system";
+    
     /** Full package for system templates */
-    public final static String SYSTEM_TEMPLATE_PACKAGE = TEMPLATE_PACKAGE + '.' + SYSTEM_PACKAGE;
+    public final static String SYSTEM_TEMPLATE_PACKAGE = 
+        TEMPLATE_PACKAGE + '.' + SYSTEM_PACKAGE;
+    
     private boolean mPreloadTemplates;
     //private boolean mRemoteSuccess;
     //private boolean mDelegatedSuccess;
@@ -77,16 +84,15 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
     private ReloadLock mReloadLock;
     private static long mTimeout;
 
-    public static TeaServletTemplateSource createTemplateSource(ServletContext servletContext,
-    		TeaServletContextSource contextSrc,
-            PropertyMap properties,
-            Log log) {
+    public static TeaServletTemplateSource createTemplateSource(
+        ServletContext servletContext, TeaServletContextSource contextSrc,
+            PropertyMap properties, Log log) {
 
         mTimeout = properties.getNumber("server.timeout",
-                new Long(15000)).longValue();
-        TemplateSourceConfig tsConfig = new TSConfig(contextSrc,
-                properties,
-                log);
+                Long.valueOf(15000)).longValue();
+        
+        TemplateSourceConfig tsConfig = 
+            new TSConfig(contextSrc, properties, log);
 
         File tmpDir = (File) servletContext.getAttribute(SERVLET_TMP_DIR);
         if (tmpDir == null) {
@@ -127,7 +133,8 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 } else if (nextPath.startsWith("file:")){
                     localVec.add(new File(nextPath.substring(5)));
                 } else {
-                	throw new IllegalStateException("unsupported template path: " + nextPath);
+                	throw new IllegalStateException(
+                	    "unsupported template path: " + nextPath);
                 }
             }
 
@@ -137,11 +144,13 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         }
 
         return new TeaServletTemplateSource(tsConfig, localDirs,
-                remoteDirs, servletContext, servletDirs, destDir, customTemplateSources);
+            remoteDirs, servletContext, servletDirs, destDir, 
+            customTemplateSources);
     }
 
     @SuppressWarnings("unchecked")
-    private static TemplateSource[] createCustomTemplateSources(final TemplateSourceConfig config) {
+    private static TemplateSource[] createCustomTemplateSources(
+        final TemplateSourceConfig config) {
 
         final PropertyMap props = config.getProperties().subMap("sources");
         List<TemplateSource> results = new Vector<TemplateSource>();
@@ -186,11 +195,14 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
             }
         }
 
-        TemplateSource[] tSrc = results.toArray(new TemplateSource[results.size()]);
+        TemplateSource[] tSrc = 
+            results.toArray(new TemplateSource[results.size()]);
+        
         if (tSrc == null) {
             config.getLog().debug("null results array");
             tSrc = new TemplateSource[0];
         }
+        
         return tSrc;
     }
 
@@ -225,9 +237,11 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         mServletContext = servletContext;
         mServletTemplatePaths = servletTemplatePaths;
         mDefaultTemplateName = config.getProperties().getString("default");
-        mEncoding = config.getProperties().getString("file.encoding", "ISO-8859-1");
+        mEncoding = 
+            config.getProperties().getString("file.encoding", "ISO-8859-1");
         mPreloadTemplates = config.getProperties().getBoolean("preload", true);
-        mPrecompiledTolerance = config.getProperties().getInt("precompiled.tolerance", 1000);
+        mPrecompiledTolerance = 
+            config.getProperties().getInt("precompiled.tolerance", 1000);
 
         Set<String> imported = new HashSet<String>();
         String imports = config.getProperties().getString("imports", "");
@@ -276,7 +290,8 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
     }
 
     @Override
-    public TemplateCompilationResults compileTemplates(ClassInjector commonInjector,
+    public TemplateCompilationResults compileTemplates(
+            ClassInjector commonInjector,
             boolean all, boolean recurse, StatusListener listener)
         throws Exception {
 
@@ -285,7 +300,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
 
     @Override
     public TemplateCompilationResults compileTemplates(ClassInjector injector,
-    		StatusListener listener, String[] selectedTemplates) 
+    	    StatusListener listener, String[] selectedTemplates) 
         throws Exception {
 
         return compileTemplates(injector, false, false, true, selectedTemplates,
@@ -294,152 +309,12 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
 
     @Override
     public TemplateCompilationResults checkTemplates(ClassInjector injector,
-            boolean all,
-            String[] selectedTemplates)
-            throws Exception {
-        // TODO should we synch with reloading?
-        TemplateCompilationResults results = super.checkTemplates(injector, all, selectedTemplates);
-
-        if (mRemoteTemplateURLs != null && mRemoteTemplateURLs.length > 0) {
-            if (injector == null) {
-                injector = createClassInjector();
-            }
-
-            TemplateErrorListener errorListener = createErrorListener();
-
-            RemoteCompiler compiler = new RemoteCompiler(mRemoteTemplateURLs,
-                    TEMPLATE_PACKAGE,
-                    mCompiledDir,
-                    injector,
-                    mEncoding,
-                    mTimeout,
-                    mPrecompiledTolerance);
-            compiler.addImportedPackages(getImports());
-            compiler.setClassLoader(injector);
-            compiler.setRuntimeContext(getContextSource().getContextType());
-            compiler.setCodeGenerationEnabled(false);
-            compiler.addErrorListener(errorListener);
-            compiler.setForceCompile(all);
-
-            String[] templates;
-            if (selectedTemplates == null || selectedTemplates.length == 0) {
-                templates = compiler.getAllTemplateNames();
-            } else {
-                templates = selectedTemplates;
-                compiler.setForceCompile(true);
-            }
-
-            List<TemplateInfo> callerList = new ArrayList<TemplateInfo>();
-
-            templateLoop:
-            for (int i = 0; i < templates.length; i++) {
-
-                CompilationUnit unit = compiler.getCompilationUnit(templates[i], null);
-                if (unit == null) {
-                    mLog.warn("selected template not found: " + templates[i]);
-                    continue templateLoop;
-                }
-
-                if (unit.shouldCompile() && !results.getReloadedTemplateNames().contains(templates[i])) {
-
-                    compiler.getParseTree(unit);
-
-                    results.appendName(templates[i]);
-                    callerList.addAll(Arrays.asList(TemplateRepository.getInstance().getCallers(unit.getName())));
-                }
-            }
-
-            compiler.setForceCompile(true);
-            callerLoop:
-            for (Iterator<TemplateInfo> it = callerList.iterator(); it.hasNext();) {
-                TemplateInfo tInfo = it.next();
-                String caller = tInfo.getShortName().replace('/', '.');
-                if (results.getReloadedTemplateNames().contains(caller)) {
-                    continue callerLoop;
-                }
-
-                CompilationUnit callingUnit = compiler.getCompilationUnit(caller, null);
-                if (callingUnit != null) {
-                    compiler.getParseTree(callingUnit);
-                }
-            }
-
-            results.appendErrors(errorListener.getTemplateErrors());
-            errorListener.close();
-
-        }
+            boolean all, String[] selectedTemplates)
+        throws Exception {
         
-        if (mServletTemplatePaths != null && mServletTemplatePaths.length > 0) {
-            if (injector == null) {
-                injector = createClassInjector();
-            }
-
-            TemplateErrorListener errorListener = createErrorListener();
-
-            ServletContextCompiler compiler = new ServletContextCompiler(mServletContext,
-            		mServletTemplatePaths,
-                    TEMPLATE_PACKAGE,
-                    mCompiledDir,
-                    injector,
-                    mEncoding,
-                    mPrecompiledTolerance);
-            compiler.addImportedPackages(getImports());
-            compiler.setClassLoader(injector);
-            compiler.setRuntimeContext(getContextSource().getContextType());
-            compiler.setCodeGenerationEnabled(false);
-            compiler.addErrorListener(errorListener);
-            compiler.setForceCompile(all);
-
-            String[] templates;
-            if (selectedTemplates == null || selectedTemplates.length == 0) {
-                templates = compiler.getAllTemplateNames();
-            } else {
-                templates = selectedTemplates;
-                compiler.setForceCompile(true);
-            }
-
-            List<TemplateInfo> callerList = new ArrayList<TemplateInfo>();
-
-            templateLoop:
-            for (int i = 0; i < templates.length; i++) {
-
-                CompilationUnit unit = compiler.getCompilationUnit(templates[i], null);
-                if (unit == null) {
-                    mLog.warn("selected template not found: " + templates[i]);
-                    continue templateLoop;
-                }
-
-                if (unit.shouldCompile() && !results.getReloadedTemplateNames().contains(templates[i])) {
-
-                    compiler.getParseTree(unit);
-
-                    results.appendName(templates[i]);
-                    callerList.addAll(Arrays.asList(TemplateRepository.getInstance().getCallers(unit.getName())));
-                }
-            }
-
-            compiler.setForceCompile(true);
-            callerLoop:
-            for (Iterator<TemplateInfo> it = callerList.iterator(); it.hasNext();) {
-                TemplateInfo tInfo = it.next();
-                String caller = tInfo.getShortName().replace('/', '.');
-                if (results.getReloadedTemplateNames().contains(caller)) {
-                    continue callerLoop;
-                }
-
-                CompilationUnit callingUnit = compiler.getCompilationUnit(caller, null);
-                if (callingUnit != null) {
-                    compiler.getParseTree(callingUnit);
-                }
-            }
-
-            results.appendErrors(errorListener.getTemplateErrors());
-            errorListener.close();
-
-        }
-
-        results.getReloadedTemplateNames().removeAll(results.getTemplateErrors().keySet());
-
+        // TODO should we synch with reloading?
+        TemplateCompilationResults results = 
+            super.checkTemplates(injector, all, selectedTemplates);
         return results;
     }
 
@@ -492,24 +367,19 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
     }
     
     private TemplateCompilationResults compileTemplates(
-            ClassInjector commonInjector,
-            boolean all,
-            boolean recurse,
-            boolean enforceReloadLock,
-            StatusListener listener)
-            throws Exception {
+            ClassInjector commonInjector, boolean all, boolean recurse,
+            boolean enforceReloadLock, StatusListener listener)
+        throws Exception {
+        
         return compileTemplates(commonInjector, all, recurse, enforceReloadLock, 
                                 null, listener);
     }
 
     private TemplateCompilationResults compileTemplates(
-            ClassInjector commonInjector,
-            boolean all,
-            boolean recurse,
-            boolean enforceReloadLock,
-            String[] selectedTemplates,
+            ClassInjector commonInjector, boolean all, boolean recurse,
+            boolean enforceReloadLock, String[] selectedTemplates,
             StatusListener listener)
-            throws Exception {
+        throws Exception {
 
         synchronized (mReloadLock) {
             if (mReloadLock.isReloading() && enforceReloadLock) {
@@ -529,46 +399,45 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
             }
 
             Results results;
-            boolean isSelectiveCompile = null != selectedTemplates && selectedTemplates.length > 0;
+            boolean isSelectiveCompile = 
+                (null != selectedTemplates && selectedTemplates.length > 0);
+            
             if (isSelectiveCompile) {
-                results = actuallyCompileTemplates(commonInjector, listener, selectedTemplates);
+                results = actuallyCompileTemplates(commonInjector, listener, 
+                                                   selectedTemplates);
             } else {
-                results = actuallyCompileTemplates(commonInjector, all, recurse, listener);
+                results = actuallyCompileTemplates(commonInjector, all, recurse, 
+                                                   listener);
             }
 
             for (int j = 0; j < mCustomTemplateSources.length; j++) {
                 TemplateCompilationResults delegateResults =
-                        mCustomTemplateSources[j].compileTemplates(commonInjector, all, listener);
+                    mCustomTemplateSources[j].compileTemplates(commonInjector, 
+                                                               all, listener);
+                
                 if (delegateResults.isAlreadyReloading()) {
                     return delegateResults;
-                } else {
+                } 
+                else {
                     TemplateCompilationResults transients =
-                            results.getTransientResults();
+                        results.getTransientResults();
                     transients.appendNames(delegateResults.getReloadedTemplateNames());
                     transients.appendErrors(delegateResults.getTemplateErrors());
                 }
             }
 
-            if (isSelectiveCompile) {
-                compileRemoteTemplates(all, commonInjector, results, listener, selectedTemplates);
-                compileServletContextTemplates(all, commonInjector, results, listener, selectedTemplates);
-            } else {
-                compileRemoteTemplates(all, commonInjector, results, listener);
-                compileServletContextTemplates(all, commonInjector, results, listener);
-            }
-
             // process results
 
             TemplateCompilationResults templateCompilationResults =
-                    results.getTransientResults();
+                results.getTransientResults();
 
             // remove errors from reloaded
             templateCompilationResults.getReloadedTemplateNames()
-                    .removeAll(templateCompilationResults.getTemplateErrors().keySet());
+                .removeAll(templateCompilationResults.getTemplateErrors().keySet());
 
-            String[] succeeded
-                    = templateCompilationResults.getReloadedTemplateNames()
-                        .toArray(new String[templateCompilationResults.getReloadedTemplateNames().size()]);
+            String[] succeeded = 
+                templateCompilationResults.getReloadedTemplateNames()
+                    .toArray(new String[templateCompilationResults.getReloadedTemplateNames().size()]);
 
             mResults = results;
 
@@ -611,12 +480,14 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
             }
 
             if ( ! templateCompilationResults.isSuccessful()) {
-                List<TemplateError> errors = templateCompilationResults.getAllTemplateErrors();
+                List<TemplateError> errors = 
+                    templateCompilationResults.getAllTemplateErrors();
                 mLog.warn(errors.size() + " errors encountered.");
                 Iterator<TemplateError> errorIt = errors.iterator();
                 while (errorIt.hasNext()) {
                     TemplateError error = errorIt.next();
-                    mLog.warn(error.getDetailedErrorMessage() + " : " + error.getSourceLine());
+                    mLog.warn(error.getDetailedErrorMessage() + " : " + 
+                              error.getSourceLine());
                 }
             }
 
@@ -652,106 +523,6 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         }
     }
 
-    private void compileRemoteTemplates(boolean force,
-            ClassInjector injector,
-            Results results,
-            StatusListener listener)
-            throws Exception {
-        compileRemoteTemplates(force, injector, results, listener, null);
-    }
-
-    private void compileRemoteTemplates(boolean force,
-            ClassInjector injector,
-            Results results,
-            StatusListener listener,
-            String[] selectedTemplates)
-            throws Exception {
-
-        if (mRemoteTemplateURLs != null && mRemoteTemplateURLs.length > 0) {
-            TemplateErrorListener errorListener = createErrorListener();
-            RemoteCompiler rmcomp =
-                    new RemoteCompiler(mRemoteTemplateURLs,
-                    TEMPLATE_PACKAGE,
-                    mCompiledDir,
-                    injector,
-                    mEncoding,
-                    mTimeout,
-                    mPrecompiledTolerance);
-            rmcomp.addImportedPackages(getImports());
-            rmcomp.setClassLoader(injector);
-            rmcomp.setRuntimeContext(getContextSource().getContextType());
-            rmcomp.setExceptionGuardianEnabled(mConfig.isExceptionGuardianEnabled());
-            rmcomp.addErrorListener(errorListener);
-            if (listener != null) {
-                rmcomp.addStatusListener(listener);
-            }
-            if(isLogCompileStatus()) {
-                rmcomp.addStatusListener(new CompilerStatusLogger(Arrays.toString(mRemoteTemplateURLs)));
-            }
-
-            rmcomp.setForceCompile(force);
-            results.getKnownTemplateNames().addAll(Arrays.asList(rmcomp.getAllTemplateNames()));
-            TemplateCompilationResults transients =
-                    results.getTransientResults();
-            if (null == selectedTemplates || selectedTemplates.length == 0) {
-                transients.appendNames(Arrays.asList(rmcomp.compileAll()));
-            } else {
-                transients.appendNames(Arrays.asList(rmcomp.compile(selectedTemplates)));
-            }
-            transients.appendErrors(errorListener.getTemplateErrors());
-        }
-    }
-    
-    private void compileServletContextTemplates(boolean force,
-            ClassInjector injector,
-            Results results,
-            StatusListener listener)
-            throws Exception {
-    	compileServletContextTemplates(force, injector, results, listener, null);
-    }
-    
-    private void compileServletContextTemplates(boolean force,
-            ClassInjector injector,
-            Results results,
-            StatusListener listener,
-            String[] selectedTemplates)
-            throws Exception {
-
-        if (mServletTemplatePaths != null && mServletTemplatePaths.length > 0) {
-            TemplateErrorListener errorListener = createErrorListener();
-            ServletContextCompiler sccomp =
-                    new ServletContextCompiler(mServletContext,
-                    		mServletTemplatePaths,
-                    TEMPLATE_PACKAGE,
-                    mCompiledDir,
-                    injector,
-                    mEncoding,
-                    mPrecompiledTolerance);
-            sccomp.addImportedPackages(getImports());
-            sccomp.setClassLoader(injector);
-            sccomp.setRuntimeContext(getContextSource().getContextType());
-            sccomp.setExceptionGuardianEnabled(mConfig.isExceptionGuardianEnabled());
-            sccomp.addErrorListener(errorListener);
-            if (listener != null) {
-            	sccomp.addStatusListener(listener);
-            }
-            if(isLogCompileStatus()) {
-            	sccomp.addStatusListener(new CompilerStatusLogger(Arrays.toString(mServletTemplatePaths)));
-            }
-
-            sccomp.setForceCompile(force);
-            results.getKnownTemplateNames().addAll(Arrays.asList(sccomp.getAllTemplateNames()));
-            TemplateCompilationResults transients =
-                    results.getTransientResults();
-            if (null == selectedTemplates || selectedTemplates.length == 0) {
-                transients.appendNames(Arrays.asList(sccomp.compileAll()));
-            } else {
-                transients.appendNames(Arrays.asList(sccomp.compile(selectedTemplates)));
-            }
-            transients.appendErrors(errorListener.getTemplateErrors());
-        }
-    }
-
     private static class TSConfig implements TemplateSourceConfig {
 
         private ContextSource mContextSource;
@@ -784,43 +555,6 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         public Log getLog() {
             return mLog;
         }
-    }
-
-    @Override
-    public Map<String, Boolean> listTouchedTemplates() throws Exception {
-        Map<String, Boolean> touchedTemplateMap = super.listTouchedTemplates();
-
-        RemoteCompiler compiler = new RemoteCompiler(mRemoteTemplateURLs, TEMPLATE_PACKAGE, mCompiledDir, null, mEncoding, mTimeout, mPrecompiledTolerance);
-        compiler.addImportedPackages(getImports());
-        compiler.setForceCompile(false);
-
-        String[] tNames = compiler.getAllTemplateNames();
-        for (int i = 0; i < tNames.length; i++) {
-
-            CompilationUnit unit = compiler.getCompilationUnit(tNames[i], null);
-
-            if (unit.shouldCompile()) {
-                Boolean sigChanged = Boolean.valueOf(sourceSignatureChanged(unit.getName(), compiler));
-                touchedTemplateMap.put(unit.getName(), sigChanged);
-            }
-        }
-        
-        ServletContextCompiler sccompiler = new ServletContextCompiler(mServletContext, mServletTemplatePaths, TEMPLATE_PACKAGE, mCompiledDir, null, mEncoding, mPrecompiledTolerance);
-        sccompiler.addImportedPackages(getImports());
-        sccompiler.setForceCompile(false);
-
-        tNames = sccompiler.getAllTemplateNames();
-        for (int i = 0; i < tNames.length; i++) {
-
-            CompilationUnit unit = sccompiler.getCompilationUnit(tNames[i], null);
-
-            if (unit.shouldCompile()) {
-                Boolean sigChanged = Boolean.valueOf(sourceSignatureChanged(unit.getName(), compiler));
-                touchedTemplateMap.put(unit.getName(), sigChanged);
-            }
-        }
-
-        return touchedTemplateMap;
     }
 
     class RemoteTemplateErrorRetriever extends ErrorRetriever {

@@ -72,7 +72,7 @@ public class ServletContextCompiler extends AbstractCompiler {
     	return mTemplates.containsKey(name);
     }
     
-    public String[] getAllTemplateNames() {
+    public String[] getAllTemplateNames(boolean recurse) {
     	return mTemplates.keySet().toArray(new String[mTemplates.size()]);
     }
 

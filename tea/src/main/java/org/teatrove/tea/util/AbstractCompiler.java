@@ -44,7 +44,6 @@ public abstract class AbstractCompiler extends Compiler {
     protected File mRootDestDir;
     protected ClassInjector mInjector;
     protected String mEncoding;
-    protected boolean mForce;
     protected long mPrecompiledTolerance;
 
     public AbstractCompiler(ClassInjector injector) {
@@ -102,13 +101,6 @@ public abstract class AbstractCompiler extends Compiler {
 	}
 
     /**
-     * @param force When true, compile all source, even if up-to-date
-     */
-    public void setForceCompile(boolean force) {
-        mForce = force;
-    }       
-
-    /**
      * Get the root target package for all templates. All templates will be 
      * based on this root package and extended from it.
      * 
@@ -149,21 +141,6 @@ public abstract class AbstractCompiler extends Compiler {
         
         return compiled;
     }
-    
-    /**
-     * Recursively compiles all files in the source directory.
-     *
-     * @return The names of all the compiled sources
-     */
-    public String[] compileAll() throws IOException {
-        return compile(getAllTemplateNames());
-    }
-
-    /**
-     * Returns all sources (template names) available from the source
-     * directory and in all sub-directories.
-     */
-    public abstract String[] getAllTemplateNames() throws IOException;
     
     public abstract class AbstractUnit extends CompilationUnit {
         protected String mSourceFilePath;

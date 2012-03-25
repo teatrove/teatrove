@@ -86,7 +86,7 @@ public class RemoteCompiler extends AbstractCompiler {
         return mTemplateMap.containsKey(name);
     }
     
-    public String[] getAllTemplateNames() {
+    public String[] getAllTemplateNames(boolean recurse) {
         return mTemplateMap.keySet().toArray(new String[0]);
     }
 

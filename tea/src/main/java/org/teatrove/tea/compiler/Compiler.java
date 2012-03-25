@@ -55,6 +55,7 @@ public abstract class Compiler {
     // Set of names for CompilationUnits that have already been compiled.
     private final Set<String> mCompiled = new HashSet<String>();
 
+    protected boolean mForce;
     private Set<String> mPreserveTree;
 
     private Class<?> mContextClass = org.teatrove.tea.runtime.UtilityContext.class;
@@ -241,6 +242,59 @@ public abstract class Compiler {
         mPreserveTree.add(name);
     }
 
+    /**
+     * Set the flag of whether to force all templates to be compiled even if
+     * up-to-date.
+     * 
+     * @param force When true, compile all source, even if up-to-date
+     */
+    public void setForceCompile(boolean force) {
+        mForce = force;
+    }
+    
+    /**
+     * Get the list of all known templates to this compiler.  If the list of
+     * known templates cannot be easily resolved, then <code>null</code> should
+     * be returned.
+     * 
+     * @return The list of all known templates.
+     */
+    public String[] getAllTemplateNames() throws IOException {
+        return getAllTemplateNames(true);
+    }
+    
+    /**
+     * Get the list of all known templates to this compiler.  If the list of
+     * known templates cannot be easily resolved, then <code>null</code> should
+     * be returned.
+     * 
+     * @param recurse The flag of whether to recurse into sub-directories
+     * 
+     * @return The list of all known templates.
+     */
+    public abstract String[] getAllTemplateNames(boolean recurse) 
+        throws IOException;
+    
+    /**
+     * Recursively compiles all files in the source directory.
+     *
+     * @return The names of all the compiled sources
+     */
+    public String[] compileAll() throws IOException {
+        return compileAll(true);
+    }
+    
+    /**
+     * Compiles all files in the source directory recursively or not.
+     *
+     * @param recurse The flag of whether to recurse all sub-directories
+     * 
+     * @return The names of all the compiled sources
+     */
+    public String[] compileAll(boolean recurse) throws IOException {
+        return compile(getAllTemplateNames(recurse));
+    }
+    
     /**
      * Compile a single compilation unit. This method can be called multiple
      * times, but it will not compile compilation units that have already been

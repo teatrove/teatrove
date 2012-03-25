@@ -56,7 +56,7 @@ public class ResourceCompiler extends AbstractCompiler {
         return this.getClass().getResource(resName) != null;
     }
     
-    public String[] getAllTemplateNames() throws IOException {
+    public String[] getAllTemplateNames(boolean recurse) throws IOException {
         // TODO: support ability to search entire class path although that
         // could be costly and unwanted
         return new String[0];
