@@ -20,6 +20,8 @@ body {
     font-family: Helvetica,Arial,sans-serif;
 }
 /* Header */
+.ie header { position: inherit !important; }
+
 header {
     position: fixed;
     width: 100%;
@@ -41,6 +43,7 @@ header {
     clear: both;
     padding: 0 33px;
 }
+ 
 header section {
 	margin: 0 auto;
 	width: 95%;
@@ -48,6 +51,7 @@ header section {
 header h1 {
     float: left;
     margin: 2px 30px 0 0;
+	margin-top: 2px;
 }
 header #logo {
     display: block;
@@ -57,11 +61,11 @@ header #logo {
 }
 header nav {
 	list-style: none;
-	display: inline-block;
+	display: block;
 	text-align: left;
-	height: 36px;
 }
 header nav.groups {
+    float: left;
 	/*margin-left: 160px;*/
 }
 header nav.admins {
@@ -87,8 +91,6 @@ header nav ul {
 	border-right-color: rgba(255, 255, 255, 0.15);
 	border-right-color: rgba(255, 255, 255, 0.15);
 	border-left-color: rgba(0, 0, 0, 0.2);
-	
-	height: 40px;
 }
 header nav ul li {
 	float: left;
@@ -148,6 +150,7 @@ header nav ul ul {
 header nav ul ul, header nav ul ul li {
 	height: auto;
 	border: 0;
+	top: 0;
 }
 header nav ul li ul {
 	position: absolute;
@@ -202,6 +205,9 @@ aside, article, footer {
     position: relative;
 	margin: 0 45px;
 }
+
+.ie aside { margin-top: inherit !important; }
+
 aside {
     margin-top: 60px;
     z-index: 2;
