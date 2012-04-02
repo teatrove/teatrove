@@ -242,7 +242,7 @@
                                                                                                     foreach ( templateName in templates ) {
                                                                                                         if ( templateName != null ) {
                                                                                                             '<div>'
-                                                                                                                '<a href="Admin?subTemplate=system.teaservlet.AdminTemplateInfo&templateName=' & templateName & '">'
+                                                                                                                '<a href="' call system.util.getTemplateDetailsUrl(templateName) '">'
                                                                                                                     templateName
                                                                                                                 '</a>'
                                                                                                             '</div>'
