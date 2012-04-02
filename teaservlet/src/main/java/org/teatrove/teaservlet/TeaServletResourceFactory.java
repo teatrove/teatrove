@@ -16,7 +16,6 @@
 
 package org.teatrove.teaservlet;
 
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -44,23 +43,15 @@ public class TeaServletResourceFactory extends DefaultResourceFactory {
         return this.servletContext;
     }
     
-    public URL getResource(String path)
-        throws MalformedURLException {
+    public URL getResource(String path) {
+        URL url = null;
+        try { url = this.servletContext.getResource(path); }
+        catch (MalformedURLException exception) { /* ignore */ }
         
-        URL url = this.servletContext.getResource(path);
         if (url == null) {
             url = super.getResource(path);
         }
         
         return url;
-    }
-    
-    public InputStream getResourceAsStream(String path) {
-        InputStream input = this.servletContext.getResourceAsStream(path);
-        if (input == null) {
-            input = super.getResourceAsStream(path);
-        }
-        
-        return input;
     }
 }

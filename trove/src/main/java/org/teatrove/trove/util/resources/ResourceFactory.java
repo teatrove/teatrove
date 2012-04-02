@@ -18,7 +18,6 @@ package org.teatrove.trove.util.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.teatrove.trove.util.PropertyMap;
@@ -35,11 +34,8 @@ public interface ResourceFactory {
      * @param path  The name or path of the resource
      * 
      * @return  The associated URL of the resource
-     * 
-     * @throws MalformedURLException if the given path is an invalid URL
      */
-    URL getResource(String path)
-        throws MalformedURLException;
+    URL getResource(String path);
     
     /**
      * Get a associated input stream per the specified path.  The default method
