@@ -9,10 +9,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.teatrove.tea.templates.FunctionsTest.FunctionsContext;
 
 public class GenericsTest extends AbstractTemplateTest {
 
+    @Before
+    public void setup() {
+        addContext("MapApplication", new MapContext());
+    }
+    
     @Test
     public void testGenerics() throws Exception {
         // setup params
@@ -39,8 +46,15 @@ public class GenericsTest extends AbstractTemplateTest {
             executeSource(TEST_SOURCE_3, TEST_SOURCE_PARAMS, 
                           numbers, states, integers);
         assertEquals("1", result3);
+
+        String result4 = executeSource(TEST_SOURCE_4, "");
+        assertEquals("0", result4);
     }
 
+    public static class MapContext {
+        public Map createHashMap() { return new HashMap(); }
+    }
+    
     protected static final String TEST_SOURCE_PARAMS =
         "List<List<Integer[]>> numbers, " +
         "Map<String, List<String>> states, " +
@@ -68,4 +82,15 @@ public class GenericsTest extends AbstractTemplateTest {
             "num = integer as Number; " +
             "num" +
         "}";
+    
+    protected static final String TEST_SOURCE_4 = 
+        "map = createHashMap() as Map<String, List<Integer>>; " +
+        "list = map['abc']; " +
+        "cnt = 0; if (list != null) { " +
+            "cnt = 0; foreach (item in list) { " +
+                "cnt = cnt + item; " +
+            "} " +
+        "}" +
+        "cnt";
+                
 }
