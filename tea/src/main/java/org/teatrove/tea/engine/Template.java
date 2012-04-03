@@ -36,9 +36,9 @@ public interface Template extends TemplateLoader.Template {
     public TemplateSource getTemplateSource();
 
     /**
-     * Returns the .tea source file of this template
+     * Returns the path to the tea source file of this template.
      */
-    public File getSourceFile();
+    public String getSourcePath();
 
     /**
      * Returns the last (known) modified time of the template's source file

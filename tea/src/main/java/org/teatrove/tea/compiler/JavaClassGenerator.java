@@ -262,7 +262,7 @@ public class JavaClassGenerator extends CodeGenerator {
         ClassFile classFile = new ClassFile(className);
         classFile.getModifiers().setFinal(true);
 
-        String sourceFile = mUnit.getSourceFileName();
+        String sourceFile = mUnit.getName();
         if (sourceFile != null) {
             classFile.setSourceFile(sourceFile);
         }

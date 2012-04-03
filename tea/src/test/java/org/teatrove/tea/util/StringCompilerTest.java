@@ -1,23 +1,28 @@
 package org.teatrove.tea.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.trove.util.ClassInjector;
 
 public class StringCompilerTest {
 
-    private StringCompiler compiler;
+    private Compiler compiler;
+    private StringCompilationProvider provider;
     
     @Before
     public void init() {
-        compiler = new StringCompiler(new ClassInjector());
-        compiler.setTemplateSource("test", "<% template test() 'test' %>");
-        compiler.setTemplateSource("abc", "<% template abc() 'abc' %>");        
+        compiler = new Compiler(new ClassInjector());
+        provider = new StringCompilationProvider();
+        provider.setTemplateSource("test", "<% template test() 'test' %>");
+        provider.setTemplateSource("abc", "<% template abc() 'abc' %>");
+        compiler.addCompilationProvider(provider);
     }
     
     @Test

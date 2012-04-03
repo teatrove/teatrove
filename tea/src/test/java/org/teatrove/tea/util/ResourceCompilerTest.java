@@ -1,20 +1,26 @@
 package org.teatrove.tea.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.trove.util.ClassInjector;
 
 public class ResourceCompilerTest {
 
-    private ResourceCompiler compiler;
+    private Compiler compiler;
+    private ResourceCompilationProvider provider;
     
     @Before
     public void init() {
-        compiler = new ResourceCompiler(new ClassInjector());
+        provider = new ResourceCompilationProvider();
+        compiler = new Compiler(new ClassInjector());
+        compiler.addCompilationProvider(provider);
     }
     
     @Test
