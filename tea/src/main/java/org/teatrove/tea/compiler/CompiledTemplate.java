@@ -55,7 +55,7 @@ public class CompiledTemplate extends CompilationUnit {
      */
     public CompiledTemplate(String name, Compiler compiler,
             CompilationUnit caller) {
-        super(name, compiler);
+        super(name, null, compiler);
         mCaller = caller;
         try {
             if (caller != null && caller.getReader() instanceof SourceReader) {
@@ -197,7 +197,7 @@ public class CompiledTemplate extends CompilationUnit {
              }
              list.add(new Variable(mCallerInfo, null, new Type(p[i], t[i])));
          }
-         mParameters = (Variable[]) list.toArray(new Variable[list.size()]);
+         mParameters = list.toArray(new Variable[list.size()]);
 
     }
 
@@ -220,7 +220,7 @@ public class CompiledTemplate extends CompilationUnit {
     /**
      * @return true if the CompilationUnit should be compiled. Default is true.
      */
-    public boolean shouldCompile() throws IOException {
+    public boolean shouldCompile() {
         return false;
     }
 

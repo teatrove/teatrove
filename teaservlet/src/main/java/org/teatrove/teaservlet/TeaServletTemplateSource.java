@@ -17,34 +17,23 @@
 package org.teatrove.teaservlet;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.Vector;
 
 import javax.servlet.ServletContext;
 
-import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.tea.compiler.CompilationUnit;
-import org.teatrove.tea.compiler.ErrorEvent;
+import org.teatrove.tea.compiler.CompilationProvider;
 import org.teatrove.tea.compiler.StatusListener;
-import org.teatrove.tea.compiler.TemplateRepository;
-import org.teatrove.tea.compiler.TemplateRepository.TemplateInfo;
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
 import org.teatrove.tea.engine.TemplateError;
-import org.teatrove.tea.engine.TemplateErrorListener;
 import org.teatrove.tea.engine.TemplateSource;
 import org.teatrove.tea.engine.TemplateSourceConfig;
 import org.teatrove.tea.engine.TemplateSourceImpl;
-import org.teatrove.teaservlet.util.RemoteCompiler;
-import org.teatrove.teaservlet.util.ServletContextCompiler;
+import org.teatrove.teaservlet.util.RemoteCompilationProvider;
+import org.teatrove.teaservlet.util.ServletContextCompilationProvider;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.ClassInjector;
 import org.teatrove.trove.util.PropertyMap;
@@ -71,15 +60,8 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         TEMPLATE_PACKAGE + '.' + SYSTEM_PACKAGE;
     
     private boolean mPreloadTemplates;
-    //private boolean mRemoteSuccess;
-    //private boolean mDelegatedSuccess;
-    private String[] mRemoteTemplateURLs;
     private ServletContext mServletContext;
-    private String[] mServletTemplatePaths;
     private String mDefaultTemplateName;
-    private String mEncoding;
-    private long mPrecompiledTolerance;
-    //private ClassInjector mInjector;
     private TemplateSource[] mCustomTemplateSources;
     private ReloadLock mReloadLock;
     private static long mTimeout;
@@ -110,42 +92,12 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         TemplateSource[] customTemplateSources =
                 createCustomTemplateSources(tsConfig);
 
-        String sourcePathString = properties.getString("path", "/");
-        File[] localDirs = null;
-        String[] remoteDirs = null;
-        String[] servletDirs = null;
-
-        if (sourcePathString != null) {
-            StringTokenizer sourcePathTokenizer =
-                    new StringTokenizer(sourcePathString, ",;");
-
-            Vector<String> remoteVec = new Vector<String>();
-            Vector<File> localVec = new Vector<File>();
-            Vector<String> servletVec = new Vector<String>();
-
-            // Sort out the local directories from those using http.
-            while (sourcePathTokenizer.hasMoreTokens()) {
-                String nextPath = sourcePathTokenizer.nextToken().trim();
-                if (nextPath.startsWith("http://")) {
-                    remoteVec.add(nextPath);
-                } else if (nextPath.startsWith("/")) {
-                	servletVec.add(nextPath);
-                } else if (nextPath.startsWith("file:")){
-                    localVec.add(new File(nextPath.substring(5)));
-                } else {
-                	throw new IllegalStateException(
-                	    "unsupported template path: " + nextPath);
-                }
-            }
-
-            localDirs = localVec.toArray(new File[localVec.size()]);
-            remoteDirs = remoteVec.toArray(new String[remoteVec.size()]);
-            servletDirs = servletVec.toArray(new String[servletVec.size()]);
-        }
-
-        return new TeaServletTemplateSource(tsConfig, localDirs,
-            remoteDirs, servletContext, servletDirs, destDir, 
-            customTemplateSources);
+        TeaServletTemplateSource source = new TeaServletTemplateSource
+        (
+            servletContext, destDir, customTemplateSources
+        );
+        source.init(tsConfig);
+        return source;
     }
 
     @SuppressWarnings("unchecked")
@@ -206,52 +158,31 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         return tSrc;
     }
 
-    private TeaServletTemplateSource(TemplateSourceConfig config, 
-    		File[] localTemplateDirs,
-    		String[] remoteTemplateURLs,
-    		ServletContext servletContext, 
-            String[] servletTemplatePaths,
-            File compiledTemplateDir,
-            TemplateSource[] customSources) {
+    private TeaServletTemplateSource(ServletContext servletContext, 
+        File compiledTemplateDir, TemplateSource[] customSources) {
 
-        super();
-
-        //since I'm not calling init to parse the config, set things up.
-        mConfig = config;
-        mLog = config.getLog();
-        mProperties = config.getProperties();
-        mLog.info("initializing the TeaServletTemplateSource.");
+        mServletContext = servletContext;
+        setDestinationDirectory(compiledTemplateDir);
+        mCustomTemplateSources = customSources;
+    }
+    
+    @Override
+    public void init(TemplateSourceConfig config) {
+        super.init(config);
+        
+        mLog.info("Initializing the TeaServletTemplateSource.");
 
         mReloadLock = new ReloadLock();
-        setTemplateRootDirs(localTemplateDirs);
-        setDestinationDirectory(compiledTemplateDir);
+        mDefaultTemplateName = config.getProperties().getString("default");
+        mPreloadTemplates = config.getProperties().getBoolean("preload", true);
 
-        if (customSources == null) {
+        if (mCustomTemplateSources == null) {
             mLog.debug("No custom TemplateSources configured.");
         } else {
-            mLog.info(customSources.length + " custom TemplateSources configured.");
+            mLog.info(mCustomTemplateSources.length + 
+                      " custom TemplateSources configured.");
         }
-
-        mCustomTemplateSources = customSources;
-        mRemoteTemplateURLs = remoteTemplateURLs;
-        mServletContext = servletContext;
-        mServletTemplatePaths = servletTemplatePaths;
-        mDefaultTemplateName = config.getProperties().getString("default");
-        mEncoding = 
-            config.getProperties().getString("file.encoding", "ISO-8859-1");
-        mPreloadTemplates = config.getProperties().getBoolean("preload", true);
-        mPrecompiledTolerance = 
-            config.getProperties().getInt("precompiled.tolerance", 1000);
-
-        Set<String> imported = new HashSet<String>();
-        String imports = config.getProperties().getString("imports", "");
-        StringTokenizer tokenizer = new StringTokenizer(imports, ",;");
-        while (tokenizer.hasMoreTokens()) {
-            imported.add(tokenizer.nextToken().trim());
-        }
-
-        setImports(imported.toArray(new String[imported.size()]));
-
+        
         if (mCompiledDir == null && !mPreloadTemplates) {
             mLog.warn("Now preloading templates.");
             mPreloadTemplates = true;
@@ -319,51 +250,23 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
     }
 
     @Override
-    protected void createCompilers(List<Compiler> compilers,
-                                   ClassInjector injector, 
-                                   String packagePrefix) {
-        // add parent class compilers
-        // TODO: how do we determine order of path between different types:
-        //       ie: /WEB-INF/templates;http://remote/templates;/WEB-INF/others
-        super.createCompilers(compilers, injector, packagePrefix);
-        
-        // add remote compiler if available
-        Compiler rcompiler = createRemoteCompiler(injector, packagePrefix);
-        if (rcompiler != null) {
-            compilers.add(rcompiler);
+    protected CompilationProvider createProvider(String path) {
+        CompilationProvider provider = super.createProvider(path);
+        if (provider == null) {
+            if (path.startsWith("http:")) {
+                provider = new RemoteCompilationProvider(path, mTimeout);
+            }
+            else if (path.startsWith("web:")) {
+                provider = new ServletContextCompilationProvider(
+                    mServletContext, path.substring(4));
+            }
+            else {
+                provider = new ServletContextCompilationProvider(
+                    mServletContext, path);
+            }
         }
         
-        // add servlet context compiler if available
-        Compiler scompiler = createServletContextCompiler(injector, packagePrefix);
-        if (scompiler != null) {
-            compilers.add(scompiler);
-        }
-    }
-    
-    protected Compiler createRemoteCompiler(ClassInjector injector,
-                                            String packagePrefix) {
-        if (mRemoteTemplateURLs != null && mRemoteTemplateURLs.length > 0) {
-            RemoteCompiler compiler = new RemoteCompiler(
-                mRemoteTemplateURLs, packagePrefix, mCompiledDir, injector,
-                mEncoding, mTimeout, mPrecompiledTolerance);
-            
-            return compiler;
-        }
-        
-        return null;
-    }
-    
-    protected Compiler createServletContextCompiler(ClassInjector injector,
-                                                    String packagePrefix) {
-        if (mServletTemplatePaths != null && mServletTemplatePaths.length > 0) {
-            ServletContextCompiler compiler = new ServletContextCompiler(
-                mServletContext, mServletTemplatePaths, packagePrefix,
-                mCompiledDir, injector, mEncoding, mPrecompiledTolerance);
-            
-            return compiler;
-        }
-        
-        return null;
+        return provider;
     }
     
     private TemplateCompilationResults compileTemplates(
@@ -503,11 +406,6 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
         return mDefaultTemplateName;
     }
 
-    @Override
-    protected TemplateErrorListener createErrorListener() {
-        return new RemoteTemplateErrorRetriever();
-    }
-
     private void preloadTemplates(TemplateSource ts)
             throws Throwable {
 
@@ -554,41 +452,6 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
 
         public Log getLog() {
             return mLog;
-        }
-    }
-
-    class RemoteTemplateErrorRetriever extends ErrorRetriever {
-
-        public void compileError(ErrorEvent event) {
-            if(! (event.getCompilationUnit() instanceof RemoteCompiler.Unit)) {
-                super.compileError(event);
-                return;
-            }
-
-            mConfig.getLog().warn("Error in " +
-                                  event.getDetailedErrorMessage());
-
-            RemoteCompiler.Unit unit = (RemoteCompiler.Unit) event.getCompilationUnit();
-            if (unit == null) {
-                return;
-            }
-
-            String templateName = unit.getName();
-
-            List<TemplateError> errors = mTemplateErrors.get(templateName);
-            if (errors == null) {
-                errors = new ArrayList<TemplateError>();
-                mTemplateErrors.put(templateName, errors);
-            }
-
-            String sourcePath = unit.getSourceFileName();
-
-            TemplateError templateError = createTemplateError(sourcePath, event);
-
-            if (templateError != null) {
-                errors.add(templateError);
-            }
-
         }
     }
 }

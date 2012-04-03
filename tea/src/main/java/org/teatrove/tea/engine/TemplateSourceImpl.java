@@ -32,10 +32,10 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.teatrove.tea.compiler.CompilationProvider;
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.ErrorEvent;
-import org.teatrove.tea.compiler.MergedCompiler;
 import org.teatrove.tea.compiler.SourceInfo;
 import org.teatrove.tea.compiler.StatusEvent;
 import org.teatrove.tea.compiler.StatusListener;
@@ -43,9 +43,9 @@ import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.compiler.TemplateRepository.TemplateInfo;
 import org.teatrove.tea.runtime.Context;
 import org.teatrove.tea.runtime.TemplateLoader;
-import org.teatrove.tea.util.FileCompiler;
-import org.teatrove.tea.util.ResourceCompiler;
-import org.teatrove.tea.util.StringCompiler;
+import org.teatrove.tea.util.FileCompilationProvider;
+import org.teatrove.tea.util.JarCompilationProvider;
+import org.teatrove.tea.util.ResourceCompilationProvider;
 import org.teatrove.trove.io.LinePositionReader;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.ClassInjector;
@@ -130,13 +130,12 @@ public class TemplateSourceImpl implements TemplateSource {
     protected Log mLog;
     protected PropertyMap mProperties;
     protected File mCompiledDir;
-
+    
     // fields specific to this implementation
-    private File[] mTemplateRootDirs;
-    private String[] mTemplateResources;
-    private String[] mTemplateStrings;
     private ReloadLock mReloading;
     private String[] mImports;
+    private String mEncoding;
+    private long mPrecompiledTolerance;
 
     // result fields
     protected Results mResults;
@@ -155,17 +154,19 @@ public class TemplateSourceImpl implements TemplateSource {
         mConfig = config;
         mLog = config.getLog();
         mProperties = config.getProperties();
-        mLog.info("initializing template source");
+        mLog.info("Initializing Template Source...");
 
         mImports = parseImports(mProperties);
 
-        mTemplateRootDirs = parseRootDirs(mProperties);
-
-        mTemplateResources = chopString(mProperties.getString("resource"), ";,");
-
-        mCompiledDir = 
+        if (mCompiledDir == null) {
+            mCompiledDir = 
             createTemplateClassesDir(new File("."), 
                                      mProperties.getString("classes"), mLog);
+        }
+        
+        mEncoding = mProperties.getString("file.encoding", "ISO-8859-1");
+        mPrecompiledTolerance = 
+            mProperties.getInt("precompiled.tolerance", 1000);
     }
 
     public String[] getImports() {
@@ -418,7 +419,7 @@ public class TemplateSourceImpl implements TemplateSource {
 
             if (wrapped == null) {
                 TemplateSourceFileInfo sourceFileInfo = null;
-                File sourceFile = null;
+                String sourcePath = null;
                 long lastModifiedTime = 0;
 
                 if (mTemplateSourceFileInfo != null) {
@@ -426,13 +427,13 @@ public class TemplateSourceImpl implements TemplateSource {
                 }
 
                 if (sourceFileInfo != null) {
-                    sourceFile = sourceFileInfo.getSourceFile();
+                    sourcePath = sourceFileInfo.getSourcePath();
                     lastModifiedTime = sourceFileInfo.getLastModifiedTime();
                 }
 
                 wrapped = new TemplateImpl
                     (getTemplateLoader().getTemplate(name), this,
-                     sourceFile, lastModifiedTime);
+                        sourcePath, lastModifiedTime);
             }
 
             wrappedTemplates.put(name, wrapped);
@@ -448,82 +449,21 @@ public class TemplateSourceImpl implements TemplateSource {
 
     protected Compiler createCompiler(ClassInjector injector, 
                                       String packagePrefix) {
-        List<Compiler> compilers = new ArrayList<Compiler>();
-        createCompilers(compilers, injector, packagePrefix);
-        return new MergedCompiler(
-            compilers.toArray(new Compiler[compilers.size()]));
-    }
-    
-    protected void createCompilers(List<Compiler> compilers,
-                                   ClassInjector injector, 
-                                   String packagePrefix) {
-        // create file compiler if valid
-        Compiler fcompiler = createFileCompiler(injector, packagePrefix);
-        if (fcompiler != null) {
-            compilers.add(fcompiler);
-        }
         
-        // create resource compiler if valid
-        Compiler rcompiler = createResourceCompiler(injector, packagePrefix);
-        if (rcompiler != null) {
-            compilers.add(rcompiler);
-        }
+        Compiler compiler = new Compiler
+        (
+            injector, packagePrefix, mCompiledDir, mEncoding, 
+            mPrecompiledTolerance
+        );
         
-        // create string compiler if valid
-        Compiler scompiler = createStringCompiler(injector, packagePrefix);
-        if (scompiler != null) {
-            compilers.add(scompiler);
-        }
-    }
-    
-    protected Compiler createFileCompiler(ClassInjector injector,
-                                          String packagePrefix) {
-        if (mTemplateRootDirs != null && mTemplateRootDirs.length > 0) {
-            FileCompiler compiler = new FileCompiler(
-                mTemplateRootDirs, packagePrefix, mCompiledDir, injector);
-            
-            return compiler;
-        }
-        
-        return null;
-    }
-    
-    protected Compiler createResourceCompiler(ClassInjector injector,
-                                              String packagePrefix) {
-        if (mTemplateResources != null && mTemplateResources.length > 0) {
-            ResourceCompiler compiler = new ResourceCompiler(
-                injector, packagePrefix);
-            
-            return compiler;
-        }
-        
-        return null;
-    }
-    
-    protected Compiler createStringCompiler(ClassInjector injector,
-                                            String packagePrefix) {
-        if (mTemplateStrings != null && mTemplateStrings.length > 0) {
-            StringCompiler compiler = new StringCompiler(
-                injector, packagePrefix);
-            
-            String[] templateNames = new String[mTemplateStrings.length];
-
-            // extract the template name from the template source string.
-            for (int j = 0; j < templateNames.length; j++) {
-                String template = "template ";
-                int index = 
-                    mTemplateStrings[j].indexOf(template) + template.length();
-                templateNames[j] = mTemplateStrings[j].substring
-                    (index, mTemplateStrings[j].indexOf('(', index));
-
-                compiler.setTemplateSource(templateNames[j], 
-                                           mTemplateStrings[j]);
+        CompilationProvider[] providers = parseProviders(mProperties);
+        if (providers != null) {
+            for (CompilationProvider provider : providers) {
+                compiler.addCompilationProvider(provider);
             }
-            
-            return compiler;
         }
-        
-        return null;
+
+        return compiler;
     }
     
     protected Results actuallyCompileTemplates(ClassInjector injector,
@@ -664,7 +604,7 @@ public class TemplateSourceImpl implements TemplateSource {
 
         // get source file info for all templates
         mTemplateSourceFileInfo = 
-            createTemplateSourceFileInfo(knownTemplateNames); 
+            createTemplateSourceFileInfo(compiler, knownTemplateNames); 
 
         // return results
         return new Results(
@@ -682,34 +622,6 @@ public class TemplateSourceImpl implements TemplateSource {
      */
     protected Set<String> getKnownTemplateNameSet() {
         return mResults.getKnownTemplateNames();
-    }
-
-    /** 
-     * allows a subclass to set the source strings directly rather than using
-     * init to parse the config.
-     */
-    protected void setTemplateStrings(String[] sourceData) {
-        mTemplateStrings = sourceData;
-    }
-
-    /**
-     * allows a subclass to set the resource paths directly rather than using
-     * init to parse the config.
-     */
-    protected void setTemplateResources(String[] resourcePaths) {
-        mTemplateResources = resourcePaths;
-    }
-
-    /**
-     * allows a subclass to directly specify the directories to be searched
-     * for template sources.
-     */
-    protected void setTemplateRootDirs(File[] rootDirs) {
-        mTemplateRootDirs = rootDirs;
-    }
-
-    protected File[] getTemplateRootDirs() {
-        return mTemplateRootDirs;
     }
 
     /**
@@ -741,34 +653,55 @@ public class TemplateSourceImpl implements TemplateSource {
         return chopString(properties.getString("imports", ""), ";,");
     }
 
-    private File[] parseRootDirs(PropertyMap properties) {
-        String[] roots = chopString(properties.getString("path"), ";,");
-        File[] rootDirs = null;
-
-        if (roots != null) {
-            rootDirs = new File[roots.length];
-            for (int j = 0; j < roots.length; j++) {
-                rootDirs[j] = new File(roots[j]);
+    private CompilationProvider[] parseProviders(PropertyMap properties) {
+        CompilationProvider[] providers = null;
+        String[] paths = chopString(properties.getString("path"), ";,");
+        if (paths != null) {
+            providers = new CompilationProvider[paths.length];
+            for (int i = 0; i < paths.length; i++) {
+                providers[i] = createProvider(paths[i]);
+                if (providers[i] == null) {
+                    throw new IllegalStateException(
+                        "unsupported compilation provider: " + paths[i]);
+                }
             }
         }
 
-        return rootDirs;
+        return providers;
     }
 
-    private File findSourceFile(String name) {
-        String filename = name.replace('.', File.separatorChar) + ".tea";
-
-        for (int i = 0; i < mTemplateRootDirs.length; i++) {
-            File file = new File(mTemplateRootDirs[i], filename);
-            if (file.exists())
-                return file;
+    protected CompilationProvider createProvider(String path) {
+        // handle file-based paths
+        if (path.startsWith("file:")) {
+            File file = new File(path.substring(5));
+            if (file.isDirectory()) {
+                return new FileCompilationProvider(file);
+            }
+            else if (file.isFile() && file.getPath().endsWith(".jar")) {
+                return new JarCompilationProvider(file);
+            }
         }
-
+        
+        // handle jar-based paths
+        else if (path.startsWith("jar:")) {
+            File file = new File(path.substring(4));
+            if (file.isFile() && file.getPath().endsWith(".jar")) {
+                return new JarCompilationProvider(file);
+            }
+        }
+        
+        // handle classpath-based paths
+        else if (path.startsWith("classpath:")) {
+            String rootPackage = path.substring(10);
+            return new ResourceCompilationProvider(rootPackage);
+        }
+        
+        // unsupported
         return null;
     }
-
+    
     private Map<String, TemplateSourceFileInfo>
-    createTemplateSourceFileInfo(Set<String> templateNames) {
+    createTemplateSourceFileInfo(Compiler compiler, Set<String> templateNames) {
         if (templateNames.isEmpty()) {
             return null;
         }
@@ -780,14 +713,18 @@ public class TemplateSourceImpl implements TemplateSource {
         while (iterator.hasNext()) {
             String name = iterator.next();
 
-            File sourceFile = findSourceFile(name);
-            if (sourceFile == null) {
+            CompilationUnit unit = compiler.getCompilationUnit(name, null);
+            if (unit == null) {
                 continue;
             }
 
-            long lastModifiedTime = sourceFile.lastModified();
+            String sourcePath = unit.getSourcePath();
+            long lastModifiedTime = unit.getLastModified();
 
-            sourceFileInfo.put(name, new TemplateSourceFileInfo(name, sourceFile, lastModifiedTime));
+            sourceFileInfo.put(
+                name, 
+                new TemplateSourceFileInfo(name, sourcePath, lastModifiedTime)
+            );
         }
 
         return sourceFileInfo;
@@ -910,17 +847,7 @@ public class TemplateSourceImpl implements TemplateSource {
                 mTemplateErrors.put(templateName, errors);
             }
 
-            String sourcePath = unit.getSourceFileName();
-
-            // Get source path if it's a file compiler
-
-            if (unit instanceof org.teatrove.tea.util.FileCompiler.Unit) {
-                sourcePath = ((org.teatrove.tea.util.FileCompiler.Unit)
-                              unit).getSourceFile().getAbsolutePath();
-            } else if(unit instanceof org.teatrove.tea.util.FileCompiler.JarredUnit) {
-                sourcePath = ((org.teatrove.tea.util.FileCompiler.JarredUnit)
-                              unit).getSourceUrl().toString();
-            }
+            String sourcePath = unit.getSourcePath();
 
             TemplateError templateError = createTemplateError(sourcePath, event);
 
@@ -1067,17 +994,17 @@ public class TemplateSourceImpl implements TemplateSource {
         /** Template name */
         private String mName;
 
-        /** Template source file */
-        private File mSourceFile;
+        /** Template source path */
+        private String mSourcePath;
 
         /** Time the template source file last modified */
         private long mLastModifiedTime;
 
         public TemplateSourceFileInfo(String name,
-                                      File sourceFile,
+                                      String sourcePath,
                                       long lastModifiedTime) {
             mName = name;
-            mSourceFile = sourceFile;
+            mSourcePath = sourcePath;
             mLastModifiedTime = lastModifiedTime;
         }
 
@@ -1085,8 +1012,8 @@ public class TemplateSourceImpl implements TemplateSource {
             return mName;
         }
 
-        public File getSourceFile() {
-            return mSourceFile;
+        public String getSourcePath() {
+            return mSourcePath;
         }
 
         public long getLastModifiedTime() {
@@ -1097,16 +1024,16 @@ public class TemplateSourceImpl implements TemplateSource {
     private class TemplateImpl implements Template {
         private TemplateLoader.Template mTemplate;
         private TemplateSource mSource;
-        private File mSourceFile;
+        private String mSourcePath;
         private long mLastModifiedTime;
 
         protected TemplateImpl(TemplateLoader.Template template,
                                TemplateSource source,
-                               File sourceFile,
+                               String sourcePath,
                                long lastModifiedTime) {
             mTemplate = template;
             mSource = source;
-            mSourceFile = sourceFile;
+            mSourcePath = sourcePath;
             mLastModifiedTime = lastModifiedTime;
         }
 
@@ -1114,8 +1041,8 @@ public class TemplateSourceImpl implements TemplateSource {
             return mSource;
         }
 
-        public File getSourceFile() {
-            return mSourceFile;
+        public String getSourcePath() {
+            return mSourcePath;
         }
 
         public long getLastModifiedTime() {
