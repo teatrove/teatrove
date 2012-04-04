@@ -16,9 +16,13 @@
 
 package org.teatrove.teatools;
 
-import org.teatrove.tea.compiler.CompilationUnit;
+import java.io.CharArrayReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Reader;
 
-import java.io.*;
+import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.Compiler;
 
 /**
  * This CompilationUnit is used in conjunction with the TextCompiler
@@ -34,11 +38,9 @@ public class TextCompilationUnit extends CompilationUnit {
      * Creates a new CompilationUnit with the specified name, compiler, 
      * and text.
      */
-    public TextCompilationUnit(String name, 
-                               org.teatrove.tea.compiler.Compiler compiler, 
-                               char[] text) {
+    public TextCompilationUnit(String name, Compiler compiler, char[] text) {
         
-        super(name, compiler);
+        super(name, null, compiler);
         
         mText = text;
     }
@@ -60,6 +62,7 @@ public class TextCompilationUnit extends CompilationUnit {
     /**
      * Returns a Reader for the text
      */
+    @Override
     public Reader getReader() throws IOException {
         return new CharArrayReader(getText());                    
     }
@@ -67,10 +70,12 @@ public class TextCompilationUnit extends CompilationUnit {
     /**
      * Always returns null
      */
+    @Override
     public OutputStream getOutputStream() throws IOException {
         // No code generation needed
         return null;
     }
     
+    @Override
     public void resetOutputStream() {}
 }

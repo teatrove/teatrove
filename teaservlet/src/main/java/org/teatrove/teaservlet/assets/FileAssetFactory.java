@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.teatrove.trove.log.Syslog;
+import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.PropertyMap;
 
 public class FileAssetFactory extends AbstractAssetFactory {
@@ -26,7 +26,14 @@ public class FileAssetFactory extends AbstractAssetFactory {
     }
     
     @Override
-    public void init(PropertyMap properties) throws Exception {
+    public String toString() {
+        return "file:".concat(this.directory.getAbsolutePath());
+    }
+    
+    @Override
+    public void init(Log log, PropertyMap properties) throws Exception {
+        super.init(log, properties);
+        
         // lookup directory, if provided
         String dir = properties.getString("directory");
         if (dir != null) {
@@ -57,7 +64,7 @@ public class FileAssetFactory extends AbstractAssetFactory {
         
         // ensure file is a valid file
         if (!file.isFile()) {
-            Syslog.error("assets must be files: " + file.getAbsolutePath());
+            log.error("assets must be files: " + file.getAbsolutePath());
             return null;
         }
         
@@ -66,7 +73,7 @@ public class FileAssetFactory extends AbstractAssetFactory {
             String filePath = file.getCanonicalPath();
             String dirPath = directory.getCanonicalPath();
             if (!filePath.startsWith(dirPath.concat(File.separator))) {
-                Syslog.error(
+                log.error(
                     "file paths must be relative to directory: " + 
                     directory.getAbsolutePath() + ":" + path
                 );
@@ -77,8 +84,8 @@ public class FileAssetFactory extends AbstractAssetFactory {
             return new FileInputStream(file);
         }
         catch (IOException ioe) {
-            Syslog.error("unable to retrieve asset: ".concat(path));
-            Syslog.error(ioe);
+            log.error("unable to retrieve asset: ".concat(path));
+            log.error(ioe);
             return null;
         }
     }

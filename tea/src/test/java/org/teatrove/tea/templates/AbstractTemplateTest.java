@@ -9,13 +9,14 @@ import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.ErrorEvent;
 import org.teatrove.tea.compiler.ErrorListener;
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.MergedContextSource;
 import org.teatrove.tea.runtime.Context;
-import org.teatrove.tea.util.FileCompiler;
-import org.teatrove.tea.util.StringCompiler;
+import org.teatrove.tea.util.FileCompilationProvider;
+import org.teatrove.tea.util.StringCompilationProvider;
 import org.teatrove.tea.util.TestCompiler;
 import org.teatrove.trove.util.ClassInjector;
 
@@ -120,7 +121,9 @@ public abstract class AbstractTemplateTest {
         new File(target, template.replace('.', '/').concat(".class")).delete();
 
         // create compiler
-        StringCompiler compiler = new StringCompiler(getInjector(), PKG);
+        Compiler compiler = new Compiler(getInjector(), PKG, null);
+        StringCompilationProvider provider = new StringCompilationProvider();
+        compiler.addCompilationProvider(provider);
 
         // setup context
         compiler.setRuntimeContext(getContext().getClass());
@@ -134,7 +137,7 @@ public abstract class AbstractTemplateTest {
         });
 
         // add sources for templates
-        compiler.setTemplateSource(template, source);
+        provider.setTemplateSource(template, source);
 
         // compile templates
         String[] results = compiler.compile(template);
@@ -152,10 +155,11 @@ public abstract class AbstractTemplateTest {
         new File(target, template.replace('.', '/').concat(".class")).delete();
 
         // create compiler
-        FileCompiler compiler = new FileCompiler
-        (
-            new File("src/tests/templates"), PKG, target, getInjector()
+        Compiler compiler = new Compiler(getInjector(), PKG, target);
+        FileCompilationProvider provider = new FileCompilationProvider(
+            new File("src/tests/templates")
         );
+        compiler.addCompilationProvider(provider);
 
         // setup context
         compiler.setRuntimeContext(getContext().getClass());

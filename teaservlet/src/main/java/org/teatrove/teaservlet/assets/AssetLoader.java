@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import org.teatrove.trove.log.Log;
 import org.teatrove.trove.log.Syslog;
 
 public class AssetLoader {
 
+    private Log log;
     private String name;
     private String basePath;
     private List<AssetFactory> factories;
@@ -36,6 +38,16 @@ public class AssetLoader {
         this.basePath = basePath;
         this.factories = factories;
         this.mimeTypes = mimeTypes;
+    }
+
+    public void init(Log log) {
+        this.log = log;
+    }
+    
+    @Override
+    public String toString() {
+        return this.name + "(" + this.basePath + ") [" + mimeTypes + "] [" +
+            this.factories.toString() + "]";
     }
     
     public void addAssetFactory(AssetFactory factory) {
@@ -70,6 +82,10 @@ public class AssetLoader {
             return null;
         }
         
+        if (log.isDebugEnabled()) {
+            log.debug("searching for resource '" + path + "' in " + this);
+        }
+        
         // check if cached for better efficiency
         InputStream input = null;
         AssetFactory cached = this.assets.get(path);
@@ -93,7 +109,6 @@ public class AssetLoader {
         
         // verify input found
         if (input == null) {
-            Syslog.debug("unable to find resource: ".concat(path));
             return null;
         }
         

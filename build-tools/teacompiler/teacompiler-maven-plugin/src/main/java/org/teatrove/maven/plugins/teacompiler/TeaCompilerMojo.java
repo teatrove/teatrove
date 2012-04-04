@@ -16,14 +16,12 @@
 
 package org.teatrove.maven.plugins.teacompiler;
 
-import org.teatrove.maven.plugins.teacompiler.contextclassbuilder.DefaultContextClassBuilderHelper;
-import org.teatrove.maven.plugins.teacompiler.contextclassbuilder.TeaCompilerExpressionEvaluator;
-import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilder;
-import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilderException;
-import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilderHelper;
-import org.teatrove.tea.compiler.ErrorEvent;
-import org.teatrove.tea.compiler.ErrorListener;
-import org.teatrove.tea.util.FileCompiler;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -36,12 +34,15 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.context.Context;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Arrays;
+import org.teatrove.maven.plugins.teacompiler.contextclassbuilder.DefaultContextClassBuilderHelper;
+import org.teatrove.maven.plugins.teacompiler.contextclassbuilder.TeaCompilerExpressionEvaluator;
+import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilder;
+import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilderException;
+import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilderHelper;
+import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.tea.compiler.ErrorEvent;
+import org.teatrove.tea.compiler.ErrorListener;
+import org.teatrove.tea.util.FileCompilationProvider;
 
 /**
  * A Maven 2 goal responsible for compiling Tea templates.
@@ -173,7 +174,7 @@ public class TeaCompilerMojo extends AbstractMojo implements Contextualizable {
                 );
 
         // Merge the contexts
-        final Class contextClass;
+        final Class<?> contextClass;
         try {
             if(this.context == null) {
                 if(contextClassBuilder == null) {
@@ -208,8 +209,14 @@ public class TeaCompilerMojo extends AbstractMojo implements Contextualizable {
             sourceDirectories = existing.toArray(new File[existing.size()]);
         }
 
-        final FileCompiler compiler =
-                new FileCompiler(sourceDirectories, rootPackage, realOutputDirectory, null, encoding);
+        final Compiler compiler = 
+            new Compiler(rootPackage, realOutputDirectory, encoding, 0);
+        
+        for (File sourceDirectory : sourceDirectories) {
+            compiler.addCompilationProvider(
+                new FileCompilationProvider(sourceDirectory)
+            );
+        }
 
         compiler.setClassLoader(contextClass.getClassLoader());
         compiler.setRuntimeContext(contextClass);

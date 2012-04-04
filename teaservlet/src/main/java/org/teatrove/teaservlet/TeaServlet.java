@@ -140,7 +140,7 @@ public class TeaServlet extends HttpServlet {
         config.getServletContext().log("Starting TeaServlet...");
 
         super.init(config);
-
+        
         String ver = System.getProperty("java.version");
         if (ver.startsWith("0.") || ver.startsWith("1.2") ||
             ver.startsWith("1.3")) {
@@ -699,6 +699,9 @@ public class TeaServlet extends HttpServlet {
         while ((read = input.read(contents)) >= 0) {
             output.write(contents, 0, read);
         }
+
+        // complete response
+        appResponse.finish();
         
         // success
         return true;
@@ -730,7 +733,7 @@ public class TeaServlet extends HttpServlet {
         // process as resource if no template available
         if (template == null) {
             if (!processResource(appRequest, appResponse)) {
-                appResponse.sendError(404);// TODO: what was this before?
+                appResponse.sendError(404);
                 return false;
             }
             return true;

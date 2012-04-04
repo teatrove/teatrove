@@ -27,7 +27,7 @@ import java.util.*;
 import javax.servlet.ServletContext;
 import org.teatrove.teaservlet.stats.*;
 import org.teatrove.teaservlet.util.NameValuePair;
-import org.teatrove.teaservlet.util.RemoteCompiler;
+import org.teatrove.teaservlet.util.RemoteCompilationProvider;
 import org.teatrove.tea.runtime.TemplateLoader;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
@@ -425,7 +425,7 @@ public class TeaServletAdmin implements Restartable {
 			HttpClient tsClient = getTemplateServerClient(remotePath);
 		
 			String uri = remotePath.substring(remotePath.indexOf(
-		                   "/",RemoteCompiler.TEMPLATE_LOAD_PROTOCOL.length()));
+		                   "/",RemoteCompilationProvider.TEMPLATE_LOAD_PROTOCOL.length()));
 			uri += "?getSourcePath";		                   
 	
 			HttpClient.Response response = tsClient.setURI(uri)
@@ -453,7 +453,7 @@ public class TeaServletAdmin implements Restartable {
 		// TODO: this was copied from the RemoteCompiler class.  This needs
 		//       to be moved into a location where both can access it!
 		int port = 80;
-		String host = remoteSource.substring(RemoteCompiler.TEMPLATE_LOAD_PROTOCOL.length());
+		String host = remoteSource.substring(RemoteCompilationProvider.TEMPLATE_LOAD_PROTOCOL.length());
 
 		int portIndex = host.indexOf("/");
     

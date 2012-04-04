@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.teatrove.trove.log.Syslog;
+import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.PropertyMap;
 
 public class UrlAssetFactory extends AbstractAssetFactory {
@@ -33,7 +33,14 @@ public class UrlAssetFactory extends AbstractAssetFactory {
     }
     
     @Override
-    public void init(PropertyMap properties) throws Exception {
+    public String toString() {
+        return baseUrl.toExternalForm();
+    }
+    
+    @Override
+    public void init(Log log, PropertyMap properties) throws Exception {
+        super.init(log, properties);
+        
         // lookup base path, if provided
         String base = properties.getString("baseUrl");
         if (base != null) {
@@ -59,10 +66,10 @@ public class UrlAssetFactory extends AbstractAssetFactory {
         URL resourceUrl = null;
         try { resourceUrl = new URL(baseUrl.toExternalForm().concat(path)); }
         catch (MalformedURLException exception) {
-            Syslog.debug(
+            log.debug(
                 "invalid asset path url: " + baseUrl.toExternalForm() + path
             );
-            Syslog.debug(exception);
+            log.debug(exception);
             return null;
         }
         
@@ -70,7 +77,7 @@ public class UrlAssetFactory extends AbstractAssetFactory {
         String basePath = baseUrl.toExternalForm();
         String resourcePath = resourceUrl.toExternalForm();
         if (!resourcePath.startsWith(basePath)) {
-            Syslog.error(
+            log.error(
                 "url paths must be relative to base url: " + 
                 baseUrl.toExternalForm() + ":" + path
             );
@@ -80,9 +87,9 @@ public class UrlAssetFactory extends AbstractAssetFactory {
         // open stream for associated url
         try { return resourceUrl.openStream(); }
         catch (IOException ioe) {
-            Syslog.debug(
+            log.debug(
                 "unable to open asset stream: " + resourceUrl.toExternalForm());
-            Syslog.debug(ioe);
+            log.debug(ioe);
             return null;
         }
     }

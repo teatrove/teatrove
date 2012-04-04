@@ -16,11 +16,12 @@
 
 package org.teatrove.tea.util;
 
-import org.teatrove.tea.runtime.DefaultContext;
-import org.teatrove.tea.runtime.TemplateLoader;
-
 import java.io.File;
 import java.io.PrintStream;
+
+import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.tea.runtime.DefaultContext;
+import org.teatrove.tea.runtime.TemplateLoader;
 
 /**
  * A compiler implementation suitable for testing from a command console.
@@ -33,7 +34,7 @@ import java.io.PrintStream;
  * 
  * @author Brian S O'Neill
  */
-public class TestCompiler extends FileCompiler {
+public class TestCompiler extends Compiler {
     public static void main(String[] args) throws Exception {
         File dir = new File(".");
         TestCompiler tc = new TestCompiler(dir, null, dir);
@@ -74,7 +75,8 @@ public class TestCompiler extends FileCompiler {
                         String rootPackage,
                         File rootDestDir) {
 
-        super(rootSourceDir, rootPackage, rootDestDir, null);
+        super(rootPackage, rootDestDir);
+        addCompilationProvider(new FileCompilationProvider(rootSourceDir));
     }
 
     public static class Context extends DefaultContext {

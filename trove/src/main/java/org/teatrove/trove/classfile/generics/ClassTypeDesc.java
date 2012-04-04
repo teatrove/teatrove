@@ -24,6 +24,9 @@ package org.teatrove.trove.classfile.generics;
 public class ClassTypeDesc
     extends AbstractGenericTypeDesc<Class<?>>
 {
+    public static ClassTypeDesc OBJECT_TYPE = 
+        ClassTypeDesc.forType(Object.class);
+    
     private final String className;
     private boolean isInterface;
 

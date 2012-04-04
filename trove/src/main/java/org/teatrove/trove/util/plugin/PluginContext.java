@@ -18,7 +18,6 @@ package org.teatrove.trove.util.plugin;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -115,8 +114,7 @@ public class PluginContext implements ResourceFactory {
      * {@inheritDoc}
      */
     @Override
-    public URL getResource(String path)
-        throws MalformedURLException {
+    public URL getResource(String path) {
         
         if (mResourceFactory == null) {
             return null;

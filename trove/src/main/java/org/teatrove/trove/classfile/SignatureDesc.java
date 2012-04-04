@@ -150,6 +150,10 @@ public class SignatureDesc {
     public static String generateClassDescriptor(TypeVariableDesc[] typeArguments,
                                                  GenericTypeDesc superClass,
                                                  GenericTypeDesc[] interfaces) {
+        if (superClass == null) {
+            superClass = ClassTypeDesc.OBJECT_TYPE;
+        }
+        
         StringBuilder buffer = new StringBuilder(256);
 
         appendTypeArguments(buffer, typeArguments);

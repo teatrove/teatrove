@@ -26,22 +26,25 @@ import java.util.*;
  *
  * @author Brian S O'Neill
  */
-public class UsageSet extends MapBackedSet {
+public class UsageSet<T> extends MapBackedSet<T> {
+    private static final long serialVersionUID = 1L;
+
     /**
      * Creates a UsageSet in forward order, MRU first.
      */
     public UsageSet() {
-        this(new HashMap());
+        this(new HashMap<T, Object>());
     }
 
     public UsageSet(int capactity) {
-        this(new HashMap(capactity));
+        this(new HashMap<T, Object>(capactity));
     }
 
     /**
      * @param backingMap map to use for storage
      */
-    public UsageSet(Map backingMap) {
+    @SuppressWarnings("unchecked")
+    public UsageSet(Map<T, Object> backingMap) {
         super(new UsageMap(backingMap));
     }
 
