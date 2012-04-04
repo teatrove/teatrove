@@ -1,7 +1,10 @@
 package org.teatrove.teaservlet.assets;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 
+import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.PropertyMap;
 
 public class ClasspathAssetFactory extends AbstractAssetFactory {
@@ -32,7 +35,14 @@ public class ClasspathAssetFactory extends AbstractAssetFactory {
     }
     
     @Override
-    public void init(PropertyMap properties) throws Exception {
+    public String toString() {
+        return "classpath:".concat(this.rootPackage);
+    }
+    
+    @Override
+    public void init(Log log, PropertyMap properties) throws Exception {
+        super.init(log, properties);
+        
         // lookup root package, if provided
         String rootPkg = properties.getString("rootPackage");
         if (rootPkg != null) {
@@ -57,7 +67,7 @@ public class ClasspathAssetFactory extends AbstractAssetFactory {
     public InputStream getAsset(String path) {
         // validate path
         path = validatePath(path);
-        
+
         // allow path to contain either root package or an extension of it
         String resource = path;
         if (!resource.startsWith(rootPackage)) {
@@ -65,13 +75,21 @@ public class ClasspathAssetFactory extends AbstractAssetFactory {
         }
         
         // lookup resource
-        InputStream input = classLoader.getResourceAsStream(resource);
-        if (input == null) {
+        URL url = classLoader.getResource(resource);
+        if (url == null) {
             return null;
         }
-        
-        // return found resource
-        return input;
+
+        // attempt to open and return stream
+        try {
+            InputStream input = url.openStream();
+            return input;
+        }
+        catch (IOException ioe) {
+            log.error("unable to open stream for resource: ".concat(resource));
+            log.error(ioe);
+            return null;
+        }
     }
 
 }

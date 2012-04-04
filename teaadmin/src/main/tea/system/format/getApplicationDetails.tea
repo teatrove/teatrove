@@ -10,14 +10,11 @@
         descriptions = info.teaContextMethodDescriptors;
 
         '<div class="table-container">'
-            '<table class="tablehead" cellpadding="3" cellspacing="1" style="border: 1px solid #CDCDCD; border-collapse: separate;">'
-                '<thead>'
-                    '<tr class="stathead">'
-                        '<th colspan="2" class="left-align">'
-                            'Summary for <strong>' context '</strong>'
-                        '</th>'
-                    '</tr>'
-                '</thead>'
+            '<div class="stathead" style="padding: 3px 7px;">'
+                '<div class="template-title" title="Summary for ' context '">Summary for ' context '</div>'
+            '</div>'
+            '<div class="scroll">'
+            '<table class="tablehead" cellpadding="3" cellspacing="1">'
                 '<tbody>'
                 if ( info.description != "" ) {
                     '<tr class="colhead">'
@@ -104,6 +101,7 @@
                 }
                 '</tbody>'
             '</table>'
+            '</div>'
         '</div>'
     }
 %>

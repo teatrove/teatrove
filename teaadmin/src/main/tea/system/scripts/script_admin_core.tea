@@ -10,6 +10,9 @@
 
     var global = this;
 
+    /* ajax setup */
+    $.ajaxSetup({ cache: false });
+    
     /* model */
     global.Admin = {
         id: "Admin"
@@ -118,6 +121,87 @@
         }
     };
     function initTree () {
+        var $window = $(window),
+            $detailsContent = $('#details-content'),
+            $detailsParent = $detailsContent.parent(),
+            $detailsSection = $detailsContent.parents('section'),
+            contentTop = $detailsContent.offset().top - 8,
+            isFixedNav = !$(document).children().hasClass('ie'),
+            navPadding = (isFixedNav ? 50 : 0),
+            scrollOffset = -1;
+            
+        var calcHeight = function() {
+            var $scroll = $detailsContent.find('div.scroll');
+            if (!$scroll.length) { return; }
+            
+            if (scrollOffset == -1) {
+                scrollOffset = ($scroll.offset().top - contentTop);
+            }
+
+            if ($detailsContent.hasClass('fixed')) {
+                height = ($window.height() - navPadding);
+                var pageBottom = $window.scrollTop() + $window.height();
+                var parentBottom = $detailsSection.offset().top + $detailsSection.height();
+                if (pageBottom > parentBottom) {
+                    height -= (pageBottom - parentBottom);
+                }
+                else { height -= 20; }
+            }
+            else {
+                height = ($window.height() - (contentTop - $window.scrollTop()) - 20);
+            }
+
+            $detailsSection.css({ 'min-height' : (height + 50) + 'px' });
+            $scroll.css({ 'max-height' : (height - scrollOffset) + 'px' });
+        };
+        
+        var calcWidth = function() {
+            $detailsContent.css({ 'width' : $detailsParent.width() + 'px' });
+        }
+
+        calcHeight(); calcWidth();
+        $(window).resize(function() { calcHeight(); calcWidth(); });
+        
+        $(document).scroll(function() {
+            var scrollTop = $window.scrollTop() + navPadding;
+            if (scrollTop < contentTop) {
+               $detailsContent.removeClass('fixed');
+               calcHeight();
+            }
+            else {
+               $detailsContent.addClass('fixed');
+               calcHeight();
+            }
+        });
+        
+        var updateLocation = function(uri) {
+            var href = location.href;
+            var idx = href.indexOf('#');
+            if (idx > 0) { href = href.substring(0, idx); }
+            location.href = href + '#' + escape(uri);
+        }
+        
+        var lastUri = null;
+        setInterval(function() {
+            var href = location.href;
+            var idx = href.indexOf('#');
+            if (idx > 0) {
+                var uri = unescape(href.substring(idx + 1));
+                if (lastUri != uri) {
+                    lastUri = uri;
+                    $('#details-content').load(uri, function() {
+                        calcHeight();
+                    });
+                }
+            }
+            else {
+                if (lastUri != null) {
+                    lastUri = null;
+                    $('#details-content').html('');
+                }
+            }
+        }, 250);
+        
         $("#tree-container")
             .bind("loaded.jstree", function (event, data) {
                 var expandFirst = $('#tree-container').attr('expandFirst');
@@ -183,7 +267,7 @@
             var details = $(this).attr('details');
             if ( details ) {
                 if ( loadLeaf ) {
-                    $('#details-container').load(details);
+                    updateLocation(details); 
                 }
             }
             // must do this because evt.stopPropagation() breaks tree
@@ -209,11 +293,11 @@
                 }
             }
         });
-        $("#details-container a").live('click', function (evt) {
+        $("#details-content a").live('click', function (evt) {
             var href = $(this).attr('href');
             var target = $(this).attr('target');
             if ( !target && href && href != '#' ) {
-                $('#details-container').load(href);
+                updateLocation(href);
                 evt.preventDefault();
             }
         });

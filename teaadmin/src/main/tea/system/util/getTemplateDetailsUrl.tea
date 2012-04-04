@@ -1,0 +1,6 @@
+<% template getTemplateDetailsUrl(String templateName) 
+
+pathPrefix = call system.util.getPathPrefix();
+link = pathPrefix & 'system/console?page=templates#format/getTemplateDetails%3Fname%3D' & templateName
+
+link
