@@ -20,72 +20,162 @@ import java.util.Date;
 import org.joda.time.DateTime;
 
 /**
+ * The CastContext provides a Tea context for performing casting in Tea. This
+ * context is a helper context for known types.  The following are equivalent:
+ * 
+ * <pre>
+ *     value = getSomeObject()
+ *     ints1 = toInt(value)
+ *     ints2 = value as Integer
+ * </pre>
+ * 
+ * Note that this purely provides casting and not conversions.  If the value 
+ * cannot be cast, then a {@link ClassCastException} will be thrown.
+ * 
  * @author Scott Jappinen
  */
 public class CastContext {
 
+    /**
+     * Cast the given value as an Integer.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as an Integer
+     */
     public Integer toInt(Object value) {
-    	if (value != null) return (Integer) value;
-    	else return null;
+        return (Integer) value;
     }
     
+    /**
+     * Cast the given value as a Long.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as an Long
+     */
     public Long toLong(Object value) {
-    	if (value != null) return (Long) value;
-    	else return null;
+    	return (Long) value;
     }
     
+    /**
+     * Cast the given value as a Float.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a Float
+     */
     public Float toFloat(Object value) {
-    	if (value != null) return (Float) value;
-    	else return null;
+    	return (Float) value;
     }
     
+    /**
+     * Cast the given value as a Double.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a Double
+     */
     public Double toDouble(Object value) {
-    	if (value != null) return (Double) value;
-    	else return null;
+    	return (Double) value;
     }
     
+    /**
+     * Cast the given value as a String.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a String
+     */
     public String toString(Object value) {
-    	if (value != null) return (String) value;
-    	else return null;
+    	return (String) value;
     }
     
+    /**
+     * Cast the given value as a Boolean.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a Boolean
+     */
     public Boolean toBoolean(Object value) {
-    	if (value != null) return (Boolean) value;
-    	else return null;
+    	return (Boolean) value;
     }
     
+    /**
+     * Cast the given value as a {@link DateTime}.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a {@link DateTime}
+     */
     public DateTime toDateTime(Object value) {
-    	if (value != null) return (DateTime) value;
-    	else return null;
+    	return (DateTime) value;
     }
     
+    /**
+     * Cast the given value as a {@link Date}.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a {@link Date}
+     */
     public Date toDate(Object value) {
-    	if (value != null) return (Date) value;
-    	else return null;
+    	return (Date) value;
     }
     
+    /**
+     * Cast the given value as an int array.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as an int array
+     */
     public int[] toIntArray(Object value) {
-    	if (value != null) return (int[]) value;
-    	else return null;
+    	return (int[]) value;
     }
     
+    /**
+     * Cast the given value as a long array.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a long array
+     */
     public long[] toLongArray(Object value) {
-    	if (value != null) return (long[]) value;
-    	else return null;
+    	return (long[]) value;
     }
     
+    /**
+     * Cast the given value as a float array.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a float array
+     */
     public float[] toFloatArray(Object value) {
-    	if (value != null) return (float[]) value;
-    	else return null;
+    	return (float[]) value;
     }
     
+    /**
+     * Cast the given value as a double array.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a double array
+     */
     public double[] toDoubleArray(Object value) {
-    	if (value != null) return (double[]) value;
-    	else return null;
+    	return (double[]) value;
     }
     
+    /**
+     * Cast the given value as a String array.
+     * 
+     * @param value The value to cast
+     * 
+     * @return The value cast as a String array
+     */
     public String[] toStringArray(Object value) {
-    	if (value != null) return (String[]) value;
-    	else return null;
+    	return (String[]) value;
     }
 }

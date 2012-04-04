@@ -18,8 +18,28 @@ package org.teatrove.teaapps.apps;
 import org.teatrove.tea.runtime.Substitution;
 
 /**
+ * Custom context that provides methods to catch throwables within a Tea
+ * substitution block. This allows a template to invoke other operations and
+ * catch any thrown exceptions including runtime exceptions. Otherwise,
+ * exceptions in Tea will propogate to the request resulting in a 
+ * {@link ServletException} and HTTP response error.
+ * 
  * @author Scott Jappinen
  */
 public interface ThrowableCatcherContext {
+    
+    /**
+     * Catch any and all errors within a substitution block. If no errors are
+     * thrown during processing the substitution block, then <code>null</code>
+     * is returned.
+     * 
+     * <pre>
+     *     errors = catchThrowables() { 'code here' }
+     * </pre>
+     * 
+     * @param substitution The substitution block to invoke
+     * 
+     * @return The array of thrown errors or <code>null</code>
+     */
     public Throwable[] catchThrowables(Substitution substitution);
 }
