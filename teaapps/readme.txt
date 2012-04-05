@@ -9,7 +9,12 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
-- No changes recorded
+- Fix #68 to cleanup contexts and applications and add javadocs
+- CookieContext: Add ability to create cookies and update
+- CryptoContext: Add general digest method with any algorithm
+- FileSystemContext: Add ability to get File instance for given path
+- FileSystemContext: Add ability to append contents when writing files
+- MathContext: Add min(array) and max(array) methods 
 
 4.0.0 to 4.1.2
 ===============================
