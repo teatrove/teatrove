@@ -31,16 +31,35 @@ import java.io.Reader;
 import java.io.RandomAccessFile;
 
 /**
+ * Custom tea context that provides access to the local file system including
+ * reading, writing, moving, deleting, etc.
+ * 
  * @author Scott Jappinen
  */
 public class FileSystemContext implements Context {
 
     private Log mLog;
 
+    /**
+     * Initialize the context with the given configuration.
+     * 
+     * @param config  The configuration to initialize with
+     */
     public void init(ContextConfig config) {
         mLog = config.getLog();
     }
-
+    
+    /**
+     * Delete the file at the given path.
+     * 
+     * @param filePath The path of the file to delete
+     * 
+     * @return <code>true</code> if the file was deleted,  
+     *         <code>false</code> otherwise
+     *         
+     * @throws IOException if the file does not exist, cannot be written,
+     *         or if an error occurs during deletion
+     */
     public boolean deleteFile(String filePath) throws IOException {
         boolean result = false;
         // synchronized on an interned string makes has all the
@@ -55,15 +74,21 @@ public class FileSystemContext implements Context {
                     if (file.canWrite()) {
                         result = file.delete();
                     } else {
-                        mLog.warn("Can not delete write locked file (" + filePath + ")");
-                        throw new IOException("Cannot delete non-existant file (" + filePath + ")");
+                        String msg = 
+                            "Can not delete write locked file (" + filePath + ")";
+                        
+                        mLog.warn(msg);
+                        throw new IOException(msg);
                     }
                 } else {
-                    mLog.warn("Cannot delete non-existant file (" + filePath + ")");
-                    throw new IOException("Cannot delete non-existant file (" + filePath + ")");
+                    String msg =
+                        "Cannot delete non-existant file (" + filePath + ")";
+                    
+                    mLog.warn(msg);
+                    throw new IOException(msg);
                 }
             } catch (IOException e) {
-                mLog.error("Error writing: " + filePath);
+                mLog.error("Error deleting: " + filePath);
                 mLog.error(e);
                 throw e;
             }
@@ -71,11 +96,46 @@ public class FileSystemContext implements Context {
         return result;
     }
 
-    public boolean moveFile(String srcPath, String dstPath) throws IOException {
+    /**
+     * Move the file referenced by the srcPath to the dstPath. This will cause
+     * the dstPath file to be overwritten if it already exists. If the srcPath
+     * does not exist, or the dstPath cannot be written to, or an error occurs
+     * during moving, then an {@link IOException} is thrown.
+     * 
+     * @param srcPath The path of the file to move
+     * @param dstPath The path to move the file to
+     * 
+     * @return <code>true</code> if the file was properly moved,
+     *         <code>false</code> otherwise
+     *         
+     * @throws IOException if an error occurs moving the file
+     */
+    public boolean moveFile(String srcPath, String dstPath) 
+        throws IOException {
+        
 		return moveFile(srcPath, dstPath, true);
 	}
 
-    public boolean moveFile(String srcPath, String dstPath, boolean overwrite) throws IOException {
+    /**
+     * Move the file referenced by the srcPath to the dstPath. If the overwrite
+     * flag is <code>true</code>this will cause the dstPath file to be 
+     * overwritten if it already exists. If the srcPath does not exist, the 
+     * dstPath cannot be written to, the overwrite flag was <code>false</code>
+     * and the dstPath already exists, or an error occurs
+     * during moving, then an {@link IOException} is thrown.
+     * 
+     * @param srcPath The path of the file to move
+     * @param dstPath The path to move the file to
+     * @param overwrite Whether to overwrite the dstPath or not
+     * 
+     * @return <code>true</code> if the file was properly moved,
+     *         <code>false</code> otherwise
+     *         
+     * @throws IOException if an error occurs moving the file
+     */
+    public boolean moveFile(String srcPath, String dstPath, boolean overwrite) 
+        throws IOException {
+        
 		boolean result = false;
 		srcPath = (String) Utils.intern(srcPath);
 		dstPath = (String) Utils.intern(dstPath);
@@ -88,19 +148,22 @@ public class FileSystemContext implements Context {
 			synchronized (srcPath) {
 				File srcFile = new File(srcPath);
 				if (!srcFile.exists()) {
-					String message = "Cannot move non-existant file (" + srcPath + ")";
+					String message = 
+					    "Cannot move non-existant file (" + srcPath + ")";
 					mLog.warn(message);
 					throw new IOException(message);
 				}
 				File dstFile = new File(dstPath);
 				synchronized (dstPath) {
 					if (dstFile.exists() && !overwrite) {
-						String message = "Destination file already exists (" + dstPath + ")";
+						String message = 
+						    "Destination file already exists (" + dstPath + ")";
 						mLog.warn(message);
 						throw new IOException(message);
 					}
 					if (dstFile.exists() && !dstFile.canWrite()) {
-						String message = "Can not overwrite write locked file (" + dstPath + ")";
+						String message = 
+						    "Can not overwrite write locked file (" + dstPath + ")";
 						mLog.warn(message);
 						throw new IOException(message);
 					}
@@ -116,6 +179,27 @@ public class FileSystemContext implements Context {
 		return result;
     }
 
+    /**
+     * Get the file at the given file path.
+     * 
+     * @param filePath The path of the file
+     * 
+     * @return The file for the associated file path
+     */
+    public File getFile(String filePath) {
+        return new File(filePath);
+    }
+    
+    /**
+     * Get the list of files within the given directory. This only returns the
+     * files in the immediate directory and is not recursive.
+     * 
+     * @param directoryPath The path of the directory
+     * 
+     * @return The list of files in the directory
+     * 
+     * @see File#listFiles()
+     */
     public File[] listFiles(String directoryPath) {
         File[] result = null;
         File directory = null;
@@ -126,11 +210,22 @@ public class FileSystemContext implements Context {
         return result;
     }
 
-	public String readFileAsString(String filePath) throws IOException {
+    /**
+     * Read the contents of the given file and return the value as a string.
+     * 
+     * @param filePath The path to the file to read
+     * 
+     * @return The contents of the file as a string
+     * 
+     * @throws IOException if an error occurs reading the file
+     */
+	public String readFileAsString(String filePath) 
+	    throws IOException {
+	    
 		String result = null;
 		Reader reader = new BufferedReader(new FileReader(filePath));
 
-		StringBuffer stringBuffer = new StringBuffer(1000);
+		StringBuilder stringBuffer = new StringBuilder(4096);
 		int charRead = -1;
 		while ((charRead = reader.read()) >= 0) {
 			stringBuffer.append((char) charRead);
@@ -141,9 +236,37 @@ public class FileSystemContext implements Context {
 		return result;
 	}
 
+	/**
+     * Write the contents of the given file data to the file at the given path.
+     * This will replace any existing data.
+     * 
+     * @param filePath The path to the file to write to
+     * @param fileData The data to write to the given file
+     * 
+     * @throws IOException if an error occurs writing the data
+     * 
+     * @see #writeToFile(String, String, boolean)
+     */
     public void writeToFile(String filePath, String fileData)
-        throws IOException
-    {
+        throws IOException {
+        
+        writeToFile(filePath, fileData, false);
+    }
+    
+	/**
+	 * Write the contents of the given file data to the file at the given path.
+	 * If the append flag is <code>true</code>, the file data will be appended
+	 * to the end of the file if it already exists. Note that this will attempt
+	 * to create any and all parent directories if the path does not exist.
+	 * 
+	 * @param filePath The path to the file to write to
+	 * @param fileData The data to write to the given file
+	 * @param append Whether to append the file data or replace existing data
+	 * 
+	 * @throws IOException if an error occurs writing the data
+	 */
+    public void writeToFile(String filePath, String fileData, boolean append)
+        throws IOException {
 
         // synchronized on an interned string makes has all the
         // makings for exclusive write access as far as this
@@ -160,12 +283,14 @@ public class FileSystemContext implements Context {
                     exists = file.createNewFile();
                 }
                 if (exists) {
-                    fileWriter = new FileWriter(file);
+                    fileWriter = new FileWriter(file, append);
                     fileWriter.write(fileData);
                     fileWriter.flush();
                 } else {
-                    mLog.error("Error writing: " + filePath);
-                    throw new IOException("File could not be created. (" + filePath + ")");
+                    String msg =
+                        "File could not be created. (" + filePath + ")";
+                    mLog.error(msg);
+                    throw new IOException(msg);
                 }
             } catch (IOException e) {
                 mLog.error("Error writing: " + filePath);
@@ -179,9 +304,38 @@ public class FileSystemContext implements Context {
         }
     }
 
+    /**
+     * Write the contents of the given file data to the file at the given path.
+     * This will replace any existing data.
+     * 
+     * @param filePath The path to the file to write to
+     * @param fileData The data to write to the given file
+     * 
+     * @throws IOException if an error occurs writing the data
+     * 
+     * @see #writeToFile(String, String, boolean)
+     */
     public void writeToFile(String filePath, byte[] fileData)
-        throws IOException
-    {
+        throws IOException {
+        
+        writeToFile(filePath, fileData, false);
+    }
+    
+    /**
+     * Write the contents of the given file data to the file at the given path.
+     * If the append flag is <code>true</code>, the file data will be appended
+     * to the end of the file if it already exists. Note that this will attempt
+     * to create any and all parent directories if the path does not exist.
+     * 
+     * @param filePath The path to the file to write to
+     * @param fileData The data to write to the given file
+     * @param append Whether to append the file data or replace existing data
+     * 
+     * @throws IOException if an error occurs writing the data
+     */
+    public void writeToFile(String filePath, byte[] fileData, boolean append)
+        throws IOException {
+        
         // synchronized on an interned string makes has all the
         // makings for exclusive write access as far as this
         // process is concerned.
@@ -197,12 +351,14 @@ public class FileSystemContext implements Context {
                     exists = file.createNewFile();
                 }
                 if (exists) {
-                    fileOutputStream = new FileOutputStream(file);
+                    fileOutputStream = new FileOutputStream(file, append);
                     fileOutputStream.write(fileData);
                     fileOutputStream.flush();
                 } else {
-                    mLog.error("Error writing: " + filePath);
-                    throw new IOException("File could not be created. (" + filePath + ")");
+                    String msg =
+                        "File could not be created. (" + filePath + ")";
+                    mLog.error(msg);
+                    throw new IOException(msg);
                 }
             } catch (IOException e) {
                 mLog.error("Error writing: " + filePath);
@@ -216,9 +372,19 @@ public class FileSystemContext implements Context {
         }
     }
 
+    /**
+     * Read the contents of the file at the given path and return the associated
+     * byte array.
+     * 
+     * @param filePath The path to the file to read
+     * 
+     * @return The contents of the file
+     * 
+     * @throws IOException if an error occurs reading the file
+     */
 	public byte[] getFileBytes(String filePath)
-		throws IOException
-	{
+		throws IOException {
+	    
 		byte[] out = null;
 		String path = (String) Utils.intern(filePath);
 		RandomAccessFile raf = null;
@@ -233,8 +399,10 @@ public class FileSystemContext implements Context {
 					raf.readFully(fileBytes);
 					out = fileBytes;
 				} else {
-					mLog.error("Error writing: " + filePath);
-					throw new IOException("File could not be created. (" + filePath + ")");
+				    String msg = 
+				        "File does not exist. (" + filePath + ")";
+					mLog.error(msg);
+					throw new IOException(msg);
 				}
 			} catch (IOException e) {
 				mLog.error("Error writing: " + filePath);

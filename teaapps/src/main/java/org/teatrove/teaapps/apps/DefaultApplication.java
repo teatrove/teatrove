@@ -15,63 +15,90 @@
  */
 package org.teatrove.teaapps.apps;
 
+import org.teatrove.teaapps.Context;
+import org.teatrove.teaapps.ContextConfig;
 import org.teatrove.teaservlet.Application;
 import org.teatrove.teaservlet.ApplicationConfig;
 import org.teatrove.teaservlet.ApplicationRequest;
 import org.teatrove.teaservlet.ApplicationResponse;
-
-import org.teatrove.trove.util.plugin.Plugin;
-
-import org.teatrove.teaapps.Context;
-import org.teatrove.teaapps.ContextConfig;
-
-import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
+import org.teatrove.trove.util.PropertyMap;
 
 /**
+ * The default application is a stateful Tea application that uses a configured
+ * context class to instantiate once and return as the context with each
+ * request.  The context class must contain a public no-arg default constructor.
+ * If the given context class implements the {@link Context} interface, then
+ * the context will be initialized with the application configuration.
+ * 
  * @author Scott Jappinen
  */
 public class DefaultApplication implements Application {
     
     private Object context;
-	private Class contextClass;
+	private Class<?> contextClass;
 
+	/**
+	 * Default constructor.
+	 */
+	public DefaultApplication() {
+	    super();
+	}
+	
+	/**
+	 * Initialize the application.
+	 * 
+	 * @param config The application configuration
+	 */
     public void init(ApplicationConfig config) {
-		String contextClassName = config.getProperties().getString("contextClass");
+        PropertyMap properties = config.getProperties();
+		String contextClassName = properties.getString("contextClass");
+        if (contextClassName == null) {
+            throw new IllegalArgumentException("contextClass");
+        }
+        
         try {
             contextClass = Class.forName(contextClassName);
             context = contextClass.newInstance();
             if (context instanceof Context) {
                 Context castContext = (Context) context;
-                Map plugins = config.getPlugins();
-                ContextConfig contextConfig = new ContextConfig
-                    (config.getProperties(), config.getLog(), 
-                     config.getName(), getTypedPluginMap(plugins));
+                ContextConfig contextConfig = new ContextConfig(
+                    config.getProperties(), config.getLog(), 
+                    config.getName(), config.getPlugins()
+                );
+                
                 castContext.init(contextConfig);
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(
+                "Unable to create context: " + contextClassName, e);
         }
     }
     
-    private Map<String,Plugin> getTypedPluginMap(Map plugins) {
-        Map<String,Plugin> result = new HashMap<String,Plugin>();
-        Set keySet = plugins.keySet();
-        for (Object key: keySet) {
-            result.put((String) key, (Plugin) plugins.get(key));
-        }
-        return result;
+    public void destroy() {
+        // nothing to do
     }
     
-    public void destroy() {}
-    
+    /**
+     * Create the context for the given request. As the default application is
+     * stateful, this will always return the single instance of the associated
+     * context class.
+     * 
+     * @param request The current request
+     * @param response The current response
+     * 
+     * @return The single instance of the context class
+     */
     public Object createContext(ApplicationRequest request,
                                 ApplicationResponse response) {        
         return context;
     }
 
-    public Class getContextType() {
+    /**
+     * Get the context class associated with this application.
+     * 
+     * @return The configured context class
+     */
+    public Class<?> getContextType() {
         return contextClass;
     }
 }

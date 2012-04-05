@@ -23,22 +23,34 @@ import java.util.Date;
 
 import org.teatrove.trove.util.FastDateFormat;
 
+/**
+ * Custom Tea context that provides convenience methods for handling dates and
+ * times in Tea including creating, parsing, formatting, adjustments, and
+ * general helper methods.
+ * 
+ * @see Date
+ */
 public class DateContext {
 
-    private static SimpleDateFormat cFormatter = new SimpleDateFormat("yyyyMMdd");
-    private static SimpleDateFormat cDayOfYearFormatter = new SimpleDateFormat("D");
-    
-    private static final String DAY = "d";
-    private static final String HOUR = "H";
-    private static final String MINUTE = "m";
-    private static final String SECOND = "s";
-    private static final String MONTH = "M";
-    private static final String YEAR = "y";
+    private static SimpleDateFormat cFormatter = 
+        new SimpleDateFormat("yyyyMMdd");
+
+    public static final String DAY = "d";
+    public static final String HOUR = "H";
+    public static final String MINUTE = "m";
+    public static final String SECOND = "s";
+    public static final String MONTH = "M";
+    public static final String YEAR = "y";
     
     /**
-     * Create a date object (default input format: "YYYYMMDD")
-     * @param dateString String from which to create a date.
-     * @return Date object representing date string.
+     * Create a {@link Date} instance from the given string using the default 
+     * input format <code>yyyyMMdd</code>.
+     * 
+     * @param dateString The string from which to create a date
+     * 
+     * @return The {@link Date} instance representing date string
+     * 
+     * @throws ParseException if the date string is improperly formatted
      */
     public Date createDate(String dateString) throws ParseException {
         Date result = null;     
@@ -49,21 +61,21 @@ public class DateContext {
     }
 
     /**
-     * Creates a date object from a long. (millis since 1970...)
-     * @param date long the millis since 1970....
-     * @return Date object representing the date.
+     * Creates a {@link Date} instance from the given number of milliseconds
+     * since 1970 (time zero).
+     * 
+     * @param date The number of milliseconds since 1970
+     * 
+     * @return The {@link Date} instance representing the date.
      */
     public Date createDate(long date) {
-        Date result = null;     
-        result = new Date(date);
+        Date result = new Date(date);
         return result;
     }
     
     /**
-     * Create a date object
-     * @param dateString String from which to create a date.
-     * @param inputFormat Definition of dateString.
-     * @return Date object representing date string.
+     * Create a {@link Date} instance for the given date string with the given
+     * format.
      * 
      * <p>
      * <strong>Time Format Syntax:</strong>
@@ -130,26 +142,72 @@ public class DateContext {
      * "K:mm a, z"                       ->>  0:00 PM, PST
      * "yyyyy.MMMMM.dd GGG hh:mm aaa"    ->>  1996.July.10 AD 12:08 PM
      * </pre>
-     * </blockquote>    
+     * </blockquote>
+     * 
+     * @param dateString The string from which to create a date
+     * @param inputFormat The format of the date string
+     * 
+     * @return The {@link Date} instance representing the date
+     * 
+     * @throws ParseException if the date is not in the proper format
      */
     public Date createDate(String dateString, String inputFormat) 
-        throws ParseException 
-    {
+        throws ParseException {
+        
         SimpleDateFormat sdf = new SimpleDateFormat(inputFormat);
         return sdf.parse(dateString);
     }
 
-    public Date createDate(String month, String day, String year, String hour, String minute, String second, String millisecond) 
-    	throws NumberFormatException 
-    {
+    /**
+     * Create a date from the given data. If any of the values are invalid
+     * numbers, then a <code>NumberFormatException</code> is thrown.
+     * 
+     * @param month The month (1-12)
+     * @param day The day (1-31)
+     * @param year The year (4-digit)
+     * @param hour The hour (0-23)
+     * @param minute The minutes (0-59)
+     * @param second The seconds (0-59)
+     * @param millisecond The milliseconds (0-999)
+     * 
+     * @return The {@link Date} instance for the given date
+     * 
+     * @throws NumberFormatException if the values are invalid numbers
+     */
+    public Date createDate(String month, String day, String year, String hour, 
+                           String minute, String second, String millisecond) 
+    	throws NumberFormatException {
+        
         Date date = null;
-        date = createDate(Integer.parseInt(month), Integer.parseInt(day), Integer.parseInt(year),
-                          Integer.parseInt(hour), Integer.parseInt(minute), Integer.parseInt(second), Integer.parseInt(millisecond));
+        date = createDate(Integer.parseInt(month), Integer.parseInt(day), 
+                          Integer.parseInt(year), Integer.parseInt(hour), 
+                          Integer.parseInt(minute), Integer.parseInt(second), 
+                          Integer.parseInt(millisecond));
+        
         return date;
     }
 
-    public Date createDate(int month, int day, int year, int hour, int minute, int second, int millisecond) {
+    /**
+     * Create a date from the given data.
+     * 
+     * @param month The month (1-12)
+     * @param day The day (1-31)
+     * @param year The year (4-digit)
+     * @param hour The hour (0-23)
+     * @param minute The minutes (0-59)
+     * @param second The seconds (0-59)
+     * @param millisecond The milliseconds (0-999)
+     * 
+     * @return The {@link Date} instance for the given date
+     * 
+     * @throws NumberFormatException if the values are invalid numbers
+     */
+    public Date createDate(int month, int day, int year, int hour, int minute, 
+                           int second, int millisecond) {
+        
         GregorianCalendar gc = new GregorianCalendar();
+
+        gc.clear();
         gc.set(Calendar.MONTH, month-1);
         gc.set(Calendar.DAY_OF_MONTH, day);
         gc.set(Calendar.YEAR, year);
@@ -160,11 +218,31 @@ public class DateContext {
         return gc.getTime();
     }
 
-    public boolean isValidDate(String month, String day, String year, String hour, String minute, String second, String millisecond) {
+    /**
+     * Check if all values in the given data are valid and that the result will
+     * be a valid date.
+     * 
+     * @param month The month (1-12)
+     * @param day The day (1-31)
+     * @param year The year (4-digit)
+     * @param hour The hour (0-23)
+     * @param minute The minutes (0-59)
+     * @param second The seconds (0-59)
+     * @param millisecond The milliseconds (0-999)
+     * 
+     * @return <code>true</code> if all data represents a valid date,
+     *         <code>false</code> otherwise
+     */
+    public boolean isValidDate(String month, String day, String year, 
+                               String hour, String minute, String second, 
+                               String millisecond) {
         boolean valid = true;
         try {
-            valid = isValidDate(Integer.parseInt(month), Integer.parseInt(day), Integer.parseInt(year),
-                                Integer.parseInt(hour), Integer.parseInt(minute), Integer.parseInt(second), Integer.parseInt(millisecond));
+            valid = isValidDate(Integer.parseInt(month), Integer.parseInt(day), 
+                                Integer.parseInt(year), Integer.parseInt(hour), 
+                                Integer.parseInt(minute), 
+                                Integer.parseInt(second), 
+                                Integer.parseInt(millisecond));
         }
         catch (NumberFormatException nfe) {
             valid = false;
@@ -173,7 +251,23 @@ public class DateContext {
         return valid;
     }
 
-    public boolean isValidDate(int month, int day, int year, int hour, int minute, int second, int millisecond) {
+    /**
+     * Check if all values in the given data are valid and that the result will
+     * be a valid date.
+     * 
+     * @param month The month (1-12)
+     * @param day The day (1-31)
+     * @param year The year (4-digit)
+     * @param hour The hour (0-23)
+     * @param minute The minutes (0-59)
+     * @param second The seconds (0-59)
+     * @param millisecond The milliseconds (0-999)
+     * 
+     * @return <code>true</code> if all data represents a valid date,
+     *         <code>false</code> otherwise
+     */
+    public boolean isValidDate(int month, int day, int year, int hour, 
+                               int minute, int second, int millisecond) {
         boolean valid = true;
         if ( month < 1 || month > 12 ) {
             valid = false;
@@ -203,7 +297,7 @@ public class DateContext {
             }
         } else if ( month == 2 ) {
             // if it's a leap year, they can have 29 days...
-            if ( year % 4 == 0 ) {
+            if ( isLeapYear(year) ) {
                 if ( day < 0 || day > 29 ) {
                     valid = false;
                 }
@@ -218,36 +312,66 @@ public class DateContext {
         return valid;
     }
 
+    private boolean isLeapYear(int year) {
+        return (year % 400 == 0) || ((year % 4 == 0) && (year % 100 != 0));
+    }
+    
     /**
-     * Create a String object
-     * @param date from which to create a String representation.
-     * @param inputFormat Definition of dateString.
-     * @return String object representing date.
+     * Create a string of the given date using the given format. If the given
+     * format is invalid, then {@link IllegalArgumentException} is thrown.
+     * 
+     * @param date The date to create the value from
+     * @param inputFormat The format to use in formatting the date
+     * 
+     * @return The string instance representing the date in the given format
      */
     public String dateToString(Date date, String inputFormat) {
 		return FastDateFormat.getInstance(inputFormat).format(date);
     }
 
     /**
-     * Roll a date forward or back a given number of days
-     * @param date Date from which to start.
-     * @param delta Positive or negative integer value to move.
-     * @return Date object reflecting specified change.
+     * Roll a date forward or back a given number of days. Only the days are
+     * modified in the associated date. If the delta is positive, then the date
+     * is rolled forward the given number of days. If the delta is negative,
+     * then the date is rolled backward the given number of days.
+     * 
+     * @param date The initial date from which to start.
+     * @param delta The positive or negative integer value of days to move
+     * 
+     * @return The new {@link Date} instance reflecting the specified change
      */
     public Date changeDate(Date date, int delta) {
         return adjustDate(date, Calendar.DATE, delta);
     }
 
     /**
-     * Roll a date forwared or back based on day (d), years (y),
-     * hours(H), minutes (m), seconds (s) or months (M).
-     * @param date the date from which to start
-     * @param type the type of change d for Day, M for month, y for Year
-     * h for hour, m for minute, s for seconds
-     * @param delta positive or negitive integer value to move
-     * @return Date object reflecting the specific change
+     * Roll a date forward or back based on the given type where type is one of
+     * the following. Note that an {@link IllegalArgumentException} is thrown if
+     * the given type is invalid.
+     * 
+     * <blockquote>
+     * <pre>
+     * Type     Meaning     Constant
+     * ----     -------     --------
+     *  y       years       {@link DateContext#YEAR}
+     *  M       months      {@link DateContext#MONTH}
+     *  d       days        {@link DateContext#DAY}
+     *  H       hours       {@link DateContext#HOUR}
+     *  m       minutes     {@link DateContext#MINUTE}
+     *  s       seconds     {@link DateContext#SECOND}
+     * </pre>
+     * </blockquote>
+     * 
+     * If the delta is positive, then the given date is rolled forward the given 
+     * value and type. If the delta is negative, then the date is rolled 
+     * backward the given value and type.
+     * 
+     * @param date The initial date from which to start
+     * @param type the type of change based on the above types
+     * @param delta The positive or negative integer value to move
+     * 
+     * @return The new {@link Date} instance reflecting the specified change
      */
-
     public Date adjustDate(Date date, String type, int delta) {
         Date result = date;
         if (date != null) {
@@ -263,8 +387,11 @@ public class DateContext {
                 result = adjustDate(date, Calendar.MINUTE, delta);
             } else if (SECOND.equals(type)) {
                 result = adjustDate(date, Calendar.SECOND, delta);
+            } else {
+                throw new IllegalArgumentException("unsupported type: " + type);
             }
         }
+        
         return result;
     }
     
@@ -276,12 +403,22 @@ public class DateContext {
     }   
 
     /**
-     * Compare one date to another for equality in year, month and date.
-     * @param date1 One date to compare.
+     * Compare one date to another for equality in year, month and date. Note
+     * that this ignores all other values including the time.  If either value
+     * is <code>null</code>, including if both are <code>null</code>, then
+     * <code>false</code> is returned.
+     * 
+     * @param date1 The first date to compare.
      * @param date2 The second date to compare.
-     * @return True if dates are same year/month/date, false if not.
+     * 
+     * @return <code>true</code> if both dates have the same year/month/date, 
+     *         <code>false</code> if not.
      */
     public boolean compareDate(Date date1, Date date2) {
+        if (date1 == null || date2 == null) {
+            return false;
+        }
+        
         boolean result;
         GregorianCalendar cal1 = new GregorianCalendar();
         GregorianCalendar cal2 = new GregorianCalendar();
@@ -295,14 +432,17 @@ public class DateContext {
         } else {
             result = false;
         }
+        
         return result;
     }   
     
     /**
-     * Returns the age in years from today given a birthday.
-     * @param birthday the birthdate
-     * @return int the number of years that have passed 
-     *                since the birthdate. (-1 if birthday is null)
+     * Calcualte the age in years from today given a birthday.
+     * 
+     * @param birthday the birthdate to calculate from
+     * 
+     * @return The number of years that have passed since the birthdate or
+     *         <code>-1</code> if birthday is <code>null</code>
      */
     public int calculateAge(Date birthday) {
         int result = -1;
@@ -315,7 +455,9 @@ public class DateContext {
             birthdayCal.setTime(birthday);
             int birthDayOfYear = birthdayCal.get(Calendar.DAY_OF_YEAR);
             int birthYear = birthdayCal.get(Calendar.YEAR);
-            birthDayOfYear = processLeapYear(todayCal, birthdayCal, birthDayOfYear);
+            birthDayOfYear = 
+                processLeapYear(todayCal, birthdayCal, birthDayOfYear);
+            
             result = year - birthYear;
             if (dayOfYear < birthDayOfYear) {
                 result--;
@@ -335,8 +477,18 @@ public class DateContext {
         return result;
     }
     
-	public int dayOfYear(Date date) throws ParseException {
-		return Integer.parseInt(cDayOfYearFormatter.format(date));
-
+    /**
+     * Get the day of the year for the given date. The day of the year is
+     * between 1-365 (366 for leap years). Note that if the given date is 
+     * <code>null</code>, then a {@link NullPointerException} is thrown.
+     * 
+     * @param date The date to get the day of the year from
+     * 
+     * @return The day within the year for the given date
+     */
+	public int dayOfYear(Date date) {
+        GregorianCalendar calendar = new GregorianCalendar();
+        calendar.setTime(date);
+        return calendar.get(Calendar.DAY_OF_YEAR);
     }
 }
