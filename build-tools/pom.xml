@@ -4,7 +4,7 @@
     <parent>
     	<groupId>org.teatrove</groupId>
         <artifactId>teatrove</artifactId>
-        <version>4.2-SNAPSHOT</version>
+        <version>4.1.3-SNAPSHOT</version>
     </parent>    
 
     <groupId>org.teatrove</groupId>
