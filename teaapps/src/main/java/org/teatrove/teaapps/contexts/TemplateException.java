@@ -16,9 +16,13 @@
 package org.teatrove.teaapps.contexts;
 
 /**
+ * Custom {@link Exception} used by the {@link TemplateExceptionContext}.
+ * 
  * @author Scott Jappinen
  */
 public class TemplateException extends Exception {
+
+    private static final long serialVersionUID = 1L;
 
     public TemplateException() {
         super();

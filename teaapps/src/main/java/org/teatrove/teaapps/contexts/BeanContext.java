@@ -30,7 +30,7 @@ import java.util.Map;
  * be highly performant.  The BeanContext provides this behavior by utilizing a
  * specially built dynamic class that performs fast and efficient property
  * lookups to decrease the performance impact.
- * 
+ * <br /><br />
  * The context works by returning a special object that wraps a given bean and
  * uses a special Tea notation to allow map-based lookups.  The lookups may be
  * either simple bean properties (ie: name, location, etc) or may be composite
@@ -40,12 +40,12 @@ import java.util.Map;
  * the <code>failOnNulls</code> parameter.  In this case, if any portion of the
  * composite graph is <code>null</code>, then a {@link BeanContextException}
  * is thrown.
- * 
+ * <br /><br />
  * Example:
- * <code>
+ * <pre>
  *     bean = getBeanMap(myObject)
  *     'Name: ' bean['name']
- * </code>
+ * </pre>
  *  
  * @author Scott Jappinen
  */
@@ -233,6 +233,9 @@ public class BeanContext {
         return result;
     }
 
+    /**
+     * Helper class that maps a method to its type.
+     */
     public static class MethodTypePair {
         Method method;
         Class<?> type;
@@ -242,8 +245,15 @@ public class BeanContext {
             this.type = type;
         }
     }
-    
-    public class BeanMap {
+
+    /**
+     * The custom bean map that provides Tea getter support via the
+     * {@link BeanMap#get(String)} method. This allows for dynamic lookups of
+     * properties from the associated object. The dynamic lookups also support
+     * dot-notation to create a path to a given property such as
+     * <code>beanMap['address.city.name']</code>.
+     */
+    public static class BeanMap {
         private Object mBean;
         private boolean mFailOnNulls;
         private BeanPropertyAccessor mAccessor;
@@ -255,6 +265,17 @@ public class BeanContext {
             mFailOnNulls = failOnNulls;
         }
         
+        /**
+         * Get the value of the given property within the associated object.
+         * If the property is a dot-notation path, then the object will be
+         * traversed for each property. Note that if any portion of the path
+         * results in a <code>null</code> value, then a 
+         * {@link NullPointerException} will be thrown.
+         * 
+         * @param property The name of the property or dot-path to the property
+         * 
+         * @return The value of the associated property or path
+         */
         public Object get(String property) {
             // verify
             if (property == null || property.length() == 0) {
@@ -304,7 +325,7 @@ public class BeanContext {
         }
     }
     
-    public class BeanContextException extends RuntimeException {
+    public static class BeanContextException extends RuntimeException {
         
         public static final long serialVersionUID = 1234567890L;
         

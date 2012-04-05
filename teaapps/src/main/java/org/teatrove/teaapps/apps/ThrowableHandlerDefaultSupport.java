@@ -19,15 +19,26 @@ import org.teatrove.trove.log.Log;
 import org.teatrove.teaapps.ContextConfig;
 
 /**
+ * Default implementation of {@link ThrowableHandler} that just returns a single
+ * element array containing the thrown error.
+ * 
  * @author Scott Jappinen
  */
 public class ThrowableHandlerDefaultSupport implements ThrowableHandler {
     private Log mLog;
 
+    /*
+     * (non-Javadoc)
+     * @see org.teatrove.teaapps.apps.ThrowableHandler#init(org.teatrove.teaapps.ContextConfig)
+     */
     public void init(ContextConfig config) {
         mLog = config.getLog();
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.teatrove.teaapps.apps.ThrowableHandler#handleThrowables(java.lang.Throwable)
+     */
     public Throwable[] handleThrowables(Throwable throwable) {
         mLog.error(throwable);
         return new Throwable[] {throwable};

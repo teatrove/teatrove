@@ -15,38 +15,87 @@
  */
 package org.teatrove.teaapps.contexts;
 
-import org.teatrove.trove.util.BeanComparator;
-
 import java.util.Arrays;
 import java.util.Comparator;
 
+import org.teatrove.trove.util.BeanComparator;
+
+/**
+ * Tea context that provides the ability to sort arrays.
+ */
 public class SortContext {
-    
-    public void sort(Object[] array, String onColumn, boolean reverse) {
-        Class objClass = getObjectClass(array);
-        if (objClass != null) {
-            sort(array, objClass, onColumn, reverse);
+
+    /**
+     * Sort the given array by using the given property to evaluate against
+     * each element in the array comparing the resulting values. For example,
+     * if the object array contained User instances that had a lastName
+     * property, then you could sort the array by last name via:
+     * <code>sort(users, 'lastName', false)</code>.
+     * 
+     * @param array The array to sort
+     * @param property The name of the property on the elements to sort against
+     * @param reverse The state of whether to reverse the order
+     */
+    public void sort(Object[] array, String property, boolean reverse) {
+        Class<?> arrayType = getObjectClass(array);
+        if (arrayType != null) {
+            sort(array, arrayType, property, reverse);
         }
     }
     
-    public void sort(Object[] array, String[] onColumns,  boolean[] reverse) {
-        Class arrayType = getObjectClass(array);
+    /**
+     * Sort the given array by using the given properties to evaluate against
+     * each element in the array comparing the resulting values. If multiple
+     * values match the first property, then the second property is used,
+     * and so on. For example, if the object array contained User instances that 
+     * had a lastName and firstName property, then you could sort the array by 
+     * last name followed by first name via:
+     * <code>sort(users, #('lastName', 'firstName'), #(false, false))</code>.
+     * The array of reverse flags correspond to each property so that you could
+     * sort one property ascendingly and another descendingly. The two arrays
+     * <em>must</em> be the same length.
+     * 
+     * @param array The array to sort
+     * @param properties The name of the properties on the elements to sort with
+     * @param reverse The states of whether to reverse the orders
+     */
+    public void sort(Object[] array, String[] properties,  boolean[] reverse) {
+        Class<?> arrayType = getObjectClass(array);
         if (arrayType != null) {
-            sort(array, arrayType, onColumns, reverse);
+            sort(array, arrayType, properties, reverse);
         }       
     }
     
+    /**
+     * Sort the given array of strings. If the ignoreCase flag is 
+     * <code>true</code>, then case will not be used during sorting so that
+     * 'abc' and 'ABC' are equivalent.
+     * 
+     * @param array The array of strings to sort
+     * @param reverse The state of whether to reverse the sort
+     * @param ignoreCase The state of whether to ignore the casing of strings
+     */
     public void sort(String[] array, boolean reverse, boolean ignoreCase) {
     	StringComparator comparator = new StringComparator(reverse, ignoreCase);
     	Arrays.sort(array, comparator);
     }
 
+    /**
+     * Sort the given array according to the natural ordering of the array. If
+     * the array contains string values, a standard string comparator is used.
+     * If the array contains values that implement {@link Comparable}, then the
+     * natural ordering of the implementation is used. Otherwise, the array is
+     * not sorted.
+     * 
+     * @param array The array to sort
+     * @param sortAscending The flag of whether to sort ascending or not
+     */
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	public void sort(Object[] array, boolean sortAscending) {
     	Class<?> arrayType = getObjectClass(array);
         if (arrayType != null) {
         	Comparator comparator = null;
-        	if (arrayType == String.class) {
+        	if (String.class.equals(arrayType)) {
         		comparator = new StringComparator(sortAscending, false);
         	} else if (Comparable.class.isAssignableFrom(arrayType)) {
         		comparator = new GenericComparator(sortAscending);
@@ -54,46 +103,99 @@ public class SortContext {
         	if (comparator != null) {
         		Arrays.sort(array, comparator);
         	} else {
-        		System.err.println("Sorting arrays of type " + arrayType.getName() + " is not supported, " + 
-        				"must implement Comparable.");
+        		System.err.println("Sorting arrays of type " + 
+        		    arrayType.getName() + " is not supported, " + 
+        			"must implement Comparable."
+        		);
         	}
         } else {
        		System.err.println("Could not determine type of array to sort.");
         }
     }
     
+    /**
+     * Sort the given array naturally.
+     * 
+     * @param array The array to sort
+     * 
+     * @see Arrays#sort(Object[])
+     */
     public void sortAscending(Object[] array) {
     	Arrays.sort(array);
     }
     
+    /**
+     * Sort the given array naturally.
+     * 
+     * @param array The array to sort
+     * 
+     * @see Arrays#sort(int[])
+     */
     public void sortAscending(int[] array) {
     	Arrays.sort(array);
     }
     
+    /**
+     * Sort the given array naturally.
+     * 
+     * @param array The array to sort
+     * 
+     * @see Arrays#sort(double[])
+     */
     public void sortAscending(double[] array) {
     	Arrays.sort(array);
     }
     
+    /**
+     * Sort the given array naturally.
+     * 
+     * @param array The array to sort
+     * 
+     * @see Arrays#sort(float[])
+     */
     public void sortAscending(float[] array) {
     	Arrays.sort(array);
     }
     
+    /**
+     * Sort the given array naturally.
+     * 
+     * @param array The array to sort
+     * 
+     * @see Arrays#sort(byte[])
+     */
     public void sortAscending(byte[] array) {
     	Arrays.sort(array);
     }
     
+    /**
+     * Sort the given array naturally.
+     * 
+     * @param array The array to sort
+     * 
+     * @see Arrays#sort(short[])
+     */
     public void sortAscending(short[] array) {
     	Arrays.sort(array);
     }
     
+    /**
+     * Sort the given array naturally.
+     * 
+     * @param array The array to sort
+     * 
+     * @see Arrays#sort(long[])
+     */
     public void sortAscending(long[] array) {
     	Arrays.sort(array);
     }
     
-    private void sort(Object[] array, Class arrayType, String onColumn, boolean reverse) {
+    @SuppressWarnings("unchecked")
+    private void sort(Object[] array, Class<?> arrayType,
+                      String property, boolean reverse) {
         BeanComparator comparator = BeanComparator.forClass(arrayType);
-        if (onColumn != null && !onColumn.equals("")) {
-            comparator = comparator.orderBy(onColumn);
+        if (property != null && !property.equals("")) {
+            comparator = comparator.orderBy(property);
         }       
         if (reverse) {            
             comparator = comparator.reverse();
@@ -101,10 +203,12 @@ public class SortContext {
         Arrays.sort(array, comparator);
     }   
     
-    private void sort(Object[] array, Class arrayType, String[] onColumns, boolean[] reverse) {
+    @SuppressWarnings("unchecked")
+    private void sort(Object[] array, Class<?> arrayType, 
+                      String[] properties, boolean[] reverse) {
         BeanComparator comparator = BeanComparator.forClass(arrayType);
-        for (int i = 0; i < onColumns.length; i++) {
-            comparator = comparator.orderBy(onColumns[i]);
+        for (int i = 0; i < properties.length; i++) {
+            comparator = comparator.orderBy(properties[i]);
             if (reverse[i] == true) {
                 comparator = comparator.reverse();
             }
@@ -112,8 +216,8 @@ public class SortContext {
         Arrays.sort(array, comparator);
     }
 
-    private Class getObjectClass(Object[] array) {
-        Class result = null;
+    private Class<?> getObjectClass(Object[] array) {
+        Class<?> result = null;
         if (array != null) {
             for (int i = 0; i < array.length; i++) {
                 if (array[i] != null) {
@@ -184,35 +288,4 @@ public class SortContext {
 			return 0;
 	    }
     }
-    
-    
-    /*
-    public static void main(String[] args) {
-    	Integer[] test1 = new Integer[] { 4, 7, 3, 5, 9, 8 };
-    	print(test1);
-    	sort(test1, false);
-    	print(test1);
-    	
-    	String[] test2 = new String[] { "Jappy",
-    			"Vic",
-    			"Chris",
-    			"Erik",
-    			"Matt" };
-    	print(test2);
-    	sort(test2, false);
-    	print(test2);
-    }
-    
-    private static void print(Object[] array) {
-    	StringBuilder builder = new StringBuilder();
-    	builder.append("{ ");
-    	for (int i=0; i < array.length; i++) {
-    		builder.append(array[i]);
-    		if (i < array.length - 1) {
-    			builder.append(", ");
-    		}
-    	}
-    	builder.append(" }");
-    	System.out.println(builder.toString());
-    }*/
 }

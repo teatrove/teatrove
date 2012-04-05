@@ -18,9 +18,30 @@ package org.teatrove.teaapps.apps;
 import org.teatrove.teaapps.ContextConfig;
 
 /**
+ * Handler class that handles thrown exceptions from the
+ * {@link ThrowableCatcherApplication} and provides the array of associated
+ * errors.
+ * 
  * @author Scott Jappinen
  */
 public interface ThrowableHandler {
+    /**
+     * Initialize the handler with the provided configuration.
+     * 
+     * @param config The provided configuration
+     */
     public void init(ContextConfig config);
+    
+    /**
+     * Handle the given throwable and return the array of associated errors.
+     * The handler can either return <code>null</code> specifying no errors
+     * should be handled, an array with the single given throwable specifying
+     * that just the one error was handled, or an array of multiple errors from
+     * determining multiple distinct errors within the given error.
+     * 
+     * @param throwable The error to handle
+     * 
+     * @return The array of errors that were and should be handled
+     */
     public Throwable[] handleThrowables(Throwable throwable);
 }

@@ -28,17 +28,38 @@ import org.teatrove.trove.log.Log;
 import javax.servlet.ServletException;
 
 /**
- * 
+ * The capture application is a Tea-based application that uses
+ * {@link Substitution} blocks in templates to capture the output of the block
+ * and return the resulting output as a string.  For example:
+ * <br />
+ * <pre>
+ *     value = capture() {
+ *         'Hello: ' name '\n'
+ *         call getAddress() '\n'
+ *     }
+ *     
+ *     'VALUE: ' value
+ * </pre>
+ *         
  * @author Scott Jappinen
+ * 
+ * @see CaptureContext
  */
 public class CaptureApplication implements Application {
     
     private Log mLog;
-    private String mOutputPath = null;
+
+    /**
+     * Default constructor.
+     */
+    public CaptureApplication() {
+        super();
+    }
     
     /**
      * Initializes the application.
-     * @param config an ApplicationConfig object containing config. info.
+     * 
+     * @param config an ApplicationConfig object containing config info
      */
     public void init(ApplicationConfig config) throws ServletException {     
         mLog = config.getLog();
@@ -46,9 +67,11 @@ public class CaptureApplication implements Application {
     
     /**
      * Creates a context for the templates.
+     * 
      * @param request The user's http request
      * @param response The user's http response
-     * @return the context for the templates
+     * 
+     * @return The context for the templates
      */
     public Object createContext(ApplicationRequest request,
                                 ApplicationResponse response) {
@@ -56,24 +79,52 @@ public class CaptureApplication implements Application {
     }
     
     /**
-     * Returns the ContextType for this application.
+     * Get the context type for this application.
+     * 
+     * @return The context type for this application
+     * 
+     * @see CaptureContext
      */
-    public Class getContextType() {
+    public Class<?> getContextType() {
         return CaptureContext.class;
     }
     
     /**
      * Called before the application is closed down.
      */
-    public void destroy() {}
+    public void destroy() {
+        // nothing to do
+    }
     
+    /**
+     * The capture context provides funcionality to capture the results of a
+     * substitution block and return the resulting output to the calling page.
+     */
     public class CaptureContext {
         private ApplicationResponse mResponse;
         
+        /**
+         * Create a context associated with the given response.
+         * 
+         * @param response The active response for this context
+         */
         public CaptureContext(ApplicationResponse response) {
             mResponse = response;
         }
         
+        /**
+         * Capture the results of the given substitution block and return the
+         * output as the string value.  The substitution block is executed once
+         * immediately and the output from the block is returned.
+         * <br />
+         * <pre>
+         *     value = capture() { 'do stuff here' }
+         * </pre>
+         * 
+         * @param substitution The substitution block of code
+         * 
+         * @return The output of the substitution block
+         */
         public String capture(Substitution substitution) {
             BodyReceiver receiver = new BodyReceiver(mResponse.getHttpContext());
             String result = null;
@@ -83,12 +134,17 @@ public class CaptureApplication implements Application {
             } catch (Exception e) {
                 mLog.error(e);
             }
+            
             return result;
         }        
     }
 
-    class BodyReceiver implements OutputReceiver {
-        StringBuffer mBuffer = new StringBuffer(256);
+    /**
+     * Specialized internal output receiver that stores the results of any
+     * output to an internal buffer.
+     */
+    protected class BodyReceiver implements OutputReceiver {
+        StringBuilder mBuffer = new StringBuilder(256);
         HttpContext mHttpContext = null;
 
         public BodyReceiver(HttpContext context) {
