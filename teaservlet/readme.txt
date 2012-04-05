@@ -13,6 +13,11 @@ properties file with configuration information and initialization parameters.
 
 Change History
 
+4.1.2 to 4.1.3
+===============================
+- Fix #41 updating compilation system including remote and servlet context compilation providers
+- Fix #56 to add better logging support to asset management feature
+
 4.1.0 to 4.1.2
 ===============================
 - Fix #38 adding Asset Management feature

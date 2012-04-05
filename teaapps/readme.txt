@@ -7,6 +7,10 @@ available to the TeaServlet.
 
 Change History
 
+4.1.2 to 4.1.3
+===============================
+- No changes recorded
+
 4.0.0 to 4.1.2
 ===============================
 - Fix #29 adding dot notation to bean accessor

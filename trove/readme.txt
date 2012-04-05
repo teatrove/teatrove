@@ -6,6 +6,11 @@ Trove contains a rich cache of useful utilities used by both Tea and the TeaServ
 
 Change History
 
+4.1.2 to 4.1.3
+===============================
+- Fix #19 to support file, classpath, or any URL-supported protocol for resources
+- Fix #55 and cleanup merged context to better support generics and bridge methods
+
 4.0.0 to 4.1.2
 ===============================
 - Bug fixes
