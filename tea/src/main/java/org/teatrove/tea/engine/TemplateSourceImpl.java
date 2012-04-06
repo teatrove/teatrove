@@ -655,7 +655,7 @@ public class TemplateSourceImpl implements TemplateSource {
 
     private CompilationProvider[] parseProviders(PropertyMap properties) {
         CompilationProvider[] providers = null;
-        String[] paths = chopString(properties.getString("path"), ";,");
+        String[] paths = chopString(properties.getString("path", "/"), ";,");
         if (paths != null) {
             providers = new CompilationProvider[paths.length];
             for (int i = 0; i < paths.length; i++) {
