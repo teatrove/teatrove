@@ -85,11 +85,11 @@ public class ErrorEvent extends java.util.EventObject {
         }
         else {
             if (mInfo == null) {
-                msg = mUnit.getSourceFileName();
+                msg = mUnit.getName();
             }
             else {
                 msg =
-                    mUnit.getSourceFileName() + ':' + mInfo.getLine();
+                    mUnit.getName() + ':' + mInfo.getLine();
             }
         }
 

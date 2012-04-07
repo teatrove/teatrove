@@ -17,8 +17,6 @@
 package org.teatrove.trove.util.resources;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -71,18 +69,42 @@ public class DefaultResourceFactory implements ResourceFactory {
      * {@inheritDoc}
      */
     @Override
-    public URL getResource(String path)
-        throws MalformedURLException {
+    public URL getResource(String path) {
         
-        // support any protocol (file:, http:, etc)
-        // support classpath: protocol
-        // support web: protocol
-        File file = new File(path);
-        if (file.exists()) {
-            return file.toURI().toURL();
+        // check if file-based path
+        if (path.startsWith("file:")) {
+            File file = new File(path.substring(5));
+            if (!file.exists()) { return null; }
+            
+            try { return file.toURI().toURL(); }
+            catch (MalformedURLException exception) { return null; }
         }
+        
+        // check if classpath-based path
+        else if (path.startsWith("classpath:")) {
+            int idx = 10;
+            while (path.charAt(idx) == '/') { idx++; }
+            return Thread.currentThread().getContextClassLoader()
+                .getResource(path.substring(idx));
+        }
+
+        // check if URL-based path
         else {
-            return DefaultResourceFactory.class.getResource(path);
+            try { return new URL(path); }
+            catch (MalformedURLException e1) {
+                // default to file or class path
+                File file = new File(path);
+                if (file.exists()) { 
+                    try { return file.toURI().toURL(); }
+                    catch (MalformedURLException e2) { return null; }
+                }
+                else { 
+                    int idx = 0;
+                    while (path.charAt(idx) == '/') { idx++; }
+                    return Thread.currentThread().getContextClassLoader()
+                        .getResource(path.substring(idx)); 
+                }
+            }
         }
     }
     
@@ -91,10 +113,13 @@ public class DefaultResourceFactory implements ResourceFactory {
      */
     @Override
     public InputStream getResourceAsStream(String path) {
-        try { return new FileInputStream(path); }
-        catch (FileNotFoundException fnfe) {
-            return DefaultResourceFactory.class.getResourceAsStream(path);
+        URL url = getResource(path);
+        if (url != null) {
+            try { return url.openStream(); }
+            catch (IOException ioe) { return null; }
         }
+        
+        return null;
     }
     
     /**

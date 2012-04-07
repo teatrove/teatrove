@@ -12,7 +12,7 @@
 
     <groupId>org.teatrove</groupId>
     <artifactId>teatrove</artifactId>
-    <version>4.1.1-espn-5-SNAPSHOT</version>
+    <version>4.1.3-espn-1-SNAPSHOT</version>
 
     <modules>
         <module>build-tools</module>
@@ -142,7 +142,7 @@
         <slf4j.version>1.6.1</slf4j.version>
         
         <!-- BEGIN ESPN UPDATE: add version for repackaging plugin -->
-        <repackaging.plugin.version>1.0.8</repackaging.plugin.version>
+        <repackaging.plugin.version>1.0.9</repackaging.plugin.version>
         <!-- END ESPN UPDATE -->
     </properties>
 

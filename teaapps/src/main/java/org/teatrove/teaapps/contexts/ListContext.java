@@ -22,80 +22,264 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * Custom Tea context that provides access to {@link List}s including creation,
+ * modification, and convenience methods.
+ * 
  * @author Scott Jappinen
  */
 public class ListContext {    
     
-    public boolean add(List<Object> list, Object value) {
+    /**
+     * Add the given value to the given list.
+     * 
+     * @param <T> The component type of the list
+     * 
+     * @param list The list to add to
+     * @param value The value to add
+     * 
+     * @return <code>true</code> if the value was added,
+     *         <code>false</code> otherwise
+     *         
+     * @see List#add(Object)
+     */
+    public <T> boolean add(List<T> list, T value) {
         return list.add(value);
     }
 
-    public void add(List<Object> list, int index, Object value) {
+    /**
+     * Insert the given value to the given list at the given index. This will
+     * insert the value at the index shifting the elements accordingly.
+     * 
+     * @param <T> The component type of the list
+     * 
+     * @param list The list to add to
+     * @param index The index to add at
+     * @param value The value to add
+     *         
+     * @see List#add(int, Object)
+     */
+    public <T> void add(List<T> list, int index, T value) {
         list.add(index, value);
     }
 
-    public boolean addAll(List<Object> listToAddTo, Collection<Object> collectionToAdd) {
+    /**
+     * Add all items of the given collection to the given list.
+     * 
+     * @param <T> The component type of the list
+     * 
+     * @param listToAddTo The list to add to
+     * @param collectionToAdd The elements to add to the list
+     * 
+     * @return <code>true</code> if all items were added,
+     *         <code>false</code> otherwise
+     *         
+     * @see List#addAll(Collection)
+     */
+    public <T> boolean addAll(List<T> listToAddTo, 
+                              Collection<? extends T> collectionToAdd) {
         return listToAddTo.addAll(collectionToAdd);
     }
 
-    public boolean addAll(List<Object> listToAddTo, int index, Collection<Object> collectionToAdd) {
+    /**
+     * Insert all items of the given collection at the given index to the given 
+     * list.
+     * 
+     * @param <T> The component type of the list
+     * 
+     * @param listToAddTo The list to add to
+     * @param index The index to insert at
+     * @param collectionToAdd The elements to add to the list
+     * 
+     * @return <code>true</code> if all items were added,
+     *         <code>false</code> otherwise
+     *         
+     * @see List#addAll(int, Collection)
+     */
+    public <T> boolean addAll(List<T> listToAddTo, int index, 
+                              Collection<? extends T> collectionToAdd) {
         return listToAddTo.addAll(collectionToAdd);
     }
 
-    public void clear(List list) {
+    /**
+     * Clear all elements from the given list.
+     * 
+     * @param list The list to clear
+     * 
+     * @see List#clear()
+     */
+    public void clear(List<?> list) {
         list.clear();
     }
     
-    public boolean contains(List list, Object obj) {
+    /**
+     * Check if the given list contains the given object.
+     * 
+     * @param list The list to search in
+     * @param obj The object to search for
+     * 
+     * @return <code>true</code> if the list contains the object,
+     *         <code>false</code> otherwise
+     *         
+     * @see List#contains(Object)
+     */
+    public boolean contains(List<?> list, Object obj) {
         return list.contains(obj);
     }
 
-    public boolean containsAll(List<Object> list, Collection<Object> collection) {
+    /**
+     * Check if the given list contains all of the given objects.
+     * 
+     * @param list The list to search in
+     * @param collection The collection of elements to search for
+     * 
+     * @return <code>true</code> if the list contains all of the objects,
+     *         <code>false</code> otherwise
+     *         
+     * @see List#containsAll(Collection)
+     */
+    public boolean containsAll(List<?> list, Collection<?> collection) {
         return list.containsAll(collection);
     }
 
+    /**
+     * Create a new and empty {@link ArrayList}.
+     * 
+     * @return the created array list
+     */
     public List<?> createArrayList() {
-        return new ArrayList();
+        return new ArrayList<Object>();
     }
     
-    public int indexOf(List list, Object obj) {
+    /**
+     * Get the first index within the list of a matching object or 
+     * <code>-1</code> if not found.
+     * 
+     * @param list The list to search in
+     * @param obj The object to search for
+     * 
+     * @return The first matching index or <code>-1</code> if not found
+     * 
+     * @see List#indexOf(Object)
+     */
+    public int indexOf(List<?> list, Object obj) {
         return list.indexOf(obj);
     }
     
-    public int lastIndexOf(List list, Object obj) {
+    /**
+     * Get the last index within the list of a matching object or 
+     * <code>-1</code> if not found.
+     * 
+     * @param list The list to search in
+     * @param obj The object to search for
+     * 
+     * @return The last matching index or <code>-1</code> if not found
+     * 
+     * @see List#lastIndexOf(Object)
+     */
+    public int lastIndexOf(List<?> list, Object obj) {
         return list.lastIndexOf(obj);
     }
 
-    public boolean remove(List list, Object obj) {
+    /**
+     * Remove the given object from the given list.
+     * 
+     * @param list The list to remove from
+     * @param obj The object to remove
+     * 
+     * @return <code>true</code> if the object was found and removed,
+     *         <code>false</code> false otherwise
+     *         
+     * @see List#remove(Object)
+     */
+    public boolean remove(List<?> list, Object obj) {
         return list.remove(obj);
     }
 
-    public Object remove(List list, int index) {
+    /**
+     * Remove the object at the given index from the given list.
+     * 
+     * @param list The list to remove from
+     * @param index The index of the object to remove
+     * 
+     * @return <code>true</code> if the object was removed,
+     *         <code>false</code> false otherwise
+     *         
+     * @see List#remove(int)
+     */
+    public Object remove(List<?> list, int index) {
         return list.remove(index);
     }
 
-    public boolean removeAll(List<Object> list, Collection<Object> collection) {
+    /**
+     * Remove all matching objects from the given collection from the given 
+     * list. If a given element in the collection is not contained in the list,
+     * then that element is ignored.
+     * 
+     * @param list The list to remove from
+     * @param collection The collection of objects to remove
+     * 
+     * @return <code>true</code> if any elements were removed from the list,
+     *         <code>false</code> otherwise
+     *         
+     * @see List#removeAll(Collection)
+     */
+    public boolean removeAll(List<?> list, Collection<?> collection) {
         return list.removeAll(collection);
     }
 
-    public Object set(List<Object> list, int index, Object obj) {
+    /**
+     * Set the value at the given index in the given list. If the value is
+     * properly set, the previous value will be returned.
+     * 
+     * @param list The list of set in
+     * @param index The index within the list to set at
+     * @param obj The object to set in the list
+     * 
+     * @return The previously set value
+     * 
+     * @see List#set(int, Object)
+     */
+    public <T> T set(List<T> list, int index, T obj) {
         return list.set(index, obj);
     }
 
-    public int size(List list) {
+    /**
+     * Get the size of the given list.
+     * 
+     * @param list The associated list
+     * 
+     * @return The size of the list
+     * 
+     * @see List#size()
+     */
+    public int size(List<?> list) {
         return list.size();
     }
     
-    public List subList(List list, int fromIndex, int toIndex) {
+    /**
+     * Get a portion of the given list as a new list.
+     * 
+     * @param list The list to retrieve a portion of
+     * @param fromIndex The first index, inclusive, to start from
+     * @param toIndex The last index, inclusive, to end at
+     * 
+     * @return A new list containing the given portion of the list
+     * 
+     * @see List#subList(int, int)
+     */
+    public <T> List<T> subList(List<T> list, int fromIndex, int toIndex) {
         return list.subList(fromIndex, toIndex);
     }
 
-    //public Object[] toArray(List<Object> list, Class arrayType) {
-    //    Object[] typedArray = (Object[]) Array.newInstance(arrayType, list.size());
-    //    return list.toArray(typedArray);
-    //}
-    
-    public Object[] toArray(List list, Class arrayType) {
+    /**
+     * Convert the given list to an array of the given array type.
+     * 
+     * @param list The list to convert
+     * @param arrayType The type of array to create
+     * 
+     * @return The array of elements in the list
+     */
+    public Object[] toArray(List<?> list, Class<?> arrayType) {
         int[] dims = findArrayDimensions(list, arrayType);
         Object[] typedArray = (Object[]) Array.newInstance(arrayType, dims);
         return list.toArray(typedArray);
@@ -103,16 +287,15 @@ public class ListContext {
 
     /**
      * If the elements of the list are arrays, get the max length of each needed
-     * dimension, otherwise return an int[] containing one element, the length of the list.
-     * @param list
-     * @param arrayType
-     * @return
+     * dimension, otherwise return an int[] containing one element, the length
+     * of the list.
      */
-    private int[] findArrayDimensions(List list, Class arrayType) {
+    private int[] findArrayDimensions(List<?> list, Class<?> arrayType) {
         List<int[]> elementDims = new LinkedList<int[]>();
         int dimCount = 0;
         for (Object o : list) {
-            if(o != null && o.getClass().isArray() && isAssignableFromArray(arrayType, o.getClass().getComponentType())) {
+            if (o != null && o.getClass().isArray() && 
+                isAssignableFromArray(arrayType, o.getClass().getComponentType())) {
                 final int[] dimensions = findArrayDimensions(o);
                 elementDims.add(dimensions);
                 dimCount = Math.max(dimCount, dimensions.length);
@@ -131,7 +314,8 @@ public class ListContext {
         return dimsArr;
     }
 
-    private boolean isAssignableFromArray(Class arrayType, Class<?> componentType) {
+    private boolean isAssignableFromArray(Class<?> arrayType, 
+                                          Class<?> componentType) {
         if(componentType.isArray()) {
             return isAssignableFromArray(arrayType, componentType.getComponentType());
         } else {
@@ -144,7 +328,7 @@ public class ListContext {
             // For each element, find its array dim
             int arrLength = Array.getLength(arr);
             List<Integer> dims = new ArrayList<Integer>();
-            dims.add(arrLength);
+            dims.add(Integer.valueOf(arrLength));
             // Find the max length(s) of any additional dimensions
             for (int i = 0; i < arrLength; i++) {
                 Object element = Array.get(arr, i);
@@ -152,14 +336,14 @@ public class ListContext {
                 resize(dims, elementDims.length+1);
                 for (int j = 0; j < elementDims.length; j++) {
                     int elementDim = elementDims[j];
-                    dims.set(j + 1, Math.max(dims.get(j + 1), elementDim));
+                    dims.set(j + 1, Integer.valueOf(Math.max(dims.get(j + 1).intValue(), elementDim)));
                 }
             }
 
             // Copy the List<Integer> to an int[] since toArray(T a) does work with primitives
             int[] dimsArr = new int[dims.size()];
             for (int i = 0; i < dims.size(); i++) {
-                dimsArr[i] = dims.get(i);
+                dimsArr[i] = dims.get(i).intValue();
             }
             return dimsArr;
         }
@@ -168,7 +352,7 @@ public class ListContext {
 
     private void resize(List<Integer> dims, int i) {
         while(dims.size() < i) {
-            dims.add(0);
+            dims.add(Integer.valueOf(0));
         }
     }
 }

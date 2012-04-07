@@ -1,10 +1,25 @@
-README for Trove/3.9.x
+README for Trove/4.1.x
 
 Copyright (C) 1997-2011 TeaTrove.org
  
 Trove contains a rich cache of useful utilities used by both Tea and the TeaServlet.
 
 Change History
+
+4.1.2 to 4.1.3
+===============================
+- Fix #19 to support file, classpath, or any URL-supported protocol for resources
+- Fix #55 and cleanup merged context to better support generics and bridge methods
+
+4.0.0 to 4.1.2
+===============================
+- Bug fixes
+
+3.9.0 to 4.0.0
+===============================
+- Add generics support to generate generics in class files and reference generics
+- Add substitution factory to load property files with substitution parameters
+- Support XMl and legacy property file formats natively
 
 1.7.5-espn-legacy-branch to 3.9.0
 ===============================

@@ -34,43 +34,114 @@ import java.util.Map;
 import java.util.Iterator;
 
 /**
+ * Custom Tea context that provides HTTP client functionality to invoke HTTP
+ * requests including GET and POST.
+ * 
  * @author Scott Jappinen
  */
 public class HttpContext {
-    
+   
+    /**
+     * Perform an HTTP GET at the given path returning the results of the
+     * response.
+     * 
+     * @param host The hostname of the request
+     * @param path The path of the request
+     * @param port The port of the request
+     * @param headers The headers to pass in the request
+     * @param timeout The timeout of the request in milliseconds
+     * 
+     * @return The data of the resposne
+     * 
+     * @throws UnknownHostException if the host cannot be found
+     * @throws ConnectException if the HTTP server does not respond
+     * @throws IOException if an I/O error occurs processing the request
+     */
     public String doGet(String host, String path, 
-                        int port, Map headers, int timeout)
-        throws UnknownHostException, ConnectException, IOException
-    {
+                        int port, Map<String, String> headers, int timeout)
+        throws UnknownHostException, ConnectException, IOException {
+        
         return doHttpCall(host, path, null, port, headers, timeout, false);
     }
     
+    /**
+     * Perform a secure HTTPS GET at the given path returning the results of the
+     * response.
+     * 
+     * @param host The hostname of the request
+     * @param path The path of the request
+     * @param port The port of the request
+     * @param headers The headers to pass in the request
+     * @param timeout The timeout of the request in milliseconds
+     * 
+     * @return The data of the resposne
+     * 
+     * @throws UnknownHostException if the host cannot be found
+     * @throws ConnectException if the HTTP server does not respond
+     * @throws IOException if an I/O error occurs processing the request
+     */
     public String doSecureGet(String host, String path, 
-                              int port, Map headers, int timeout)
-        throws UnknownHostException, ConnectException, IOException
-    {
+                              int port, Map<String, String> headers, 
+                              int timeout)
+        throws UnknownHostException, ConnectException, IOException {
+        
         return doHttpCall(host, path, null, port, headers, timeout, true);
     }
     
+    /**
+     * Perform an HTTP POST at the given path sending in the given post data
+     * returning the results of the response.
+     * 
+     * @param host The hostname of the request
+     * @param path The path of the request
+     * @param postData The POST data to send in the request
+     * @param port The port of the request
+     * @param headers The headers to pass in the request
+     * @param timeout The timeout of the request in milliseconds
+     * 
+     * @return The data of the resposne
+     * 
+     * @throws UnknownHostException if the host cannot be found
+     * @throws ConnectException if the HTTP server does not respond
+     * @throws IOException if an I/O error occurs processing the request
+     */
     public String doPost(String host, String path, String postData, 
-                         int port, Map headers, int timeout)
-        throws UnknownHostException, ConnectException, IOException
-    {
+                         int port, Map<String, String> headers, int timeout)
+        throws UnknownHostException, ConnectException, IOException {
+        
         return doHttpCall(host, path, postData, port, headers, timeout, false);
     }
     
+    /**
+     * Perform a secure HTTPS POST at the given path sending in the given post 
+     * data returning the results of the response.
+     * 
+     * @param host The hostname of the request
+     * @param path The path of the request
+     * @param postData The POST data to send in the request
+     * @param port The port of the request
+     * @param headers The headers to pass in the request
+     * @param timeout The timeout of the request in milliseconds
+     * 
+     * @return The data of the resposne
+     * 
+     * @throws UnknownHostException if the host cannot be found
+     * @throws ConnectException if the HTTP server does not respond
+     * @throws IOException if an I/O error occurs processing the request
+     */
     public String doSecurePost(String host, String path, String postData,
-                               int port, Map headers, int timeout)
-        throws UnknownHostException, ConnectException, IOException
-    {
+                               int port, Map<String, String> headers, 
+                               int timeout)
+        throws UnknownHostException, ConnectException, IOException {
+        
         return doHttpCall(host, path, postData, port, headers, timeout, true);
     }
     
     private String doHttpCall(String host, String path,  String postData,
-                              int port, Map headers, int timeout, 
-                              boolean isSecure)
-        throws UnknownHostException, ConnectException, IOException
-    { 
+                              int port, Map<String, String> headers, 
+                              int timeout, boolean isSecure)
+        throws UnknownHostException, ConnectException, IOException {
+        
         String result = null;
         InetAddress inetAddress = InetAddress.getByName(host);
         SocketFactory socketFactory;
@@ -83,9 +154,9 @@ public class HttpContext {
         HttpClient httpClient = new HttpClient(socketFactory);
         httpClient.setURI(path);
         if (headers != null && headers.size() > 0) {
-            Iterator iter = headers.keySet().iterator();
+            Iterator<String> iter = headers.keySet().iterator();
             while (iter.hasNext()) {
-                String key = (String) iter.next();
+                String key = iter.next();
                 httpClient.addHeader(key, headers.get(key));
             }
         }

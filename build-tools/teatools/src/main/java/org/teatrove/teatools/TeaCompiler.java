@@ -16,13 +16,20 @@
 
 package org.teatrove.teatools;
 
-import org.teatrove.tea.compiler.*;
-import org.teatrove.tea.parsetree.Template;
-import org.teatrove.tea.util.*;
-import org.teatrove.trove.io.SourceReader;
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
 
-import java.io.*;
-import java.util.*;
+import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.Compiler;
+import org.teatrove.tea.compiler.ErrorListener;
+import org.teatrove.tea.compiler.Parser;
+import org.teatrove.tea.compiler.Token;
+import org.teatrove.tea.compiler.TypeChecker;
+import org.teatrove.tea.parsetree.Template;
+import org.teatrove.tea.util.FileCompilationProvider;
+import org.teatrove.trove.io.SourceReader;
+import org.teatrove.trove.util.ClassInjector;
 
 /**
  * Simple extension of the Tea FileCompiler that allows a context class to
@@ -31,7 +38,7 @@ import java.util.*;
  *
  * @author Mark Masse
  */
-public class TeaCompiler extends FileCompiler {
+public class TeaCompiler extends Compiler {
 
 
     /**
@@ -72,7 +79,7 @@ public class TeaCompiler extends FileCompiler {
     }
 
     /** The Runtime Context Class */
-    protected Class mRuntimeContextClass;
+    protected Class<?> mRuntimeContextClass;
 
     /** The ErrorListener for Scanner errors.  These
         errors are in the category of syntax errors. */
@@ -94,11 +101,15 @@ public class TeaCompiler extends FileCompiler {
      * @param rootSourceDirs Required root source directories
      * @param parseTreeMap Optional map should be thread-safe
      */
-    public TeaCompiler(File[] rootSourceDirs, Map parseTreeMap) {
-        super(rootSourceDirs, null, null, null, null, parseTreeMap);
+    public TeaCompiler(File[] rootSourceDirs, 
+                       Map<String, Template> parseTreeMap) {
+        super(ClassInjector.getInstance(), null, null, null, 0, parseTreeMap);
 
         setForceCompile(true);
         setCodeGenerationEnabled(false);
+        for (File rootSourceDir : rootSourceDirs) {
+            addCompilationProvider(new FileCompilationProvider(rootSourceDir));
+        }
     }
 
 
@@ -118,7 +129,7 @@ public class TeaCompiler extends FileCompiler {
      *
      * @param clazz the class that defines a template's runtime context.
      */
-    public void setRuntimeContextClass(Class clazz) {
+    public void setRuntimeContextClass(Class<?> clazz) {
         mRuntimeContextClass = clazz;
     }
 
@@ -127,7 +138,7 @@ public class TeaCompiler extends FileCompiler {
      *
      * @return the class that defines a template's runtime context.
      */
-    public Class getRuntimeContext() {
+    public Class<?> getRuntimeContext() {
         return mRuntimeContextClass;
     }
 

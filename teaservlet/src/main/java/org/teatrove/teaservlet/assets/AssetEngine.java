@@ -29,6 +29,11 @@ public class AssetEngine {
         this.context = context;
     }
     
+    @Override
+    public String toString() {
+        return "AssetEngine[" + this.loaders.toString() + "]";
+    }
+    
     @SuppressWarnings("unchecked")
     public void init(Log log, PropertyMap properties) 
         throws Exception {
@@ -77,6 +82,10 @@ public class AssetEngine {
         else if (this.loaders.isEmpty()) {
             log.warn("no asset loaders configured!");
             return null;
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("searching for asset '" + path + "' within: " + loaders);
         }
         
         // check if previously cached for better efficiency
@@ -166,7 +175,10 @@ public class AssetEngine {
         // create and return asset loader
         if (!factories.isEmpty()) {
             log.debug("creating asset loader: ".concat(name));
-            return new AssetLoader(name, basePath, factories, mimeTypes);
+            AssetLoader loader =
+                new AssetLoader(name, basePath, factories, mimeTypes);
+            loader.init(log);
+            return loader;
         }
         
         // none found
@@ -175,7 +187,8 @@ public class AssetEngine {
     }
     
     protected void createAssetFactories(String paths, 
-                                        List<AssetFactory> factories) {
+                                        List<AssetFactory> factories)
+        throws Exception {
         
         StringTokenizer tokens = new StringTokenizer(paths, ",");
         while (tokens.hasMoreTokens()) {
@@ -187,32 +200,41 @@ public class AssetEngine {
         }
     }
     
-    protected AssetFactory createAssetFactory(String path) {
+    protected AssetFactory createAssetFactory(String path) 
+        throws Exception {
+        
+        AssetFactory factory = null;
         
         // check for classpath or file-based paths
         if (path.startsWith("classpath:")) {
             log.debug("creating classpath asset factory: ".concat(path));
-            return new ClasspathAssetFactory(path.substring(10));
+            factory = new ClasspathAssetFactory(path.substring(10));
         }
         else if (path.startsWith("file:")) {
             log.debug("creating file asset factory: ".concat(path));
-            return new FileAssetFactory(path.substring(5));
+            factory = new FileAssetFactory(path.substring(5));
         }
         else if (path.startsWith("web:")) {
             log.debug("creating web asset factory: ".concat(path));
-            return new ServletContextAssetFactory(context, path.substring(4));
+            factory = new ServletContextAssetFactory(context, path.substring(4));
         }
         
         // check for url-based path
-        try {
-            URL url = new URL(path);
-            log.debug("creating url asset factory: ".concat(path));
-            return new UrlAssetFactory(url);
+        if (factory == null) {
+            try {
+                URL url = new URL(path);
+                log.debug("creating url asset factory: ".concat(path));
+                factory = new UrlAssetFactory(url);
+            }
+            catch (MalformedURLException exception) {
+                log.debug("creating web asset factory: ".concat(path));
+                factory = new ServletContextAssetFactory(context, path);
+            }
         }
-        catch (MalformedURLException exception) {
-            log.debug("creating web asset factory: ".concat(path));
-            return new ServletContextAssetFactory(context, path);
-        }
+
+        // initialize and return factory
+        factory.init(log, new PropertyMap());
+        return factory;
     }
     
     protected AssetFactory createAssetFactory(String className, 
@@ -229,7 +251,7 @@ public class AssetEngine {
         }
 
         // initialize factory
-        factory.init(config);
+        factory.init(log, config);
 
         // return the factory instance
         return factory;

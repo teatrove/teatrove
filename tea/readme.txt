@@ -1,4 +1,4 @@
-README for Tea/3.9.x
+README for Tea/4.1.x
 
 Copyright (C) 1997-2011 TeaTrove.org
 
@@ -10,6 +10,16 @@ compiler. A much smaller amount of code supports Tea in a runtime environment.
 
 Change History
 
+4.1.2 to 4.1.3
+=============================
+- Fix #41 rewriting the compilation system so that compilation providers can now reference each other through single compiler
+
+4.1.0 to 4.1.2
+=============================
+- Fix #34 to generate class files to webapp temporary directory
+- Fix #32 to cleanup compilers and better share code
+- Merge pull request #28 removing old test methods
+- Fix #24 in invalid handling of downcasting
 
 4.0.0 to 4.1.0
 =============================

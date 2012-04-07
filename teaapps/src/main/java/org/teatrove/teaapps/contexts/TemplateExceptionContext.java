@@ -16,23 +16,61 @@
 package org.teatrove.teaapps.contexts;
 
 /**
+ * Custom Tea context that allow the template to throw errors that may get
+ * propogated to {@link ServletException} causing the given response to fail.
+ * 
  * @author Scott Jappinen
  */
 public class TemplateExceptionContext {
 
-	public void throwTemplateException() throws TemplateException {
+    /**
+     * Throw a template exception with no message or cause.
+     * 
+     * @throws TemplateException the generated error
+     */
+	public void throwTemplateException() 
+	    throws TemplateException {
+	    
 		throw new TemplateException();
 	}
 
-    public void throwTemplateException(String message) throws TemplateException {
+	/**
+	 * Throw a template exception with the given message.
+	 * 
+	 * @param message The message to include in the exception
+	 * 
+	 * @throws TemplateException the generated error
+	 */
+    public void throwTemplateException(String message) 
+        throws TemplateException {
+        
         throw new TemplateException(message);
     }
     
-    public void throwTemplateException(Throwable t) throws TemplateException {
-        throw new TemplateException(t);
+    /**
+     * Throw a template exception with the given cause.
+     * 
+     * @param cause The cause to include in the exception
+     * 
+     * @throws TemplateException the generated error
+     */
+    public void throwTemplateException(Throwable cause) 
+        throws TemplateException {
+        
+        throw new TemplateException(cause);
     }
     
-    public void throwTemplateException(String message, Throwable t) throws TemplateException {
-        throw new TemplateException(message, t);
+    /**
+     * Throw a template exception with the given message and cause.
+     * 
+     * @param message The message to include in the exception
+     * @param cause The cause to include in the exception
+     * 
+     * @throws TemplateException the generated error
+     */
+    public void throwTemplateException(String message, Throwable cause) 
+        throws TemplateException {
+        
+        throw new TemplateException(message, cause);
     }
 }

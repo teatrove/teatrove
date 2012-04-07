@@ -612,7 +612,7 @@ public class AdminApplication implements AdminApp {
 
             if (td==null) {
                 throw new ServletException("dynamicTemplateCall() could not find template: " + templateName
-                        +" called from template: " + currentTemplate.getSourceFile());
+                        +" called from template: " + currentTemplate.getSourcePath());
             }
 
             // make sure we have the right number and types of parameters

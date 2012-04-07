@@ -26,43 +26,62 @@ import org.teatrove.teaservlet.ApplicationResponse;
 import org.teatrove.trove.log.Log;
 
 
-/*
+/**
+ * Tea admini application that provides a JMX console. The application provides
+ * a single admin template entry page and a singleton instance of the
+ * {@link JMXContext} context.
+ * 
  * @author Scott Jappinen
  */
 public class JMXConsoleApplication implements AdminApp {
 
 	private Log mLog;
+	private JMXContext mContext;
 	
-	private JMXContext mContext = null;
-	
+	/**
+	 * Initialize the application.
+	 * 
+	 * @param config The application configuration
+	 */
 	public void init(ApplicationConfig config) throws ServletException {
 		mLog = config.getLog();
 		mContext = new JMXContext();
 	}
 	
-    public void destroy() {}
+    public void destroy() {
+        // nothing to do
+    }
 
     /**
-     * Returns an instance of {@link JMXContext}.
+     * Returns an instance of singleton {@link JMXContext}.
+     * 
+     * @param request The current request (ignored)
+     * @param response The current response (ignored)
+     * 
+     * @return The singleton JMX context
      */
     public Object createContext(ApplicationRequest request,
                                 ApplicationResponse response) {
-        return new JMXContext();
+        return mContext;
     }
 
     /**
      * Returns {@link JMXContext}.class.
+     * 
+     * @return The JMX context class
      */
     public Class<JMXContext> getContextType() {
         return JMXContext.class;
     }
 	
-    /*
+    /**
      * Retrieves the administrative links for this application.
+     * 
+     * @return The list of administration links
      */
     public AppAdminLinks getAdminLinks() {
     	AppAdminLinks links = new AppAdminLinks(mLog.getName());
-        links.addAdminLink("JMX Console","system.teaservlet.JMXConsole");
+        links.addAdminLink("JMX Console", "system.teaservlet.JMXConsole");
         return links;
     }
 	

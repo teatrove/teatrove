@@ -61,11 +61,12 @@
 						<div id="toggleTree" class="button">Toggle All</div>
 					</div>
 				</div>
+				<br class="clear" />
                 <div id="tree-container" expandFirst="true">
                     <% call system.util.printTemplateTree(templateMap, "", "tree", servletName); %>
                 </div>
                 <div id="details-container">
-                    Click a template to the left to load details.
+                    <div id="details-content"></div>
                 </div>
                 <div class="clear"></div>
 			</section>

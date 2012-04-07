@@ -16,8 +16,13 @@
 
 package org.teatrove.tea.compiler;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
@@ -25,24 +30,63 @@ import java.util.Arrays;
 import org.teatrove.tea.parsetree.Template;
 import org.teatrove.tea.parsetree.Variable;
 import org.teatrove.trove.classfile.TypeDesc;
+import org.teatrove.trove.io.DualOutput;
 import org.teatrove.trove.io.SourceReader;
+import org.teatrove.trove.util.ClassInjector;
 
 /**
- *
+ * A compilation unit is a unit of compilation for a given template that
+ * provides source details and outputs the compiled result to a given set of
+ * output streams (class files, injectors, etc).  It works hand-in-hand with the
+ * associated compiler during compilation.
+ * 
  * @author Brian S O'Neill
  */
-public abstract class CompilationUnit implements ErrorListener {
+public class CompilationUnit implements ErrorListener {
     private String mName;
     private Compiler mCompiler;
     private Template mTree;
+    private CompilationSource mSource;
 
     private int mErrorCount;
+    private File mDestDir;
+    private File mDestFile;
 
-    public CompilationUnit(String name, Compiler compiler) {
+    public CompilationUnit(String name, CompilationSource source,
+                           Compiler compiler) {
         mName = name;
+        mSource = source;
         mCompiler = compiler;
+        
+        initialize();
     }
 
+    private void initialize() {
+        String slashPath = mName.replace('.', '/');
+        if (slashPath.endsWith("/")) {
+            slashPath = slashPath.substring(0, slashPath.length() - 1);
+        }
+        
+        File rootDestDir = mCompiler.getRootDestDir();
+        if (rootDestDir != null) {
+            if (slashPath.lastIndexOf('/') >= 0) {
+                mDestDir = new File
+                    (rootDestDir,
+                     slashPath.substring(0,slashPath.lastIndexOf('/')));
+            }
+            else {
+                mDestDir = rootDestDir;
+            }
+            
+            mDestDir.mkdirs();          
+            mDestFile = new File(
+                mDestDir,
+                slashPath.substring(slashPath.lastIndexOf('/') + 1) + 
+                    ".class"
+            );
+        }
+    }
+    
     public String getName() {
         return mName;
     }
@@ -56,11 +100,20 @@ public abstract class CompilationUnit implements ErrorListener {
 
         return name;
     }
-
-    public Compiler getCompiler() {
-        return mCompiler;
+    
+    public String getSourcePath() {
+        return mSource == null ? null : mSource.getSourcePath();
     }
 
+    /**
+     * Get the associated compiler for this unit.
+     * 
+     * @return The associated compiler for this compilation unit
+     */
+    protected Compiler getCompiler() {
+        return mCompiler;
+    }
+    
     /**
      * The retrieves the runtime context.  The default behavior is to delegate
      * this call to the compiler.  This is overriden to implement compiled
@@ -110,21 +163,169 @@ public abstract class CompilationUnit implements ErrorListener {
      * into. Default implementation returns null, or no package.
      */
     public String getTargetPackage() {
-        return null;
+        return mCompiler.getRootPackage();
     }
 
-    public abstract String getSourceFileName();
+    public Reader getReader() throws IOException {
+        Reader reader = null;
+        InputStream in = getTemplateSource();
+        String encoding = mCompiler.getEncoding();
+        if (encoding == null) {
+            reader = new InputStreamReader(in);
+        }
+        else {
+            reader = new InputStreamReader(in, encoding);
+        }
+        
+        return reader;
+    }
+    
+    public void syncTimes() {
+        if (mDestFile != null) {
+            mDestFile.setLastModified(getLastModified());
+        }
+    }
+    
+    public boolean shouldCompile() {
+        return shouldCompile(getDestinationLastModified());
+    }
 
-    /**
-     * @return A new source file reader.
-     */
-    public abstract Reader getReader() throws IOException;
+    protected boolean shouldCompile(long timestamp) {
+        if (mDestFile != null && !mDestFile.exists()) {
+            return true;
+        }
 
-    /**
-     * @return true if the CompilationUnit should be compiled. Default is true.
-     */
-    public boolean shouldCompile() throws IOException {
+        long precompiledTolerance = mCompiler.getPrecompiledTolerance();
+        long lastModified = getLastModified();
+        if (timestamp > 0 && lastModified > 0 &&
+            gteq(timestamp, lastModified, precompiledTolerance)) {
+
+            return false;
+        }
+
         return true;
+    }
+
+    public long getLastModified() {
+        return mSource == null ? -1 : mSource.getLastModified();
+    }
+    
+    protected long getDestinationLastModified() {
+        if (mDestFile != null && mDestFile.exists()) {
+            return mDestFile.lastModified();
+        }
+        
+        return 0L;
+    }
+    
+    /**
+     * Returns the truth that a is greater than or equal to b assuming the given tolerance.
+     * <p>
+     * ex. tolerance = 10, a = 1000 and b = 2000, returns false<br/>
+     * ex. tolerance = 10, a = 1989 and b = 2000, returns false<br/>
+     * ex. tolerance = 10, a = 1990 and b = 2000, returns true<br/>
+     * ex. tolerance = 10, a = 2000 and b = 2000, returns true<br/>
+     * ex. tolerance = 10, a = 3000 and b = 2000, returns true<br/>
+     * </p>
+     *
+     * @param a
+     * @param b
+     * @param tolerance
+     * @return
+     */
+    private boolean gteq(long a, long b, long tolerance) {
+        return a >= b - tolerance;
+    }
+
+    /**
+     * @return the file that gets written by the compiler.
+     */
+    public File getDestinationFile() {
+        return mDestFile;
+    }
+
+    public OutputStream getOutputStream() throws IOException {
+        OutputStream out1 = null;
+        OutputStream out2 = null;
+
+        if (mDestDir != null) {
+            if (!mDestDir.exists()) {
+                mDestDir.mkdirs();
+            }
+
+            out1 = new FileOutputStream(mDestFile);
+        }
+
+        ClassInjector injector = mCompiler.getInjector();
+        if (injector != null) {
+            String className = getName();
+            String pack = getTargetPackage();
+            if (pack != null && pack.length() > 0) {
+                className = pack + '.' + className;
+            }
+            out2 = injector.getStream(className);
+        }
+
+        OutputStream out;
+
+        if (out1 != null) {
+            if (out2 != null) {
+                out = new DualOutput(out1, out2);
+            }
+            else {
+                out = out1;
+            }
+        }
+        else if (out2 != null) {
+            out = out2;
+        }
+        else {
+            out = new OutputStream() {
+                public void write(int b) {}
+                public void write(byte[] b, int off, int len) {}
+            };
+        }
+
+        return new BufferedOutputStream(out);
+    }
+    
+    public void resetOutputStream() {
+        if (mDestFile != null) {
+            mDestFile.delete();
+        }
+
+        ClassInjector injector = mCompiler.getInjector();
+        if (injector != null) {
+            injector.resetStream(getClassName());
+        }
+    }
+    
+    protected String getClassName() {
+        return getClassName(null);
+    }
+
+    protected String getClassName(String innerClass) {
+        String className = getName();
+        String pack = getTargetPackage();
+        if (pack != null && pack.length() > 0) {
+            className = pack + '.' + className;
+        }
+
+        if (innerClass != null) {
+            className = className + '$' + innerClass;
+        }
+
+        return className;
+    }
+
+    protected InputStream getTemplateSource() 
+        throws IOException {
+        
+        if (mSource == null) {
+            throw new IOException("no source defined for " + mName);
+        }
+        
+        return mSource.getSource();
     }
 
     public boolean signatureEquals(String templateName, TypeDesc[] params, TypeDesc returnType) throws IOException {
@@ -202,17 +403,4 @@ public abstract class CompilationUnit implements ErrorListener {
         }
         return type;
     }
-
-    /**
-     * @return An OutputStream to write compiled code to. Returning null is
-     * disables code generation for this CompilationUnit.
-     */
-    public abstract OutputStream getOutputStream() throws IOException;
-
-    /**
-     * Reset the output stream cleaning up or removing any files created as
-     * part of the output stream.  This is generally used when an exception
-     * occurs during code generation to the output stream.
-     */
-    public abstract void resetOutputStream();
 }

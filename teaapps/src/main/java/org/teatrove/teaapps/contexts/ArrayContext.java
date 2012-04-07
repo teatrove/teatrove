@@ -18,39 +18,60 @@ package org.teatrove.teaapps.contexts;
 import java.lang.reflect.Array;
 
 /**
- * @author Nick Hagan
+ * The array context is a Tea context that provides templates access to array
+ * data and the creation of arrays dynamically.
+ * 
+ * @author Nicholas Hagen
  */
 public class ArrayContext {
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#isArray(java.lang.Object)
+    /**
+     * Determine whether the provided object is an array or not. This returns
+     * <code>true</code> if the object is non-<code>null</code> and the class
+     * is an array (see {@link Class#isArray()}). Otherwise, it returns
+     * <code>false</code>.
+     * 
+     * @param object The object to check as an array
+     * 
+     * @return The boolean state of whether the object is an array
      */
-    public boolean isArray(Object array) {
-        return (array != null && array.getClass().isArray());
+    public boolean isArray(Object object) {
+        return (object != null && object.getClass().isArray());
     }
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#getComponentType(java.lang.Object)
+    /**
+     * Get the component type of the given array. If the given array is not
+     * actually an array, then <code>null</code> is returned. Otherwise, the
+     * associated component type is returned.
+     * 
+     * @param array The array to get the component type from
+     * 
+     * @return The component type of the array or <code>null</code>
+     * 
+     * @see #isArray(Object)
+     * @see Class#getComponentType()
      */
     public Class<?> getComponentType(Object array) {
-        if (array == null || !array.getClass().isArray()) {
-            return null;
-        }
-
+        if (!isArray(array)) { return null; }
         return array.getClass().getComponentType();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#getRootComponentType(java.lang.Object)
+    /**
+     * Get the root component type of the given array. The root component type
+     * is the actual underlying type of the array. This is especially useful
+     * in multi-dimensional arrays since {@link #getComponentType(Object)} would
+     * return <code>Type[]</code> rather than <code>Type</code>.
+     * 
+     * @param array The array to get the root component type from
+     * 
+     * @return The root component type or <code>null</code>
+     * 
+     * @see #getComponentType(Object)
      */
     public Class<?> getRootComponentType(Object array) {
-        if (array == null || !array.getClass().isArray()) {
-            return null;
-        }
+        if (!isArray(array)) { return null; }
 
+        // search for root type
         Class<?> type = array.getClass();
         while (type.isArray()) {
             type = type.getComponentType();
@@ -59,14 +80,19 @@ public class ArrayContext {
         return type;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#getDimensions(java.lang.Object)
+    /**
+     * Get the number of dimensions of the given array. If the array is not
+     * actually an array, then <code>0</code> is returned. Otherwise, if the
+     * array is single-dimension, then <code>1</code> is returned. If the array
+     * is multi-dimensional, the total number of dimensions is returned. For
+     * example, <code>Type[][][]</code> would return <code>3</code>.
+     * 
+     * @param array The array to get the number of dimensions from
+     * 
+     * @return The number of dimensions in the given array
      */
     public int getDimensions(Object array) {
-        if (array == null || !array.getClass().isArray()) {
-            return 0;
-        }
+        if (!isArray(array)) { return 0; }
 
         int dimensions = 0;
         Class<?> type = array.getClass();
@@ -78,50 +104,102 @@ public class ArrayContext {
         return dimensions;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#getArrayLength(java.lang.Object)
+    /**
+     * Get the length of the given array. This is a helper method for 
+     * {@link Array#getLength(Object)}. If the array is not actually an array,
+     * then {@link IllegalArgumentException} is thrown.
+     * 
+     * @param array The array to get the length from
+     * 
+     * @return The length of the array
      */
     public int getArrayLength(Object array) {
+        if (!isArray(array)) { return -1; }
         return Array.getLength(array);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#getArrayElement(java.lang.Object, int)
+    /**
+     * Get the element at the given index from the given array. This is a helper
+     * method for {@link Array#get(Object, int)}. If the given array is not an
+     * array, then {@link IllegalArgumentException} is thrown. If the given
+     * index is out of bounds, then {@link ArrayIndexOutOfBoundsException} is
+     * thrown. Note that the returned value may be wrapped if the component type
+     * is a primitive.
+     *  
+     * @param array The array to get the element from
+     * @param index The index of the array to retrieve
+     * 
+     * @return The associated element at the given index
      */
     public Object getArrayElement(Object array, int index) {
         return Array.get(array, index);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#setArrayElement(java.lang.Object, int, java.lang.Object)
+    /**
+     * Set the element at the given index in the given array. This is a helper
+     * method for {@link Array#set(Object, int, Object)}. If the given array is
+     * not an array, then {@link IllegalArgumentException} is thrown. If the
+     * given index is out of bounds, then {@link ArrayIndexOutOfBoundsException}
+     * is thrown. Note that if the component type of the array is a primitive,
+     * then the value will be unwrapped. This may result in a
+     * {@link NullPointerException} being thrown.
+     * 
+     * @param array The array to set the element to
+     * @param index The index of the array to set
+     * @param value The value of the array to set
      */
     public void setArrayElement(Object array, int index, Object value) {
         Array.set(array, index, value);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#createArray(java.lang.Class, int)
+    /**
+     * Create an array of the specified component type and size. This is the
+     * helper method for {@link Array#newInstance(Class, int)}.
+     * 
+     * @param type The component type of the array
+     * @param length The size of the array to create
+     * 
+     * @return The resulting array
      */
     public Object createArray(Class<?> type, int length) {
         return Array.newInstance(type, length);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see disney.entrepot.context.impl.ArrayContext#createArray(java.lang.Class, int[])
+    /**
+     * Create an array of the specified component type and dimension lengths. 
+     * This is the helper method for {@link Array#newInstance(Class, int[])}.
+     * 
+     * @param type The component type of the array
+     * @param dimensions The size of each dimension in the array to create
+     * 
+     * @return The resulting array
      */
     public Object createArray(Class<?> type, int... dimensions) {
         return Array.newInstance(type, dimensions);
     }
     
+    /**
+     * Create an array of <code>double</code> values of the given length.
+     * 
+     * @param length The size of the array to create
+     * 
+     * @return The created double array
+     */
     public double[] createDoubleArray(int length) {
         return new double[length];
     }
     
+    /**
+     * Create an array of <code>double</code> values from the given array of
+     * {@link Double} values. Each value in the given array will be unwrapped to
+     * its primitive form. If any values within the given array are
+     * <code>null</code>, then they will be ignored and the resulting array will
+     * be smaller than the given array.
+     * 
+     * @param doubles The array of doubles to convert
+     * 
+     * @return The array of primitive doubles
+     */
     public double[] createDoubleArray(Double[] doubles) {
         double[] result;
         if (doubles != null) {
@@ -146,14 +224,40 @@ public class ArrayContext {
         return result;
     }
 
+    /**
+     * Set the primitive <code>double</code> value in the given array at the
+     * given index.
+     * 
+     * @param doubleArray The array of doubles to set in
+     * @param value The value to set
+     * @param index The index to set at
+     */
     public void setDoubleInArray(double[] doubleArray, double value, int index) {
         doubleArray[index] = value;
     }
 
+    /**
+     * Create an array of <code>int</code> values of the given length.
+     * 
+     * @param length The size of the array to create
+     * 
+     * @return The created int array
+     */
     public int[] createIntArray(int length) {
         return new int[length];
     }
 
+    /**
+     * Create an array of <code>int</code> values from the given array of
+     * {@link Integer} values. Each value in the given array will be unwrapped 
+     * to its primitive form. If any values within the given array are
+     * <code>null</code>, then they will be ignored and the resulting array will
+     * be smaller than the given array.
+     * 
+     * @param integers The array of integers to convert
+     * 
+     * @return The array of primitive ints
+     */
     public int[] createIntArray(Integer[] integers) {
         int[] result;
         if (integers != null) {
@@ -178,6 +282,14 @@ public class ArrayContext {
         return result;
     }
 
+    /**
+     * Set the primitive <code>int</code> value in the given array at the
+     * given index.
+     * 
+     * @param intArray The array of ints to set in
+     * @param value The value to set
+     * @param index The index to set at
+     */
     public void setIntInArray(int[] intArray, int value, int index) {
         intArray[index] = value;
     }

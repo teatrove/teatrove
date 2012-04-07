@@ -4,6 +4,7 @@ import java.io.InputStream;
 
 import javax.servlet.ServletContext;
 
+import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.PropertyMap;
 
 public class ServletContextAssetFactory extends AbstractAssetFactory {
@@ -25,7 +26,14 @@ public class ServletContextAssetFactory extends AbstractAssetFactory {
     }
     
     @Override
-    public void init(PropertyMap properties) throws Exception {
+    public String toString() {
+        return "web:".concat(this.basePath);
+    }
+    
+    @Override
+    public void init(Log log, PropertyMap properties) throws Exception {
+        super.init(log, properties);
+        
         // lookup base path, if provided
         String base = properties.getString("basePath");
         if (base != null) {

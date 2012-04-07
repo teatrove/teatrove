@@ -1,4 +1,4 @@
-README for TeaServlet/3.9.x
+README for TeaServlet/4.1.x
 
 Copyright (C) 1999-2011 TeaTrove.org
 
@@ -12,6 +12,17 @@ properties file with configuration information and initialization parameters.
 * NOTE - As of Tea 3.5.0  and TeaServlet 1.8.0, the minimum requried JVM version is 1.6.
 
 Change History
+
+4.1.2 to 4.1.3
+===============================
+- Fix #41 updating compilation system including remote and servlet context compilation providers
+- Fix #56 to add better logging support to asset management feature
+
+4.1.0 to 4.1.2
+===============================
+- Fix #38 adding Asset Management feature
+- Fix #26 addressing issue with servlet context compiler and sub-directories
+- Fix #14 adding ability to auto load/inject config files per module
 
 
 4.0.0 to 4.1.0

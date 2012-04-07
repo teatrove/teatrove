@@ -17,4 +17,9 @@ public class Asset {
     public String getPath() { return this.path; }
     public String getMimeType() { return this.mimeType; }
     public InputStream getInputStream() { return this.input; }
+    
+    @Override
+    public String toString() {
+        return this.path + " [" + this.mimeType + "]";
+    }
 }

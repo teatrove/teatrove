@@ -23,16 +23,18 @@ import java.util.*;
  *
  * @author Brian S O'Neill
  */
-public class MapBackedSet extends AbstractSet implements java.io.Serializable {
+public class MapBackedSet<T> extends AbstractSet<T> implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+
     // Dummy value to associate with an Object in the backing Map
     private static final Object PRESENT = new Object();
 
-    protected final Map mMap;
+    protected final Map<T, Object> mMap;
 
     /**
      * @param map The map to back this set.
      */
-    public MapBackedSet(Map map) {
+    public MapBackedSet(Map<T, Object> map) {
         mMap = map;
     }
 
@@ -43,7 +45,8 @@ public class MapBackedSet extends AbstractSet implements java.io.Serializable {
      * @return an Iterator over the elements in this set.
      * @see ConcurrentModificationException
      */
-    public Iterator iterator() {
+    @Override
+    public Iterator<T> iterator() {
         return mMap.keySet().iterator();
     }
 
@@ -52,6 +55,7 @@ public class MapBackedSet extends AbstractSet implements java.io.Serializable {
      *
      * @return the number of elements in this set (its cardinality).
      */
+    @Override
     public int size() {
         return mMap.size();
     }
@@ -61,6 +65,7 @@ public class MapBackedSet extends AbstractSet implements java.io.Serializable {
      *
      * @return true if this set contains no elements.
      */
+    @Override
     public boolean isEmpty() {
         return mMap.isEmpty();
     }
@@ -70,6 +75,7 @@ public class MapBackedSet extends AbstractSet implements java.io.Serializable {
      *
      * @return true if this set contains the specified element.
      */
+    @Override
     public boolean contains(Object obj) {
         return mMap.containsKey(obj);
     }
@@ -81,7 +87,8 @@ public class MapBackedSet extends AbstractSet implements java.io.Serializable {
      * @param obj element to be added to this set.
      * @return true if the set did not already contain the specified element.
      */
-    public boolean add(Object obj) {
+    @Override
+    public boolean add(T obj) {
         return mMap.put(obj, PRESENT) == null;
     }
 
@@ -91,6 +98,7 @@ public class MapBackedSet extends AbstractSet implements java.io.Serializable {
      * @param obj object to be removed from this set, if present.
      * @return true if the set contained the specified element.
      */
+    @Override
     public boolean remove(Object obj) {
         return mMap.remove(obj) == PRESENT;
     }
@@ -98,6 +106,7 @@ public class MapBackedSet extends AbstractSet implements java.io.Serializable {
     /**
      * Removes all of the elements from this set.
      */
+    @Override
     public void clear() {
         mMap.clear();
     }
