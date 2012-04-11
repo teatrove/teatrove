@@ -15,11 +15,10 @@
  */
 package org.teatrove.teaapps.contexts;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-
-import java.io.UnsupportedEncodingException;
 
 /**
  * Custom Tea context that provides helper methods when dealing with strings.

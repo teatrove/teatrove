@@ -150,6 +150,13 @@
                 <contextClass>org.teatrove.teaapps.contexts.TemplateExceptionContext</contextClass>
             </init>
         </TemplateExceptionApplication>
+        
+        <HTMLApplication>
+            <class>org.teatrove.teaapps.apps.DefaultApplication</class>
+            <init>
+                <contextClass>org.teatrove.teaapps.contexts.HTMLContext</contextClass>
+            </init>
+        </HTMLApplication>
                 
     </applications>
 

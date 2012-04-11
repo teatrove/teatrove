@@ -69,19 +69,6 @@ public class BeanAnalyzer {
     createPropertiesCache() {
         return Collections.synchronizedMap(new IdentityMap(32768));
     }
-    
-    /**
-     * Test program.
-     */
-    public static void main(String[] args) throws Exception {
-        Map<String, PropertyDescriptor> map = getAllProperties(new GenericType(Class.forName(args[0])));
-        Iterator<String> keys = map.keySet().iterator();
-        while (keys.hasNext()) {
-            String key = (String)keys.next();
-            PropertyDescriptor desc = (PropertyDescriptor)map.get(key);
-            System.out.println(key + " = " + desc);
-        }
-    }
 
     /**
      * A function that returns a Map of all the available properties on
@@ -157,7 +144,59 @@ public class BeanAnalyzer {
             for (int i=0; i<length; i++) {
                 PropertyDescriptor desc = pdArray[i];
                 // This check will discard standard pure indexed properties.
-                if (desc.getPropertyType() != null) {
+                Class<?> propertyType = desc.getPropertyType();
+                if (propertyType != null) {
+                    boolean modified = false;
+                    
+                    // check if read method is bridge and lookup real method
+                    Method readMethod = desc.getReadMethod();
+                    if (readMethod != null && readMethod.isBridge()) {
+                        try {
+                            readMethod = clazz.getMethod(
+                                readMethod.getName()
+                            );
+                            
+                            modified = true;
+                            propertyType = readMethod.getReturnType();
+                        }
+                        catch (NoSuchMethodException nsme) {
+                            // ignore and use existing method
+                        }
+                        catch (Exception e) {
+                            throw new IntrospectionException(e.toString());
+                        }
+                    }
+                    
+                    // check if write method is bridge and lookup real method
+                    Method writeMethod = desc.getWriteMethod();
+                    if (writeMethod != null && writeMethod.isBridge()) {
+                        try {
+                            writeMethod = clazz.getMethod(
+                                writeMethod.getName(), propertyType
+                            );
+                            
+                            modified = true;
+                        }
+                        catch (NoSuchMethodException nsme) {
+                            // ignore and use existing method
+                        }
+                        catch (Exception e) {
+                            throw new IntrospectionException(e.toString());
+                        }
+                    }
+                    
+                    // overwrite the methods if they were modified...note that
+                    // we must set writeMethod to null first since invoking the
+                    // setter will attempt to vaildate the types are the same
+                    // which may not be the case if the read method was setup
+                    // incorrectly with its bridge type
+                    if (modified) {
+                        desc.setWriteMethod(null);
+                        desc.setReadMethod(readMethod);
+                        desc.setWriteMethod(writeMethod);
+                    }
+                    
+                    // save the property
                     properties.put(desc.getName(), desc);
                 }
             }
@@ -326,14 +365,14 @@ public class BeanAnalyzer {
 
             properties.put(KEYED_PROPERTY_NAME, keyed);
             int size = keyedMethods.size();
-            keyed.setKeyedReadMethods
-                ((Method[])keyedMethods.toArray(new Method[size]));
+            keyed.setKeyedReadMethods(
+                keyedMethods.toArray(new Method[size]));
         }
 
         // Filter out properties with names that contain '$' characters.
         Iterator<String> it = properties.keySet().iterator();
         while (it.hasNext()) {
-            String propertyName = (String)it.next();
+            String propertyName = it.next();
             if (propertyName.indexOf('$') >= 0) {
                 it.remove();
             }
