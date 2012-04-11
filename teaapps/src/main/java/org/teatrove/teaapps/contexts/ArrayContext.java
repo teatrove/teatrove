@@ -24,7 +24,24 @@ import java.lang.reflect.Array;
  * @author Nicholas Hagen
  */
 public class ArrayContext {
-
+    
+    /**
+     * Clone the given array into a new instance of the same type and 
+     * dimensions. The values are directly copied by memory, so this is not
+     * a deep clone operation.  However, manipulation of the contents of the
+     * array will not impact the given array.
+     * 
+     * @param array The array to clone
+     * 
+     * @return The new cloned array
+     */
+    public Object[] cloneArray(Object[] array) {
+        Class<?> clazz = array.getClass().getComponentType();
+        Object newArray =  Array.newInstance(clazz, array.length);
+        System.arraycopy(array, 0, newArray, 0, array.length);
+        return (Object[]) newArray;
+    }
+    
     /**
      * Determine whether the provided object is an array or not. This returns
      * <code>true</code> if the object is non-<code>null</code> and the class

@@ -1550,7 +1550,7 @@ public class TypeChecker {
                     }
 
                     // otherwise, fail with unknown variable
-                    error("variable.not.declared", expr);
+                    error("variable.not.declared", name, expr);
                     return null;
                 }
             }
@@ -1619,7 +1619,7 @@ public class TypeChecker {
                     }
 
                     // otherwise, fail with unknown variable
-                    error("variable.not.declared", expr);
+                    error("variable.not.declared", name, expr);
                     return null;
                 }
             }
