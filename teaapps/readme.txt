@@ -9,6 +9,9 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #77 to add HTMLContext for HTML-based pagination methods 
+- Fix #76 for SortContext to add backwards compatibility methods
+- Cleanup SortContext for consistency and performance
 - Fix #68 to cleanup contexts and applications and add javadocs
 - CookieContext: Add ability to create cookies and update
 - CryptoContext: Add general digest method with any algorithm
