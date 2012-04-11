@@ -29,6 +29,7 @@ public class VarargsTest extends AbstractTemplateTest {
         assertEquals("11", executeTest(TEST_SOURCE_11));
         assertEquals("44", executeTest(TEST_SOURCE_12));
         assertEquals("11", executeTest(TEST_SOURCE_13));
+        assertEquals("java.lang.Integer", executeTest(TEST_SOURCE_14));
     }
 
     protected String executeTest(String source) throws Exception {
@@ -37,6 +38,11 @@ public class VarargsTest extends AbstractTemplateTest {
     }
 
     public static class VarargsContext {
+        
+        public Number getRandom() {
+            return Integer.valueOf(1);
+        }
+        
         public String doSomething(String test, Object... blah) {
             return "1";
         }
@@ -124,4 +130,7 @@ public class VarargsTest extends AbstractTemplateTest {
     protected static final String TEST_SOURCE_13 =
         "doSomething('test', 5.2, 2.3, 2.9, 'test');" +
         "getContext()?.doSomething('test', 5.2, 2.3, 2.9, 'test');"; // 1
+    
+    protected static final String TEST_SOURCE_14 =
+        "a = getRandom(); b = getRandom(); c = a + b; c.class.name";
 }
