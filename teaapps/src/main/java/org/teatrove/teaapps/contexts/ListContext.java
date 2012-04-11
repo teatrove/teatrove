@@ -286,6 +286,38 @@ public class ListContext {
     }
 
     /**
+     * Create a new {@link ArrayList} instance containing all elements of the
+     * given list.  This is not a deep clone operation, so the underlying
+     * elements are copied by memory and not cloned.
+     * 
+     * @param list The list to copy
+     * 
+     * @return The newly created list
+     */
+    public <T> List<T> cloneList(List<T> list) {
+        return new ArrayList<T>(list);
+    }
+    
+    /**
+     * Create a new {@link ArrayList} instance adding all values of the given
+     * lists together.  The second list will essentially be added after the
+     * first list. Note that any duplicates between lists will remain as
+     * duplicates.
+     * 
+     * @param list1 The first list to merge
+     * @param list2 The second list to merge
+     * 
+     * @return The newly created list containing the merged lists
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public List<?> mergeLists(List<?> list1, List<?> list2) {
+        List list = new ArrayList(list1.size() + list2.size());
+        list.addAll(list1);
+        list.addAll(list2);
+        return list;
+    }
+    
+    /**
      * If the elements of the list are arrays, get the max length of each needed
      * dimension, otherwise return an int[] containing one element, the length
      * of the list.
