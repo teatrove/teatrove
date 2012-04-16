@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.teatrove</groupId>
         <artifactId>examples</artifactId>
-        <version>4.1.3-espn-2-SNAPSHOT</version>
+        <version>4.1.3-espn-2</version>
     </parent>
 
     <name>Directory Browser TeaTrove Example</name>
