@@ -379,6 +379,20 @@ public class TemplateStats {
 	}
 	
 	/**
+	 * Returns the latest service time for this template.
+	 * 
+	 * @return the last time this template was invoked and completed
+	 */
+	public long getLatestServiceTime() {
+	    RawData[] rawData = getRawData();
+	    if (rawData != null && rawData.length > 0) {
+	        return rawData[rawData.length - 1].getEndTime();
+	    }
+	    
+	    return -1;
+	}
+	
+	/**
 	 * Returns an AggregateInterval for the current raw data.
 	 * 
 	 * The aggregate interval that is created is not stored and

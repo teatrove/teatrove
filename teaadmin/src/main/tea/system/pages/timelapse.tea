@@ -1,0 +1,641 @@
+<% template timelapse (Map config)
+
+    /*
+    TODO:
+    - style css into separate code
+    - javascript into separate code
+
+    BUGS
+    - ui-state-active lost after hover and remove (use radio buttons?)
+    - reset and compile do not redirect back
+
+    FUTURE
+    - vertical scrolling fix by hand
+    - compile events/milestones    
+    - ability to disable/enable auto update
+    - scroll history on demand as scroll
+    */
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+ 
+    call system.util.handleRequest(request);
+
+    stats = getTemplateStats()
+    
+    sort = request.parameters['sort'] ?: 'name'
+    direction = request.parameters['direction'] ?: 'asc'
+    if (sort == 'name') {
+        sort(stats, 'templateName', direction != 'asc')
+    }
+    else if (sort == 'path') {
+        sort(stats, 'fullTemplateName', direction != 'asc')
+    }
+    else if (sort == 'duration') {
+        sort(stats, 'aggregateIntervalForRawData.durationStats.arithmeticMean', direction != 'asc')
+    }
+    else if (sort == 'recent') {
+        sort(stats, 'latestServiceTime', direction != 'asc')
+    }
+    
+    currentTime = currentDateTime().millis
+
+    pxps = convertStringToInteger(request.parameters['pxps'] ?: '-1')
+    zoom = convertStringToInteger(request.parameters['zoom'] ?: '1')
+    if (pxps <= 0) {
+        pxps = zoom == 0 ? 25 : (zoom * 100)
+    }
+
+    timeframe = convertStringToInteger(request.parameters['timeframe'] ?: '1')
+    timeframeSEC = timeframe * 60
+    timeframeMSEC = timeframeSEC * 1000
+    
+    endTime = currentTime - timeframeMSEC
+
+    MEDIUM_THRESHOLD = 500
+    HIGH_THRESHOLD = 1000
+
+    PX_PER_SEC = pxps ? convertStringToInteger(pxps) : 100
+    PX_PER_MSEC = PX_PER_SEC / 1000.0
+%>
+
+    <style type="text/css">
+        #buttonset-timeframe, #buttonset-zoom { margin-right: 30px; }
+    
+        #timelapse-container { padding-top: 10px; }
+
+        .grid-lhn { float: left; width: 200px; overflow: hidden; white-space: nowrap; margin-right: 1px; }
+        .grid-lhn .header { color: white; height: 48px; border-bottom: 1px solid white; }
+        .grid-lhn .header .template { padding-left: 5px; font-size: 12px; font-weight: bold; }
+        .grid-lhn .placeholder { background-color: silver; height: 23px; border-bottom: 1px solid white; }
+        .grid-lhn .row { background-color: #c0c0c0; padding-left: 5px; font-size: 12px; font-weight: bold; border-bottom: 1px solid white; text-transform: none !important; }
+        .grid-lhn .row .template { padding: 5px 0; }
+        .grid-lhn .row .template .template-options { display: none; margin: -1px 4px 0 2px; }
+        .grid-lhn .row .template:hover .template-options { display: block; }
+        .grid-lhn .row .template a { display: block; color: white; text-decoration: none; }
+        .grid-lhn .row .template .path { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; }
+        .grid-lhn .row .template .name { display: block; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; }
+
+        .grid { width: 0px; overflow-x: hidden; overflow-y: hidden; position: relative; }
+        .grid .header { color: white; height: 24px; position: relative; text-transform: none !important; }
+        .grid .header .metric { text-align: left; }
+        .grid .metric { position: absolute; height: 24px; line-height: 24px; font-size: 12px; font-weight: bold; text-align: center; }
+        .grid .row { position: relative; border-bottom: 1px solid white; text-transform: none !important; }
+        .grid div.row:nth-child(even) { background-color: #efefef; }
+        .grid div.row:nth-child(odd) { background-color: white; }
+        .grid div.row:hover { background-color: #f5f5f5; }
+        .grid .process { height: 18px; border-radius: 5px; position: absolute; }
+        .grid .process:hover {  }
+        .grid .process .value { display: block; font-size: 11px; text-align: center; color: white; font-weight: bold; white-space: nowrap; overflow: hidden; }
+        .grid .process.low { 
+            border: 1px solid darkGreen; 
+            background-color: lightGreen;
+            background-image: -moz-linear-gradient(top, lightGreen, darkGreen);
+            background-image: -ms-linear-gradient(top, lightGreen, darkGreen);
+            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(lightGreen), to(darkGreen));
+            background-image: -webkit-linear-gradient(top, lightGreen, darkGreen);
+            background-image: -o-linear-gradient(top, lightGreen, darkGreen);
+            background-image: linear-gradient(top, lightGreen, darkGreen);
+            background-repeat: repeat-x;
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='lightGreen', endColorstr='darkGreen', GradientType=0);
+         }
+        .grid .process.medium { 
+            border: 1px solid #FFC40D; 
+            background-color: yellow;
+            background-image: -moz-linear-gradient(top, yellow, #FFC40D);
+            background-image: -ms-linear-gradient(top, yellow, #FFC40D);
+            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(yellow), to(#FFC40D));
+            background-image: -webkit-linear-gradient(top, yellow, #FFC40D);
+            background-image: -o-linear-gradient(top, yellow, #FFC40D);
+            background-image: linear-gradient(top, yellow, #FFC40D);
+            background-repeat: repeat-x;
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='yellow', endColorstr='#FFC40D', GradientType=0); 
+         }
+        .grid .process.high { 
+            border: 1px solid #9d261d; 
+            background-color: red;
+            background-image: -moz-linear-gradient(top, red, #9d261d);
+            background-image: -ms-linear-gradient(top, red, #9d261d);
+            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(red), to(#9d261d));
+            background-image: -webkit-linear-gradient(top, red, #9d261d);
+            background-image: -o-linear-gradient(top, red, #9d261d);
+            background-image: linear-gradient(top, red, #9d261d);
+            background-repeat: repeat-x;
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='red', endColorstr='#9d261d', GradientType=0); 
+        }
+        
+        .grid div.scrollbar { height: 24px; border-bottom: 1px solid white; background-color:#efefef; position: relative; }
+        .grid div.scrollbar div.scroller { 
+            position: absolute; 
+            top: 2px; 
+            left: 0;
+            
+            width: 0;
+            height: 16px; 
+            line-height:16px;
+            
+            padding: 1px;
+            
+            font-size: 11px; 
+            text-align: center;
+             
+            border: 1px solid #9d261d; 
+            border:1px solid silver;
+
+            background-color: #ccc; 
+            background-image: -moz-linear-gradient(top, white, #ccc);
+            background-image: -ms-linear-gradient(top, white, #ccc);
+            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(white), to(#ccc));
+            background-image: -webkit-linear-gradient(top, white, #ccc);
+            background-image: -o-linear-gradient(top, white, #ccc);
+            background-image: linear-gradient(top, white, #ccc);
+            background-repeat: repeat-x;
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='white', endColorstr='#cccccc', GradientType=0);
+  
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            border-radius: 5px;             
+        }
+        .grid div.scrollbar div.scroller:hover { 
+            background-color: #999;
+            background-image: -moz-linear-gradient(top, white, #999);
+            background-image: -ms-linear-gradient(top, white, #999);
+            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(white), to(#999));
+            background-image: -webkit-linear-gradient(top, white, #999);
+            background-image: -o-linear-gradient(top, white, #999);
+            background-image: linear-gradient(top, white, #999);
+            background-repeat: repeat-x;
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='white', endColorstr='#999999', GradientType=0);
+        }
+
+        .timer { display: none; z-index: 501; text-align: center; font-weight: bold; line-height: 22px; height: 22px; position: absolute; top: 1px; width: 50px; -webkit-border-radius: 5px; -moz-border-radius: 5px; border-radius: 5px; font-size: 10px; background-color: #e0e0e0; color: black; }
+        
+        #grid-tracker { display: none; z-index: 500; position: absolute; top: -1; left: -1; width: 1px; height: 0; border-right: 1px solid red; }
+    </style>
+
+    <article>
+        <section>
+            <div class="controls">
+                <div class="controls-wrapper">
+                    <div id="loadingIndicator"></div>
+                    
+                    <div role="label">Show Last</div>
+                    <div id="buttonset-timeframe" class="buttonset">
+                        <% foreach (idx in #(1, 5, 15, 30)) { %>
+                            <a href="?page=system.pages.timelapse&timeframe=<% idx %>&zoom=<% zoom %>" class="button <% timeframe == idx ? 'ui-state-active' : '' %>"><% idx %> min<% idx > 1 ? 's' : '' %></a>
+                        <% } %>
+                    </div>
+                    
+                    <div role="label">Zoom</div>
+                    <div id="buttonset-zoom" class="buttonset">
+                        <% if (zoom <= 0) { %>
+                            <a href="#" class="button disabled">Zoom Out</a>
+                        <% } else { %>
+                            <a href="?page=system.pages.timelapse&timeframe=<% timeframe %>&zoom=<% zoom - 1 %>" class="button">Zoom Out</a>
+                        <% } %>
+                        
+                        <% if (zoom >= 10) { %>
+                            <a href="#" class="button disabled">Zoom In</a>
+                        <% } else { %>
+                            <a href="?page=system.pages.timelapse&timeframe=<% timeframe %>&zoom=<% zoom + 1 %>" class="button">Zoom In</a>
+                        <% } %>
+                    </div>
+                    
+                    <div role="label">Order By</div>
+                    <div id="buttonset-orderby" class="buttonset">
+                        <a href="?page=system.pages.timelapse&sort=path&direction=<% sort == 'path' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'path' ? 'ui-state-active' : '' %>">Path</a>
+                        <a href="?page=system.pages.timelapse&sort=name&direction=<% sort == 'name' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'name' ? 'ui-state-active' : '' %>">Name</a>
+                        <a href="?page=system.pages.timelapse&sort=recent&direction=<% sort == 'recent' and direction == 'desc' ? 'asc' : 'desc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'recent' ? 'ui-state-active' : '' %>">Recent</a>
+                        <a href="?page=system.pages.timelapse&sort=duration&direction=<% sort == 'duration' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'duration' ? 'ui-state-active' : '' %>">Duration</a>
+                    </div>
+                </div>
+            </div>
+            <br class="clear" />
+
+            <div id="timelapse-container">
+                <div class="grid-lhn">
+                <% 
+                    row = -1; 
+                    foreach (stat in stats) 
+                    {
+                        rawData = stat.rawData
+                        if (rawData == null or 
+                            rawData.length == 0 or 
+                            rawData[rawData.length - 1].endTime < endTime) 
+                        { 
+                            continue; 
+                        }
+                        
+                        row = row + 1;
+                        if (row % 10 == 0) 
+                        {
+                %>
+                            <div class="header stathead">
+                                <div class="template">&nbsp;</div>
+                            </div>
+                <%
+                        }
+
+                        top = 0; maxtop = 1
+                        lend = -1; lstart = -1
+                        foreach (data in stat.rawData reverse) 
+                        {
+                            end = data.endTime
+                            start = data.startTime
+                            if (end < endTime) { continue }
+
+                            if ((start > lstart and start < lend) or 
+                                (end > lstart and end < lend)) 
+                            {
+                                top = top + 1;
+                                maxtop = Math.max(maxtop, top)
+                                
+                                lend = Math.max(end, lend)
+                                lstart = Math.min(start, lstart)
+                            }
+                            else 
+                            {
+                                top = 0;
+                                lend = end
+                                lstart = start
+                            }
+                        }
+                %>
+                        <div class="row stathead" style="height: <% (24 * (maxtop + 1)) %>px;">
+                            <div class="template" title="<% stat.templatePath %>.<% stat.templateName %>, avg <% stat.aggregateIntervalForRawData.durationStats.arithmeticMean %> ms">
+                                <div class="template-options">
+                                    <a class="compile" href="remote/reload?reloadTemplates=selected&selectedTemplates=<% stat.fullTemplateName %>" title="Compile template"></a>
+                                    <a class="web" target="_blank" href="<% replace(stat.fullTemplateName, '.', '/') %>" title="Follow template url"></a>
+                                    <a class="info" href="?page=template_info&name=<% stat.fullTemplateName %>" title="View template stats"></a>
+                                    <a class="reset" href="remote/reset?name=<% stat.fullTemplateName %>" title="Reset template stats"></a>
+                                </div> 
+                                <a href="?page=template_info&name=<% stat.fullTemplateName %>">
+                                    <span class="path"><% stat.templatePath %></span>
+                                    <span class="name"><% stat.templateName %></span>
+                                </a>
+                            </div>
+                        </div>
+                <% 
+                    }
+                %>
+
+                    <div class="placeholder stathead">&nbsp;</div>
+                </div>
+                
+                <div class="grid">
+                <% 
+                    row = -1; header = 0;
+                    foreach (stat in stats) {
+                        rawData = stat.rawData
+                        if (rawData == null or 
+                            rawData.length == 0 or 
+                            rawData[rawData.length - 1].endTime < endTime) 
+                        { 
+                            continue; 
+                        }
+                        
+                        row = row + 1;
+                        if (row % 10 == 0) 
+                        {
+                            header = header + 1
+                %>
+                            <div id="header-<% header %>" class="header stathead" style="width:<% timeframeSEC * PX_PER_SEC %>px;">
+                                <div class="timer">&nbsp;</div>
+                                <% foreach (i in 1..(timeframeSEC - 1)) { %>
+                                    <div class="metric" style="left: <% i * PX_PER_SEC %>px; width: <% PX_PER_SEC %>px;">
+                                        <% i %>s
+                                    </div>
+                                <% } %>
+                            </div>
+                            <div class="scrollbar" style="width: <% timeframeSEC * PX_PER_SEC %>px;">
+                                <div class="scroller">|||</div>
+                            </div>
+                <% 
+                        } 
+
+                        top = 0; maxtop = 1; 
+                        lend = -1; lstart = -1; 
+                        foreach (data in rawData reverse) 
+                        {
+                            start = data.startTime
+                            end = data.endTime
+                            if (end < endTime) { continue }
+
+                            if ((start > lstart and start < lend) or 
+                                (end > lstart and end < lend)) 
+                            {
+                                top = top + 1
+                                maxtop = Math.max(maxtop, top)
+                                
+                                lend = Math.max(end, lend)
+                                lstart = Math.min(start, lstart)
+                            }
+                            else 
+                            {
+                                top = 0
+                                lend = end
+                                lstart = start
+                            }
+                        }
+                %>
+                        <div class="row" style="height: <% (24 * (maxtop + 1)) %>px; width: <% timeframeSEC * PX_PER_SEC %>px;">
+                <% 
+                        top = 0; 
+                        lend = -1; lstart = -1;
+                        foreach (data in rawData reverse) 
+                        {
+                            end = data.endTime
+                            start = data.startTime
+                            duration = data.duration
+                            if (end < endTime) { continue }
+
+                            startDate = createDate(start)
+                            endDate = createDate(end)
+                            
+                            if ((start > lstart and start < lend) or
+                                (end > lstart and end < lend)) 
+                            {
+                                top = top + 1;
+                                lend = Math.max(end, lend)
+                                lstart = Math.min(start, lstart)
+                            }
+                            else {
+                                top = 0;
+                                lend = end
+                                lstart = start
+                            }
+                            
+                            clazz = ''
+                            if (duration > HIGH_THRESHOLD) { clazz = 'high' }
+                            else if (duration > MEDIUM_THRESHOLD) { clazz = 'medium' }
+                            else { clazz = 'low' }
+
+                            numberFormat('#.#')
+                            dateFormat('h:mm:ss')
+                            left = ((currentTime - end) * PX_PER_MSEC);
+                            width = ((end - start) * PX_PER_MSEC);
+                %>
+                            <div title="<% (currentTime - end) / 1000.0 %>s ago, <% end - start %> ms, <% data.contentLength %> bytes<% '\n\n' %>started <% startDate %>, ended <% endDate %>"
+                                 class="metric process <% clazz %>" style="left: <% left %>px; width: <% width %>px; top: <% 2 + (24 * top) %>px;">
+                                <span class="value">&nbsp;</span>
+                            </div>
+                <% 
+                        } 
+                %>
+                    
+                        </div>
+
+                <%
+                    }
+                %>
+                
+                    <div class="scrollbar" style="width: <% timeframeSEC * PX_PER_SEC %>px;">
+                        <div class="scroller">|||</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <br class="clear" />
+            
+            <div id="grid-tracker">
+                
+            </div>
+
+            <script type="text/javascript">
+                (function() {
+                var position = { top: 0, left: 0 },
+                    dragging = null,
+                    $document = $(document),
+                    $body = $('body'),
+                    $grid = $('.grid'),
+                    $gridLHN = $('.grid-lhn'),
+                    $scrollbars = $('.scrollbar'),
+                    $scrollers = $('.scrollbar .scroller'),
+                    $tracker = $('#grid-tracker'),
+                    $timers = $('.timer'),
+                    $container = $('#timelapse-container');
+
+                // setup container
+                var initialize = function() {
+
+                    // initialize grid and scrollbars
+                    $grid.css('width', $container.width() - $gridLHN.width() - 5);
+                    $scrollbars.css('width', $grid.width() + 'px');
+                    $scrollers.css('width', (Math.pow($grid.width(), 2) / $grid[0].scrollWidth) + 'px');
+                    $('.grid').scroll(function() {
+                        $scrollbars.css('left', this.scrollLeft + 'px');
+                        $scrollers.css('left', (this.scrollLeft / this.scrollWidth * 100.0) + '%');
+                    });
+                    
+                    // initialize tracker and times
+                    $tracker.appendTo($('body'))
+                        .css({ 
+                            height : ($grid.height() - 48) + 'px',
+                            top : ($grid.offset().top + 24) + 'px',
+                            left : $grid.offset().left + 'px' 
+                        });
+                 
+                    $timers.appendTo($('body')).each(function(idx) {
+                        var $header = $('#header-' + (idx + 1));
+                        $(this).css({
+                            top : ($header.offset().top + 1) + 'px'
+                        });
+                    });
+                };
+                
+                // setup click to scroll
+                
+                var scrolling = null;
+                var scrollPage = function() {
+                    if (!scrolling) { return false; }
+                    
+                    var scrollbarLeft = scrolling.scrollbar.offset().left,
+                        scrollerLeft = scrolling.scroller.offset().left,
+                        scrollbarWidth = scrolling.scrollbar.width(),
+                        scrollerWidth = scrolling.scroller.width();
+                    
+                    if (position.left > scrollbarLeft && 
+                        position.left < (scrollbarLeft + scrollbarWidth)) {
+
+                        if (position.left < scrollerLeft) {
+                            var scrollSize = $grid[0].scrollWidth / $grid.width();
+                            var scrollX = scrollerWidth * scrollSize;
+                            
+                            if (position.left > (scrollerLeft - scrollerWidth)) {
+                                scrollX = (scrollerLeft - (position.left - (scrollerWidth / 2))) * scrollSize;
+                            }
+                            
+                            var scrollLeft = $grid[0].scrollLeft - scrollX;
+                            $grid[0].scrollLeft = scrollLeft;
+                        }
+                        else if (position.left > (scrollerLeft + scrollerWidth)) {
+                            var scrollSize = $grid[0].scrollWidth / $grid.width();
+                            var scrollX = scrollerWidth * scrollSize;
+                            
+                            if (position.left < (scrollerLeft + (scrollerWidth * 2))) {
+                                scrollX = ((position.left - (scrollerWidth / 2)) - scrollerLeft) * scrollSize;
+                            }
+                            
+                            var scrollLeft = $grid[0].scrollLeft + scrollX;
+                            $grid[0].scrollLeft = scrollLeft;
+                        }                        
+                    } 
+                };
+                
+                // setup scrollbars
+               
+                $scrollbars
+                    .mouseover(function(event) {
+                        $timers.hide();
+                        $tracker.hide();
+                    })
+                    .mousedown(function(event) {
+                        var offset = event.offsetX,
+                            $scrollbar = $(this),
+                            $scroller = $scrollbar.children('.scroller'),
+                            scroll = $scroller.position().left,
+                            width = $scroller.width(),
+                            direction = null;
+                             
+                        if (offset < scroll) {
+                            direction = 'left';
+                        }
+                        else if (offset > scroll + width) {
+                            direction = 'right';
+                        }
+                        
+                        if (direction) {
+                            scrolling = {
+                                direction : direction,
+                                offset : offset,
+                                scroll : scroll,
+                                width : width,
+                                scrollbar : $scrollbar,
+                                scroller : $scroller,
+                                interval : setInterval(scrollPage, 200)
+                            };
+
+                            scrollPage();
+                        }
+                    })
+                    .mouseup(function(event) {
+                        if (scrolling && scrolling.interval) {
+                            clearInterval(scrolling.interval);
+                        }
+                        
+                        scrolling = null;
+                    });
+                    
+                $scrollers
+                    .mouseover(function(event) {
+                        $timers.hide();
+                        $tracker.hide();
+                    })
+                    .mousedown(function(event) {
+                        dragging = {
+                            pageX: event.pageX,
+                            scrollLeft: $grid[0].scrollLeft,
+                            scroller: $(this),
+                            scrollMax: $grid[0].scrollWidth - $grid[0].clientWidth - 10,
+                            scrollSize: $grid[0].scrollWidth / $grid.width()
+                        };
+
+                        event.preventDefault();
+                        return false;
+                    });
+               
+                // setup grid dragging and trackers
+                     
+                $grid.find('div.row')
+                    .mousedown(function(event) {
+                        dragging = {
+                            mode: 'opposite',
+                            pageX: event.pageX,
+                            scrollLeft: $grid[0].scrollLeft,
+                            scroller: null,
+                            pageY: event.pageY,
+                            scrollTop: $body[0].scrollTop,
+                            scrollMax: $grid[0].scrollWidth - $grid[0].clientWidth - 10,
+                            scrollSize: $grid[0].scrollWidth / $grid.width()
+                        };
+                        
+                        $tracker.hide();
+                        $timers.hide();
+
+                        event.preventDefault();
+                        return false;
+                    })
+                    .mousemove(function(event) {
+                        if (dragging) { return true; }
+                        
+                        var offset = $grid[0].scrollLeft + event.pageX - $grid.offset().left - 10;
+                            
+                        $tracker.css('left', (event.pageX - 10) + 'px').show();
+                        $timers.css('left', (event.pageX - 35) + 'px')
+                               .html((Math.ceil(offset / <% PX_PER_SEC %> * 10) / 10) + 's')
+                               .show();
+                        
+                        event.preventDefault();
+                        return false;
+                    });
+
+                $document
+                    .mouseup(function(event) {
+                        if (dragging) {
+                            dragging = null;
+                            event.preventDefault();
+                            return false;
+                        }
+                        
+                        if (scrolling) {
+                            if (scrolling.interval) {
+                                clearInterval(scrolling.interval);
+                            }
+                        
+                            scrolling = null;
+                            event.preventDefault();
+                            return false;
+                        }
+                    })
+                    .mousemove(function(event) {
+                        position.top = event.pageY;
+                        position.left = event.pageX;
+                        
+                        if (dragging) {
+                            var diffX = event.pageX - dragging.pageX,
+                                scrollX = diffX * dragging.scrollSize,
+                                scrollLeft = dragging.scrollLeft + (dragging.mode == 'opposite' ? -scrollX : scrollX);
+
+                            $grid[0].scrollLeft =
+                                Math.min(scrollLeft, dragging.scrollMax);
+                                
+                            /*
+                            if (typeof dragging.pageY !== 'undefined') {
+                                var diffY = event.pageY - dragging.pageY,
+                                    scrollTop = dragging.scrollTop + (dragging.mode == 'opposite' ? -diffY : diffY);
+
+                                $body[0].scrollTop = scrollTop;
+                            }
+                            */
+                            
+                            event.preventDefault();
+                            return false;
+                        }
+                    });
+                    
+                // setup resize handlers
+                
+                $(window).resize(function() {
+                    initialize();
+                });
+
+                $(function() {
+                    setTimeout(initialize, 500);
+                });
+                    
+                })();
+            </script>
+        </section>
+    </article>
+    
