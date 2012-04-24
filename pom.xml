@@ -142,7 +142,7 @@
         <slf4j.version>1.6.1</slf4j.version>
         
         <!-- BEGIN ESPN UPDATE: add version for repackaging plugin -->
-        <repackaging.plugin.version>1.0.10</repackaging.plugin.version>
+        <repackaging.plugin.version>1.0.11</repackaging.plugin.version>
         <!-- END ESPN UPDATE -->
     </properties>
 

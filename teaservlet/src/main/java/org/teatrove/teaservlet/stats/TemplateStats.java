@@ -393,6 +393,21 @@ public class TemplateStats {
 	}
 	
 	/**
+     * Returns an AggregateInterval for the current raw data over the last
+     * 60 seconds.
+     * 
+     * The aggregate interval that is created is not stored and
+     * is only created for the caller.
+     * 
+     * @return the aggregate interval for the raw data over 60 seconds.
+     */
+    public AggregateInterval getLatestAggregateIntervalForRawData() {
+        long endTime = System.currentTimeMillis();
+        long startTime = endTime - 60000;
+        return getAggregateIntervalForRawData(startTime, endTime);
+    }
+    
+	/**
 	 * Returns an AggregateInterval for the current raw data.
 	 * 
 	 * The aggregate interval that is created is not stored and
@@ -429,7 +444,9 @@ public class TemplateStats {
 			result = new AggregateInterval();
 			List<RawData> list = new ArrayList<RawData>();
 			for (int i=0; i < rawData.length; i++) {
-				if (rawData[i].startTime >= startTime && rawData[i].endTime <= stopTime) {
+				if (rawData[i].startTime >= startTime && 
+				    rawData[i].endTime <= stopTime) {
+				    
 					list.add(rawData[i]);
 				}
 			}

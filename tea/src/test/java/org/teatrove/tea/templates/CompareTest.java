@@ -88,8 +88,8 @@ public class CompareTest extends AbstractTemplateTest {
         "start < end ? 'true' : 'false'";
 
     protected static final String TEST_DATES_EQ =
-        "start = getDate(); " +
-        "end = getDate(); " +
+        "start = getDate(10000); " +
+        "end = getDate(10000); " +
         "start == end ? 'true' : 'false'";
 
     protected static final String TEST_STRINGS_1 =
