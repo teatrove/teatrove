@@ -12,6 +12,7 @@ Change History
 
 4.1.2 to 4.1.3
 =============================
+- Fix #98 to resolve comparisons with Number values
 - Fix #79 to add missing messages in type checker properties
 - Fix #78 for handling bridge methods and covariant returns in BeanAnalyzer
 - Fix #41 rewriting the compilation system so that compilation providers can now reference each other through single compiler

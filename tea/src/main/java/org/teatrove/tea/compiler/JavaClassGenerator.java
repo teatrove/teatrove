@@ -98,6 +98,8 @@ import org.teatrove.trove.classfile.Opcode;
 import org.teatrove.trove.classfile.TypeDesc;
 import org.teatrove.trove.util.MergedClass;
 
+import com.go.tea.compiler.Type;
+
 /**
  * The JavaClassGenerator compiles a template into a single Java class file.
  * A template is compiled such that it has two static methods, execute and
@@ -1833,56 +1835,32 @@ public class JavaClassGenerator extends CodeGenerator {
             // get associated types
             Type ltype = left.getType();
             Type rtype = right.getType();
+            Class<?> clazz = 
+            ltype.getCompatibleType(rtype).getNaturalClass();
 
             // create local variables
             generate(left);
             LocalVariable lvar = 
                 mBuilder.createLocalVariable(null, makeDesc(ltype));
             mBuilder.storeLocal(lvar);
-            
+        
             generate(right);
             LocalVariable rvar =
                 mBuilder.createLocalVariable(null, makeDesc(rtype));
             mBuilder.storeLocal(rvar);
 
-            // check if comparable
-            boolean comparable =
-                Comparable.class.isAssignableFrom(ltype.getObjectClass()) &&
-                ltype.getNaturalClass().isAssignableFrom(rtype.getNaturalClass());
-                
             // check if primitives and handle directly
-            if (ltype.isPrimitive() && rtype.isPrimitive()) {
-                // TODO: long, double?
-                
-                Label endLocation = mBuilder.createLabel();
-                Label ltLocation = mBuilder.createLabel();
-                Label gtLocation = mBuilder.createLabel();
-
-                mBuilder.loadLocal(lvar);
-                mBuilder.loadLocal(rvar);
-                generateComparison(ltLocation, "!=", ltype);
-                mBuilder.loadConstant(0);
-                mBuilder.branch(endLocation);
-
-                ltLocation.setLocation();
-                mBuilder.loadLocal(lvar);
-                mBuilder.loadLocal(rvar);
-                generateComparison(gtLocation, "<", ltype);
-                mBuilder.loadConstant(1);
-                mBuilder.branch(endLocation);
-                
-                gtLocation.setLocation();
-                mBuilder.loadConstant(-1);
-                
-                endLocation.setLocation();
+            if (clazz.isPrimitive()) {
+                generatePrimitiveComparison(lvar, rvar, clazz);
             }
+        
+            // handle as object (comparable, numbers, strings)
             else {
                 Label location1 = mBuilder.createLabel();
                 Label location2 = mBuilder.createLabel();
                 Label location3 = mBuilder.createLabel();
-                Label location4 = mBuilder.createLabel();
                 Label endLocation = mBuilder.createLabel();
-                
+            
                 mBuilder.loadLocal(lvar);
                 mBuilder.ifNullBranch(location1, false);
                 
@@ -1895,7 +1873,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 location2.setLocation();
                 mBuilder.loadConstant(-1);
                 mBuilder.branch(endLocation);
-                
+            
                 location1.setLocation();
                 mBuilder.loadLocal(rvar);
                 mBuilder.ifNullBranch(location3, false);
@@ -1907,32 +1885,71 @@ public class JavaClassGenerator extends CodeGenerator {
                 
                 mBuilder.loadLocal(lvar);
                 mBuilder.loadLocal(rvar);
-                
-                if (!comparable) {
-                    mBuilder.loadLocal(lvar);
-                    mBuilder.instanceOf(makeDesc(Comparable.class));
-                    mBuilder.ifZeroComparisonBranch(location4, "!=");
+            
+                if (Comparable.class.isAssignableFrom(clazz) &&
+                    ltype.getNaturalClass().isAssignableFrom(rtype.getNaturalClass())) {
                     
-                    mBuilder.swap();
-                    mBuilder.invoke(getMethod(Object.class, "toString"));
-                    
-                    mBuilder.swap();
-                    mBuilder.invoke(getMethod(Object.class, "toString"));
+                    mBuilder.invoke(getMethod(Comparable.class, "compareTo", 
+                                              Object.class));
                 }
-
-                location4.setLocation();
-                mBuilder.invoke(getMethod(Comparable.class, "compareTo", 
-                                          Object.class));
-                
+                else if (Number.class.isAssignableFrom(clazz)) {
+    
+                    LocalVariable rdouble = 
+                        mBuilder.createLocalVariable(null, TypeDesc.DOUBLE);
+                    mBuilder.invoke(getMethod(Number.class, "doubleValue"));
+                    mBuilder.storeLocal(rdouble);
+    
+                    LocalVariable ldouble = 
+                        mBuilder.createLocalVariable(null, TypeDesc.DOUBLE);
+                    mBuilder.invoke(getMethod(Number.class, "doubleValue"));
+                    mBuilder.storeLocal(ldouble);
+                    
+                    generatePrimitiveComparison(ldouble, rdouble, double.class);
+                }
+                else {
+                    
+                    Method toString = getMethod(Object.class, "toString");
+                    
+                    mBuilder.swap();
+                    mBuilder.invoke(toString);
+                    
+                    mBuilder.swap();
+                    mBuilder.invoke(toString);
+                    
+                    mBuilder.invoke(getMethod(String.class, "compareTo", 
+                                              Object.class));
+                }
+            
                 endLocation.setLocation();
             }
 
             return null;
         }
-        
-        private void generateComparison(Label label, String choice, 
-                                        Type type) {
-            generateComparison(label, choice, type.getNaturalClass());
+
+        private void generatePrimitiveComparison(LocalVariable lvar, 
+                                                 LocalVariable rvar, 
+                                                 Class<?> clazz) {
+            Label endLocation = mBuilder.createLabel();
+            Label ltLocation = mBuilder.createLabel();
+            Label gtLocation = mBuilder.createLabel();
+    
+            mBuilder.loadLocal(lvar);
+            mBuilder.loadLocal(rvar);
+            generateComparison(ltLocation, "!=", clazz);
+            mBuilder.loadConstant(0);
+            mBuilder.branch(endLocation);
+    
+            ltLocation.setLocation();
+            mBuilder.loadLocal(lvar);
+            mBuilder.loadLocal(rvar);
+            generateComparison(gtLocation, "<", clazz);
+            mBuilder.loadConstant(1);
+            mBuilder.branch(endLocation);
+            
+            gtLocation.setLocation();
+            mBuilder.loadConstant(-1);
+            
+            endLocation.setLocation();
         }
         
         private void generateComparison(Label label, String choice, 
@@ -2510,7 +2527,10 @@ public class JavaClassGenerator extends CodeGenerator {
             String choice = getChoice(operator, whenTrue);
 
             Type leftType = left.getType();
+            Class<?> leftClass = leftType.getNaturalClass();
+            
             Type rightType = right.getType();
+            Class<?> rightClass = rightType.getNaturalClass();
 
             Class<?> clazz = 
                 leftType.getCompatibleType(rightType).getNaturalClass();
@@ -2607,7 +2627,8 @@ public class JavaClassGenerator extends CodeGenerator {
                                            TypeDesc.INT, cStringParam);
                     mBuilder.ifZeroComparisonBranch(label, choice);
                 }
-                else if (Comparable.class.isAssignableFrom(clazz)) {
+                else if (Comparable.class.isAssignableFrom(clazz) &&
+                         leftClass.isAssignableFrom(rightClass)) {
                     // The compareTo method is called only for <, >, <= or >=
                     // relational operators.
                     generate(left);
@@ -2617,6 +2638,34 @@ public class JavaClassGenerator extends CodeGenerator {
                     mBuilder.invokeInterface("java.lang.Comparable",
                                              "compareTo",
                                              TypeDesc.INT, cObjectParam);
+                    mBuilder.ifZeroComparisonBranch(label, choice);
+                }
+                else if (Number.class.isAssignableFrom(clazz)) {
+                    // numbers must be converted down to primitives to be
+                    // compared...this is potentially dangerous as we are
+                    // converting types
+                    // TODO: include a warning to the compiler
+                    
+                    Method doubleMethod = 
+                        getMethod(Number.class, "doubleValue");
+                    
+                    generate(left);
+                    mBuilder.invoke(doubleMethod);
+                    generate(right);
+                    mBuilder.invoke(doubleMethod);
+                    setLineNumber(operator.getSourceInfo());
+                    
+                    byte op;
+                    int ID = operator.getID();
+                    if (ID == Token.LT || ID == Token.LE ||
+                        ID == Token.EQ) {
+                        op = Opcode.DCMPG;
+                    }
+                    else {
+                        op = Opcode.DCMPL;
+                    }
+                    
+                    mBuilder.math(op);
                     mBuilder.ifZeroComparisonBranch(label, choice);
                 }
                 else {
