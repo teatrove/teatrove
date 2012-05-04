@@ -398,6 +398,10 @@ public class TypeChecker {
                         clazz = Long.TYPE;
                     else if (checkName.equals("short"))
                         clazz = Short.TYPE;
+                    else if (checkName.equals("float"))
+                        clazz = Float.TYPE;
+                    else if (checkName.equals("byte"))
+                        clazz = Byte.TYPE;
                     else
                         clazz = loadClass(checkName);
                     checkAccess(clazz, node);
@@ -1957,12 +1961,33 @@ public class TypeChecker {
             Type rightType = right.getType();
 
             if (binaryTypeCheck(node, Number.class)) {
-                Type type =
-                    leftType.getCompatibleType(rightType).toPrimitive();
+                Type type = leftType.getCompatibleType(rightType);
+                if (type.hasPrimitivePeer()) { 
+                    type = type.toPrimitive();
 
-                left.convertTo(type);
-                right.convertTo(type);
-                node.setType(type);
+                    left.convertTo(type);
+                    right.convertTo(type);
+                    node.setType(type);
+                }
+                
+                // one of the wrappers is not a known primitive, so maintain
+                // types and let generators determine type at runtime and
+                // perform operation then.  If either side is a primitive, we
+                // convert to the most compatible number that can perform
+                // arithmetic operations (int, long, float, double)
+                else {
+                    if (leftType.isPrimitive()) {
+                        leftType = leftType.getCompatibleType(Type.INT_TYPE);
+                        left.convertTo(leftType);
+                    }
+                    
+                    if (rightType.isPrimitive()) {
+                        rightType = rightType.getCompatibleType(Type.INT_TYPE);
+                        right.convertTo(rightType);
+                    }
+                    
+                    node.setType(type);
+                }
             }
 
             return null;
@@ -2049,11 +2074,13 @@ public class TypeChecker {
                 Class<?> clazz = type.getObjectClass();
 
                 if (type.hasPrimitivePeer() &&
-                    leftType.isNonNull() && rightType.isNonNull() &&
+                    // TODO: needed? leftType.isNonNull() && rightType.isNonNull() &&
                     (leftType.isPrimitive() || leftType.hasPrimitivePeer()) &&
                     (rightType.isPrimitive() || rightType.hasPrimitivePeer()))
                 {
-                    leftType = rightType = type.toPrimitive();
+                    // ensure primitive type is at least an int
+                    leftType = rightType = 
+                        type.toPrimitive().getCompatibleType(Type.INT_TYPE);
                 }
                 else {
                     if (leftType.isNonNull()) {
@@ -2076,11 +2103,29 @@ public class TypeChecker {
                     }
                 }
 
-                if (ID == Token.EQ || ID == Token.NE ||
-                    Comparable.class.isAssignableFrom(clazz) ||
-                    String.class.isAssignableFrom(clazz) ||
-                    Number.class.isAssignableFrom(clazz)) {
-
+                if (Number.class.equals(clazz)) {
+                    // ensure primitive types are converted to at least an int
+                    // otherwise, leave untouched to allow runtime checks
+                    leftType = left.getType();
+                    if (leftType.isPrimitive()) {
+                        Type ctype = leftType.getCompatibleType(Type.INT_TYPE);
+                        if (!leftType.equals(ctype)) {
+                            left.convertTo(ctype);
+                        }
+                    }
+                    
+                    rightType = right.getType();
+                    if (rightType.isPrimitive()) {
+                        Type ctype = rightType.getCompatibleType(Type.INT_TYPE);
+                        if (!rightType.equals(ctype)) {
+                            right.convertTo(ctype);
+                        }
+                    }
+                }
+                else if (ID == Token.EQ || ID == Token.NE ||
+                         Comparable.class.isAssignableFrom(clazz) ||
+                         Number.class.isAssignableFrom(clazz)) {
+                    
                     // Don't prefer cast; possibly perform string conversion.
                     left.convertTo(leftType, false);
                     right.convertTo(rightType, false);
@@ -2231,24 +2276,51 @@ public class TypeChecker {
             Type ltype = left.getType();
             Type rtype = right.getType();
             if (ltype != null && rtype != null &&
-                ltype.convertableFrom(rtype) == -1) {
-                error("compare.not.convertible", node);
-                return null;
+                ltype.convertableFrom(rtype) == -1 &&
+                rtype.convertableFrom(ltype) == -1) {
+                
+                /*
+                warn("compare.not.convertible",
+                      ltype.getClassName(), rtype.getClassName(), node);
+                */
             }
 
-            // TODO: this will return object if either is object
-            // however, we can optimize by moving to primitive if object is
-            // non-null.  Even if non-null, we can branch logic and if not
-            // null, convert to primitive, then evalutae rather than going to
-            // object which is more expensive
-
-            Type compatible = null;
+            // convert to a compatible type
             if (ltype != null && rtype != null) {
-                compatible = ltype.getCompatibleType(rtype);
-                left.convertTo(compatible);
-                right.convertTo(compatible);
+                
+                // if both are primitive, compare directly to each other
+                // otherwise, maintain types to do better analysis when
+                // generating code...note that we do not do conversion of
+                // primitive and wrappers to same compatible type here since
+                // the generator must do branching for null checks
+                if (ltype.isPrimitive() && rtype.isPrimitive()) {
+                    Type compatible = ltype.getCompatibleType(rtype)
+                        .getCompatibleType(Type.INT_TYPE);
+                    
+                    left.convertTo(compatible);
+                    right.convertTo(compatible);
+                }
+                
+                // otherwise, ensure primitives are in their most valid state
+                else {
+                    if (ltype.isPrimitive()) {
+                        Type ctype = ltype.getCompatibleType(Type.INT_TYPE);
+                        if (!ltype.equals(ctype)) {
+                            left.convertTo(ctype);
+                        }
+                    }
+                    
+                    if (rtype.isPrimitive()) {
+                        Type ctype = rtype.getCompatibleType(Type.INT_TYPE);
+                        if (!rtype.equals(ctype)) {
+                            right.convertTo(ctype);
+                        }
+                    }
+                }
+                
             }
 
+            // result is -1, 0, or 1 (int)
             node.setType(Type.INT_TYPE);
             return null;
         }

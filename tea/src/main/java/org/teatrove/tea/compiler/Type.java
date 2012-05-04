@@ -22,12 +22,16 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.teatrove.tea.TypedElement;
 import org.teatrove.tea.util.BeanAnalyzer;
@@ -922,53 +926,56 @@ public class Type implements java.io.Serializable {
         }
     }
 
+    private static boolean isNumberDouble(Class<?> clazz) {
+        return (clazz == double.class ||
+                clazz == Double.class || clazz == BigDecimal.class);
+    }
+    
+    private static boolean isNumberFloat(Class<?> clazz) {
+        return (clazz == float.class || clazz == Float.class);
+    }
+    
+    private static boolean isNumberLong(Class<?> clazz) {
+        return (clazz == long.class || clazz == Long.class ||
+                clazz == AtomicLong.class || clazz == BigInteger.class);
+    }
+    
+    private static boolean isNumberInteger(Class<?> clazz) {
+        return (clazz == int.class || clazz == Integer.class ||
+                clazz == short.class || clazz == Short.class ||
+                clazz == byte.class || clazz == Byte.class ||
+                clazz == AtomicInteger.class);
+    }
+    
     private static Class<?> compatibleNumber(Class<?> classA, Class<?> classB) {
-        if (classA == Integer.class) {
-
-            if (classB == Integer.class ||
-                classB == Byte.class || classB == Short.class) {
-
-                return Integer.class;
-            }
-
-            if (classB == Long.class) {
-                return classB;
-            }
+        boolean ldouble = isNumberDouble(classA);
+        boolean lfloat = isNumberFloat(classA);
+        boolean llong = isNumberLong(classA);
+        boolean linteger = isNumberInteger(classA);
+        boolean lvalid = ldouble || lfloat || llong || linteger;
+        
+        boolean rdouble = isNumberDouble(classB);
+        boolean rfloat = isNumberFloat(classB);
+        boolean rlong = isNumberLong(classB);
+        boolean rinteger = isNumberInteger(classB);
+        boolean rvalid = rdouble || rfloat || rlong || rinteger;
+        
+        // if either is double, then ensure everything converts to a double
+        if (ldouble || rdouble) {
+            return Double.class;
         }
-        else if (classA == Byte.class || classA == Short.class) {
-            if (classB == Integer.class ||
-                classB == Byte.class || classB == Short.class) {
-
-                return Integer.class;
-            }
-
-            if (classB == Long.class) {
-                return classB;
-            }
-
-            if (classB == Float.class) {
-                return Float.class;
-            }
+        
+        // if both are valid and known numbers, then select most compatible
+        else if (lvalid && rvalid) {
+            if (ldouble || rdouble) { return Double.class; }
+            else if (lfloat || rfloat) { return Float.class; }
+            else if (llong || rlong) { return Long.class; }
+            else if (linteger || rinteger) { return Integer.class; }
+            else { return Number.class; }
         }
-        else if (classA == Float.class) {
-            if (classB == Float.class) {
-                return classB;
-            }
-
-            if (classB == Byte.class || classB == Short.class) {
-                return Float.class;
-            }
-        }
-        else if (classA == Long.class) {
-            if (classB == Integer.class ||
-                classB == Byte.class || classB == Short.class ||
-                classB == Long.class) {
-
-                return Long.class;
-            }
-        }
-
-        return Double.class;
+        
+        // unknown on left or right or both so just use general number
+        else { return Number.class; }
     }
 
     /**

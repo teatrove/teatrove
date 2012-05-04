@@ -8,7 +8,7 @@ import org.junit.Test;
 public class TernaryTest extends AbstractTemplateTest {
 
     @Test
-    public void testSpread() throws Exception {
+    public void testTernary() throws Exception {
         assertEquals("false", executeSource(TEST_SOURCE_1));
         assertEquals("valid", executeSource(TEST_SOURCE_2));
         assertEquals("data", executeSource(TEST_SOURCE_3_1));
@@ -27,6 +27,10 @@ public class TernaryTest extends AbstractTemplateTest {
         assertEquals("a5", executeSource(TEST_SOURCE_12));
         assertEquals("4", executeSource(TEST_SOURCE_13));
         assertEquals("true", executeSource(TEST_SOURCE_14));
+        assertEquals("5", executeSource(TEST_SOURCE_15));
+        // TODO: add test case for Truthful object
+        // TODO: add test case for non-Truthful object
+        // TODO: add test case for Object that is runtime Truthful
     }
 
     protected static final String TEST_SOURCE_1 =
@@ -87,5 +91,8 @@ public class TernaryTest extends AbstractTemplateTest {
 
     protected static final String TEST_SOURCE_14 =
         "f = null; f?.toString()?.length() == 0"; // true
+    
+    protected static final String TEST_SOURCE_15 =
+        "l = 5L; l ?: 4"; // 5
 
 }

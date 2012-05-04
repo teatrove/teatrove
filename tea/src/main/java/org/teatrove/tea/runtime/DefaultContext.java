@@ -29,6 +29,8 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,6 +40,8 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The default runtime context class that Tea templates get compiled to use.
@@ -312,16 +316,22 @@ public abstract class DefaultContext extends Writer
             }
         }
         else {
-            if (n instanceof Integer) {
+            if (n instanceof Integer ||
+                n instanceof AtomicInteger ||
+                n instanceof Short ||
+                n instanceof Byte) {
                 return mDecimalFormat.format(n.intValue());
             }
-            if (n instanceof Double) {
+            if (n instanceof Double ||
+                n instanceof BigDecimal) {
                 return mDecimalFormat.format(n.doubleValue());
             }
             if (n instanceof Float) {
                 return mDecimalFormat.format(n.floatValue());
             }
-            if (n instanceof Long) {
+            if (n instanceof Long ||
+                n instanceof BigInteger ||
+                n instanceof AtomicLong) {
                 return mDecimalFormat.format(n.longValue());
             }
             return mDecimalFormat.format(n.doubleValue());
