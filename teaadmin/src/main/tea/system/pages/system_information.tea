@@ -1,6 +1,78 @@
 <% template system_information (Map config)
 
+/*
+    Overview
+    -------------------
+
+               1.7 GB        0.4 GB         2.0 GB      
+            Free Memory    Used Memory   Total Memory
+
+
+    Bar Graph of Eden Survivor, Perm Gen        Graph of Heap & GC Events
+    
+    Class Loader                                Thread Graph
+
+    Total Loaded:   x    Total Unloaded: x      Live: x         Daemon: x
+                                                Peak: x         Total:  x
+    
+    graph                                       graph
+
+
+    Memory
+    -------------------
+    
+    GC Info         Memory Info
+    
+    
+    
+    Threads
+    --------------------
+    
+    Name        Time    State
+    Thread 1    30%     [____][__________][__]
+    Thread 2    10%     [__________][__________]
+    Thread 3
+    Thread 4
+    Thread 5
+    Thread 6
+
+
+
+    Thread Info
+    --------------------
+    
+    Thread 1        30%         Running
+    Name           Time           Sttas
+    
+    Stack Trace (Refresh)
+
+
+    System Info
+    --------------------
+    
+    
+    
+    
+    MBeans
+    --------------------
+    
+    MBeans          Attributes   |   Operations   |   Metadata
+    
+    + JMImple       Name            Value
+    
+                    Value           6
+                    
+                    
+                    
+                    void dumpHeap ( p0 [_____] , p1 [_____] )
+
+*/
+
+
     admin = getTeaServletAdmin();
+    
+    pathPrefix = call system.util.getPathPrefix();
+    
     request = getRequest();
 
     call system.util.handleRequest(request);
@@ -19,8 +91,8 @@
     threadMXBean = getThreadMXBean();
 
 %>
-		<article>
-			<section>
+        <article>
+            <section>
                     <div id="system-info-snapshot">
                         <div class="quick-summary">
                             <table class="tablehead">
@@ -88,7 +160,301 @@
                         </div>
                     </div>
 
-			    <div class="table-container">
+                    <div>
+                        <div id="heapUsage" style="float:left;width:30%;height:300px;"></div>
+                        <div id="classUsage" style="float:left;width:30%;height:300px;"></div>
+                        <div id="threadUsage" style="float:left;width:30%;height:300px;"></div>
+                    </div>
+
+                    <script type="text/javascript">
+                        var MAX_POINTS = 100;
+                        var INTERVAL = 2500;
+                    
+                        function initChart($container, formatter, callback) {
+                            var options = {
+                                series: {
+                                    lines: { show: true, fill: false },
+                                    points: { show: true }
+                                },
+                                grid: {
+                                    hoverable: true,
+                                    clickable: true,
+                                    autoHighlight: false
+                                },
+                                legend: {
+                                    show: false
+                                },
+                                crosshair: { mode: "x" },
+                                xaxis: { show: true, mode: 'time' },
+                                yaxis: { 
+                                    show: true, 
+                                    min: 0, 
+                                    tickFormatter: formatter 
+                                }
+                            };
+                            
+                            if (callback) {
+                                callback(options);
+                            }
+
+                            var data = [ ], handlers = [ ];
+                            for (var i = 3; i < arguments.length; i += 2) {
+                                handlers.push(arguments[i + 1]);
+                                data.push({ label: arguments[i], data: [] });
+                            }
+
+                            var plot = $.plot($container, data, options);
+                            $container.data('plot', plot);
+                            $container.data('plotdata', data);
+                            $container.data('plothandlers', handlers);
+                            $container.addClass('graph');
+
+                            var previous = null;
+                            $container.bind("mouseout", function() {
+                                previous = null;
+                                hideTooltip();
+                                plot.clearCrosshair();
+                                $container.data('plothover', null);
+                            });
+                            
+                            $container.bind("plothover", function(event, pos, item) {
+                                var axes = plot.getAxes();
+                                if (pos.x < axes.xaxis.min || pos.x > axes.xaxis.max ||
+                                    pos.y < axes.yaxis.min || pos.y > axes.yaxis.max) {
+                                    return;
+                                }
+                        
+                                var contents = '2:30 PM' + '<br /><br />';
+                                var datapoint = null;
+                                var i, j, dataset = plot.getData();
+                                for (i = 0; i < dataset.length; i++) {
+                                    var series = dataset[i];
+                        
+                                    // find the nearest points, x-wise
+                                    for (j = 0; j < series.data.length; j++) {
+                                        if (series.data[j][0] > pos.x) {
+                                            break;
+                                        }
+                                    }
+                                    
+                                    // now interpolate
+                                    var p, p1 = series.data[j - 1], 
+                                           p2 = series.data[j];
+
+                                    if (p1 == null) { p = p2[1]; }
+                                    else if (p2 == null) { p = p1[1]; }
+                                    else if (Math.abs(p1[0] - pos.x) < 
+                                             Math.abs(p2[0] - pos.x)) {
+                                        p = p1;
+                                    }
+                                    else { p = p2; }
+                                    
+                                    datapoint = p;
+                                    contents += series.label + ": " + formatter(p[1]) + '<br />';
+                                }
+                                
+                                var poffset = $container.offset();
+                                var offset = plot.pointOffset({ x: datapoint[0], y: 0 });
+                                
+                                $container.data('plothover', [ pos, item ]);
+                                showTooltip(poffset.left + offset.left, pos.pageY, contents, $container);
+                                plot.lockCrosshair({ x: datapoint[0] });
+                            });
+                        }
+
+                        setInterval(
+                            function() {
+                                $.get('<% pathPrefix %>system/remote/jmx', function(json) {
+                                    $('.graph').each(function(idx) {
+                                        var $this = $(this),
+                                            plot = $this.data('plot'),
+                                            data = $this.data('plotdata'),
+                                            handlers = $this.data('plothandlers');
+                                        
+                                        for (var i = 0; i < handlers.length; i++) {
+                                            data[i].data.push([ 
+                                                json.timestamp * 1000, 
+                                                handlers[i](json) 
+                                            ]);
+                                            
+                                            if (data[i].data.length > MAX_POINTS) {
+                                                // TODO: aggregate data over time period
+                                                data[i].data.shift();
+                                            }
+                                        }
+                                        
+                                        plot.setData(data);
+                                        plot.setupGrid();
+                                        plot.draw();
+                                        plot.clearCrosshair();
+                                        
+                                        var plothover = $this.data('plothover');
+                                        if (plothover) {
+                                            $this.trigger('plothover', plothover[0], plothover[1]);
+                                        }
+                                    });
+                                });
+                            },
+                            3000
+                        );
+                        
+                        function hideTooltip() {
+                            $('#tooltip').fadeOut(200);
+                        }
+                        
+                        function showTooltip (x, y, contents, container) {
+                            var $tooltip = $('#tooltip');
+                            if ($tooltip.length == 0) {
+                                $tooltip = 
+                                    $('<div id="tooltip"></div>')
+                                        .css({
+                                            position: 'absolute',
+                                            display: 'none',
+                                            border: '1px solid #fdd',
+                                            padding: '5px',
+                                            'background-color': '#000',
+                                            color: '#FFF',
+                                            opacity: 0.80,
+                                            'z-index': 9999,
+                                            'font-size': '12px',
+                                            'border-radius': '3px'
+                                        }
+                                    ).appendTo("body");
+                            }
+                            
+                            $tooltip.css({visibility: 'hidden'})
+                                    .html(contents);
+
+                            var left = x, top = y,
+                                coffset = container.offset(),
+                                cwidth = container.width(), 
+                                cheight = container.height(),
+                                twidth = $tooltip.width(),
+                                theight = $tooltip.height();
+                                
+                            // to the right first
+                            if (left + twidth + 5 < coffset.left + cwidth) {
+                                left = left + 5;
+                            }
+                            
+                            // to the left last
+                            else { left = left - twidth - 5; }
+
+                            // to above first
+                            if (top - theight - 5 > coffset.top) {
+                                top = top - theight - 5;
+                            }
+                            
+                            // to bottom last
+                            else { top = top + 15; }
+
+                            $tooltip.html(contents)
+                                    .css({'left': left + 'px', top: top + 'px', visibility: 'visible' })
+                                    .fadeIn(200);
+                        };
+                        
+                        $(function() {
+                        
+                            initChart(
+                                $('#heapUsage'), 
+                                function(y) {
+                                    return (y / 1024 / 1024).toFixed(1) + ' MB';
+                                },
+                                function(options) {
+                                    options.series.stack = true;
+                                    options.series.lines.fill = true;
+                                },
+                                
+                                'Heap Used (MB)', 
+                                function(data) { return data.memory.heap.used; },
+                                //function(data) { return data.pools.tenured.usage.used; },
+                                
+                                'Heap Size (MB)',
+                                function(data) { return data.memory.heap.committed; }
+                                //function(data) { return data.pools.tenured.usage.committed; }
+                            );
+                        
+                            initChart(
+                                $('#classUsage'), 
+                                function(y) { return y; },
+                                null,
+                                
+                                'Total Loaded Classes', 
+                                function(data) {
+                                    return data.classes.loaded;
+                                }
+                            );
+                            
+                            initChart(
+                                $('#threadUsage'), 
+                                function(y) { return y; },
+                                null,
+                                
+                                'Live Threads', 
+                                function(data) { return data.threads.count; },
+                                
+                                'Daemon Threads', 
+                                function(data) { return data.threads.daemon; }
+                            );
+                        });
+                    </script>
+<%
+/*
+
+Instrumentation
+    MemoryUsage getEdenUsage()
+    MemoryUsage getSurvivorUsage()
+    MemoryUsage getPermGenUsage();
+    MemoryUsage getOldGenUsage();
+    MemoryUsage getHeapUsage();
+    MemoryUsage getNonHeapUsage();
+    
+    GCInfo getYoungCollector();
+    GCInfo getTenuredCollector();
+    
+    ClassInfo getClasInfo();
+    ThreadInfo getThreadInfo();
+
+GCInfo
+    long collectionTime
+    long collectionCount
+    CollectionInfo lastCollection
+    
+CollectionInfo
+    long duration
+    long startTime
+    long endTime
+    long getCollectionSize()
+    long getEdenCollectionSize()
+    long getSurvivorCollectionSize()
+    long getOldGenCollectionSize()
+
+*/
+
+/*
+
+show loading indicator for 3 secs
+
+$.ajax('/jxm-instrumentation', function(data) {
+
+    var edenData = $('#eden-bar-graph').data();
+    edenData.push([ data.timestamp, data.edenUsage.used ])
+    $('#eden-bar-graph').reload()
+*/
+
+/*
+Eden Space      Survivor Space       Perm Gen           Eden
+  
+[       ]       [           ]       [       ]           Graph
+[       ]       [           ]       [       ]
+[       ]       [           ]       [       ]           Survivor
+[       ]       [           ]       [       ]  
+[       ]       [           ]       [       ]           Graph
+[_______]       [___________]       [_______]
+                                                        Old Gen
+*/
+%>
+                <div class="table-container">
                     <table cellspacing="1" cellpadding="3" class="tablehead">
                         <thead>
                             <tr class="stathead">
@@ -119,7 +485,7 @@
                         </tbody>
                     </table>
                 </div>
-			    <div class="table-container">
+                <div class="table-container">
                     <table cellspacing="1" cellpadding="3" class="tablehead">
                         <thead>
                             <tr class="stathead">
@@ -146,15 +512,15 @@
                         </tbody>
                     </table>
                 </div>
-			    <div class="table-container">
-			        <%
+                <div class="table-container">
+                    <%
                         // megabytes
                         unitLabel = "MB";
                         unitFormat = "#,###,###";
                         unitDividend = 1024;
                         
-			            numberFormat(unitFormat);
-			        %>
+                        numberFormat(unitFormat);
+                    %>
                     <table cellspacing="1" cellpadding="3" class="tablehead">
                         <thead>
                             <tr class="stathead">
@@ -208,8 +574,8 @@
                                             </tbody>
                                         </table></div></td>
                             </tr>
-			                <%
-			                    numberFormat(null);
+                            <%
+                                numberFormat(null);
                             %>
                             <tr class="oddrow">
                                 <td>Object Pending Finalization Count</td>
@@ -222,7 +588,7 @@
                         </tbody>
                     </table>
                 </div>
-			    <div class="table-container">
+                <div class="table-container">
                     <table cellspacing="1" cellpadding="3" class="tablehead">
                         <thead>
                             <tr class="stathead">
@@ -257,7 +623,7 @@
                         </tbody>
                     </table>
                 </div>
-			    <div class="table-container">
+                <div class="table-container">
                     <table cellspacing="1" cellpadding="3" class="tablehead">
                         <thead>
                             <tr class="stathead">
@@ -300,7 +666,7 @@
                         </tbody>
                     </table>
                 </div>
-			    <div class="table-container">
+                <div class="table-container">
                     <table cellspacing="1" cellpadding="3" class="tablehead">
                         <thead>
                             <tr class="stathead">
@@ -397,7 +763,7 @@
                         </tbody>
                     </table>
                 </div>
-			    <div class="table-container">
+                <div class="table-container">
                     <table cellspacing="1" cellpadding="3" class="tablehead">
                         <thead>
                             <tr class="stathead">
@@ -481,5 +847,5 @@
                         </tbody>
                     </table>
                 </div>
-			</section>
-		</article>
+            </section>
+        </article>
