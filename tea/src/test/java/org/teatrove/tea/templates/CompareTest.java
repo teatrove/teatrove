@@ -186,7 +186,7 @@ public class CompareTest extends AbstractTemplateTest {
         try {
             String name = lname + " min, " + rname + " max";
             String signature = ltype + " min, " + rtype + " max";
-            // System.out.println("EXECUTE " + name + ": " + source);
+            //System.out.println("EXECUTE " + name + ": " + source);
             String result = executeSource(source, signature, min, max);
             assertEquals("invalid result: " + name + ": " + source,
                          expected, result);
@@ -259,6 +259,11 @@ public class CompareTest extends AbstractTemplateTest {
         { "if (max != min) { 'true' }", "true" },
         { "if (max != max) { 'false' }", "" },
         { "if (min != min) { 'false' }", "" },
+        
+        { "(min < max ? 'true' : 'false')", "true" },
+        { "(min == max ? 'true' : 'false')", "false" },
+        { "(max < min ? 'true' : 'false')", "false" },
+        { "(min != max ? 'true' : 'false')", "true" },
         
         { "a = (min <=> max); if (a < 0) { 'true' }", "true" },
         { "a = (max <=> min); if (a > 0) { 'true' }", "true" },

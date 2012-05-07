@@ -1924,13 +1924,9 @@ public class TypeChecker {
             if (type == null) {
                 node.setType(Type.BOOLEAN_TYPE);
             }
-            else if (type.getObjectClass() == Boolean.class) {
-                type = type.toPrimitive();
+            else {
                 expr.convertTo(type);
                 node.setType(type);
-            }
-            else {
-                error("notexpression.type", node);
             }
 
             return null;

@@ -2033,11 +2033,6 @@ public class JavaClassGenerator extends CodeGenerator {
                     generateComparison(lvar2, rvar2, type);
                 }
                 
-                // TODO: if both types have primitive peers
-                // convert both to best fit primitive and compare directly
-                // rather than falling through below using the wrapper util
-                // to compare at runtime which is slower
-                
                 // if left parent class of right and comparable
                 else if (lclass.isAssignableFrom(rclass) &&
                          Comparable.class.isAssignableFrom(lclass)) {
@@ -2153,6 +2148,33 @@ public class JavaClassGenerator extends CodeGenerator {
             }
             else {
                 mBuilder.ifComparisonBranch(label, choice);                
+            }
+        }
+        
+        private void generateZeroComparison(Label label, String choice, 
+                                            Type type) {
+            generateZeroComparison(label, choice, type.getNaturalClass());
+        }
+        
+        private void generateZeroComparison(Label label, String choice, 
+                                            Class<?> clazz) {
+            if (clazz == long.class) {
+                mBuilder.loadConstant(0L);
+                mBuilder.math(Opcode.LCMP);
+                mBuilder.ifZeroComparisonBranch(label, choice);
+            }
+            else if (clazz == float.class) {
+                mBuilder.loadConstant(0.0f);
+                mBuilder.math(Opcode.FCMPG);
+                mBuilder.ifZeroComparisonBranch(label, choice);
+            }
+            else if (clazz == double.class) {
+                mBuilder.loadConstant(0.0);
+                mBuilder.math(Opcode.DCMPG);
+                mBuilder.ifZeroComparisonBranch(label, choice);
+            }
+            else {
+                mBuilder.ifZeroComparisonBranch(label, choice);                
             }
         }
         
@@ -2455,8 +2477,17 @@ public class JavaClassGenerator extends CodeGenerator {
             else if (Double.class.isAssignableFrom(fromClass)) {
                 mBuilder.loadConstant(value.doubleValue());
             }
+            else if (value instanceof Long) {
+                mBuilder.loadConstant(value.longValue());
+            }
+            else if (value instanceof Float) {
+                mBuilder.loadConstant(value.floatValue());
+            }
+            else if (value instanceof Double) {
+                mBuilder.loadConstant(value.doubleValue());
+            }
             else {
-                typeError(fromType, toType);
+                mBuilder.loadConstant(value.intValue());
             }
 
             return null;
@@ -2475,8 +2506,21 @@ public class JavaClassGenerator extends CodeGenerator {
             }
         }
 
-        private void generateBranch(Expression expr,
-                                    Label label, boolean whenTrue) {
+        private void generateBranch(Expression expr, Label label,
+                                    boolean whenTrue) {
+            generateBranch(expr, label, whenTrue, false);
+        }
+        
+        private void generateBranch(Expression expr, Label label,
+                                    boolean whenTrue, boolean invert) {
+            
+            // get the simple state for handling whenTrue
+            // if this is an inversion (ie: not operation), then we use the
+            // opposite.  Note that this does not apply for compound statements
+            // such as truthful expressions which requires the aggregate to be
+            // the opposite rather than its individual parts
+            boolean _whenTrue = (invert ? !whenTrue : whenTrue);
+            
             if (expr instanceof Logical) {
                 // What follows is something that the visitor design pattern
                 // solves, but I would need to make a special visitor
@@ -2484,16 +2528,16 @@ public class JavaClassGenerator extends CodeGenerator {
                 // labels and "whenTrue" flags.
 
                 if (expr instanceof RelationalExpression) {
-                    generateBranch((RelationalExpression)expr, label,whenTrue);
+                    generateBranch((RelationalExpression)expr, label, _whenTrue);
                 }
                 else if (expr instanceof NotExpression) {
-                    generateBranch((NotExpression)expr, label, whenTrue);
+                    generateBranch((NotExpression)expr, label, _whenTrue);
                 }
                 else if (expr instanceof AndExpression) {
-                    generateBranch((AndExpression)expr, label, whenTrue);
+                    generateBranch((AndExpression)expr, label, _whenTrue);
                 }
                 else if (expr instanceof OrExpression) {
-                    generateBranch((OrExpression)expr, label, whenTrue);
+                    generateBranch((OrExpression)expr, label, _whenTrue);
                 }
             }
             else {
@@ -2502,72 +2546,64 @@ public class JavaClassGenerator extends CodeGenerator {
                 Type type = expr.getType();
                 if (expr.isValueKnown()) {
                     Object value = expr.getValue();
-                    if (value == null && !whenTrue) {
+                    if (value == null && !_whenTrue) {
                         mBuilder.branch(label);
                     }
                     else if (value instanceof Truthful) {
                         boolean isTrue = ((Truthful) value).isTrue();
-                        if ((!isTrue && !whenTrue) || (isTrue && whenTrue)) {
+                        if ((!isTrue && !_whenTrue) || (isTrue && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof Boolean) {
                         boolean isTrue = ((Boolean) value).booleanValue();
-                        if ((!isTrue && !whenTrue) || (isTrue && whenTrue)) {
-                            mBuilder.branch(label);
-                        }
-                    }
-                    else if (value instanceof Float ||
-                             value instanceof Double) {
-                        double dblvalue = ((Number) value).doubleValue();
-                        if ((dblvalue == 0.0 && !whenTrue) ||
-                            (dblvalue != 0.0 && whenTrue)) {
+                        if ((!isTrue && !_whenTrue) || (isTrue && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof Number) {
-                        int intvalue = ((Number) value).intValue();
-                        if ((intvalue == 0 && !whenTrue) ||
-                            (intvalue != 0 && whenTrue)) {
+                        boolean valid = 
+                            WrapperTypeConversionUtil.isValid((Number) value);
+                        if ((!valid && !_whenTrue) || (valid && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof String) {
                         int length = ((String) value).length();
-                        if ((length == 0 && !whenTrue) ||
-                            (length != 0 && whenTrue)) {
+                        if ((length == 0 && !_whenTrue) ||
+                            (length != 0 && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value != null && value.getClass().isArray()) {
                         int length = Array.getLength(value);
-                        if ((length == 0 && !whenTrue) ||
-                            (length != 0 && whenTrue)) {
+                        if ((length == 0 && !_whenTrue) ||
+                            (length != 0 && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof Collection) {
                         int length = ((Collection<?>) value).size();
-                        if ((length == 0 && !whenTrue) ||
-                            (length != 0 && whenTrue)) {
+                        if ((length == 0 && !_whenTrue) ||
+                            (length != 0 && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof Map) {
                         int length = ((Map<?, ?>) value).size();
-                        if ((length == 0 && !whenTrue) ||
-                            (length != 0 && whenTrue)) {
+                        if ((length == 0 && !_whenTrue) ||
+                            (length != 0 && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
-                    else if (value != null && whenTrue) {
+                    else if (value != null && _whenTrue) {
                         mBuilder.branch(label);
                     }
                 }
                 else if (type == null) {
                     // unknown type, just perform straight comparison
                     generate(expr);
-                    mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                    mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                 }
                 else if (type.isPrimitive()) {
                     generate(expr);
@@ -2575,21 +2611,21 @@ public class JavaClassGenerator extends CodeGenerator {
                     if (long.class.equals(clazz)) {
                            mBuilder.loadConstant(0L);
                            mBuilder.math(Opcode.LCMP);
-                           mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                           mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                     }
                     else if (float.class.equals(clazz)) {
                         mBuilder.loadConstant(0.0f);
                         mBuilder.math(Opcode.FCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                     }
                     else if (double.class.equals(clazz)) {
                         mBuilder.loadConstant(0.0);
                         mBuilder.math(Opcode.DCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                     }
                     else {
                         // standard type, just perform straight comparison
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                     }
                 }
                 else {
@@ -2598,10 +2634,16 @@ public class JavaClassGenerator extends CodeGenerator {
                         mBuilder.createLocalVariable(null, makeDesc(type));
                     mBuilder.storeLocal(local);
 
+                    Label branch = null;
+                    if (invert) {
+                        branch = mBuilder.createLabel();
+                    }
+                    
                     // test for null (false value)
                     if (type.isNullable()) {
                         mBuilder.loadLocal(local);
-                        mBuilder.ifNullBranch(label, !whenTrue);
+                        mBuilder.ifNullBranch(invert ? branch : label, 
+                            !whenTrue);
                     }
 
                     mBuilder.loadLocal(local);
@@ -2610,71 +2652,89 @@ public class JavaClassGenerator extends CodeGenerator {
                     // handle truthful values
                     if (Truthful.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(Truthful.class, "isTrue"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(invert ? branch : label, 
+                            whenTrue ? "!=" : "==");
                     }
 
                     // handle boolean values
                     else if (Boolean.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(Boolean.class, "booleanValue"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(invert ? branch : label, 
+                            whenTrue ? "!=" : "==");
                     }
 
                     // handle numeric values
-                    else if (Long.class.isAssignableFrom(clazz)) {
-                        mBuilder.invoke(getMethod(Long.class, "longValue"));
-
-                        mBuilder.loadConstant(0L);
-                        mBuilder.math(Opcode.FCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
-                    }
-                    else if (Double.class.isAssignableFrom(clazz)) {
-                        mBuilder.invoke(getMethod(Double.class, "doubleValue"));
-
-                        mBuilder.loadConstant(0.0);
-                        mBuilder.math(Opcode.DCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
-                    }
-                    else if (Float.class.isAssignableFrom(clazz)) {
-                        mBuilder.invoke(getMethod(Float.class, "floatValue"));
-
-                        mBuilder.loadConstant(0.0f);
-                        mBuilder.math(Opcode.FCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
-                    }
                     else if (Number.class.isAssignableFrom(clazz)) {
-                        mBuilder.invoke(getMethod(Number.class, "intValue"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        Type ctype = 
+                            type.getCompatibleType(Type.INT_TYPE).toPrimitive();
+                        
+                        // handle types that are primitive and known
+                        if (ctype.isPrimitive()) {
+                            if (!type.equals(ctype)) {
+                                typeConvertEnd(type, ctype, false);
+                            }
+                            
+                            generateZeroComparison(invert ? branch : label, 
+                                whenTrue ? "!=" : "==", ctype);
+                        }
+                        
+                        // otherwise, test at runtime to evaluate
+                        else {
+                            Method method = getMethod
+                            (
+                                WrapperTypeConversionUtil.class, 
+                                "isValid", Number.class
+                            );
+                            
+                            mBuilder.invoke(method);
+                            mBuilder.ifZeroComparisonBranch(invert ? branch : label, 
+                                whenTrue ? "!=" : "==");
+                        }
                     }
 
                     // handle string values
                     else if (String.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(String.class, "length"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(invert ? branch : label, 
+                            whenTrue ? "!=" : "==");
                     }
 
                     // handle array values
                     else if (clazz.isArray()) {
                         mBuilder.arrayLength();
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(invert ? branch : label, 
+                            whenTrue ? "!=" : "==");
                     }
 
                     // handle collection values
                     else if (Collection.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(Collection.class, "size"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(invert ? branch : label, 
+                            whenTrue ? "!=" : "==");
                     }
                     
                     // handle map values
                     else if (Map.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(Map.class, "size"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(invert ? branch : label, 
+                            whenTrue ? "!=" : "==");
                     }
 
                     // any other case, just pop last value (assume true)
                     // if expected true, then branch
                     else {
+                        // TODO: warn that type is unknown and non-truthful
                         mBuilder.pop();
-                        if (whenTrue) { mBuilder.branch(label); }
+                        if (whenTrue) { 
+                            mBuilder.branch(invert ? branch : label); 
+                        }
+                    }
+                    
+                    // if this is an inversion, then we must jump to the label
+                    // at this point followed by our label for the branch point
+                    if (invert) {
+                        mBuilder.branch(label);
+                        branch.setLocation();
                     }
                 }
             }
@@ -2986,8 +3046,8 @@ public class JavaClassGenerator extends CodeGenerator {
         private void generateBranch(NotExpression expr,
                                     Label label, boolean whenTrue) {
             // If someone is branching based on the result of this not
-            // expression, just invert the branch condition.
-            generateBranch(expr.getExpression(), label, !whenTrue);
+            // expression, we must invert the branch condition.
+            generateBranch(expr.getExpression(), label, whenTrue, true);
         }
 
         private void generateBranch(AndExpression expr,

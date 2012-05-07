@@ -214,6 +214,39 @@ public class WrapperTypeConversionUtil {
         return Integer.valueOf(result);
     }
 
+    public static boolean isValid(Number value) {
+        int type = getNumberType(value);
+        if (type == TYPE_DOUBLE) { 
+            return isValid(value.doubleValue()); 
+        }
+        else if (type == TYPE_FLOAT) {
+            return isValid(value.floatValue()); 
+        }
+        else if (type == TYPE_LONG) { 
+            return isValid(value.longValue()); 
+        }
+        else if (type == TYPE_INT) {
+            return isValid(value.intValue());
+        }
+        else { return isValid(value.doubleValue()); }
+    }
+    
+    public static boolean isValid(double value) {
+        return Double.compare(value, 0.0) != 0;
+    }
+    
+    public static boolean isValid(float value) {
+        return Float.compare(value, 0.0f) != 0;
+    }
+    
+    public static boolean isValid(long value) {
+        return value != 0L;
+    }
+    
+    public static boolean isValid(int value) {
+        return value != 0;
+    }
+    
     public static int compare(int leftVal, Number rightVal) {
         int type = getNumberType(rightVal);
         if (type == TYPE_DOUBLE) { 
