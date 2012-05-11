@@ -1,28 +1,11 @@
 <% template system_information (Map config)
 
 /*
-    Overview
-    -------------------
 
-               1.7 GB        0.4 GB         2.0 GB      
-            Free Memory    Used Memory   Total Memory
-
-
-    Bar Graph of Eden Survivor, Perm Gen        Graph of Heap & GC Events
-    
-    Class Loader                                Thread Graph
-
-    Total Loaded:   x    Total Unloaded: x      Live: x         Daemon: x
-                                                Peak: x         Total:  x
-    
-    graph                                       graph
-
-
-    Memory
-    -------------------
-    
-    GC Info         Memory Info
-    
+TODO:
+- cleanup handling of tooltip
+- add tabs (Threads, MBeans, Information)
+- media queries (if width < 1200, width: 50% vs 33%; if width < 600, width: 100%;)
     
     
     Threads
@@ -74,7 +57,7 @@
     pathPrefix = call system.util.getPathPrefix();
     
     request = getRequest();
-
+    
     call system.util.handleRequest(request);
 
     nullFormat("None");
@@ -90,762 +73,412 @@
     runtimeMXBean = getRuntimeMXBean();
     threadMXBean = getThreadMXBean();
 
+    tab = request.parameters['tab'] ?: 'overview'
 %>
-        <article>
-            <section>
-                    <div id="system-info-snapshot">
-                        <div class="quick-summary">
-                            <table class="tablehead">
-                                <tr>
-                                <%
-                                    // gigabytes
-                                    unitLabel = "GB";
-                                    unitFormat = "0.00";
-                                    unitDividend = 1073741824.0;
-                                    
-                                    numberFormat(unitFormat);
 
-                                    freeMemory = (memoryMXBean.heapMemoryUsage.max - memoryMXBean.heapMemoryUsage.used) / unitDividend;
-                                    usedMemory = memoryMXBean.heapMemoryUsage.used / unitDividend;
-                                    totalMemory = memoryMXBean.heapMemoryUsage.max / unitDividend;
-
-                                    '<td style="width:15%">'
-                                        '<div id="averageStressLevel">'
-                                            '<div class="value">' freeMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Free Heap Memory</div>'
-                                        '</div>'
-                                    '</td>\n'
-                                    '<td style="width:15%">'
-                                        '<div id="averageTime">'
-                                            '<div class="value">' usedMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Used Heap Memory</div>'
-                                        '</div>'
-                                    '</td>'
-                                    '<td style="width:15%">'
-                                        '<div id="averageThroughput">'
-                                            '<div class="value">' totalMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Total Heap Memory</div>'
-                                        '</div>'
-                                    '</td>\n'
-
-
-                                    '<td style="width:9%">&nbsp;</td>\n'
-
-
-                                    freeMemory = (memoryMXBean.nonHeapMemoryUsage.max - memoryMXBean.nonHeapMemoryUsage.used) / unitDividend;
-                                    usedMemory = memoryMXBean.nonHeapMemoryUsage.used / unitDividend;
-                                    totalMemory = memoryMXBean.nonHeapMemoryUsage.max / unitDividend;
-
-                                    '<td style="width:15%">'
-                                        '<div id="averageStressLevel">'
-                                            '<div class="value">' freeMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Free Non-Heap Memory</div>'
-                                        '</div>'
-                                    '</td>\n'
-                                    '<td style="width:15%">'
-                                        '<div id="averageTime">'
-                                            '<div class="value">' usedMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Used Non-Heap Memory</div>'
-                                        '</div>'
-                                    '</td>'
-                                    '<td style="width:15%">'
-                                        '<div id="averageThroughput">'
-                                            '<div class="value">' totalMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Total Non-Heap Memory</div>'
-                                        '</div>'
-                                    '</td>\n'
-                                %>
-                                </tr>
-                            </table>
-                        </div>
+<article>
+    <section id="system-info-container">
+        <div class="controls">
+            <div class="controls-wrapper">
+                <div id="loadingIndicator"></div>
+                <div id="buttonset-tabs" class="buttonset">
+                    <input type="radio" id="tabs_overview" name="radio" value="overview" <% tab == 'overview' ? 'checked="checked"' : '' %> /><label for="tabs_overview">Overview</label>
+                    <input type="radio" id="tabs_memory" name="radio" value="memory" <% tab == 'memory' ? 'checked="checked"' : '' %> /><label for="tabs_memory">Memory</label>
+                    <input type="radio" id="tabs_threads" name="radio" value="threads" <% tab == 'threads' ? 'checked="checked"' : '' %> /><label for="tabs_threads">Threads</label>
+                    <input type="radio" id="tabs_mbeans" name="radio" value="mbeans" <% tab == 'mbeans' ? 'checked="checked"' : '' %> /><label for="tabs_mbeans">MBeans</label>
+                    <input type="radio" id="tabs_info" name="radio" value="info" <% tab == 'info' ? 'checked="checked"' : '' %> /><label for="tabs_info">Information</label>
+                </div>
+            </div>
+        </div>
+        <br class="clear" /><br />
+        
+        <div id="system-info-summary">
+            <div class="quick-summary">
+                <%
+                    unitLabel = 'MB'
+                    unitDividend = 1024 * 1024;
+                    numberFormat("0");
+                %>
+                
+                <% freeMemory = (memoryMXBean.heapMemoryUsage.max - memoryMXBean.heapMemoryUsage.used) / unitDividend; %>
+                <div class="metric">
+                    <div id="freeHeapMemory">
+                        <div class="value"><span class="number"><% freeMemory %></span> <% unitLabel %></div>
+                        <div class="label">Free Heap Memory</div>
                     </div>
-
-                    <div>
-                        <div id="heapUsage" style="float:left;width:30%;height:300px;"></div>
-                        <div id="classUsage" style="float:left;width:30%;height:300px;"></div>
-                        <div id="threadUsage" style="float:left;width:30%;height:300px;"></div>
+                </div>
+                
+                <% usedMemory = memoryMXBean.heapMemoryUsage.used / unitDividend; %>
+                <div class="metric">
+                    <div id="usedHeapMemory">
+                        <div class="value"><span class="number"><% usedMemory %></span> <% unitLabel %></div>
+                        <div class="label">Used Heap Memory</div>
                     </div>
+                </div>
+                
+                <% totalMemory = memoryMXBean.heapMemoryUsage.max / unitDividend; %>
+                <div class="metric">
+                    <div id="totalHeapMemory">
+                        <div class="value"><span class="number"><% totalMemory %></span> <% unitLabel %></div>
+                        <div class="label">Total Heap Memory</div>
+                    </div>
+                </div>
+                
+                <div class="separator">&nbsp;</div>
+                
+                <% freeMemory = (memoryMXBean.nonHeapMemoryUsage.max - memoryMXBean.nonHeapMemoryUsage.used) / unitDividend; %>
+                <div class="metric">
+                    <div id="freeNonHeapMemory">
+                        <div class="value"><span class="number"><% freeMemory %></span> <% unitLabel %></div>
+                        <div class="label">Free Non-Heap Memory</div>
+                    </div>
+                </div>
+                
+                <% usedMemory = memoryMXBean.nonHeapMemoryUsage.used / unitDividend; %>
+                <div class="metric">
+                    <div id="usedNonHeapMemory">
+                        <div class="value"><span class="number"><% usedMemory %></span> <% unitLabel %></div>
+                        <div class="label">Used Non-Heap Memory</div>
+                    </div>
+                </div>
+                
+                <% totalMemory = memoryMXBean.nonHeapMemoryUsage.max / unitDividend; %>
+                <div class="metric">
+                    <div id="totalNonHeapMemory">
+                        <div class="value"><span class="number"><% totalMemory %></span> <% unitLabel %></div>
+                        <div class="label">Total Non-Heap Memory</div>
+                    </div>
+                </div>
+                
+                <br class="clear" />
+            </div>
+        </div>
+    </section>
+    
+    <div id="system-info-overview" class="ui-active system-info-tab" style="display: <% tab == 'overview' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfoOverview(); %>
+    </div>
+    <div id="system-info-memory" class="system-info-tab" style="display: <% tab == 'memory' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfoMemory(); %>
+    </div>
+    <div id="system-info-threads" class="system-info-tab" style="display: <% tab == 'threads' ? 'block' : 'none' %>;">
+    </div>
+    <div id="system-info-mbeans" class="system-info-tab" style="display: <% tab == 'mbeans' ? 'block' : 'none' %>;">
+    </div>
+    <div id="system-info-info" class="system-info-tab" style="display: <% tab == 'info' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfo(); %>
+    </div>
+</article>
+        
+<script type="text/javascript">
+    var MAX_POINTS = 100;
+    var INTERVAL = 2000;
 
-                    <script type="text/javascript">
-                        var MAX_POINTS = 100;
-                        var INTERVAL = 2500;
+    function initPlot($container, data, options) {
+        var plot = $.plot($container, data, options);
+        $container.data('plot', plot);
+
+        var previous = null;
+        $container.bind("mouseout", function() {
+            previous = null;
+            hideTooltip();
+            
+            plot.clearCrosshair();
+            $container.data('plothover', null);
+        });
+        
+        $container.bind("plothover", function(event, pos, item) {
+            var axes = plot.getAxes();
+            if (pos.x < axes.xaxis.min || pos.x > axes.xaxis.max ||
+                pos.y < axes.yaxis.min || pos.y > axes.yaxis.max) {
+                return;
+            }
+    
+            var contents = '';
+            var datapoint = null;
+            var i, j, dataset = plot.getData();
+            for (i = 0; i < dataset.length; i++) {
+                var series = dataset[i];
+    
+                // find the nearest points, x-wise
+                for (j = 0; j < series.data.length; j++) {
+                    if (series.data[j][0] > pos.x) {
+                        break;
+                    }
+                }
+                
+                // now interpolate
+                var p, p1 = series.data[j - 1], 
+                       p2 = series.data[j];
+
+                if (p1 == null && p2 == null) { p = null; }
+                else if (p1 == null) { p = p2[1]; }
+                else if (p2 == null) { p = p1[1]; }
+                else if (Math.abs(p1[0] - pos.x) < 
+                         Math.abs(p2[0] - pos.x)) {
+                    p = p1;
+                }
+                else { p = p2; }
+                
+                datapoint = p;
+                if (p != null) {
+                    if (contents.length == 0) {
+                        contents += axes.xaxis.tickFormatter(p[0], axes.xaxis) + '<br /><br />';
+                    }
                     
-                        function initChart($container, formatter, callback) {
-                            var options = {
-                                series: {
-                                    lines: { show: true, fill: false },
-                                    points: { show: true }
-                                },
-                                grid: {
-                                    hoverable: true,
-                                    clickable: true,
-                                    autoHighlight: false
-                                },
-                                legend: {
-                                    show: false
-                                },
-                                crosshair: { mode: "x" },
-                                xaxis: { show: true, mode: 'time' },
-                                yaxis: { 
-                                    show: true, 
-                                    min: 0, 
-                                    tickFormatter: formatter 
-                                }
-                            };
-                            
-                            if (callback) {
-                                callback(options);
-                            }
-
-                            var data = [ ], handlers = [ ];
-                            for (var i = 3; i < arguments.length; i += 2) {
-                                handlers.push(arguments[i + 1]);
-                                data.push({ label: arguments[i], data: [] });
-                            }
-
-                            var plot = $.plot($container, data, options);
-                            $container.data('plot', plot);
-                            $container.data('plotdata', data);
-                            $container.data('plothandlers', handlers);
-                            $container.addClass('graph');
-
-                            var previous = null;
-                            $container.bind("mouseout", function() {
-                                previous = null;
-                                hideTooltip();
-                                plot.clearCrosshair();
-                                $container.data('plothover', null);
-                            });
-                            
-                            $container.bind("plothover", function(event, pos, item) {
-                                var axes = plot.getAxes();
-                                if (pos.x < axes.xaxis.min || pos.x > axes.xaxis.max ||
-                                    pos.y < axes.yaxis.min || pos.y > axes.yaxis.max) {
-                                    return;
-                                }
-                        
-                                var contents = '2:30 PM' + '<br /><br />';
-                                var datapoint = null;
-                                var i, j, dataset = plot.getData();
-                                for (i = 0; i < dataset.length; i++) {
-                                    var series = dataset[i];
-                        
-                                    // find the nearest points, x-wise
-                                    for (j = 0; j < series.data.length; j++) {
-                                        if (series.data[j][0] > pos.x) {
-                                            break;
-                                        }
-                                    }
-                                    
-                                    // now interpolate
-                                    var p, p1 = series.data[j - 1], 
-                                           p2 = series.data[j];
-
-                                    if (p1 == null) { p = p2[1]; }
-                                    else if (p2 == null) { p = p1[1]; }
-                                    else if (Math.abs(p1[0] - pos.x) < 
-                                             Math.abs(p2[0] - pos.x)) {
-                                        p = p1;
-                                    }
-                                    else { p = p2; }
-                                    
-                                    datapoint = p;
-                                    contents += series.label + ": " + formatter(p[1]) + '<br />';
-                                }
-                                
-                                var poffset = $container.offset();
-                                var offset = plot.pointOffset({ x: datapoint[0], y: 0 });
-                                
-                                $container.data('plothover', [ pos, item ]);
-                                showTooltip(poffset.left + offset.left, pos.pageY, contents, $container);
-                                plot.lockCrosshair({ x: datapoint[0] });
-                            });
-                        }
-
-                        setInterval(
-                            function() {
-                                $.get('<% pathPrefix %>system/remote/jmx', function(json) {
-                                    $('.graph').each(function(idx) {
-                                        var $this = $(this),
-                                            plot = $this.data('plot'),
-                                            data = $this.data('plotdata'),
-                                            handlers = $this.data('plothandlers');
-                                        
-                                        for (var i = 0; i < handlers.length; i++) {
-                                            data[i].data.push([ 
-                                                json.timestamp * 1000, 
-                                                handlers[i](json) 
-                                            ]);
-                                            
-                                            if (data[i].data.length > MAX_POINTS) {
-                                                // TODO: aggregate data over time period
-                                                data[i].data.shift();
-                                            }
-                                        }
-                                        
-                                        plot.setData(data);
-                                        plot.setupGrid();
-                                        plot.draw();
-                                        plot.clearCrosshair();
-                                        
-                                        var plothover = $this.data('plothover');
-                                        if (plothover) {
-                                            $this.trigger('plothover', plothover[0], plothover[1]);
-                                        }
-                                    });
-                                });
-                            },
-                            3000
-                        );
-                        
-                        function hideTooltip() {
-                            $('#tooltip').fadeOut(200);
-                        }
-                        
-                        function showTooltip (x, y, contents, container) {
-                            var $tooltip = $('#tooltip');
-                            if ($tooltip.length == 0) {
-                                $tooltip = 
-                                    $('<div id="tooltip"></div>')
-                                        .css({
-                                            position: 'absolute',
-                                            display: 'none',
-                                            border: '1px solid #fdd',
-                                            padding: '5px',
-                                            'background-color': '#000',
-                                            color: '#FFF',
-                                            opacity: 0.80,
-                                            'z-index': 9999,
-                                            'font-size': '12px',
-                                            'border-radius': '3px'
-                                        }
-                                    ).appendTo("body");
-                            }
-                            
-                            $tooltip.css({visibility: 'hidden'})
-                                    .html(contents);
-
-                            var left = x, top = y,
-                                coffset = container.offset(),
-                                cwidth = container.width(), 
-                                cheight = container.height(),
-                                twidth = $tooltip.width(),
-                                theight = $tooltip.height();
-                                
-                            // to the right first
-                            if (left + twidth + 5 < coffset.left + cwidth) {
-                                left = left + 5;
-                            }
-                            
-                            // to the left last
-                            else { left = left - twidth - 5; }
-
-                            // to above first
-                            if (top - theight - 5 > coffset.top) {
-                                top = top - theight - 5;
-                            }
-                            
-                            // to bottom last
-                            else { top = top + 15; }
-
-                            $tooltip.html(contents)
-                                    .css({'left': left + 'px', top: top + 'px', visibility: 'visible' })
-                                    .fadeIn(200);
-                        };
-                        
-                        $(function() {
-                        
-                            initChart(
-                                $('#heapUsage'), 
-                                function(y) {
-                                    return (y / 1024 / 1024).toFixed(1) + ' MB';
-                                },
-                                function(options) {
-                                    options.series.stack = true;
-                                    options.series.lines.fill = true;
-                                },
-                                
-                                'Heap Used (MB)', 
-                                function(data) { return data.memory.heap.used; },
-                                //function(data) { return data.pools.tenured.usage.used; },
-                                
-                                'Heap Size (MB)',
-                                function(data) { return data.memory.heap.committed; }
-                                //function(data) { return data.pools.tenured.usage.committed; }
-                            );
-                        
-                            initChart(
-                                $('#classUsage'), 
-                                function(y) { return y; },
-                                null,
-                                
-                                'Total Loaded Classes', 
-                                function(data) {
-                                    return data.classes.loaded;
-                                }
-                            );
-                            
-                            initChart(
-                                $('#threadUsage'), 
-                                function(y) { return y; },
-                                null,
-                                
-                                'Live Threads', 
-                                function(data) { return data.threads.count; },
-                                
-                                'Daemon Threads', 
-                                function(data) { return data.threads.daemon; }
-                            );
-                        });
-                    </script>
-<%
-/*
-
-Instrumentation
-    MemoryUsage getEdenUsage()
-    MemoryUsage getSurvivorUsage()
-    MemoryUsage getPermGenUsage();
-    MemoryUsage getOldGenUsage();
-    MemoryUsage getHeapUsage();
-    MemoryUsage getNonHeapUsage();
+                    contents += series.label + ": " + axes.yaxis.tickFormatter(p[1], axes.yaxis) + '<br />';
+                }
+            }
+            
+            if (datapoint != null) {
+                var poffset = $container.offset();
+                var offset = plot.pointOffset({ x: datapoint[0], y: 0 });
+                
+                $container.data('plothover', [ pos, item ]);
+                showTooltip(poffset.left + offset.left, pos.pageY, contents, $container);
+                plot.lockCrosshair({ x: datapoint[0] });
+            }
+        });
+    }
     
-    GCInfo getYoungCollector();
-    GCInfo getTenuredCollector();
+    function formatDuration(time) {
+        var result = '';
+        
+        var days = (1000.0 * 60.0 * 60.0 * 24.0);
+        var value = Math.floor(time / days);
+        var time = time % days;
+        if (value > 0) { result += value.toFixed(0) + 'd '; }
+
+        var hours = (1000.0 * 60.0 * 60.0);
+        value = Math.floor(time / hours);
+        time = time % hours;
+        if (value > 0) { result += value.toFixed(0) + 'h '; }
+        
+        minutes = (1000.0 * 60.0);
+        value = Math.floor(time / minutes);
+        time = time % minutes;
+        if (value > 0) { result += value.toFixed(0) + 'm '; }
+        
+        seconds = (1000.0);
+        value = Math.floor(time / seconds);
+        time = time % seconds;
+        if (value > 0) { result += value.toFixed(0) + 's '; }
+        
+        if (result.length == 0) {
+            result = time + ' ms';
+        }
+        
+        return result;
+    }
     
-    ClassInfo getClasInfo();
-    ThreadInfo getThreadInfo();
+    function initChart($container, type, formatter, callback) {
+        var options = {
+            series: {
+                bars: { show: (type == 'bar'), fill: true },
+                lines: { show: (type == 'line'), fill: false },
+                points: { show: false }
+            },
+            grid: {
+                hoverable: true,
+                clickable: true,
+                autoHighlight: false
+            },
+            legend: { show: false },
+            crosshair: { mode: "x" },
+            xaxis: { 
+                show: true, 
+                mode: (type == 'line' ? 'time' : ''),
+                twelveHourClock: true 
+            },
+            yaxis: { 
+                show: true, 
+                min: 0, 
+                tickFormatter: formatter 
+            },
+        };
+        
+        if (callback) {
+            callback(options);
+        }
 
-GCInfo
-    long collectionTime
-    long collectionCount
-    CollectionInfo lastCollection
+        var data = [ ], handlers = [ ];
+        for (var i = 4; i < arguments.length; i += 2) {
+            handlers.push(arguments[i + 1]);
+            
+            var series = null;
+            if (typeof arguments[i] == 'object') {
+                series = arguments[i];
+                series.data = [];
+            }
+            else {
+                series = { label: arguments[i], data: [] };
+            }
+            
+            data.push(series);
+        }
+
+        $container.data('plot', null);
+        $container.data('plotdata', data);
+        $container.data('plothandlers', handlers);
+        $container.data('plotoptions', options);
+        $container.addClass('graph');
+    }
+
+    var dataListeners = [];
+    function addDataListener(listener) {
+        dataListeners.push(listener);
+    }
+
+    addDataListener(function(json) {
+        var usedHeapMemory = json.memory.heap.used / 1024 / 1024;
+        var maxHeapMemory = json.memory.heap.max / 1024 / 1024;
+        var freeHeapMemory = maxHeapMemory - usedHeapMemory;
+        $('#freeHeapMemory .value .number').text(freeHeapMemory.toFixed(0));
+        $('#usedHeapMemory .value .number').text(usedHeapMemory.toFixed(0));
+        $('#totalHeapMemory .value .number').text(maxHeapMemory.toFixed(0));
     
-CollectionInfo
-    long duration
-    long startTime
-    long endTime
-    long getCollectionSize()
-    long getEdenCollectionSize()
-    long getSurvivorCollectionSize()
-    long getOldGenCollectionSize()
+        var usedNonHeapMemory = json.memory.nonheap.used / 1024 / 1024;
+        var maxNonHeapMemory = json.memory.nonheap.max / 1024 / 1024;
+        var freeNonHeapMemory = maxNonHeapMemory - usedNonHeapMemory;
+        $('#freeNonHeapMemory .value .number').text(freeNonHeapMemory.toFixed(0));
+        $('#usedNonHeapMemory .value .number').text(usedNonHeapMemory.toFixed(0));
+        $('#totalNonHeapMemory .value .number').text(maxNonHeapMemory.toFixed(0));
+    });
+    
+    addDataListener(function(json) {
+        $('.graph').each(function(idx) {
+            var $this = $(this),
+                plot = $this.data('plot'),
+                data = $this.data('plotdata'),
+                handlers = $this.data('plothandlers'),
+                options = $this.data('plotoptions');
+            
+            for (var i = 0; i < handlers.length; i++) {
+                var point = handlers[i](json);
+                if (point === null) { continue; }
+                
+                if (!$.isArray(point)) {
+                    point = [ json.timestamp, point ];
+                }
+                
+                if ($.isArray(point[0])) {
+                    for (var j = 0; j < point.length; j++) {
+                        data[i].data.push(point[j]);
+                    }
+                }
+                else {
+                    if (options.series.bars.show) {
+                        data[i].data = [ point ];
+                    }
+                    else {
+                        data[i].data.push(point);
+                    }
+                }
+                
+                if (data[i].data.length > MAX_POINTS) {
+                    // TODO: aggregate data over time period
+                    data[i].data.shift();
+                }
+            }
+            
+            if (!plot) {
+                if (!$this.is(':visible')) { return; }
+                plot = initPlot($this, data, options);
+            }
+            else {
+                plot.setData(data);
+                if ($this.is(':visible')) {
+                    plot.resize();
+                }
+                
+                plot.setupGrid();
+                plot.draw();
+                plot.clearCrosshair();
+            }
+            
+            var plothover = $this.data('plothover');
+            if (plothover) {
+                $this.trigger('plothover', plothover[0], plothover[1]);
+            }
+        });
+    });
+    
+    setInterval(
+        function() {
+            $.get('<% pathPrefix %>system/remote/jmx', function(json) {
+                for (var i = 0; i < dataListeners.length; i++) {
+                    dataListeners[i](json);
+                }
+            });
+        },
+        1000
+    );
+    
+    function hideTooltip() {
+        $('#tooltip').fadeOut(200);
+    }
+    
+    function showTooltip (x, y, contents, container) {
+        var $tooltip = $('#tooltip');
+        if ($tooltip.length == 0) {
+            $tooltip = 
+                $('<div id="tooltip"></div>')
+                    .css({
+                        position: 'absolute',
+                        display: 'none',
+                        border: '1px solid #fdd',
+                        padding: '5px',
+                        'background-color': '#000',
+                        color: '#FFF',
+                        opacity: 0.80,
+                        'z-index': 9999,
+                        'font-size': '12px',
+                        'border-radius': '3px'
+                    }
+                ).appendTo("body");
+                
+            $tooltip.css({visibility: 'hidden'})
+                .html(contents);
+        }
+        else {
+            $tooltip.html(contents);
+        }
 
-*/
+        var left = x, top = y,
+            coffset = container.offset(),
+            cwidth = container.width(), 
+            cheight = container.height(),
+            twidth = $tooltip.width(),
+            theight = $tooltip.height();
+            
+        // to the right first
+        if (left + twidth + 15 < coffset.left + cwidth) {
+            left = left + 15;
+        }
+        
+        // to the left last
+        else { left = left - twidth - 15; }
 
-/*
+        // to above first
+        if (top - theight - 15 > coffset.top) {
+            top = top - theight - 15;
+        }
+        
+        // to bottom last
+        else { top = top + 15; }
 
-show loading indicator for 3 secs
-
-$.ajax('/jxm-instrumentation', function(data) {
-
-    var edenData = $('#eden-bar-graph').data();
-    edenData.push([ data.timestamp, data.edenUsage.used ])
-    $('#eden-bar-graph').reload()
-*/
-
-/*
-Eden Space      Survivor Space       Perm Gen           Eden
-  
-[       ]       [           ]       [       ]           Graph
-[       ]       [           ]       [       ]
-[       ]       [           ]       [       ]           Survivor
-[       ]       [           ]       [       ]  
-[       ]       [           ]       [       ]           Graph
-[_______]       [___________]       [_______]
-                                                        Old Gen
-*/
-%>
-                <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Class Loading MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Loaded Class Count</td>
-                                <td><% classLoadingMXBean.loadedClassCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Total Loaded Class Count</td>
-                                <td><% classLoadingMXBean.totalLoadedClassCount %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Unloaded Class Count</td>
-                                <td><% classLoadingMXBean.unloadedClassCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Verbose</td>
-                                <td><% classLoadingMXBean.verbose %></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Compilation MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Compilation Time Monitoring Supported</td>
-                                <td><% compilationMXBean.compilationTimeMonitoringSupported %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Name</td>
-                                <td><% compilationMXBean.name %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Total Compilation Time</td>
-                                <td><% compilationMXBean.totalCompilationTime %></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="table-container">
-                    <%
-                        // megabytes
-                        unitLabel = "MB";
-                        unitFormat = "#,###,###";
-                        unitDividend = 1024;
-                        
-                        numberFormat(unitFormat);
-                    %>
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Memory MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Heap Memory Usage (<% unitLabel %>)</td>
-                                <td><div class="table-container no-margin no-padding"><table cellspacing="1" cellpadding="3" class="tablehead">
-                                            <thead>
-                                                <tr class="stathead">
-                                                    <th width="25%">Committed</th>
-                                                    <th width="25%">Init</th>
-                                                    <th width="25%">Max</th>
-                                                    <th width="25%">Used</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td><% memoryMXBean.heapMemoryUsage.committed / unitDividend %></td>
-                                                    <td><% memoryMXBean.heapMemoryUsage.init / unitDividend %></td>
-                                                    <td><% memoryMXBean.heapMemoryUsage.max / unitDividend %></td>
-                                                    <td><% memoryMXBean.heapMemoryUsage.used / unitDividend %></td>
-                                                </tr>
-                                            </tbody>
-                                    </table></div></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Non Heap Memory Usage (<% unitLabel %>)</td>
-                                <td><div class="table-container no-margin no-padding"><table cellspacing="1" cellpadding="3" class="tablehead">
-                                            <thead>
-                                                <tr class="stathead">
-                                                    <th width="25%">Committed</th>
-                                                    <th width="25%">Init</th>
-                                                    <th width="25%">Max</th>
-                                                    <th width="25%">Used</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td><% memoryMXBean.nonHeapMemoryUsage.committed / unitDividend %></td>
-                                                    <td><% memoryMXBean.nonHeapMemoryUsage.init / unitDividend %></td>
-                                                    <td><% memoryMXBean.nonHeapMemoryUsage.max / unitDividend %></td>
-                                                    <td><% memoryMXBean.nonHeapMemoryUsage.used / unitDividend %></td>
-                                                </tr>
-                                            </tbody>
-                                        </table></div></td>
-                            </tr>
-                            <%
-                                numberFormat(null);
-                            %>
-                            <tr class="oddrow">
-                                <td>Object Pending Finalization Count</td>
-                                <td><% memoryMXBean.objectPendingFinalizationCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Verbose</td>
-                                <td><% memoryMXBean.verbose %></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Operating System MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Arch</td>
-                                <td><% operatingSystemMXBean.arch %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Available Processors</td>
-                                <td><% operatingSystemMXBean.availableProcessors %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Name</td>
-                                <td><% operatingSystemMXBean.name %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>System Load Average</td>
-                                <td><% operatingSystemMXBean.systemLoadAverage %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Version</td>
-                                <td><% operatingSystemMXBean.version %></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Platform MBean Server</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Class Loader Repository</td>
-                                <td><% platformMBeanServer.classLoaderRepository %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Default Domain</td>
-                                <td><% platformMBeanServer.defaultDomain %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Domains</td>
-                                <td><%
-                                    if ( platformMBeanServer.domains != null ) {
-                                        foreach ( p in 0..platformMBeanServer.domains.length-1 ) {
-                                            domain = platformMBeanServer.domains[p];
-
-                                            'Domain ' p+1 ': "' domain '"';
-                                            
-                                            if ( p != platformMBeanServer.domains.length-1 ) {
-                                                ', '
-                                            }
-                                        }
-                                    }
-                                %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>MBean Count</td>
-                                <td><% platformMBeanServer.MBeanCount %></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Runtime MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Boot Class Path</td>
-                                <td><% replace(runtimeMXBean.bootClassPath, ':', '<br />') %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Boot Class Path Supported</td>
-                                <td><% runtimeMXBean.bootClassPathSupported %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Class Path</td>
-                                <td><% replace(runtimeMXBean.classPath, ':', '<br />') %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Input Arguments</td>
-                                <td><%
-                                    first = true;
-                                    foreach ( arg in runtimeMXBean.inputArguments ) {
-                                        if ( not first ) {
-                                            '<br />'
-                                        }
-                                        arg;
-                                        first = false;
-                                    }
-                                %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Library Path</td>
-                                <td><% replace(runtimeMXBean.libraryPath, ':', '<br />') %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Management Spec Version</td>
-                                <td><% runtimeMXBean.managementSpecVersion %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Name</td>
-                                <td><% runtimeMXBean.name %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Spec Name</td>
-                                <td><% runtimeMXBean.specName %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Spec Vendor</td>
-                                <td><% runtimeMXBean.specVendor %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Spec Version</td>
-                                <td><% runtimeMXBean.specVersion %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Start Time</td>
-                                <td><% runtimeMXBean.startTime %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>System Properties</td>
-                                <td><%
-                                    first = true;
-                                    foreach ( key in runtimeMXBean.systemProperties ) {
-                                        if ( not first ) {
-                                            '<br />'
-                                        }
-                                        key ': ' replace(runtimeMXBean.systemProperties[key], ##(':', ', ', "http://", '', "\n", ''));
-                                        first = false;
-                                    }
-                                %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Uptime</td>
-                                <td><% runtimeMXBean.uptime %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>VM Name</td>
-                                <td><% runtimeMXBean.vmName %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>VM Vendor</td>
-                                <td><% runtimeMXBean.vmVendor %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>VM Version</td>
-                                <td><% runtimeMXBean.vmVersion %></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Thread MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>All Thread Ids</td>
-                                <td><%
-                                    if ( threadMXBean.allThreadIds != null ) {
-                                        foreach ( t in 0..threadMXBean.allThreadIds.length-1 ) {
-                                            thread = threadMXBean.allThreadIds[t];
-
-                                            //'Thread ' t+1 ': ' thread;
-                                            thread
-
-                                            if ( t != threadMXBean.allThreadIds.length-1 ) {
-                                                ', '
-                                            }
-                                        }
-                                    }
-                                %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Current Thread CPU Time</td>
-                                <td><% threadMXBean.currentThreadCpuTime %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Current Thread CPU Time Supported</td>
-                                <td><% threadMXBean.currentThreadCpuTimeSupported %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Current Thread User Time</td>
-                                <td><% threadMXBean.currentThreadUserTime %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Daemon Thread Count</td>
-                                <td><% threadMXBean.daemonThreadCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Object Monitor Usage Supported</td>
-                                <td><% threadMXBean.objectMonitorUsageSupported %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Peak Thread Count</td>
-                                <td><% threadMXBean.peakThreadCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Synchronizer Usage Supported</td>
-                                <td><% threadMXBean.synchronizerUsageSupported %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Thread Contention Monitoring Enabled</td>
-                                <td><% threadMXBean.threadContentionMonitoringEnabled %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Thread Contention Monitoring Supported</td>
-                                <td><% threadMXBean.threadContentionMonitoringSupported %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Thread Count</td>
-                                <td><% threadMXBean.threadCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Thread CPU Time Enabled</td>
-                                <td><% threadMXBean.threadCpuTimeEnabled %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Thread CPU Time Supported</td>
-                                <td><% threadMXBean.threadCpuTimeSupported %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Total Started Thread Count</td>
-                                <td><% threadMXBean.totalStartedThreadCount %></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </article>
+        $tooltip.html(contents)
+                .css({'left': left + 'px', top: top + 'px', visibility: 'visible' })
+                .fadeIn(200);
+                
+        $(window).resize(function() {
+            $('.graph').each(function() {
+                var $this = $(this);
+                if ($this.is(":visible")) {
+                    var plot = $this.data('plot');
+                    if (plot) { plot.resize(); }
+                }
+            });
+        });
+    };
+</script>

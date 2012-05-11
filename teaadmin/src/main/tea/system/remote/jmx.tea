@@ -3,6 +3,7 @@
     classLoadingMXBean = getClassLoadingMXBean();
     compilationMXBean = getCompilationMXBean();
     memoryMXBean = getMemoryMXBean();
+    operatingSystemMXBean = getOperatingSystemMXBean();
     edenMemoryPoolMXBean = getEdenMemoryPoolMXBean();
     survivorMemoryPoolMXBean = getSurvivorMemoryPoolMXBean()
     permGenMemoryPoolMXBean = getPermGenMemoryPoolMXBean()
@@ -14,10 +15,13 @@
     threadInfos = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds())
 
     setContentType("application/json");
+    
+    date = currentDate()
+    time = date.time - (date.timezoneOffset * 60 * 1000)
 %>
 
 {
-    "timestamp" : <% currentDate().time %>,
+    "timestamp" : <% time %>,
     "memory" : {
         "heap" : {
             "init" : <% memoryMXBean.heapMemoryUsage.init %>,
@@ -194,7 +198,12 @@
         "time" : <% compilationMXBean.totalCompilationTime %>
     },
     "runtime" : {
-        "start" : <% runtimeMXBean.startTime %>,
+        "start" : <% runtimeMXBean.startTime - (date.timezoneOffset * 60 * 1000) %>,
         "uptime" : <% runtimeMXBean.uptime %>
+    },
+    "os" : {
+        <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
+            "processtime" : <% operatingSystemMXBean.processCpuTime / 1000000.0 %>
+        <% } %>
     }
 }

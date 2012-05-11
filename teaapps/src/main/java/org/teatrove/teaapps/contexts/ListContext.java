@@ -316,6 +316,28 @@ public class ListContext {
         list.addAll(list2);
         return list;
     }
+
+    /**
+     * Join the contents of the given list separated by the given separator.
+     * For example, the list [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param list  The list to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(List<?> list, String separator) {
+        int size = list.size();
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            Object item = list.get(i);
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item.toString());
+        }
+        
+        return buffer.toString();
+    }
     
     /**
      * If the elements of the list are arrays, get the max length of each needed

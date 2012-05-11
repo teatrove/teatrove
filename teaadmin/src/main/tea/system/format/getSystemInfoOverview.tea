@@ -1,0 +1,228 @@
+<% template getSystemInfoOverview() 
+
+pathPrefix = call system.util.getPathPrefix();
+
+classLoadingMXBean = getClassLoadingMXBean();
+compilationMXBean = getCompilationMXBean();
+garbageCollectorMXBean = getGarbageCollectorMXBeans();
+memoryManagerMXBean = getMemoryManagerMXBeans();
+memoryMXBean = getMemoryMXBean();
+memoryPoolMXBean = getMemoryPoolMXBeans();
+operatingSystemMXBean = getOperatingSystemMXBean();
+platformMBeanServer = getPlatformMBeanServer();
+runtimeMXBean = getRuntimeMXBean();
+threadMXBean = getThreadMXBean();
+tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
+
+%>
+
+<section>
+    <div style="float: left; width: 33%; height: 350px; min-width: 500px;">
+        <div style="padding: 0 15px;">
+            <div>
+                <div style="float: left; padding: 0 0 10px 0; font-weight: bold; color: #333; font-size: 16px; text-align: left;">Heap Usage</div>
+                <div style="float: right; font-size: 13px; color: #555; margin-top: 10px; text-align: right;">
+                    <% numberFormat('0.0') %>
+                    <%/*
+                    <span id="oldgen-memory-used"><% tenuredMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="oldgen-memory-committed"><% tenuredMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
+                    max: <span id="oldgen-memory-max"><% tenuredMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
+                    peak: <span id="oldgen-memory-peak"><% tenuredMemoryMXBean.peakUsage.used / 1024.0 / 1024.0 %></span> MB
+                    */%>
+                    <span id="heap-memory-used"><% memoryMXBean.heapMemoryUsage.used / 1024.0 / 1024.0 %></span> MB of <span id="heap-memory-committed"><% memoryMXBean.heapMemoryUsage.committed / 1024.0 / 1024.0 %></span> MB, 
+                    max: <span id="heap-memory-max"><% memoryMXBean.heapMemoryUsage.max / 1024.0 / 1024.0 %></span> MB,
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="heapUsage" style="height: 300px;"></div>
+        </div>
+    </div>
+    
+    <div style="float: left; width: 34%; height: 350px; min-width: 500px;">
+        <div style="padding: 0 15px;">
+            <div>
+                <div style="float: left; padding: 0 0 10px 0; font-weight: bold; color: #333; font-size: 16px; text-align: center;">Classes</div>
+                <div style="float: right; font-size: 13px; color: #555; margin-top: 10px; text-align: right;">
+                    <% numberFormat('0') %>
+                    <span id="classes-loaded"><% classLoadingMXBean.loadedClassCount %></span> classes loaded,
+                    <span id="classes-unloaded"><% classLoadingMXBean.unloadedClassCount %></span> classes unloaded
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="classUsage" style="height: 300px;"></div>
+        </div>
+    </div>
+    
+    <div style="float: left; width: 33%; height: 350px; min-width: 500px;">
+        <div style="padding: 0 15px;">
+            <div>
+                <div style="float: left; padding: 0 0 10px 0; font-weight: bold; color: #333; font-size: 16px; text-align: center;">Threads</div>
+                <div style="float: right; font-size: 13px; color: #555; margin-top: 10px; text-align: right;">
+                    <span id="threads-live"><% threadMXBean.threadCount %></span> live threads (<span id="threads-peak"><% threadMXBean.peakThreadCount %></span> peak), 
+                    <span id="threads-daemon"><% threadMXBean.daemonThreadCount %></span> daemon threads, 
+                    <span id="threads-started"><% threadMXBean.totalStartedThreadCount %></span> total started
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="threadUsage" style="height: 300px;"></div>
+        </div>
+    </div>
+    
+    <br class="clear" />
+</section>
+
+<section>
+    <div class="table-container" style="float: left; width: 49%;">
+        <table cellspacing="1" cellpadding="3" class="tablehead">
+            <thead>
+                <tr class="stathead">
+                    <th colspan="2">Program Information</th>
+                </tr>
+                <tr class="colhead">
+                    <th width="25%">Item</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="oddrow">
+                    <td>Name</td>
+                    <td><% runtimeMXBean.name %></td>
+                </tr>
+                <tr class="evenrow">
+                    <td>Arguments</td>
+                    <td><% join(runtimeMXBean.inputArguments, '<br /><br />') %></td>
+                </tr>
+                <tr class="oddrow">
+                    <td>Class Path</td>
+                    <td><% runtimeMXBean.classPath %></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="float: left; width: 2%;">&nbsp;</div>
+    <div class="table-container" style="float: left; width: 49%;">
+        <table cellspacing="1" cellpadding="3" class="tablehead">
+            <thead>
+                <tr class="stathead">
+                    <th colspan="2">System Information</th>
+                </tr>
+                <tr class="colhead">
+                    <th width="25%">Item</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="oddrow">
+                    <td>Started</td>
+                    <td><% createDate(runtimeMXBean.startTime) %></td>
+                </tr>
+                <tr class="evenrow">
+                    <td>Uptime</td>
+                    <td><span id="uptime"><% call system.util.getFormattedDuration(runtimeMXBean.uptime) %></span></td>
+                </tr>
+                <tr class="oddrow">
+                    <td>Virtual Machine</td>
+                    <td><% runtimeMXBean.vmName %> by <% runtimeMXBean.vmVendor %></td>
+                </tr>
+                <tr class="evenrow">
+                    <td>Java Version</td>
+                    <td><% runtimeMXBean.systemProperties['java.version'] %></td>
+                </tr>
+                <tr class="oddrow">
+                    <td>Operating System</td>
+                    <td><% runtimeMXBean.systemProperties['os.name'] %> (version <% runtimeMXBean.systemProperties['os.version'] %>)</td>
+                </tr>
+                <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
+                    <tr class="evenrow">
+                        <td>Process Time</td>
+                        <td><span id="processtime"><% call system.util.getFormattedDuration(operatingSystemMXBean.processCpuTime / 1000000.0) %>/span></td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+    
+    <br class="clear" />
+</section>
+
+<script type="text/javascript">
+
+    $(function() {
+        addDataListener(function(json) {
+            $('#uptime').text(formatDuration(json.runtime.uptime));
+            
+            <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
+                $('#processtime').text(formatDuration(json.os.processtime));
+            <% } %>
+            
+            $('#heap-memory-used').text((json.memory.heap.used / 1024.0 / 1024.0).toFixed(1));
+            $('#heap-memory-committed').text((json.memory.heap.committed / 1024.0 / 1024.0).toFixed(1));
+            $('#heap-memory-max').text((json.memory.heap.max / 1024.0 / 1024.0).toFixed(1));
+            
+            //$('#oldgen-memory-used').text((json.pools.tenured.usage.used / 1024.0 / 1024.0).toFixed(1));
+            //$('#oldgen-memory-committed').text((json.pools.tenured.usage.committed / 1024.0 / 1024.0).toFixed(1));
+            //$('#oldgen-memory-max').text((json.pools.tenured.usage.max / 1024.0 / 1024.0).toFixed(1));
+            //$('#oldgen-memory-peak').text((json.pools.tenured.peak.used / 1024.0 / 1024.0).toFixed(1));
+            
+            $('#classes-loaded').text(json.classes.loaded);
+            $('#classes-unloaded').text(json.classes.unloaded);
+            
+            $('#threads-live').text(json.threads.count);
+            $('#threads-peak').text(json.threads.peak);
+            $('#threads-daemon').text(json.threads.daemon);
+            $('#threads-started').text(json.threads.total);
+        });
+            
+        initChart(
+            $('#heapUsage'), 
+            'line',
+            function(y) {
+                return (y / 1024 / 1024).toFixed(1) + ' MB';
+            },
+            function(options) {
+                options.legend.show = true;
+                options.legend.position = 'nw';
+                options.series.stack = true;
+                options.series.lines.fill = true;
+            },
+            
+            'Heap Used', 
+            function(data) { return data.memory.heap.used; },
+            //function(data) { return data.pools.tenured.usage.used; },
+            
+            'Heap Size',
+            function(data) { return data.memory.heap.committed; }
+            //function(data) { return data.pools.tenured.usage.committed; }
+        );
+    
+        initChart(
+            $('#classUsage'),
+            'line', 
+            function(y) { return y.toFixed(0); },
+            function(options) {
+                options.legend.show = true;
+                options.legend.position = 'nw';
+            },
+            
+            'Total Loaded Classes', 
+            function(data) {
+                return data.classes.loaded;
+            }
+        );
+        
+        initChart(
+            $('#threadUsage'),
+            'line', 
+            function(y) { return y.toFixed(0); },
+            function(options) {
+                options.legend.show = true;
+                options.legend.position = 'nw';
+            },
+            
+            'Live Threads', 
+            function(data) { return data.threads.count; },
+            
+            'Daemon Threads', 
+            function(data) { return data.threads.daemon; }
+        );
+    });
+</script>

@@ -937,10 +937,7 @@ table .stress-percentage-bar.red {
 #template-info-snapshot .name {
     font-size: 16px;
 }
-#template-info-snapshot .quick-summary table td {
-    /*width: 16.67%;*/
-    padding: 10px;
-}
+
 #template-info-snapshot .quick-summary table td.summary-center {
     width: 60%;
 }
@@ -1041,10 +1038,34 @@ table .stress-percentage-bar.red {
 #system-info-snapshot .name {
     font-size: 16px;
 }
-#system-info-snapshot .quick-summary table td {
-    /*width: 16.67%;*/
-    padding: 10px;
+
+#system-info-summary .quick-summary div.metric {
+    width: 15%;
+    float: left;
 }
+
+#system-info-summary .quick-summary div.metric div.value {
+    padding: 10px 10px 0 10px;
+    text-align: center;
+    font-size: 30px;
+    color: #333;
+    font-weight: normal;
+    text-shadow: 1px 1px 1px #CCCCCC;
+}
+
+#system-info-summary .quick-summary div.metric div.label {
+    text-align: center;
+    font-size: 12px;
+    padding: 0 10px 10px 10px;
+    color: #333;
+    font-weight: normal;
+}
+
+#system-info-summary .quick-summary div.separator {
+    width: 10%;
+    float: left;
+}
+
 #system-info-snapshot .quick-summary table td.summary-center {
     width: 60%;
 }

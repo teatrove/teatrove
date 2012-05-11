@@ -1,0 +1,243 @@
+<% template getSystemInfoMemory() 
+
+pathPrefix = call system.util.getPathPrefix();
+
+classLoadingMXBean = getClassLoadingMXBean();
+compilationMXBean = getCompilationMXBean();
+garbageCollectorMXBean = getGarbageCollectorMXBeans();
+memoryManagerMXBean = getMemoryManagerMXBeans();
+memoryMXBean = getMemoryMXBean();
+memoryPoolMXBean = getMemoryPoolMXBeans();
+operatingSystemMXBean = getOperatingSystemMXBean();
+platformMBeanServer = getPlatformMBeanServer();
+runtimeMXBean = getRuntimeMXBean();
+threadMXBean = getThreadMXBean();
+youngCollectorMXBean = getYoungCollectorMXBean()
+tenuredCollectorMXBean = getTenuredCollectorMXBean()
+edenMemoryMXBean = getEdenMemoryPoolMXBean()
+survivorMemoryMXBean = getSurvivorMemoryPoolMXBean()
+tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
+
+%>
+
+<section>
+    <div style="float: left; width: 47%;">
+        <div style="padding: 0 15px;">
+            <div style="font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Memory</div>
+            <div id="memory-spaces" style="width: 100%; height: 731px;"></div>
+        </div>
+    </div>
+    <div style="float: left; width: 6%;">&nbsp;</div>
+    <div style="float: left; width: 47%;">
+        <% if (youngCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>        
+            <div style="padding: 0 15px 15px 15px;">
+                <div>
+                    <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Young Collector</div>
+                    <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
+                        <span id="young-collector-count"><% youngCollectorMXBean.collectionCount %></span> collections, <span id="young-collector-time"><% call system.util.getFormattedDuration(youngCollectorMXBean.collectionTime) %></span>, last GC: <span id="young-collector-lastgc">N/A</span>
+                    </div>
+                    <br class="clear" />
+                </div>
+                <div id="young-collector" style="width: 100%; height: 100px;"></div>
+            </div>
+        <% } %>
+        
+        <% if (tenuredCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
+            <div style="padding: 0 15px 15px 15px;">
+                <div>
+                    <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Tenured Collector</div>
+                    <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
+                        <span id="tenured-collector-count"><% tenuredCollectorMXBean.collectionCount %></span> collections, <span id="tenured-collector-time"><% call system.util.getFormattedDuration(tenuredCollectorMXBean.collectionTime) %></span>, last GC: <span id="tenured-collector-lastgc">N/A</span>
+                    </div>
+                    <br class="clear" />
+                </div>
+                <div id="tenured-collector" style="width: 100%; height: 100px;"></div>
+            </div>
+        <% } %>
+        
+        <div style="padding: 0 15px 15px 15px;">
+            <div>
+                <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Eden</div>
+                <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
+                    <% numberFormat('0.0') %>
+                    <span id="eden-memory-used"><% edenMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="eden-memory-committed"><% edenMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
+                    max: <span id="eden-memory-max"><% edenMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
+                    peak: <span id="eden-memory-peak"><% edenMemoryMXBean.peakUsage.used / 1024.0 / 1024.0 %></span> MB
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="eden-usage" style="width: 100%; height: 100px;"></div>
+        </div>
+        <div style="padding: 0 15px 15px 15px;">
+            <div>
+                <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Survivor</div>
+                <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
+                    <% numberFormat('0.0') %>
+                    <span id="survivor-memory-used"><% survivorMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="survivor-memory-committed"><% survivorMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
+                    max: <span id="survivor-memory-max"><% survivorMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
+                    peak: <span id="survivor-memory-peak"><% survivorMemoryMXBean.peakUsage.used / 1024.0 / 1024.0 %></span> MB
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="survivor-usage" style="width: 100%; height: 100px;"></div>
+        </div>
+        <div style="padding: 0 15px 15px 15px;">
+            <div>
+                <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Old Gen</div>
+                <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
+                    <% numberFormat('0.0') %>
+                    <span id="oldgen-memory-used"><% tenuredMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="oldgen-memory-committed"><% tenuredMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
+                    max: <span id="oldgen-memory-max"><% tenuredMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
+                    peak: <span id="oldgen-memory-peak"><% tenuredMemoryMXBean.peakUsage.used / 1024.0 / 1024.0 %></span> MB
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="oldgen-usage" style="width: 100%; height: 100px;"></div>
+        </div>
+    </div>
+    
+    <br class="clear" />
+</section>
+
+<script type="text/javascript">
+    
+    function initSpaces() {
+        initChart(
+            $('#memory-spaces'), 
+            'bar',
+            function(y) {
+                return (y / 1024 / 1024).toFixed(1) + ' MB';
+            },
+            function(options) {
+                options.series.stack = true;
+                options.xaxis.ticks = [
+                    [ 1, 'Perm Gen' ],
+                    [ 3, 'Old Gen' ],
+                    [ 5, 'Eden' ]
+                ];
+            },
+            
+            { label: 'Perm Gen Used', color: 0 }, 
+            function(data) { return [ 1, data.pools.perm.usage.used ]; },
+            
+            { label: 'Perm Gen Committed', color: '#e0e0e0' },
+            function(data) { return [ 1, data.pools.perm.usage.committed ]; },
+            
+            { label: 'Perm Gen Committed', color: '#eeeeee' },
+            function(data) { return [ 1, data.pools.perm.usage.max ]; },
+            
+            { label: 'Old Gen Used', color: 0 }, 
+            function(data) { return [ 3, data.pools.tenured.usage.used ]; },
+            
+            { label: 'Old Gen Committed', color: '#e0e0e0' },
+            function(data) { return [ 3, data.pools.tenured.usage.committed ]; },
+            
+            { label: 'Old Gen Size', color: '#eeeeee' },
+            function(data) { return [ 3, data.pools.tenured.usage.max ]; },
+            
+            { label: 'Eden Used', color: 0 }, 
+            function(data) { return [ 5, data.pools.eden.usage.used ]; },
+            
+            { label: 'Eden Committed', color: '#e0e0e0' },
+            function(data) { return [ 5, data.pools.eden.usage.committed ]; }
+        );
+    }
+    
+    function initCollector(id, property) {
+        var $container = $('#' + id);
+        initChart(
+            $container,
+            'line', 
+            function(y) {
+                return (y / 1024 / 1024).toFixed(1) + ' MB';
+            },
+            function(options) {
+                options.yaxis.labelWidth = 60;
+                options.series.lines.fill = true;
+            },
+            
+            'Collection', 
+            function(data) {
+                var last = $container.data('lastGC');
+                var current = data.collectors[property].lastGC;
+                if (current.start < 0) { return 0; }
+                
+                if (!last || last.start != current.start) {
+                    $container.data('lastGC', current);
+                    console.log('GC: ', data.runtime.start, current.start, data.timestamp);
+                    return [
+                        [ data.runtime.start + current.start - 1, 0 ],
+                        [ data.runtime.start + current.start, current.memory.total ],
+                        [ data.runtime.start + current.end, current.memory.total ],
+                        [ data.runtime.start + current.end + 1, 0 ]
+                    ];
+                }
+                
+                return 0;
+            }
+        );
+    }
+    
+    function initUsage(id, property) {
+        initChart(
+            $('#' + id), 
+            'line',
+            function(y) {
+                return (y / 1024 / 1024).toFixed(1) + ' MB';
+            },
+            function(options) {
+                options.yaxis.labelWidth = 60;
+            },
+            
+            'Used', 
+            function(data) { return data.pools[property].usage.used; }
+        );
+    }
+    
+    $(function() {
+        initSpaces();
+        
+        <% if (youngCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
+            initCollector('young-collector', 'young');
+        <% } %>
+        
+        <% if (tenuredCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
+            initCollector('tenured-collector', 'tenured');
+        <% } %>
+        
+        initUsage('eden-usage', 'eden');
+        initUsage('survivor-usage', 'survivor');
+        initUsage('oldgen-usage', 'tenured');
+        
+        addDataListener(function(json) {
+            $('#young-collector-count').text(json.collectors.young.count);
+            $('#young-collector-time').text(formatDuration(json.collectors.young.time));
+            if (json.collectors.young.lastGC.start > 0) {
+                var offset = json.timestamp - (json.collectors.young.lastGC.start + json.runtime.start);
+                $('#young-collector-lastgc').text(formatDuration(offset) + ' ago taking ' + formatDuration(json.collectors.young.lastGC.duration));
+            }
+            
+            $('#tenured-collector-count').text(json.collectors.tenured.count);
+            $('#tenured-collector-time').text(formatDuration(json.collectors.tenured.time));
+            if (json.collectors.tenured.lastGC.start > 0) {
+                var offset = json.timestamp - (json.collectors.tenured.lastGC.start + json.runtime.start);
+                $('#tenured-collector-lastgc').text(formatDuration(offset) + ' ago taking ' + formatDuration(json.collectors.tenured.lastGC.duration));
+            }
+            
+            $('#eden-memory-used').text((json.pools.eden.usage.used / 1024.0 / 1024.0).toFixed(1));
+            $('#eden-memory-committed').text((json.pools.eden.usage.committed / 1024.0 / 1024.0).toFixed(1));
+            $('#eden-memory-max').text((json.pools.eden.usage.max / 1024.0 / 1024.0).toFixed(1));
+            $('#eden-memory-peak').text((json.pools.eden.peak.used / 1024.0 / 1024.0).toFixed(1));
+            
+            $('#survivor-memory-used').text((json.pools.survivor.usage.used / 1024.0 / 1024.0).toFixed(1));
+            $('#survivor-memory-committed').text((json.pools.survivor.usage.committed / 1024.0 / 1024.0).toFixed(1));
+            $('#survivor-memory-max').text((json.pools.survivor.usage.max / 1024.0 / 1024.0).toFixed(1));
+            $('#survivor-memory-peak').text((json.pools.survivor.peak.used / 1024.0 / 1024.0).toFixed(1));
+            
+            $('#oldgen-memory-used').text((json.pools.tenured.usage.used / 1024.0 / 1024.0).toFixed(1));
+            $('#oldgen-memory-committed').text((json.pools.tenured.usage.committed / 1024.0 / 1024.0).toFixed(1));
+            $('#oldgen-memory-max').text((json.pools.tenured.usage.max / 1024.0 / 1024.0).toFixed(1));
+            $('#oldgen-memory-peak').text((json.pools.tenured.peak.used / 1024.0 / 1024.0).toFixed(1));
+        });
+    });
+</script>
