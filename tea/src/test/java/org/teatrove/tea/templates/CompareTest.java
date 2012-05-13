@@ -8,7 +8,6 @@ import java.util.concurrent.Semaphore;
 import org.junit.Before;
 import org.junit.Test;
 
-
 public class CompareTest extends AbstractTemplateTest {
 
     protected static final int PROCESSORS = 

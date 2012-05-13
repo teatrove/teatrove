@@ -6,9 +6,9 @@
     // 20 minutes
     //aggregateIntervalForRawData = getAggregateIntervalForRawData(stats, cdt.millis-1200000, cdt.millis);
     // 1 minute
-    aggregateIntervalForRawData = getAggregateIntervalForRawData(stats, cdt.millis-60000, cdt.millis);
+    aggregateIntervalForRawData = stats.latestAggregateIntervalForRawData
 
-    if ( stats != null and stats.aggregateIntervalForRawData != null ) {
+    if ( stats != null and aggregateIntervalForRawData != null ) {
 
         durationStressMeasure = aggregateIntervalForRawData.durationStressMeasure;
         if ( durationStressMeasure + 0.0 == durationStressMeasure ) {

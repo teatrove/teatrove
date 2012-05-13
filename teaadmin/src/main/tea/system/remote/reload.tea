@@ -82,12 +82,7 @@
                                     errorString = errorString & call system.util.cleanString(e.errorEnd);
                                     errorString = errorString & call system.util.cleanString(e.lineEnd);
 
-                                    templateName = e.sourcePath;
-                                    templateName = substring(templateName, findLast(templateName, '/')+1);
-                                    //templateName = replace(templateName, '.tea', '');
-
-                                    templatePath = call system.util.getTemplatePathFromSourcePath(admin, e.sourcePath);
-
+                                    templatePath = e.sourcePath;
                                     if ( previousTemplatePath != null and templatePath != previousTemplatePath ) {
                                         // close previous
                                         '</li>\n'
@@ -96,7 +91,7 @@
                                     if ( templatePath != previousTemplatePath ) {
                                         '<li class="arial13">\n'
                                             '<div class="template-path">'
-                                                '<a target="_blank" href="' templatePath '">' templatePath '</a>'
+                                                templatePath
                                             '</div>\n'
                                     }
                                     '<div class="error-detail">'

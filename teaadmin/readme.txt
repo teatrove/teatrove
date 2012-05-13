@@ -10,6 +10,11 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #93 with invalid source path on compilation errors
+- Fix #87 adding a new timelapse view
+- Fix #85 adding tooltip titles to instrumentation view
+- Fix #82 right aligning control buttons
+- Fix #81 making stressed column in instrumentation view sortable
 - Fix #60 and IE improperly caching Ajax requests
 - Fix #59 with fixed navigation bar and dropdown in IE
 - Fix #57 with menu overlays in IE

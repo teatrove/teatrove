@@ -853,7 +853,10 @@
 		            },
 		            complete: function () {
 		                $('#loadingIndicator').hide();
-		                getInstrumentationUpdates();
+		                
+		                if ($("#instrumentation-container").length) {
+		                    getInstrumentationUpdates();
+		                }
 		            }
 		        });
 				evt.preventDefault();
@@ -865,86 +868,91 @@
 		    $('#'+viewState).trigger('click');
 		}
     };
-	function initTemplateInfoOptions () {
+    function initTemplateOptionLinks () {
         $(".template-options a").live("click", function (evt) {
             if ( $(this).is(".web") || $(this).is(".info") ) {
-				// follow link
+                // follow link
                 //evt.preventDefault();
             } else if ( $(this).is(".compile") || $(this).is(".reset") ) {
-		        $('#loadingIndicator').show();
-				var link = $(this);
-				var url = $(link).attr('href');
-				var qs = $.deparam.querystring(url);
+                $('#loadingIndicator').show();
+                var link = $(this);
+                var url = $(link).attr('href');
+                var qs = $.deparam.querystring(url);
 
-				$.ajax({
-		            url: url,
-		            success: function (data) {
-						if ( $(link).is(".compile") ) {
-							var name = qs.selectedTemplates;
-							if ( name.indexOf('.') > -1 ) {
-								index = name.lastIndexOf('.');
-								name = name.substring(index+1);
-							}
-							var msg = 'No changes detected.';
-							var img = '<% pathPrefix %>system/assets/images/notification-info.png';
+                $.ajax({
+                    url: url,
+                    success: function (data) {
+                        if ( $(link).is(".compile") ) {
+                            var name = qs.selectedTemplates;
+                            if ( name.indexOf('.') > -1 ) {
+                                index = name.lastIndexOf('.');
+                                name = name.substring(index+1);
+                            }
+                            var msg = 'No changes detected.';
+                            var img = '<% pathPrefix %>system/assets/images/notification-info.png';
 
-							if ( $(data).closest('.sml-e').length > 0 ) {
+                            if ( $(data).closest('.sml-e').length > 0 ) {
 
-								img = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
-								msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
+                                img = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
+                                msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
-							} else if ( $(data).closest('.sml-c').length > 0 ) {
+                            } else if ( $(data).closest('.sml-c').length > 0 ) {
 
-								img = '<% pathPrefix %>system/assets/images/notification-correct.png';
-								msg = 'Template compiled successfully!';
+                                img = '<% pathPrefix %>system/assets/images/notification-correct.png';
+                                msg = 'Template compiled successfully!';
 
-							}
+                            }
 
-							$.gritter.add({
-								// (string | mandatory) the heading of the notification
-								title: name,
-								// (string | mandatory) the text inside the notification
-								text: msg,
-								// (string | optional) the image to display on the left
-								image: img,
-								// (bool | optional) if you want it to fade out on its own or just sit there
-								sticky: false,
-								// (int | optional) the time you want it to be alive for before fading out
-								time: ''
-							});
-						} else if ( $(link).is(".reset") ) {
-							if ( data == 'Success' ) {
-								var name = qs.name;
-								if ( name.indexOf('.') > -1 ) {
-									index = name.lastIndexOf('.');
-									name = name.substring(index+1);
-								}
-								var msg = 'Template stats were reset.';
-								var img = '<% pathPrefix %>system/assets/images/notification-correct.png';
+                            $.gritter.add({
+                                // (string | mandatory) the heading of the notification
+                                title: name,
+                                // (string | mandatory) the text inside the notification
+                                text: msg,
+                                // (string | optional) the image to display on the left
+                                image: img,
+                                // (bool | optional) if you want it to fade out on its own or just sit there
+                                sticky: false,
+                                // (int | optional) the time you want it to be alive for before fading out
+                                time: ''
+                            });
+                        } else if ( $(link).is(".reset") ) {
+                            if ( data == 'Success' ) {
+                                var name = qs.name;
+                                if ( name.indexOf('.') > -1 ) {
+                                    index = name.lastIndexOf('.');
+                                    name = name.substring(index+1);
+                                }
+                                var msg = 'Template stats were reset.';
+                                var img = '<% pathPrefix %>system/assets/images/notification-correct.png';
 
-								$.gritter.add({
-									// (string | mandatory) the heading of the notification
-									title: name,
-									// (string | mandatory) the text inside the notification
-									text: msg,
-									// (string | optional) the image to display on the left
-									image: img,
-									// (bool | optional) if you want it to fade out on its own or just sit there
-									sticky: false,
-									// (int | optional) the time you want it to be alive for before fading out
-									time: ''
-								});
-							}
-						}
-		            },
-		            complete: function () {
-		                $('#loadingIndicator').hide();
-		                getInstrumentationUpdates();
-		            }
-		        });
-				evt.preventDefault();
-			}
+                                $.gritter.add({
+                                    // (string | mandatory) the heading of the notification
+                                    title: name,
+                                    // (string | mandatory) the text inside the notification
+                                    text: msg,
+                                    // (string | optional) the image to display on the left
+                                    image: img,
+                                    // (bool | optional) if you want it to fade out on its own or just sit there
+                                    sticky: false,
+                                    // (int | optional) the time you want it to be alive for before fading out
+                                    time: ''
+                                });
+                            }
+                        }
+                    },
+                    complete: function () {
+                        $('#loadingIndicator').hide();
+                        if (getInstrumentationUpdates) {
+                            getInstrumentationUpdates();
+                        }
+                    }
+                });
+                evt.preventDefault();
+            }
         });
+    };
+	function initTemplateInfoOptions () {
+        initTemplateOptionLinks();
 
 		var viewState = $.bbq.getState('view');
 		if ( viewState ) {
@@ -994,6 +1002,236 @@
 			evt.preventDefault();
 		});
 	};
+	function initTimelapseOptions () {
+        var position = { top: 0, left: 0 },
+            dragging = null,
+            $document = $(document),
+            $body = $('body'),
+            $grid = $('.grid'),
+            $gridLHN = $('.grid-lhn'),
+            $scrollbars = $('.scrollbar'),
+            $scrollers = $('.scrollbar .scroller'),
+            $tracker = $('#grid-tracker'),
+            $timers = $('.timer'),
+            $container = $('#timelapse-container');
+
+        // setup container
+        var initialize = function() {
+
+            // initialize grid and scrollbars
+            $grid.css('width', $container.width() - $gridLHN.width() - 5);
+            $scrollbars.css('width', $grid.width() + 'px');
+            $scrollers.css('width', (Math.pow($grid.width(), 2) / $grid[0].scrollWidth) + 'px');
+            $('.grid').scroll(function() {
+                $scrollbars.css('left', this.scrollLeft + 'px');
+                $scrollers.css('left', (this.scrollLeft / this.scrollWidth * 100.0) + '%');
+            });
+            
+            // initialize tracker and times
+            $tracker.appendTo($('body'))
+                .css({ 
+                    height : ($grid.height() - 48) + 'px',
+                    top : ($grid.offset().top + 24) + 'px',
+                    left : $grid.offset().left + 'px' 
+                });
+         
+            $timers.appendTo($('body')).each(function(idx) {
+                var $header = $('#header-' + (idx + 1));
+                $(this).css({
+                    top : ($header.offset().top + 1) + 'px'
+                });
+            });
+        };
+        
+        // setup click to scroll
+        
+        var scrolling = null;
+        var scrollPage = function() {
+            if (!scrolling) { return false; }
+            
+            var scrollbarLeft = scrolling.scrollbar.offset().left,
+                scrollerLeft = scrolling.scroller.offset().left,
+                scrollbarWidth = scrolling.scrollbar.width(),
+                scrollerWidth = scrolling.scroller.width();
+            
+            if (position.left > scrollbarLeft && 
+                position.left < (scrollbarLeft + scrollbarWidth)) {
+
+                if (position.left < scrollerLeft) {
+                    var scrollSize = $grid[0].scrollWidth / $grid.width();
+                    var scrollX = scrollerWidth * scrollSize;
+                    
+                    if (position.left > (scrollerLeft - scrollerWidth)) {
+                        scrollX = (scrollerLeft - (position.left - (scrollerWidth / 2))) * scrollSize;
+                    }
+                    
+                    var scrollLeft = $grid[0].scrollLeft - scrollX;
+                    $grid[0].scrollLeft = scrollLeft;
+                }
+                else if (position.left > (scrollerLeft + scrollerWidth)) {
+                    var scrollSize = $grid[0].scrollWidth / $grid.width();
+                    var scrollX = scrollerWidth * scrollSize;
+                    
+                    if (position.left < (scrollerLeft + (scrollerWidth * 2))) {
+                        scrollX = ((position.left - (scrollerWidth / 2)) - scrollerLeft) * scrollSize;
+                    }
+                    
+                    var scrollLeft = $grid[0].scrollLeft + scrollX;
+                    $grid[0].scrollLeft = scrollLeft;
+                }                        
+            } 
+        };
+        
+        // setup scrollbars
+       
+        $scrollbars
+            .mouseover(function(event) {
+                $timers.hide();
+                $tracker.hide();
+            })
+            .mousedown(function(event) {
+                var offset = event.offsetX,
+                    $scrollbar = $(this),
+                    $scroller = $scrollbar.children('.scroller'),
+                    scroll = $scroller.position().left,
+                    width = $scroller.width(),
+                    direction = null;
+                     
+                if (offset < scroll) {
+                    direction = 'left';
+                }
+                else if (offset > scroll + width) {
+                    direction = 'right';
+                }
+                
+                if (direction) {
+                    scrolling = {
+                        direction : direction,
+                        offset : offset,
+                        scroll : scroll,
+                        width : width,
+                        scrollbar : $scrollbar,
+                        scroller : $scroller,
+                        interval : setInterval(scrollPage, 200)
+                    };
+
+                    scrollPage();
+                }
+            })
+            .mouseup(function(event) {
+                if (scrolling && scrolling.interval) {
+                    clearInterval(scrolling.interval);
+                }
+                
+                scrolling = null;
+            });
+            
+        $scrollers
+            .mouseover(function(event) {
+                $timers.hide();
+                $tracker.hide();
+            })
+            .mousedown(function(event) {
+                dragging = {
+                    pageX: event.pageX,
+                    scrollLeft: $grid[0].scrollLeft,
+                    scroller: $(this),
+                    scrollMax: $grid[0].scrollWidth - $grid[0].clientWidth - 10,
+                    scrollSize: $grid[0].scrollWidth / $grid.width()
+                };
+
+                event.preventDefault();
+                return false;
+            });
+       
+        // setup grid dragging and trackers
+             
+        $grid.find('div.row')
+            .mousedown(function(event) {
+                dragging = {
+                    mode: 'opposite',
+                    pageX: event.pageX,
+                    scrollLeft: $grid[0].scrollLeft,
+                    scroller: null,
+                    pageY: event.pageY,
+                    scrollTop: $body[0].scrollTop,
+                    scrollMax: $grid[0].scrollWidth - $grid[0].clientWidth - 10,
+                    scrollSize: $grid[0].scrollWidth / $grid.width()
+                };
+                
+                $tracker.hide();
+                $timers.hide();
+
+                event.preventDefault();
+                return false;
+            })
+            .mousemove(function(event) {
+                if (dragging) { return true; }
+                
+                var offset = $grid[0].scrollLeft + event.pageX - $grid.offset().left - 10;
+                    
+                $tracker.css('left', (event.pageX - 10) + 'px').show();
+                $timers.css('left', (event.pageX - 35) + 'px')
+                       .html((Math.ceil(offset / PX_PER_SEC * 10) / 10) + 's')
+                       .show();
+                
+                event.preventDefault();
+                return false;
+            });
+
+        $document
+            .mouseup(function(event) {
+                if (dragging) {
+                    dragging = null;
+                    event.preventDefault();
+                    return false;
+                }
+                
+                if (scrolling) {
+                    if (scrolling.interval) {
+                        clearInterval(scrolling.interval);
+                    }
+                
+                    scrolling = null;
+                    event.preventDefault();
+                    return false;
+                }
+            })
+            .mousemove(function(event) {
+                position.top = event.pageY;
+                position.left = event.pageX;
+                
+                if (dragging) {
+                    var diffX = event.pageX - dragging.pageX,
+                        scrollX = diffX * dragging.scrollSize,
+                        scrollLeft = dragging.scrollLeft + (dragging.mode == 'opposite' ? -scrollX : scrollX);
+
+                    $grid[0].scrollLeft =
+                        Math.min(scrollLeft, dragging.scrollMax);
+                        
+                    /*
+                    if (typeof dragging.pageY !== 'undefined') {
+                        var diffY = event.pageY - dragging.pageY,
+                            scrollTop = dragging.scrollTop + (dragging.mode == 'opposite' ? -diffY : diffY);
+
+                        $body[0].scrollTop = scrollTop;
+                    }
+                    */
+                    
+                    event.preventDefault();
+                    return false;
+                }
+            });
+            
+        // setup resize handlers
+        
+        $(window).resize(function() {
+            initialize();
+        });
+
+        setTimeout(initialize, 250);
+        initTemplateOptionLinks();
+    };
     function getInstrumentationUpdates () {
         $('#loadingIndicator').show();
 
@@ -1186,6 +1424,7 @@
 		$(".accordion").accordion({ header: "h3", active: false, collapsible: true });
 		$(".button").button();
 		$(".buttonset").buttonset();
+		$("a.button.disabled").button("disable");
 
 		/* Dashboard */
         if ( $("#dashboard-container").length ) {
@@ -1231,6 +1470,10 @@
         if ( $("#instrumentation-container").length ) {
             initInstrumentationOptions();
             setInterval(getInstrumentationUpdates, 15000);
+        }
+        /* Timelapse */
+        if ( $("#timelapse-container").length ) {
+            initTimelapseOptions();
         }
         /* Template Info */
         if ( $("#template-info-container").length ) {

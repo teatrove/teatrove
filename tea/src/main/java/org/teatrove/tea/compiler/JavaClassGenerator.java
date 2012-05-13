@@ -1888,13 +1888,15 @@ public class JavaClassGenerator extends CodeGenerator {
             // get associated types
             Type ltype = left.getType();
             Type rtype = right.getType();
+            Class<?> clazz = 
+            ltype.getCompatibleType(rtype).getNaturalClass();
 
             // create local variables
             generate(left);
             LocalVariable lvar = 
                 mBuilder.createLocalVariable(null, makeDesc(ltype));
             mBuilder.storeLocal(lvar);
-            
+        
             generate(right);
             LocalVariable rvar =
                 mBuilder.createLocalVariable(null, makeDesc(rtype));
@@ -2886,6 +2888,34 @@ public class JavaClassGenerator extends CodeGenerator {
                     
                     mBuilder.ifZeroComparisonBranch(label, choice);
                 }
+                else if (Number.class.isAssignableFrom(clazz)) {
+                    // numbers must be converted down to primitives to be
+                    // compared...this is potentially dangerous as we are
+                    // converting types
+                    // TODO: include a warning to the compiler
+                    
+                    Method doubleMethod = 
+                        getMethod(Number.class, "doubleValue");
+                    
+                    generate(left);
+                    mBuilder.invoke(doubleMethod);
+                    generate(right);
+                    mBuilder.invoke(doubleMethod);
+                    setLineNumber(operator.getSourceInfo());
+                    
+                    byte op;
+                    int ID = operator.getID();
+                    if (ID == Token.LT || ID == Token.LE ||
+                        ID == Token.EQ) {
+                        op = Opcode.DCMPG;
+                    }
+                    else {
+                        op = Opcode.DCMPL;
+                    }
+                    
+                    mBuilder.math(op);
+                    mBuilder.ifZeroComparisonBranch(label, choice);
+                }
                 else {
                     throw new RuntimeException("Can't do " + choice +
                                                " for type " + leftType);
@@ -2895,7 +2925,7 @@ public class JavaClassGenerator extends CodeGenerator {
             // otherwise, handle purely primitive comparisons
             else {
                 if (clazz == int.class) {
-                    if (right.isValueKnown()) {
+                    if (right.isValueKnown() && right.getValue() != null) {
                         int value = ((Integer)right.getValue()).intValue();
                         if (value == 0) {
                             generate(left);
@@ -2903,7 +2933,7 @@ public class JavaClassGenerator extends CodeGenerator {
                             return;
                         }
                     }
-                    else if (left.isValueKnown()) {
+                    else if (left.isValueKnown() && left.getValue() != null) {
                         int value = ((Integer)left.getValue()).intValue();
                         if (value == 0) {
                             generate(right);

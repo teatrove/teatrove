@@ -317,6 +317,10 @@ article section .ui-widget {
 	margin-bottom: 5px;
 }
 
+article section .buttonset {
+    white-space: nowrap;
+}
+
 #reload-container { 
     clear: both;
     padding-top: 10px; 
@@ -324,6 +328,7 @@ article section .ui-widget {
 
 article section .controls {
 	clear: both;
+	float: right;
 }
 article section .controls-wrapper {
 	
@@ -366,7 +371,7 @@ article section .signature {
     font-size: inherit;
 }
 .stathead, .stathead td, .stathead th {
-    background: url(data:image/gif;base64,R0lGODlhGQAZAIQVAEJCQkNDQ0REREVFRUZGRkdHR0hISElJSUpKSktLS0xMTE1NTU5OTk9PT1BQUFFRUVJSUlNTU1RUVFVVVVZWVv///////////////////////////////////////////yH5BAEKAB8ALAAAAAAZABkAAAWRYCCOZGmSQKqubOu+MCvMdG3feK7bQ+//wOCPQCwaj0hjYclsOp9Ng3RKrVqph6x2y+1uEeCweEwWJ87otHqdVrjf8Lgcvqjb7/j8ncHv+/+Afg2DhIWGh4UOiouMjY6MD5GSk5SVkxCYmZqbnJoRn6ChoqOhEqanqKmqqBOtrq+wsbKztLAUt7i5uru8vb66IQA7) repeat-x scroll 0 0 transparent !important;
+    background: url(data:image/gif;base64,R0lGODlhGQAZAIQVAEJCQkNDQ0REREVFRUZGRkdHR0hISElJSUpKSktLS0xMTE1NTU5OTk9PT1BQUFFRUVJSUlNTU1RUVFVVVVZWVv///////////////////////////////////////////yH5BAEKAB8ALAAAAAAZABkAAAWRYCCOZGmSQKqubOu+MCvMdG3feK7bQ+//wOCPQCwaj0hjYclsOp9Ng3RKrVqph6x2y+1uEeCweEwWJ87otHqdVrjf8Lgcvqjb7/j8ncHv+/+Afg2DhIWGh4UOiouMjY6MD5GSk5SVkxCYmZqbnJoRn6ChoqOhEqanqKmqqBOtrq+wsbKztLAUt7i5uru8vb66IQA7) repeat-x scroll 0 0 #545454 !important;
     color: #FFFFFF !important;
     height: 18px;
     font-family: helvetica,arial,sans-serif;
@@ -773,6 +778,11 @@ table .template-name {
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAJFSURBVHjaYvz//z8DJQAggJgYKAQAAcSCTTD/YEr2vz9/c//+/af+989fBiC++efP38kLglZNRVcLEECMyF4oPJwq9e/vv42SnFImUtxSDJysXAx///1j+PTjE8P9Nw8YHry8f+bPnz/+qxO2PIPpAQggFC8Abdwox61goiKgysDIyMzw5+8foAF/GZiYmBjUxNUYFEWVTP78+rMRWQ9AAMENyNufnC3BIWkiyyvH8AeoCegShtuvbzPcenGLAWgr2CB5MXkGSSEpE48JjtkwfQABBDcA6M9cCS5Jhu+/vwHxD4a9N/f8u/HsZvONpzead1/Y8+/Tj89gF0mLyjAAXZEL0wcQQPBABAaSOjszB8O//38Z7r25y/Dn99/WZVHr60By/jPcv+49vacDKAZ2DZBWh+kDCCC4AX9/A535/w840P6CFf2B+/P3rz8d2/L2MmKLMYAAgnsBaOrNj98+Mnz99ZVBXEASpKnad5rrMojcHwanDmusKQ4ggJAM+DP5ATCqmIGhzwi0y97AgUlSSDLStcfuv6SIFIOkmBSDVZ0JhiEAAYSSDkLmeZ+WE5U3kROXY/gKDExWJlaGf8DQ/wtUAwqbi1cuMdy7e5/hXM9luHcAAgglHfz+/cf/5sNbZ67cucLw/fsPcKj/Bhrw599vMBsY0CCvorgAIIAYsWUm5y6bbKDCjL+//+qAQl1KUhqYyP4y3AfafmnidZTABAggRmJyo0GRzn9Qnrg86TpGTAAEEAsxOQ4UxZcn38AajQABBgDmDSSSJTnd0QAAAABJRU5ErkJggg%3D%3D) !important;
 }
 
+#instrumentation-container table.tablehead th,
+#instrumentation-container table.tablehead td {
+    white-space: normal !important;
+}
+
 table .stress-text {
     font-size: 14px;
     color: #999;
@@ -1052,6 +1062,112 @@ table .stress-percentage-bar.red {
     width: 33%;
 }
 
+#buttonset-timeframe, #buttonset-zoom { margin-right: 30px; }
+
+#timelapse-container { padding-top: 10px; }
+    
+#timelapse-container .grid-lhn { float: left; width: 200px; overflow: hidden; white-space: nowrap; margin-right: 1px; }
+#timelapse-container .grid-lhn .header { color: white; height: 48px; border-bottom: 1px solid white; }
+#timelapse-container .grid-lhn .header .template { padding-left: 5px; font-size: 12px; font-weight: bold; }
+#timelapse-container .grid-lhn .placeholder { background-color: silver; height: 23px; border-bottom: 1px solid white; }
+#timelapse-container .grid-lhn .row { background-color: #c0c0c0; padding-left: 5px; font-size: 12px; font-weight: bold; border-bottom: 1px solid white; text-transform: none !important; }
+#timelapse-container .grid-lhn .row .template { padding: 5px 0; }
+#timelapse-container .grid-lhn .row .template .template-options { display: none; margin: -1px 4px 0 2px; }
+#timelapse-container .grid-lhn .row .template:hover .template-options { display: block; }
+#timelapse-container .grid-lhn .row .template a { display: block; color: white; text-decoration: none; }
+#timelapse-container .grid-lhn .row .template .path { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; }
+#timelapse-container .grid-lhn .row .template .name { display: block; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; }
+    
+#timelapse-container .grid { width: 0px; overflow-x: hidden; overflow-y: hidden; position: relative; }
+#timelapse-container .grid .header { color: white; height: 24px; position: relative; text-transform: none !important; }
+#timelapse-container .grid .header .metric { text-align: left; }
+#timelapse-container .grid .metric { position: absolute; height: 24px; line-height: 24px; font-size: 12px; font-weight: bold; text-align: center; }
+#timelapse-container .grid .row { position: relative; border-bottom: 1px solid white; text-transform: none !important; }
+#timelapse-container .grid div.row:nth-child(even) { background-color: #efefef; }
+#timelapse-container .grid div.row:nth-child(odd) { background-color: white; }
+#timelapse-container .grid div.row:hover { background-color: #f5f5f5; }
+#timelapse-container .grid .process { height: 18px; border-radius: 5px; position: absolute; }
+#timelapse-container .grid .process:hover {  }
+#timelapse-container .grid .process .value { display: block; font-size: 11px; text-align: center; color: white; font-weight: bold; white-space: nowrap; overflow: hidden; }
+#timelapse-container .grid .process.low { 
+    border: 1px solid darkGreen; 
+    background-color: lightGreen;
+    background-image: -moz-linear-gradient(top, lightGreen, darkGreen);
+    background-image: -ms-linear-gradient(top, lightGreen, darkGreen);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(lightGreen), to(darkGreen));
+    background-image: -webkit-linear-gradient(top, lightGreen, darkGreen);
+    background-image: -o-linear-gradient(top, lightGreen, darkGreen);
+    background-image: linear-gradient(top, lightGreen, darkGreen);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='lightGreen', endColorstr='darkGreen', GradientType=0);
+}
+#timelapse-container .grid .process.medium { 
+    border: 1px solid #FFC40D; 
+    background-color: yellow;
+    background-image: -moz-linear-gradient(top, yellow, #FFC40D);
+    background-image: -ms-linear-gradient(top, yellow, #FFC40D);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(yellow), to(#FFC40D));
+    background-image: -webkit-linear-gradient(top, yellow, #FFC40D);
+    background-image: -o-linear-gradient(top, yellow, #FFC40D);
+    background-image: linear-gradient(top, yellow, #FFC40D);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='yellow', endColorstr='#FFC40D', GradientType=0); 
+}
+#timelapse-container  .grid .process.high { 
+    border: 1px solid #9d261d; 
+    background-color: red;
+    background-image: -moz-linear-gradient(top, red, #9d261d);
+    background-image: -ms-linear-gradient(top, red, #9d261d);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(red), to(#9d261d));
+    background-image: -webkit-linear-gradient(top, red, #9d261d);
+    background-image: -o-linear-gradient(top, red, #9d261d);
+    background-image: linear-gradient(top, red, #9d261d);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='red', endColorstr='#9d261d', GradientType=0); 
+}
+
+#timelapse-container .grid div.scrollbar { height: 24px; border-bottom: 1px solid white; background-color:#efefef; position: relative; }
+#timelapse-container .grid div.scrollbar div.scroller { 
+    position: absolute; 
+    top: 2px; 
+    left: 0;
+    width: 0;
+    height: 16px; 
+    line-height:16px;
+    padding: 1px;
+    font-size: 11px; 
+    text-align: center;
+    border: 1px solid #9d261d; 
+    border:1px solid silver;
+    background-color: #ccc; 
+    background-image: -moz-linear-gradient(top, white, #ccc);
+    background-image: -ms-linear-gradient(top, white, #ccc);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(white), to(#ccc));
+    background-image: -webkit-linear-gradient(top, white, #ccc);
+    background-image: -o-linear-gradient(top, white, #ccc);
+    background-image: linear-gradient(top, white, #ccc);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='white', endColorstr='#cccccc', GradientType=0);
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;             
+}
+#timelapse-container .grid div.scrollbar div.scroller:hover { 
+    background-color: #999;
+    background-image: -moz-linear-gradient(top, white, #999);
+    background-image: -ms-linear-gradient(top, white, #999);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(white), to(#999));
+    background-image: -webkit-linear-gradient(top, white, #999);
+    background-image: -o-linear-gradient(top, white, #999);
+    background-image: linear-gradient(top, white, #999);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='white', endColorstr='#999999', GradientType=0);
+}
+
+.timer { display: none; z-index: 501; text-align: center; font-weight: bold; line-height: 22px; height: 22px; position: absolute; top: 1px; width: 50px; -webkit-border-radius: 5px; -moz-border-radius: 5px; border-radius: 5px; font-size: 10px; background-color: #e0e0e0; color: black; }
+        
+#grid-tracker { display: none; z-index: 500; position: absolute; top: -1; left: -1; width: 1px; height: 0; border-right: 1px solid red; }
+        
 /* Footer */
 footer {
     z-index: 1;
