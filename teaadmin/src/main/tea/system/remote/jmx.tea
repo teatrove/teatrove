@@ -171,7 +171,15 @@
         "total" : <% threadMXBean.totalStartedThreadCount %>,
         "daemon" : <% threadMXBean.daemonThreadCount %>,
         "threads" : [
-            <% foreach (thread in threadInfos) { %>
+            <% 
+                cpuTimes = 0L; userTimes = 0L;
+                foreach (thread in threadInfos) {
+                    cpuTime = threadMXBean.getThreadCpuTime(thread.threadId)
+                    userTime = threadMXBean.getThreadUserTime(thread.threadId)
+                    
+                    cpuTimes = cpuTimes + cpuTime
+                    userTimes = userTimes + userTime
+            %>
                 {
                     "id" : <% thread.threadId %>,
                     "name" : "<% thread.threadName %>",
@@ -185,13 +193,20 @@
                         "count" : <% thread.waitedCount %>
                     },
                     "time" : {
-                        "cpu" : <% threadMXBean.getThreadCpuTime(thread.threadId) %>,
-                        "user" : <% threadMXBean.getThreadUserTime(thread.threadId) %>
+                        "cpu" : <% cpuTime %>,
+                        "user" : <% userTime %>
                     }
                 },
             <% } %>
             null
-        ]
+        ],
+        "aggregate" : {
+            "time" : {
+                "cpu" : <% cpuTimes %>,
+                "user" : <% userTimes %>,
+                "total" : <% cpuTimes + userTimes %>
+            }
+        }
     },
     "compiler" : {
         "name" : "<% compilationMXBean.name %>",

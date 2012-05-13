@@ -11,9 +11,15 @@ import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
+import javax.management.MBeanInfo;
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import org.teatrove.teaapps.Context;
 import org.teatrove.teaapps.ContextConfig;
@@ -76,6 +82,10 @@ public class JMXContext implements Context {
         if (permGen != null) {
             this.permGen = new String[] { permGen };
         }
+        
+        // enable contention
+        getThreadMXBean().setThreadCpuTimeEnabled(true);
+        getThreadMXBean().setThreadContentionMonitoringEnabled(true);
     }
     
     /**
@@ -505,5 +515,102 @@ public class JMXContext implements Context {
      */
     public void setThreadCpuTimeEnabled(boolean enable) {
         ManagementFactory.getThreadMXBean().setThreadCpuTimeEnabled(enable);
+    }
+    
+    public Collection<MBeanEntry> getMBeans() {
+        Set<ObjectName> mbeans =
+            ManagementFactory.getPlatformMBeanServer().queryNames(null, null);
+        
+        MBeanEntry root = new MBeanEntry(null);
+        for (ObjectName mbean : mbeans) {
+            String domain = mbean.getDomain();
+            MBeanEntry current = root.getOrCreateEntry(domain);
+            
+            String[] properties = mbean.getKeyPropertyListString().split(",");
+            for (int i = 0; i < properties.length - 1; i++) {
+                String[] parts = properties[i].split("=");
+                String property = (parts.length == 2 ? parts[1] : properties[i]);
+                current = current.getOrCreateEntry(property);
+            }
+            
+            String name = properties[properties.length - 1];
+            String[] parts = name.split("=");
+            String property = (parts.length == 2 ? parts[1] : name);
+            
+            current.addEntry(name, new MBeanEntry(property, mbean));
+        }
+        
+        return root.getEntries();
+    }
+    
+    public MBeanInfo getMBeanInfo(String name) 
+        throws Exception {
+        
+        return getMBeanInfo(ObjectName.getInstance(name));
+    }
+    
+    public MBeanInfo getMBeanInfo(ObjectName name) 
+        throws Exception {
+        
+        return ManagementFactory.getPlatformMBeanServer().getMBeanInfo(name);
+    }
+    
+    public Object getMBeanAttribute(String name, String attribute)
+        throws Exception {
+        
+        return getMBeanAttribute(ObjectName.getInstance(name), attribute);
+    }
+    
+    public Object getMBeanAttribute(ObjectName name, String attribute)
+        throws Exception {
+        
+        return ManagementFactory.getPlatformMBeanServer()
+            .getAttribute(name, attribute);
+    }
+    
+    public static class MBeanEntry {
+        private String name;
+        private ObjectName objectName;
+        private SortedMap<String, MBeanEntry> entries =
+            new TreeMap<String, MBeanEntry>();
+        
+        public MBeanEntry(String name) {
+            this.name = name;
+        }
+        
+        public MBeanEntry(String name, ObjectName objectName) {
+            this.name = name;
+            this.objectName = objectName;
+        }
+        
+        public boolean isMBean() {
+            return this.objectName != null;
+        }
+        
+        public String getName() {
+            return this.name;
+        }
+        
+        public ObjectName getObjectName() {
+            return this.objectName;
+        }
+        
+        public Collection<MBeanEntry> getEntries() {
+            return this.entries.values();
+        }
+        
+        public MBeanEntry getOrCreateEntry(String name) {
+            MBeanEntry entry = this.entries.get(name);
+            if (entry == null) {
+                entry = new MBeanEntry(name);
+                this.entries.put(name, entry);
+            }
+            
+            return entry;
+        }
+        
+        public void addEntry(String name, MBeanEntry entry) {
+            this.entries.put(name, entry);
+        }
     }
 }

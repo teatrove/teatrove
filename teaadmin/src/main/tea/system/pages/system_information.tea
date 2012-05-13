@@ -4,51 +4,13 @@
 
 TODO:
 - cleanup handling of tooltip
-- add tabs (Threads, MBeans, Information)
-- media queries (if width < 1200, width: 50% vs 33%; if width < 600, width: 100%;)
-    
-    
-    Threads
-    --------------------
-    
-    Name        Time    State
-    Thread 1    30%     [____][__________][__]
-    Thread 2    10%     [__________][__________]
-    Thread 3
-    Thread 4
-    Thread 5
-    Thread 6
+- sortable threads
+- use timelapse view for threads (name, pie chart [user, cpu, block, wait], graph)
+- thread stacktrace and refresh
+- timeouts when offline to show not connected
+- move scripts to script core
 
-
-
-    Thread Info
-    --------------------
     
-    Thread 1        30%         Running
-    Name           Time           Sttas
-    
-    Stack Trace (Refresh)
-
-
-    System Info
-    --------------------
-    
-    
-    
-    
-    MBeans
-    --------------------
-    
-    MBeans          Attributes   |   Operations   |   Metadata
-    
-    + JMImple       Name            Value
-    
-                    Value           6
-                    
-                    
-                    
-                    void dumpHeap ( p0 [_____] , p1 [_____] )
-
 */
 
 
@@ -81,7 +43,7 @@ TODO:
         <div class="controls">
             <div class="controls-wrapper">
                 <div id="loadingIndicator"></div>
-                <div id="buttonset-tabs" class="buttonset">
+                <div id="buttonset-tabs" class="buttonset" style="width:100%;">
                     <input type="radio" id="tabs_overview" name="radio" value="overview" <% tab == 'overview' ? 'checked="checked"' : '' %> /><label for="tabs_overview">Overview</label>
                     <input type="radio" id="tabs_memory" name="radio" value="memory" <% tab == 'memory' ? 'checked="checked"' : '' %> /><label for="tabs_memory">Memory</label>
                     <input type="radio" id="tabs_threads" name="radio" value="threads" <% tab == 'threads' ? 'checked="checked"' : '' %> /><label for="tabs_threads">Threads</label>
@@ -155,17 +117,19 @@ TODO:
         </div>
     </section>
     
-    <div id="system-info-overview" class="ui-active system-info-tab" style="display: <% tab == 'overview' ? 'block' : 'none' %>;">
+    <div id="system-info-overview" class="system-info-tab <% tab == 'overview' ? 'ui-active' : '' %>" style="display: <% tab == 'overview' ? 'block' : 'none' %>;">
         <% call system.format.getSystemInfoOverview(); %>
     </div>
-    <div id="system-info-memory" class="system-info-tab" style="display: <% tab == 'memory' ? 'block' : 'none' %>;">
+    <div id="system-info-memory" class="system-info-tab <% tab == 'memory' ? 'ui-active' : '' %>" style="display: <% tab == 'memory' ? 'block' : 'none' %>;">
         <% call system.format.getSystemInfoMemory(); %>
     </div>
-    <div id="system-info-threads" class="system-info-tab" style="display: <% tab == 'threads' ? 'block' : 'none' %>;">
+    <div id="system-info-threads" class="system-info-tab <% tab == 'threads' ? 'ui-active' : '' %>" style="display: <% tab == 'threads' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfoThreads(); %>
     </div>
-    <div id="system-info-mbeans" class="system-info-tab" style="display: <% tab == 'mbeans' ? 'block' : 'none' %>;">
+    <div id="system-info-mbeans" class="system-info-tab <% tab == 'mbeans' ? 'ui-active' : '' %>" style="display: <% tab == 'mbeans' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfoMBeans(); %>
     </div>
-    <div id="system-info-info" class="system-info-tab" style="display: <% tab == 'info' ? 'block' : 'none' %>;">
+    <div id="system-info-info" class="system-info-tab <% tab == 'info' ? 'ui-active' : '' %>" style="display: <% tab == 'info' ? 'block' : 'none' %>;">
         <% call system.format.getSystemInfo(); %>
     </div>
 </article>

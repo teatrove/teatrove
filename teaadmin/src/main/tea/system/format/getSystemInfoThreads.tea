@@ -1,0 +1,150 @@
+<% template getSystemInfoThreads()
+
+/*
+
+    Threads
+    --------------------
+    
+    Name        Time    State
+    Thread 1    30%     [____][__________][__]
+    Thread 2    10%     [__________][__________]
+    Thread 3
+    Thread 4
+    Thread 5
+    Thread 6
+
+
+
+    Thread Info
+    --------------------
+    
+    Thread 1        30%         Running
+    Name           Time           Sttas
+    
+    Stack Trace (Refresh)
+
+*/
+
+threadMXBean = getThreadMXBean();
+threads = threadMXBean.getThreadInfo(threadMXBean.allThreadIds, true, true)
+
+%>
+
+<section>
+    <table cellspacing="1" cellpadding="3" class="tablehead">
+    <thead>
+        <tr class="stathead">
+            <th colspan="12">Threads</th>
+        </tr>
+        <tr class="colhead">
+            <th class="left-align">Name</th>
+            <th>CPU Time</th>
+            <th>User Time</th>
+            <th class="left-align">State</th>
+        </tr>
+    </thead>
+    <tbody>
+    <% 
+        numberFormat('0');
+        // new = black, run = green, blocked = red, waiting =yellow, timed wait = yellow, terminated = white 
+        colors = #( 'black', 'green', 'red', 'yellow', 'yellow', 'white' );
+        foreach (idx in 0..threads.length - 1) { 
+            thread = threads[idx];
+            state = thread.threadState.ordinal()
+            
+            waitedTime = thread.waitedTime
+            blockedTime = thread.blockedTime
+            cpuTime = threadMXBean.getThreadCpuTime(thread.threadId) / 1000000.0
+            userTime = threadMXBean.getThreadUserTime(thread.threadId) / 1000000.0
+            
+            totalTime = waitedTime + blockedTime + cpuTime + userTime;
+            if (totalTime == 0) { totalTime = 1 }
+    %>
+
+            <tr id="thread-<% thread.threadId %>" class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                <td style="white-space: normal !important;">
+                    <a style="padding:4px; font-size: 14px; font-weight: bold;" href="#"><% thread.threadName %></a>
+                    <div style="margin-top:24px;">
+                        <div style="padding:4px 10px 4px 4px; float: left; line-height:16px;">Thread State</div>
+                        <div style="width:40%;height:16px;margin:4px;float:left;">
+                            <div title="blocked <% thread.blockedCount %> times for <% blockedTime %> ms" style="float:left;width:<% blockedTime / totalTime * 100 %>%;height:16px;background-color:red;"></div>
+                            <div title="waited <% thread.waitedCount %> times for <% waitedTime %> ms" style="float:left;width:<% waitedTime / totalTime * 100%>%;height:16px;background-color:yellow;"></div>
+                            <div title="user time: <% userTime %> ms" style="float:left;width:<% userTime / totalTime * 100 %>%;height:16px;background-color:green;"></div>
+                            <div title="CPU time <% cpuTime %> ms" style="float:left;width:<% cpuTime / totalTime * 100 %>%;height:16px;background-color:orange;"></div>
+                            <br class="clear" />
+                        </div>
+                        <br class="clear" />
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div style="float:left;width:16px;height:16px;background-color:yellow;margin: 4px;"></div>
+                        <div style="float:left;line-height:24px;padding-right:16px;">Blocked (<% blockedTime / totalTime * 100 %>%)</div>
+                        
+                        <div style="float:left;width:16px;height:16px;background-color:red;margin: 4px;"></div>
+                        <div style="float:left;line-height:24px;padding-right:16px;">Waited (<% waitedTime / totalTime * 100 %>%)</div>
+                        
+                        <div style="float:left;width:16px;height:16px;background-color:green;margin: 4px;"></div>
+                        <div style="float:left;line-height:24px;padding-right:16px;">User Time (<% userTime / totalTime * 100 %>%)</div>
+                        
+                        <div style="float:left;width:16px;height:16px;background-color:orange;margin: 4px;"></div>
+                        <div style="float:left;line-height:24px;padding-right:16px;">CPU Time (<% cpuTime / totalTime * 100 %>%)</div>
+                    </div>
+                </td>
+                <td><span id="thread-<% thread.threadId %>-cputime"><% call system.util.getFormattedDuration(cpuTime) %></span></td>
+                <td><span id="thread-<% thread.threadId %>-usertime"><% call system.util.getFormattedDuration(userTime) %></span></td>
+                <td style="width: 650px;"><div class="thread-state"><div style="float: left; margin: 4px; width: 16px; height: 16px; background-color: <% colors[state] %>; border: 1px solid #333; border-radius: 3px;"></div><br class="clear " /></div></td>
+            </tr>
+            <tr style="display: none;">
+                <td colspan="4">
+                    State: <% thread.threadState.name() %>
+                    <% if (thread.threadState.ordinal() >= 2) { %>
+                         on <% thread.lockInfo %>
+                    <% } %><br />
+                    Blocked <% thread.blockedCount %> times, <% call system.util.getFormattedDuration(thread.blockedTime) %><br />
+                    Waited <% thread.waitedCount %> times, <% call system.util.getFormattedDuration(thread.waitedTime) %><br />
+                    <br />
+                    Stack Trace:<br />
+                    <% foreach (stack in thread.stackTrace) { %>
+                        <% stack %><br />
+                    <% } %> 
+                </td>
+            </tr>
+            
+        <% 
+            } 
+        %>
+    </tbody>
+    </table>
+</section>
+
+<script type="text/javascript">
+
+    var colors = [ 'black', 'green', 'red', 'yellow', 'yellow', 'white' ];
+
+    $(function() {
+        addDataListener(function(json) {
+            for (var i = 0; i < json.threads.threads.length; i++) {
+                var thread = json.threads.threads[i];
+                if (!thread || thread.id < 0) { continue; }
+                
+                var $state = $('#thread-' + thread.id + ' div.thread-state');
+                var $result = $('<div style="float: left; display: block; opacity: 0; margin: 4px; width: 0px; height: 16px; background-color: ' + colors[thread.state] + '; border: 1px solid #333; border-radius: 3px;"></div>'); 
+                $state.prepend($result);
+                $result.animate({opacity:1.0, width: 16}, 500);
+                
+                $divs = $state.children('div');
+                if ($divs.length > 100) {
+                    $($divs[$divs.length - 1]).remove();
+                }
+                
+                var cpuPct = thread.time.cpu / json.threads.aggregate.time.cpu * 100.0;
+                $('#thread-' + thread.id + '-cputime').text(formatDuration((thread.time.cpu / 1000000.0).toFixed(0)) + ' (' + cpuPct.toFixed(1) + '%)');
+                
+                var userPct = thread.time.user / json.threads.aggregate.time.user * 100.0;
+                $('#thread-' + thread.id + '-usertime').text(formatDuration((thread.time.user / 1000000.0).toFixed(0)) + ' (' + userPct.toFixed(1) + '%)');
+            }
+        });
+        
+    // TODO: add horizontal padding for extinquished threads and hilite 
+    });
+
+</script>

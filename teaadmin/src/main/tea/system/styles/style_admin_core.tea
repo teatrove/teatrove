@@ -1032,6 +1032,88 @@ table .stress-percentage-bar.red {
     top: 10px !important;
 }
 
+.system-overview-graph {
+    float: left; height: 350px; padding-bottom: 20px;
+}
+
+@media (min-width: 1600px) {
+    .system-overview-graph { width: 33% !important; }
+}
+
+@media (min-width: 1000px) and (max-width: 1599px) {
+    .system-overview-graph { width: 50% !important; }
+}
+
+@media (min-width: 0px) and (max-width: 999px) {
+    .system-overview-graph { width: 100% !important; }
+}
+
+.system-overview-graph > div {
+    padding: 0 15px 15px 15px;
+}
+
+.system-overview-graph .title {
+    float: left; 
+    padding: 0 0 10px 0; 
+    font-weight: bold; 
+    color: #333;
+    font-size: 16px; 
+    text-align: left;
+}
+
+.system-overview-graph .info {
+    float: right; 
+    font-size: 13px; 
+    color: #555; 
+    margin-top: 10px;
+    text-align: right;
+}
+
+.system-overview-graph .graph {
+    height: 300px;
+}
+
+.system-memory-graph {
+    float: left;
+}
+
+@media (min-width: 1000px) {
+    .system-memory-graph { width: 50% !important; }
+}
+
+@media (min-width: 0px) and (max-width: 999px) {
+    .system-memory-graph { width: 100% !important; }
+}
+
+.system-memory-graph > div {
+    padding: 0 15px 15px 15px;
+}
+
+.system-memory-graph .title {
+    float: left; 
+    padding: 0 0 10px 0; 
+    font-weight: bold; 
+    color: #333;
+    font-size: 16px; 
+    text-align: left;
+}
+
+.system-memory-graph .info {
+    float: right; 
+    font-size: 13px; 
+    color: #555; 
+    margin-top: 10px;
+    text-align: right;
+}
+
+.system-memory-graph .graph {
+    width: 100%;
+}
+
+#memory-spaces { height: 700px; }
+#young-collector, #tenured-collector { height: 100px; }
+#eden-usage, #oldgen-usage { height: 170px; }
+
 #system-info-snapshot {
     margin-bottom: 16px;
 }

@@ -2,68 +2,57 @@
 
 pathPrefix = call system.util.getPathPrefix();
 
-classLoadingMXBean = getClassLoadingMXBean();
-compilationMXBean = getCompilationMXBean();
-garbageCollectorMXBean = getGarbageCollectorMXBeans();
-memoryManagerMXBean = getMemoryManagerMXBeans();
-memoryMXBean = getMemoryMXBean();
-memoryPoolMXBean = getMemoryPoolMXBeans();
-operatingSystemMXBean = getOperatingSystemMXBean();
-platformMBeanServer = getPlatformMBeanServer();
-runtimeMXBean = getRuntimeMXBean();
 threadMXBean = getThreadMXBean();
-tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
+memoryMXBean = getMemoryMXBean();
+runtimeMXBean = getRuntimeMXBean();
+classLoadingMXBean = getClassLoadingMXBean();
+operatingSystemMXBean = getOperatingSystemMXBean();
 
 %>
 
 <section>
-    <div style="float: left; width: 33%; height: 350px; min-width: 500px;">
-        <div style="padding: 0 15px;">
+    <div class="system-overview-graph">
+        <div>
             <div>
-                <div style="float: left; padding: 0 0 10px 0; font-weight: bold; color: #333; font-size: 16px; text-align: left;">Heap Usage</div>
-                <div style="float: right; font-size: 13px; color: #555; margin-top: 10px; text-align: right;">
+                <div class="title">Heap Usage</div>
+                <div class="info">
                     <% numberFormat('0.0') %>
-                    <%/*
-                    <span id="oldgen-memory-used"><% tenuredMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="oldgen-memory-committed"><% tenuredMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
-                    max: <span id="oldgen-memory-max"><% tenuredMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
-                    peak: <span id="oldgen-memory-peak"><% tenuredMemoryMXBean.peakUsage.used / 1024.0 / 1024.0 %></span> MB
-                    */%>
                     <span id="heap-memory-used"><% memoryMXBean.heapMemoryUsage.used / 1024.0 / 1024.0 %></span> MB of <span id="heap-memory-committed"><% memoryMXBean.heapMemoryUsage.committed / 1024.0 / 1024.0 %></span> MB, 
-                    max: <span id="heap-memory-max"><% memoryMXBean.heapMemoryUsage.max / 1024.0 / 1024.0 %></span> MB,
+                    max: <span id="heap-memory-max"><% memoryMXBean.heapMemoryUsage.max / 1024.0 / 1024.0 %></span> MB
                 </div>
                 <br class="clear" />
             </div>
-            <div id="heapUsage" style="height: 300px;"></div>
+            <div id="heap-usage" class="graph"></div>
         </div>
     </div>
     
-    <div style="float: left; width: 34%; height: 350px; min-width: 500px;">
-        <div style="padding: 0 15px;">
+    <div class="system-overview-graph">
+        <div>
             <div>
-                <div style="float: left; padding: 0 0 10px 0; font-weight: bold; color: #333; font-size: 16px; text-align: center;">Classes</div>
-                <div style="float: right; font-size: 13px; color: #555; margin-top: 10px; text-align: right;">
+                <div class="title">Classes</div>
+                <div class="info">
                     <% numberFormat('0') %>
                     <span id="classes-loaded"><% classLoadingMXBean.loadedClassCount %></span> classes loaded,
                     <span id="classes-unloaded"><% classLoadingMXBean.unloadedClassCount %></span> classes unloaded
                 </div>
                 <br class="clear" />
             </div>
-            <div id="classUsage" style="height: 300px;"></div>
+            <div id="class-usage" class="graph"></div>
         </div>
     </div>
     
-    <div style="float: left; width: 33%; height: 350px; min-width: 500px;">
-        <div style="padding: 0 15px;">
+    <div class="system-overview-graph">
+        <div>
             <div>
-                <div style="float: left; padding: 0 0 10px 0; font-weight: bold; color: #333; font-size: 16px; text-align: center;">Threads</div>
-                <div style="float: right; font-size: 13px; color: #555; margin-top: 10px; text-align: right;">
+                <div class="title">Threads</div>
+                <div class="info">
                     <span id="threads-live"><% threadMXBean.threadCount %></span> live threads (<span id="threads-peak"><% threadMXBean.peakThreadCount %></span> peak), 
                     <span id="threads-daemon"><% threadMXBean.daemonThreadCount %></span> daemon threads, 
                     <span id="threads-started"><% threadMXBean.totalStartedThreadCount %></span> total started
                 </div>
                 <br class="clear" />
             </div>
-            <div id="threadUsage" style="height: 300px;"></div>
+            <div id="thread-usage" class="graph"></div>
         </div>
     </div>
     
@@ -173,7 +162,7 @@ tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
         });
             
         initChart(
-            $('#heapUsage'), 
+            $('#heap-usage'), 
             'line',
             function(y) {
                 return (y / 1024 / 1024).toFixed(1) + ' MB';
@@ -195,7 +184,7 @@ tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
         );
     
         initChart(
-            $('#classUsage'),
+            $('#class-usage'),
             'line', 
             function(y) { return y.toFixed(0); },
             function(options) {
@@ -210,7 +199,7 @@ tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
         );
         
         initChart(
-            $('#threadUsage'),
+            $('#thread-usage'),
             'line', 
             function(y) { return y.toFixed(0); },
             function(options) {

@@ -190,7 +190,9 @@ public class Variable extends Node {
         // a new one gets created)...this helps to ensure that the generic
         // types are passed through when the type checker re-checks.
         // this mimics the functionality in TypeChecker check(TypeName)
-        if (type.getGenericClass() instanceof ParameterizedType) {
+        if (type != null &&
+            type.getGenericClass() instanceof ParameterizedType) {
+            
             ParameterizedType ptype =
                 (ParameterizedType) type.getGenericClass();
             genericTypes = new TypeName[ptype.getActualTypeArguments().length];

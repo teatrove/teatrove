@@ -2,63 +2,58 @@
 
 pathPrefix = call system.util.getPathPrefix();
 
-classLoadingMXBean = getClassLoadingMXBean();
-compilationMXBean = getCompilationMXBean();
-garbageCollectorMXBean = getGarbageCollectorMXBeans();
-memoryManagerMXBean = getMemoryManagerMXBeans();
-memoryMXBean = getMemoryMXBean();
-memoryPoolMXBean = getMemoryPoolMXBeans();
-operatingSystemMXBean = getOperatingSystemMXBean();
-platformMBeanServer = getPlatformMBeanServer();
-runtimeMXBean = getRuntimeMXBean();
-threadMXBean = getThreadMXBean();
 youngCollectorMXBean = getYoungCollectorMXBean()
 tenuredCollectorMXBean = getTenuredCollectorMXBean()
 edenMemoryMXBean = getEdenMemoryPoolMXBean()
-survivorMemoryMXBean = getSurvivorMemoryPoolMXBean()
 tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
 
 %>
 
 <section>
-    <div style="float: left; width: 47%;">
-        <div style="padding: 0 15px;">
-            <div style="font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Memory</div>
-            <div id="memory-spaces" style="width: 100%; height: 731px;"></div>
+    <div class="system-memory-graph">
+        <div>
+            <div>
+                <div class="title">Memory</div>
+                <br class="clear" />
+            </div>
+            <div id="memory-spaces" class="graph"></div>
         </div>
     </div>
-    <div style="float: left; width: 6%;">&nbsp;</div>
-    <div style="float: left; width: 47%;">
+    <div class="system-memory-graph">
         <% if (youngCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>        
-            <div style="padding: 0 15px 15px 15px;">
+            <div>
                 <div>
-                    <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Young Collector</div>
-                    <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
-                        <span id="young-collector-count"><% youngCollectorMXBean.collectionCount %></span> collections, <span id="young-collector-time"><% call system.util.getFormattedDuration(youngCollectorMXBean.collectionTime) %></span>, last GC: <span id="young-collector-lastgc">N/A</span>
+                    <div class="title">Young Collector</div>
+                    <div class="info">
+                        <span id="young-collector-count"><% youngCollectorMXBean.collectionCount %></span> collections, 
+                        <span id="young-collector-time"><% call system.util.getFormattedDuration(youngCollectorMXBean.collectionTime) %></span>, 
+                        last GC: <span id="young-collector-lastgc">N/A</span>
                     </div>
                     <br class="clear" />
                 </div>
-                <div id="young-collector" style="width: 100%; height: 100px;"></div>
+                <div id="young-collector" class="graph"></div>
             </div>
         <% } %>
         
         <% if (tenuredCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
-            <div style="padding: 0 15px 15px 15px;">
+            <div>
                 <div>
-                    <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Tenured Collector</div>
-                    <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
-                        <span id="tenured-collector-count"><% tenuredCollectorMXBean.collectionCount %></span> collections, <span id="tenured-collector-time"><% call system.util.getFormattedDuration(tenuredCollectorMXBean.collectionTime) %></span>, last GC: <span id="tenured-collector-lastgc">N/A</span>
+                    <div class="title">Tenured Collector</div>
+                    <div class="info">
+                        <span id="tenured-collector-count"><% tenuredCollectorMXBean.collectionCount %></span> collections, 
+                        <span id="tenured-collector-time"><% call system.util.getFormattedDuration(tenuredCollectorMXBean.collectionTime) %></span>, 
+                        last GC: <span id="tenured-collector-lastgc">N/A</span>
                     </div>
                     <br class="clear" />
                 </div>
-                <div id="tenured-collector" style="width: 100%; height: 100px;"></div>
+                <div id="tenured-collector" class="graph"></div>
             </div>
         <% } %>
         
-        <div style="padding: 0 15px 15px 15px;">
+        <div>
             <div>
-                <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Eden</div>
-                <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
+                <div class="title">Eden</div>
+                <div class="info">
                     <% numberFormat('0.0') %>
                     <span id="eden-memory-used"><% edenMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="eden-memory-committed"><% edenMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
                     max: <span id="eden-memory-max"><% edenMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
@@ -66,25 +61,12 @@ tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
                 </div>
                 <br class="clear" />
             </div>
-            <div id="eden-usage" style="width: 100%; height: 100px;"></div>
+            <div id="eden-usage" class="graph"></div>
         </div>
-        <div style="padding: 0 15px 15px 15px;">
+        <div>
             <div>
-                <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Survivor</div>
-                <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
-                    <% numberFormat('0.0') %>
-                    <span id="survivor-memory-used"><% survivorMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="survivor-memory-committed"><% survivorMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
-                    max: <span id="survivor-memory-max"><% survivorMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
-                    peak: <span id="survivor-memory-peak"><% survivorMemoryMXBean.peakUsage.used / 1024.0 / 1024.0 %></span> MB
-                </div>
-                <br class="clear" />
-            </div>
-            <div id="survivor-usage" style="width: 100%; height: 100px;"></div>
-        </div>
-        <div style="padding: 0 15px 15px 15px;">
-            <div>
-                <div style="float: left; font-size: 13px; font-weight: bold; line-height: 40px; height: 40px; text-align: left;">Old Gen</div>
-                <div style="float: right; font-size: 12px; line-height: 20px; height: 20px; margin: 20px 5px 0 0; color: #555; text-align: right;">
+                <div class="title">Old Gen</div>
+                <div class="info">
                     <% numberFormat('0.0') %>
                     <span id="oldgen-memory-used"><% tenuredMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="oldgen-memory-committed"><% tenuredMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
                     max: <span id="oldgen-memory-max"><% tenuredMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
@@ -92,7 +74,7 @@ tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
                 </div>
                 <br class="clear" />
             </div>
-            <div id="oldgen-usage" style="width: 100%; height: 100px;"></div>
+            <div id="oldgen-usage" class="graph"></div>
         </div>
     </div>
     
