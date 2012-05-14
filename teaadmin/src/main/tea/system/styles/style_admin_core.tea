@@ -1169,30 +1169,31 @@ table .stress-percentage-bar.red {
 
 #timelapse-container { padding-top: 10px; }
     
-#timelapse-container .grid-lhn { float: left; width: 200px; overflow: hidden; white-space: nowrap; margin-right: 1px; }
-#timelapse-container .grid-lhn .header { color: white; height: 48px; border-bottom: 1px solid white; }
-#timelapse-container .grid-lhn .header .template { padding-left: 5px; font-size: 12px; font-weight: bold; }
-#timelapse-container .grid-lhn .placeholder { background-color: silver; height: 23px; border-bottom: 1px solid white; }
-#timelapse-container .grid-lhn .row { background-color: #c0c0c0; padding-left: 5px; font-size: 12px; font-weight: bold; border-bottom: 1px solid white; text-transform: none !important; }
-#timelapse-container .grid-lhn .row .template { padding: 5px 0; }
-#timelapse-container .grid-lhn .row .template .template-options { display: none; margin: -1px 4px 0 2px; }
-#timelapse-container .grid-lhn .row .template:hover .template-options { display: block; }
-#timelapse-container .grid-lhn .row .template a { display: block; color: white; text-decoration: none; }
-#timelapse-container .grid-lhn .row .template .path { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; }
-#timelapse-container .grid-lhn .row .template .name { display: block; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; }
+.gridlapse .grid-container .grid-lhn { float: left; width: 200px; overflow: hidden; white-space: nowrap; margin-right: 1px; }
+.gridlapse .grid-container .grid-lhn .header { color: white; height: 48px; border-bottom: 1px solid white; }
+.gridlapse .grid-container .grid-lhn .header .template { padding-left: 5px; font-size: 12px; font-weight: bold; }
+.gridlapse .grid-container .grid-lhn .placeholder { background-color: silver; height: 23px; border-bottom: 1px solid white; }
+.gridlapse .grid-container .grid-lhn .row { background-color: #c0c0c0; padding-left: 5px; font-size: 12px; font-weight: bold; border-bottom: 1px solid white; text-transform: none !important; }
+.gridlapse .grid-container .grid-lhn .row .template { padding: 5px 0; }
+.gridlapse .grid-container .grid-lhn .row .template .template-options { display: none; margin: -1px 4px 0 2px; }
+.gridlapse .grid-container .grid-lhn .row .template:hover .template-options { display: block; }
+.gridlapse .grid-container .grid-lhn .row .template a { display: block; color: white; text-decoration: none; }
+.gridlapse .grid-container .grid-lhn .row .template .path { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; }
+.gridlapse .grid-container .grid-lhn .row .template .name { display: block; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; }
     
-#timelapse-container .grid { width: 0px; overflow-x: hidden; overflow-y: hidden; position: relative; }
-#timelapse-container .grid .header { color: white; height: 24px; position: relative; text-transform: none !important; }
-#timelapse-container .grid .header .metric { text-align: left; }
-#timelapse-container .grid .metric { position: absolute; height: 24px; line-height: 24px; font-size: 12px; font-weight: bold; text-align: center; }
-#timelapse-container .grid .row { position: relative; border-bottom: 1px solid white; text-transform: none !important; }
-#timelapse-container .grid div.row:nth-child(even) { background-color: #efefef; }
-#timelapse-container .grid div.row:nth-child(odd) { background-color: white; }
-#timelapse-container .grid div.row:hover { background-color: #f5f5f5; }
-#timelapse-container .grid .process { height: 18px; border-radius: 5px; position: absolute; }
-#timelapse-container .grid .process:hover {  }
-#timelapse-container .grid .process .value { display: block; font-size: 11px; text-align: center; color: white; font-weight: bold; white-space: nowrap; overflow: hidden; }
-#timelapse-container .grid .process.low { 
+.gridlapse .grid-container .grid { width: 0px; overflow-x: hidden; overflow-y: hidden; position: relative; }
+.gridlapse .grid-container .grid .header { color: white; height: 24px; position: relative; text-transform: none !important; }
+.gridlapse .grid-container .grid .header .metric { text-align: left; }
+.gridlapse .grid-container .grid .metric { position: absolute; height: 24px; line-height: 24px; font-size: 12px; font-weight: bold; text-align: center; }
+.gridlapse .grid-container .grid .row { position: relative; border-bottom: 1px solid white; text-transform: none !important; }
+.gridlapse .grid-container .grid div.row:nth-child(even) { background-color: #efefef; }
+.gridlapse .grid-container .grid div.row:nth-child(odd) { background-color: white; }
+.gridlapse .grid-container .grid div.row:hover { background-color: #f5f5f5; }
+.gridlapse .grid-container .grid .process { height: 18px; border-radius: 5px; position: absolute; }
+.gridlapse .grid-container .grid .process:hover {  }
+.gridlapse .grid-container .grid .process .value { display: block; font-size: 11px; text-align: center; color: white; font-weight: bold; white-space: nowrap; overflow: hidden; }
+
+.gridlapse .grid-container .grid .process.green { 
     border: 1px solid darkGreen; 
     background-color: lightGreen;
     background-image: -moz-linear-gradient(top, lightGreen, darkGreen);
@@ -1204,7 +1205,7 @@ table .stress-percentage-bar.red {
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='lightGreen', endColorstr='darkGreen', GradientType=0);
 }
-#timelapse-container .grid .process.medium { 
+.gridlapse .grid-container .grid .process.yellow { 
     border: 1px solid #FFC40D; 
     background-color: yellow;
     background-image: -moz-linear-gradient(top, yellow, #FFC40D);
@@ -1216,7 +1217,7 @@ table .stress-percentage-bar.red {
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='yellow', endColorstr='#FFC40D', GradientType=0); 
 }
-#timelapse-container  .grid .process.high { 
+.gridlapse .grid-container  .grid .process.red { 
     border: 1px solid #9d261d; 
     background-color: red;
     background-image: -moz-linear-gradient(top, red, #9d261d);
@@ -1228,9 +1229,26 @@ table .stress-percentage-bar.red {
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='red', endColorstr='#9d261d', GradientType=0); 
 }
+.gridlapse .grid-container .grid .process.black { 
+    border: 1px solid #888; 
+    background-color: black;
+    background-image: -moz-linear-gradient(top, #888, black);
+    background-image: -ms-linear-gradient(top, #888, black);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#888), to(black));
+    background-image: -webkit-linear-gradient(top, #888, black);
+    background-image: -o-linear-gradient(top, #888, black);
+    background-image: linear-gradient(top, #888, black);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#888', endColorstr='black', GradientType=0);
+}
+.gridlapse .grid-container .grid .process.white { 
+    border: 1px solid #555; 
+    background-color: white;
+}
 
-#timelapse-container .grid div.scrollbar { height: 24px; border-bottom: 1px solid white; background-color:#efefef; position: relative; }
-#timelapse-container .grid div.scrollbar div.scroller { 
+
+.gridlapse .grid-container .grid div.scrollbar { height: 24px; border-bottom: 1px solid white; background-color:#efefef; position: relative; }
+.gridlapse .grid-container .grid div.scrollbar div.scroller { 
     position: absolute; 
     top: 2px; 
     left: 0;
@@ -1255,7 +1273,7 @@ table .stress-percentage-bar.red {
     -moz-border-radius: 5px;
     border-radius: 5px;             
 }
-#timelapse-container .grid div.scrollbar div.scroller:hover { 
+.gridlapse .grid-container .grid div.scrollbar div.scroller:hover { 
     background-color: #999;
     background-image: -moz-linear-gradient(top, white, #999);
     background-image: -ms-linear-gradient(top, white, #999);
@@ -1269,7 +1287,7 @@ table .stress-percentage-bar.red {
 
 .timer { display: none; z-index: 501; text-align: center; font-weight: bold; line-height: 22px; height: 22px; position: absolute; top: 1px; width: 50px; -webkit-border-radius: 5px; -moz-border-radius: 5px; border-radius: 5px; font-size: 10px; background-color: #e0e0e0; color: black; }
         
-#grid-tracker { display: none; z-index: 500; position: absolute; top: -1; left: -1; width: 1px; height: 0; border-right: 1px solid red; }
+.grid-tracker { display: none; z-index: 500; position: absolute; top: -1; left: -1; width: 1px; height: 0; border-right: 1px solid red; }
         
 /* Footer */
 footer {

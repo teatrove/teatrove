@@ -879,6 +879,8 @@
                 });
             }
         });
+        
+        initGridlapses();
     };
     function initTemplateOptionLinks () {
         $(".template-options a").live("click", function (evt) {
@@ -1015,17 +1017,27 @@
 		});
 	};
 	function initTimelapseOptions () {
+	   initGridlapses();
+	   initTemplateOptionLinks();
+	};
+    function initGridlapses() {
+        var $gridlapse = $('.gridlapse');
+        $gridlapse.each(function() {
+            initGridlapse($(this));
+        });
+    };
+	function initGridlapse($gridlapse) {
         var position = { top: 0, left: 0 },
             dragging = null,
             $document = $(document),
             $body = $('body'),
-            $grid = $('.grid'),
-            $gridLHN = $('.grid-lhn'),
-            $scrollbars = $('.scrollbar'),
-            $scrollers = $('.scrollbar .scroller'),
-            $tracker = $('#grid-tracker'),
-            $timers = $('.timer'),
-            $container = $('#timelapse-container');
+            $grid = $gridlapse.find('.grid'),
+            $gridLHN = $gridlapse.find('.grid-lhn'),
+            $scrollbars = $gridlapse.find('.scrollbar'),
+            $scrollers = $gridlapse.find('.scrollbar .scroller'),
+            $tracker = $gridlapse.find('.grid-tracker'),
+            $timers = $gridlapse.find('.timer'),
+            $container = $gridlapse.find('.grid-container');
 
         // setup container
         var initialize = function() {
@@ -1241,8 +1253,8 @@
             initialize();
         });
 
+        $grid.data('gridlapse', { initialize : initialize });
         setTimeout(initialize, 250);
-        initTemplateOptionLinks();
     };
     function getInstrumentationUpdates () {
         $('#loadingIndicator').show();

@@ -39,7 +39,7 @@
     MEDIUM_THRESHOLD = 500
     HIGH_THRESHOLD = 1000
 
-    PX_PER_SEC = pxps ? convertStringToInteger(pxps) : 100
+    PX_PER_SEC = pxps ?: 100
     PX_PER_MSEC = PX_PER_SEC / 1000.0
 %>
 
@@ -82,7 +82,8 @@
             </div>
             <br class="clear" />
 
-            <div id="timelapse-container">
+            <div class="gridlapse">
+            <div id="timelapse-container" class="grid-container">
                 <div class="grid-lhn">
                 <% 
                     row = -1; 
@@ -236,9 +237,9 @@
                             }
                             
                             clazz = ''
-                            if (duration > HIGH_THRESHOLD) { clazz = 'high' }
-                            else if (duration > MEDIUM_THRESHOLD) { clazz = 'medium' }
-                            else { clazz = 'low' }
+                            if (duration > HIGH_THRESHOLD) { clazz = 'red' }
+                            else if (duration > MEDIUM_THRESHOLD) { clazz = 'yellow' }
+                            else { clazz = 'green' }
 
                             numberFormat('#.#')
                             dateFormat('h:mm:ss')
@@ -268,9 +269,12 @@
 
             <br class="clear" />
             
-            <div id="grid-tracker"></div>
+            <div class="grid-tracker"></div>
+            </div>
             
             <script type="text/javascript">PX_PER_SEC = <% PX_PER_SEC %>;</script>
+            
+            </div>
 
         </section>
     </article>

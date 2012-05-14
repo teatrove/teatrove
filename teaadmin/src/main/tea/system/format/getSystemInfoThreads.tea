@@ -2,149 +2,198 @@
 
 /*
 
-    Threads
-    --------------------
-    
-    Name        Time    State
-    Thread 1    30%     [____][__________][__]
-    Thread 2    10%     [__________][__________]
-    Thread 3
-    Thread 4
-    Thread 5
-    Thread 6
-
-
-
-    Thread Info
-    --------------------
-    
-    Thread 1        30%         Running
-    Name           Time           Sttas
-    
-    Stack Trace (Refresh)
+TODO:
+- better handle offset based on timestamp in json
+- add user time / cpu time / wait time / block time
+- add buttons for zooming, sorting, etc
+- on hover row show stacktrace button 
+- add title for name of thread 
+- add stacktrace dialog
 
 */
 
-threadMXBean = getThreadMXBean();
-threads = threadMXBean.getThreadInfo(threadMXBean.allThreadIds, true, true)
+    request = getRequest();
+    
+    threadMXBean = getThreadMXBean();
+    threads = threadMXBean.getThreadInfo(threadMXBean.allThreadIds, true, true)
+
+    currentTime = currentDateTime().millis
+
+    pxps = convertStringToInteger(request.parameters['pxps'] ?: '-1')
+    zoom = convertStringToInteger(request.parameters['zoom'] ?: '1')
+    if (pxps <= 0) {
+        pxps = zoom == 0 ? 25 : (zoom * 100)
+    }
+
+    timeframe = convertStringToInteger(request.parameters['timeframe'] ?: '1')
+    timeframeSEC = timeframe * 60
+    timeframeMSEC = timeframeSEC * 1000
+    
+    endTime = currentTime - timeframeMSEC
+
+    MEDIUM_THRESHOLD = 500
+    HIGH_THRESHOLD = 1000
+
+    PX_PER_SEC = pxps ?: 100
+    PX_PER_MSEC = PX_PER_SEC / 1000.0
 
 %>
 
 <section>
-    <table cellspacing="1" cellpadding="3" class="tablehead">
-    <thead>
-        <tr class="stathead">
-            <th colspan="12">Threads</th>
-        </tr>
-        <tr class="colhead">
-            <th class="left-align">Name</th>
-            <th>CPU Time</th>
-            <th>User Time</th>
-            <th class="left-align">State</th>
-        </tr>
-    </thead>
-    <tbody>
-    <% 
-        numberFormat('0');
-        // new = black, run = green, blocked = red, waiting =yellow, timed wait = yellow, terminated = white 
-        colors = #( 'black', 'green', 'red', 'yellow', 'yellow', 'white' );
-        foreach (idx in 0..threads.length - 1) { 
-            thread = threads[idx];
-            state = thread.threadState.ordinal()
-            
-            waitedTime = thread.waitedTime
-            blockedTime = thread.blockedTime
-            cpuTime = threadMXBean.getThreadCpuTime(thread.threadId) / 1000000.0
-            userTime = threadMXBean.getThreadUserTime(thread.threadId) / 1000000.0
-            
-            totalTime = waitedTime + blockedTime + cpuTime + userTime;
-            if (totalTime == 0) { totalTime = 1 }
-    %>
-
-            <tr id="thread-<% thread.threadId %>" class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
-                <td style="white-space: normal !important;">
-                    <a style="padding:4px; font-size: 14px; font-weight: bold;" href="#"><% thread.threadName %></a>
-                    <div style="margin-top:24px;">
-                        <div style="padding:4px 10px 4px 4px; float: left; line-height:16px;">Thread State</div>
-                        <div style="width:40%;height:16px;margin:4px;float:left;">
-                            <div title="blocked <% thread.blockedCount %> times for <% blockedTime %> ms" style="float:left;width:<% blockedTime / totalTime * 100 %>%;height:16px;background-color:red;"></div>
-                            <div title="waited <% thread.waitedCount %> times for <% waitedTime %> ms" style="float:left;width:<% waitedTime / totalTime * 100%>%;height:16px;background-color:yellow;"></div>
-                            <div title="user time: <% userTime %> ms" style="float:left;width:<% userTime / totalTime * 100 %>%;height:16px;background-color:green;"></div>
-                            <div title="CPU time <% cpuTime %> ms" style="float:left;width:<% cpuTime / totalTime * 100 %>%;height:16px;background-color:orange;"></div>
-                            <br class="clear" />
-                        </div>
-                        <br class="clear" />
+    <div class="gridlapse">
+    <div class="grid-container">
+        <div class="grid-lhn">
+        <%
+            numberFormat('0');
+            // new = black, run = green, blocked = red, waiting =yellow, timed wait = yellow, terminated = white 
+            colors = #( 'black', 'green', 'red', 'yellow', 'yellow', 'white' );
+            foreach (idx in 0..threads.length - 1) { 
+                thread = threads[idx];
+                state = thread.threadState.ordinal()
+                
+                if (idx % 10 == 0) 
+                {
+        %>
+                    <div class="header stathead">
+                        <div class="template">&nbsp;</div>
                     </div>
-                    <div style="margin-top: 10px;">
-                        <div style="float:left;width:16px;height:16px;background-color:yellow;margin: 4px;"></div>
-                        <div style="float:left;line-height:24px;padding-right:16px;">Blocked (<% blockedTime / totalTime * 100 %>%)</div>
-                        
-                        <div style="float:left;width:16px;height:16px;background-color:red;margin: 4px;"></div>
-                        <div style="float:left;line-height:24px;padding-right:16px;">Waited (<% waitedTime / totalTime * 100 %>%)</div>
-                        
-                        <div style="float:left;width:16px;height:16px;background-color:green;margin: 4px;"></div>
-                        <div style="float:left;line-height:24px;padding-right:16px;">User Time (<% userTime / totalTime * 100 %>%)</div>
-                        
-                        <div style="float:left;width:16px;height:16px;background-color:orange;margin: 4px;"></div>
-                        <div style="float:left;line-height:24px;padding-right:16px;">CPU Time (<% cpuTime / totalTime * 100 %>%)</div>
+        <%
+                }
+        %>
+                <div class="row stathead" style="height: 24px;">
+                    <div class="template" title="">
+                        <a href="">
+                            <% thread.threadName %>
+                        </a>
                     </div>
-                </td>
-                <td><span id="thread-<% thread.threadId %>-cputime"><% call system.util.getFormattedDuration(cpuTime) %></span></td>
-                <td><span id="thread-<% thread.threadId %>-usertime"><% call system.util.getFormattedDuration(userTime) %></span></td>
-                <td style="width: 650px;"><div class="thread-state"><div style="float: left; margin: 4px; width: 16px; height: 16px; background-color: <% colors[state] %>; border: 1px solid #333; border-radius: 3px;"></div><br class="clear " /></div></td>
-            </tr>
-            <tr style="display: none;">
-                <td colspan="4">
-                    State: <% thread.threadState.name() %>
-                    <% if (thread.threadState.ordinal() >= 2) { %>
-                         on <% thread.lockInfo %>
-                    <% } %><br />
-                    Blocked <% thread.blockedCount %> times, <% call system.util.getFormattedDuration(thread.blockedTime) %><br />
-                    Waited <% thread.waitedCount %> times, <% call system.util.getFormattedDuration(thread.waitedTime) %><br />
-                    <br />
-                    Stack Trace:<br />
-                    <% foreach (stack in thread.stackTrace) { %>
-                        <% stack %><br />
-                    <% } %> 
-                </td>
-            </tr>
-            
+                </div>        
         <% 
             } 
         %>
-    </tbody>
-    </table>
+            <div class="placeholder stathead">&nbsp;</div>
+        </div>
+        
+        <div class="grid">
+        <%
+            header = 0;
+            foreach (idx in 0..threads.length - 1) {
+                if (idx % 10 == 0) 
+                {
+                    header = header + 1
+        %>
+                    <div id="header-<% header %>" class="header stathead" style="width:<% timeframeSEC * PX_PER_SEC %>px;">
+                        <div class="timer">&nbsp;</div>
+                        <% foreach (i in 1..(timeframeSEC - 1)) { %>
+                            <div class="metric" style="left: <% i * PX_PER_SEC %>px; width: <% PX_PER_SEC %>px;">
+                                <% i %>s
+                            </div>
+                        <% } %>
+                    </div>
+                    <div class="scrollbar" style="width: <% timeframeSEC * PX_PER_SEC %>px;">
+                        <div class="scroller">|||</div>
+                    </div>
+        <% 
+                }
+        %>
+                 
+            <div id="row-<% threads[idx].threadId %>" class="row" style="height: 24px; width: <% timeframeSEC * PX_PER_SEC %>px;">
+            </div>
+        
+        <%
+            }
+        %>
+            
+            <div class="scrollbar" style="width: <% timeframeSEC * PX_PER_SEC %>px;">
+                <div class="scroller">|||</div>
+            </div>
+                    
+        </div>
+    </div>
+    
+    <br class="clear" />
+            
+    <div class="grid-tracker"></div>
+    </div>
+            
+    </div>
 </section>
 
 <script type="text/javascript">
-
+    PX_PER_SEC = <% PX_PER_SEC %>;
+    
     var colors = [ 'black', 'green', 'red', 'yellow', 'yellow', 'white' ];
 
     $(function() {
+        var $grid = $('.grid'), 
+            $headers = $grid.find('.header');
+            $rows = $grid.find('.row');
+            
         addDataListener(function(json) {
+        
+            // insert time frame into each header
+            var extend = false;
+            $headers.each(function() {
+                var $header = $(this);
+                var $metrics = $header.children('.metric');
+                if ($metrics.length < 60) { 
+                    extend = true;
+                    $header.css('width', ($header.width() + PX_PER_SEC) + 'px');
+                }
+                else {
+                    $($metrics[$metrics.length - 1]).remove();
+                }
+                 
+                $metrics.each(function(idx) {
+                    var $metric = $(this);
+                    $metric.css('left', ($metric.position().left + PX_PER_SEC) + 'px')
+                           .text((idx + 2) + 's');
+                });
+                $header.prepend('<div class="metric" style="left: ' + PX_PER_SEC + 'px; width: ' + PX_PER_SEC + 'px;">1s</div>');
+            });
+            
+            // move previous metrics in each row
+            $rows.each(function() {
+                var $row = $(this), width= $row.width();
+                if (extend) {
+                    $row.css('width', (width + PX_PER_SEC) + 'px');
+                }
+                
+                $row.children('.metric').each(function() {
+                    var $metric = $(this);
+                    
+                    var left = $metric.position().left + PX_PER_SEC;
+                    if (left > width) { $metric.remove(); }
+                    else { $metric.css('left', left + 'px'); }
+                });
+            });
+
+            // reinitialize the grid and scrollbars
+            var gridlapse = $grid.data('gridlapse');
+            gridlapse.initialize();
+            
+            // insert row per thread
             for (var i = 0; i < json.threads.threads.length; i++) {
                 var thread = json.threads.threads[i];
                 if (!thread || thread.id < 0) { continue; }
                 
-                var $state = $('#thread-' + thread.id + ' div.thread-state');
-                var $result = $('<div style="float: left; display: block; opacity: 0; margin: 4px; width: 0px; height: 16px; background-color: ' + colors[thread.state] + '; border: 1px solid #333; border-radius: 3px;"></div>'); 
-                $state.prepend($result);
-                $result.animate({opacity:1.0, width: 16}, 500);
-                
-                $divs = $state.children('div');
-                if ($divs.length > 100) {
-                    $($divs[$divs.length - 1]).remove();
+                var $row = $('#row-' + thread.id);
+                if ($row.length) {
+                    var clazz = 'metric process ' + colors[thread.state];
+                    
+                    var $metrics = $row.children('.metric');
+                    if ($metrics.length > 0 && $metrics[0].className == clazz) {
+                        var $metric = $($metrics[0]); 
+                        var width = Math.min($metric.width() + PX_PER_SEC, $row.width() - 2);
+                        $metric.css({ left : '2px', width: width + 'px' });  
+                    }
+                    else {
+                        $row.prepend('<div class="' + clazz + '" style="left: 2px; width: <% 250 * PX_PER_MSEC %>px; top: 2px;"><span class="value">&nbsp;</span></div>');
+                    }
                 }
-                
-                var cpuPct = thread.time.cpu / json.threads.aggregate.time.cpu * 100.0;
-                $('#thread-' + thread.id + '-cputime').text(formatDuration((thread.time.cpu / 1000000.0).toFixed(0)) + ' (' + cpuPct.toFixed(1) + '%)');
-                
-                var userPct = thread.time.user / json.threads.aggregate.time.user * 100.0;
-                $('#thread-' + thread.id + '-usertime').text(formatDuration((thread.time.user / 1000000.0).toFixed(0)) + ' (' + userPct.toFixed(1) + '%)');
             }
         });
         
-    // TODO: add horizontal padding for extinquished threads and hilite 
+        // TODO: add horizontal padding for extinquished threads and hilite 
     });
 
 </script>
