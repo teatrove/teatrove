@@ -22,6 +22,7 @@
 
 {
     "timestamp" : <% time %>,
+    "time" : "<% dateToString(date, "hh:mm:ss") %>",
     "memory" : {
         "heap" : {
             "init" : <% memoryMXBean.heapMemoryUsage.init %>,

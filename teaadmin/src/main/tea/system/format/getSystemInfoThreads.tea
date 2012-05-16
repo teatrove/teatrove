@@ -3,9 +3,12 @@
 /*
 
 TODO:
-- better handle offset based on timestamp in json
+- consider adding a gap when time way out of bounds (more than a few secs)?
+- move margin, padding, border, float styles to separate gridlapse in core
+- IE support, FF, etc
+- show threads that have expired and dynamically add new threads
+
 - add user time / cpu time / wait time / block time
-- add buttons for zooming, sorting, etc
 - on hover row show stacktrace button 
 - add title for name of thread 
 - add stacktrace dialog
@@ -19,24 +22,6 @@ TODO:
 
     currentTime = currentDateTime().millis
 
-    pxps = convertStringToInteger(request.parameters['pxps'] ?: '-1')
-    zoom = convertStringToInteger(request.parameters['zoom'] ?: '1')
-    if (pxps <= 0) {
-        pxps = zoom == 0 ? 25 : (zoom * 100)
-    }
-
-    timeframe = convertStringToInteger(request.parameters['timeframe'] ?: '1')
-    timeframeSEC = timeframe * 60
-    timeframeMSEC = timeframeSEC * 1000
-    
-    endTime = currentTime - timeframeMSEC
-
-    MEDIUM_THRESHOLD = 500
-    HIGH_THRESHOLD = 1000
-
-    PX_PER_SEC = pxps ?: 100
-    PX_PER_MSEC = PX_PER_SEC / 1000.0
-
 %>
 
 <section>
@@ -45,8 +30,6 @@ TODO:
         <div class="grid-lhn">
         <%
             numberFormat('0');
-            // new = black, run = green, blocked = red, waiting =yellow, timed wait = yellow, terminated = white 
-            colors = #( 'black', 'green', 'red', 'yellow', 'yellow', 'white' );
             foreach (idx in 0..threads.length - 1) { 
                 thread = threads[idx];
                 state = thread.threadState.ordinal()
@@ -81,29 +64,22 @@ TODO:
                 {
                     header = header + 1
         %>
-                    <div id="header-<% header %>" class="header stathead" style="width:<% timeframeSEC * PX_PER_SEC %>px;">
-                        <div class="timer">&nbsp;</div>
-                        <% foreach (i in 1..(timeframeSEC - 1)) { %>
-                            <div class="metric" style="left: <% i * PX_PER_SEC %>px; width: <% PX_PER_SEC %>px;">
-                                <% i %>s
-                            </div>
-                        <% } %>
-                    </div>
-                    <div class="scrollbar" style="width: <% timeframeSEC * PX_PER_SEC %>px;">
+                    <div id="header-<% header %>" class="header stathead"></div>
+                    <div class="scrollbar">
                         <div class="scroller">|||</div>
                     </div>
         <% 
                 }
         %>
                  
-            <div id="row-<% threads[idx].threadId %>" class="row" style="height: 24px; width: <% timeframeSEC * PX_PER_SEC %>px;">
+            <div id="row-<% threads[idx].threadId %>" class="row" style="height: 24px;">
             </div>
         
         <%
             }
         %>
             
-            <div class="scrollbar" style="width: <% timeframeSEC * PX_PER_SEC %>px;">
+            <div class="scrollbar">
                 <div class="scroller">|||</div>
             </div>
                     
@@ -112,59 +88,80 @@ TODO:
     
     <br class="clear" />
             
-    <div class="grid-tracker"></div>
-    </div>
-            
     </div>
 </section>
 
 <script type="text/javascript">
-    PX_PER_SEC = <% PX_PER_SEC %>;
-    
-    var colors = [ 'black', 'green', 'red', 'yellow', 'yellow', 'white' ];
-
     $(function() {
-        var $grid = $('.grid'), 
+        var MAX_DIFFERENTIAL = 5000, 
+            COLORS = [ 'black', 'green', 'red', 'yellow', 'yellow', 'white' ];
+        
+        var lastTimestamp = -1,
+            $grid = $('.grid'), 
             $headers = $grid.find('.header');
             $rows = $grid.find('.row');
             
         addDataListener(function(json) {
+            // calculate time differential and insert break if outstanding
+            var timestamp = json.timestamp;
+            if (timestamp - json.timestamp > MAX_DIFFERENTIAL) {
+                insertBreak();
+            }
+            
+            // insert regular metrics per thread
+            insertMetrics(json);
+        });
         
-            // insert time frame into each header
-            var extend = false;
+        function insertBreak() {
+            var rowWidth = -1;
             $headers.each(function() {
                 var $header = $(this);
-                var $metrics = $header.children('.metric');
-                if ($metrics.length < 60) { 
-                    extend = true;
-                    $header.css('width', ($header.width() + PX_PER_SEC) + 'px');
+                if (rowWidth < 0) {
+                    var $metrics = $header.children('.metric');
+                    var twidth = ($metrics.length + 1) * 106;
+                    rowWidth = Math.max($grid.width(), twidth);
                 }
-                else {
-                    $($metrics[$metrics.length - 1]).remove();
-                }
-                 
-                $metrics.each(function(idx) {
-                    var $metric = $(this);
-                    $metric.css('left', ($metric.position().left + PX_PER_SEC) + 'px')
-                           .text((idx + 2) + 's');
-                });
-                $header.prepend('<div class="metric" style="left: ' + PX_PER_SEC + 'px; width: ' + PX_PER_SEC + 'px;">1s</div>');
+                
+                $header.css('width', rowWidth + 'px');
+
+                var $metric = $('<div class="metric" style="position: relative !important; border-left: 1px solid white; float: left; left: -100px; width: 100px; background-color: white; text-align: center;"> ||| </div>');
+                $header.prepend($metric);
             });
             
             // move previous metrics in each row
             $rows.each(function() {
-                var $row = $(this), width= $row.width();
-                if (extend) {
-                    $row.css('width', (width + PX_PER_SEC) + 'px');
+                var $row = $(this), width = $row.width();
+                $row.css('width', rowWidth + 'px');
+                
+                var $metric = $('<div class="white" style="float: left; position: relative !important; margin-left: 1px; width: 103px; top: 2px;"><span class="value">&nbsp;</span></div>'); 
+                $row.prepend($metric);
+            });
+        }
+        
+        function insertMetrics(json) {
+            var time = json.time;
+                    
+            // insert time frame into each header
+            var rowWidth = -1;
+            $headers.each(function() {
+                var $header = $(this);
+                if (rowWidth < 0) {
+                    var $metrics = $header.children('.metric');
+                    var twidth = ($metrics.length + 1) * 106;
+                    rowWidth = Math.max($grid.width(), twidth);
                 }
                 
-                $row.children('.metric').each(function() {
-                    var $metric = $(this);
-                    
-                    var left = $metric.position().left + PX_PER_SEC;
-                    if (left > width) { $metric.remove(); }
-                    else { $metric.css('left', left + 'px'); }
-                });
+                $header.css('width', rowWidth + 'px');
+
+                var $metric = $('<div class="metric" style="position: relative !important; border-left: 1px solid white; float: left; left: -100px; width: 0px;">' + time + '</div>');
+                $header.prepend($metric);
+                $metric.animate({'left' : '0px', 'width' : '100px' });
+            });
+            
+            // move previous metrics in each row
+            $rows.each(function() {
+                var $row = $(this), width = $row.width();
+                $row.css('width', rowWidth + 'px');
             });
 
             // reinitialize the grid and scrollbars
@@ -178,22 +175,14 @@ TODO:
                 
                 var $row = $('#row-' + thread.id);
                 if ($row.length) {
-                    var clazz = 'metric process ' + colors[thread.state];
+                    var clazz = 'metric process ' + COLORS[thread.state];
                     
-                    var $metrics = $row.children('.metric');
-                    if ($metrics.length > 0 && $metrics[0].className == clazz) {
-                        var $metric = $($metrics[0]); 
-                        var width = Math.min($metric.width() + PX_PER_SEC, $row.width() - 2);
-                        $metric.css({ left : '2px', width: width + 'px' });  
-                    }
-                    else {
-                        $row.prepend('<div class="' + clazz + '" style="left: 2px; width: <% 250 * PX_PER_MSEC %>px; top: 2px;"><span class="value">&nbsp;</span></div>');
-                    }
+                    var $metric = $('<div class="' + clazz + '" style="float: left; position: relative !important; margin-left: 1px; width: 0px; top: 2px;"><span class="value">&nbsp;</span></div>'); 
+                    $row.prepend($metric);
+                    $metric.animate({ 'width' : '103px' });
                 }
             }
-        });
-        
-        // TODO: add horizontal padding for extinquished threads and hilite 
+        }
     });
 
 </script>

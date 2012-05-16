@@ -1191,6 +1191,7 @@
             })
             .mousemove(function(event) {
                 if (dragging) { return true; }
+                if ($tracker.length == 0 && $timers.length == 0) { return true; }
                 
                 var offset = $grid[0].scrollLeft + event.pageX - $grid.offset().left - 10;
                     
