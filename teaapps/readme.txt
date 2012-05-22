@@ -9,6 +9,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Add join methods to ArrayContext and ListContext
 - Fix #77 to add HTMLContext for HTML-based pagination methods 
 - Fix #76 for SortContext to add backwards compatibility methods
 - Cleanup SortContext for consistency and performance
