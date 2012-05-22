@@ -43,9 +43,9 @@ public class MethodInfo {
 
     private ConstantUTFInfo mNameConstant;
     private ConstantUTFInfo mDescriptorConstant;
-    private ConstantUTFInfo mSignatureConstant;
+    // private ConstantUTFInfo mSignatureConstant;
 
-    private List mAttributes = new ArrayList(2);
+    private List<Attribute> mAttributes = new ArrayList<Attribute>(2);
 
     private CodeAttr mCode;
     private ExceptionsAttr mExceptions;
@@ -224,7 +224,7 @@ public class MethodInfo {
 
     public Attribute[] getAttributes() {
         Attribute[] attrs = new Attribute[mAttributes.size()];
-        return (Attribute[])mAttributes.toArray(attrs);
+        return mAttributes.toArray(attrs);
     }
 
     /**
@@ -235,10 +235,80 @@ public class MethodInfo {
 
         int size = mAttributes.size();
         for (int i=0; i<size; i++) {
-            length += ((Attribute)mAttributes.get(i)).getLength();
+            length += mAttributes.get(i).getLength();
         }
 
         return length;
+    }
+
+    /**
+     * Returns all the runtime invisible annotations defined for this class
+     * file, or an empty array if none.
+     */
+    public Annotation[] getRuntimeInvisibleAnnotations() {
+        for (int i = mAttributes.size(); --i >= 0; ) {
+            Attribute attr = mAttributes.get(i);
+            if (attr instanceof RuntimeInvisibleAnnotationsAttr) {
+                return ((AnnotationsAttr) attr).getAnnotations();
+            }
+        }
+        return new Annotation[0];
+    }
+
+    /**
+     * Returns all the runtime visible annotations defined for this class file,
+     * or an empty array if none.
+     */
+    public Annotation[] getRuntimeVisibleAnnotations() {
+        for (int i = mAttributes.size(); --i >= 0; ) {
+            Attribute attr = mAttributes.get(i);
+            if (attr instanceof RuntimeVisibleAnnotationsAttr) {
+                return ((AnnotationsAttr) attr).getAnnotations();
+            }
+        }
+        return new Annotation[0];
+    }
+
+    /**
+     * Add a runtime invisible annotation.
+     */
+    public Annotation addRuntimeInvisibleAnnotation(TypeDesc type) {
+        AnnotationsAttr attr = null;
+        for (int i = mAttributes.size(); --i >= 0; ) {
+            Attribute a = mAttributes.get(i);
+            if (a instanceof RuntimeInvisibleAnnotationsAttr) {
+                attr = (AnnotationsAttr) a;
+            }
+        }
+        if (attr == null) {
+            attr = new RuntimeInvisibleAnnotationsAttr(mCp);
+            addAttribute(attr);
+        }
+        Annotation ann = new Annotation(mCp);
+        ann.setType(type);
+        attr.addAnnotation(ann);
+        return ann;
+    }
+
+    /**
+     * Add a runtime visible annotation.
+     */
+    public Annotation addRuntimeVisibleAnnotation(TypeDesc type) {
+        AnnotationsAttr attr = null;
+        for (int i = mAttributes.size(); --i >= 0; ) {
+            Attribute a = mAttributes.get(i);
+            if (a instanceof RuntimeVisibleAnnotationsAttr) {
+                attr = (AnnotationsAttr) a;
+            }
+        }
+        if (attr == null) {
+            attr = new RuntimeVisibleAnnotationsAttr(mCp);
+            addAttribute(attr);
+        }
+        Annotation ann = new Annotation(mCp);
+        ann.setType(type);
+        attr.addAnnotation(ann);
+        return ann;
     }
 
     public void writeTo(DataOutput dout) throws IOException {
@@ -249,7 +319,7 @@ public class MethodInfo {
         int size = mAttributes.size();
         dout.writeShort(size);
         for (int i=0; i<size; i++) {
-            Attribute attr = (Attribute)mAttributes.get(i);
+            Attribute attr = mAttributes.get(i);
             attr.writeTo(dout);
         }
     }

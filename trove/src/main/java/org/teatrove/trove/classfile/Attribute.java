@@ -38,6 +38,10 @@ public abstract class Attribute {
     final static String SOURCE_FILE = "SourceFile";
     final static String SYNTHETIC = "Synthetic";
     final static String SIGNATURE = "Signature";
+    final static String RUNTIME_VISIBLE_ANNOTATIONS = "RuntimeVisibleAnnotations";
+    final static String RUNTIME_INVISIBLE_ANNOTATIONS = "RuntimeInvisibleAnnotations";
+    final static String RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS = "RuntimeVisibleParamaterAnnotations";
+    final static String RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS = "RuntimeInvisibleParamaterAnnotations";
 
     /** The ConstantPool that this attribute is defined against. */
     protected final ConstantPool mCp;
@@ -158,7 +162,19 @@ public abstract class Attribute {
 	        else if (name.equals(SIGNATURE)) {
 	            return SignatureAttr.define(cp, name, length, din);
 	        }
-	
+	        else if (name.equals(RUNTIME_VISIBLE_ANNOTATIONS)) {
+	            return new RuntimeVisibleAnnotationsAttr(cp, name, length, din);
+	        } 
+	        else if (name.equals(RUNTIME_INVISIBLE_ANNOTATIONS)) {
+	            return new RuntimeInvisibleAnnotationsAttr(cp, name, length, din);
+	        }
+	        else if (name.equals(RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS)) {
+	            return new RuntimeVisibleParameterAnnotationsAttr(cp, name, length, din);
+	        }
+	        else if (name.equals(RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS)) {
+	            return new RuntimeInvisibleParameterAnnotationsAttr(cp, name, length, din);
+	        }
+
 	        if (mAttrFactory != null) {
 	            Attribute attr =
 	                mAttrFactory.createAttribute(cp, name, length, din);
