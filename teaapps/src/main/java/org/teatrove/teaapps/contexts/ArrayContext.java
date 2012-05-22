@@ -310,4 +310,92 @@ public class ArrayContext {
     public void setIntInArray(int[] intArray, int value, int index) {
         intArray[index] = value;
     }
+    
+    /**
+     * Join the contents of the given array separated by the given separator.
+     * For example, the array [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param array  The array to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(int[] array, String separator) {
+        int size = array.length;
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            int item = array[i];
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item);
+        }
+        
+        return buffer.toString();
+    }
+    
+    /**
+     * Join the contents of the given array separated by the given separator.
+     * For example, the array [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param array  The array to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(long[] array, String separator) {
+        int size = array.length;
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            long item = array[i];
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item);
+        }
+        
+        return buffer.toString();
+    }
+    
+    /**
+     * Join the contents of the given array separated by the given separator.
+     * For example, the array [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param array  The array to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(double[] array, String separator) {
+        int size = array.length;
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            double item = array[i];
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item);
+        }
+        
+        return buffer.toString();
+    }
+    
+    /**
+     * Join the contents of the given array separated by the given separator.
+     * For example, the array [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param array  The array to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(Object[] array, String separator) {
+        int size = array.length;
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            Object item = array[i];
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item.toString());
+        }
+        
+        return buffer.toString();
+    }
 }
