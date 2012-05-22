@@ -124,34 +124,42 @@
         var $window = $(window),
             $detailsContent = $('#details-content'),
             $detailsParent = $detailsContent.parent(),
+            $treeContainer = $('#tree-container'),
             $detailsSection = $detailsContent.parents('section'),
-            contentTop = $detailsContent.offset().top - 8,
             isFixedNav = !$(document).children().hasClass('ie'),
             navPadding = (isFixedNav ? 50 : 0),
-            scrollOffset = -1;
+            contentTop = -1;
             
-        var calcHeight = function() {
+        var calcHeight = function(isFixed) {
             var $scroll = $detailsContent.find('div.scroll');
             if (!$scroll.length) { return; }
+            else if (!$detailsContent.is(":visible")) { return; }
             
-            if (scrollOffset == -1) {
-                scrollOffset = ($scroll.offset().top - contentTop);
+            if (contentTop < 0) {
+                contentTop = $detailsContent.offset().top - 8
             }
+            
+            var scrollOffset = 
+                $scroll.offset().top - $detailsContent.offset().top - 8;
 
-            if ($detailsContent.hasClass('fixed')) {
+            if (typeof isFixed === 'undefined') {
+                isFixed = $detailsContent.hasClass('fixed');
+            }
+            
+            if (isFixed) {
                 height = ($window.height() - navPadding);
                 var pageBottom = $window.scrollTop() + $window.height();
                 var parentBottom = $detailsSection.offset().top + $detailsSection.height();
                 if (pageBottom > parentBottom) {
                     height -= (pageBottom - parentBottom);
                 }
-                else { height -= 20; }
+                else { height -= 40; }
             }
             else {
-                height = ($window.height() - (contentTop - $window.scrollTop()) - 20);
+                height = ($window.height() - (contentTop - $window.scrollTop()) - 40);
             }
 
-            $detailsSection.css({ 'min-height' : (height + 50) + 'px' });
+            $treeContainer.css({ 'min-height' : (height + 24) + 'px' });
             $scroll.css({ 'max-height' : (height - scrollOffset) + 'px' });
         };
         
@@ -163,14 +171,20 @@
         $(window).resize(function() { calcHeight(); calcWidth(); });
         
         $(document).scroll(function() {
+            if (!$detailsContent.is(":visible")) { return; }
+            
             var scrollTop = $window.scrollTop() + navPadding;
+            if (contentTop < 0) {
+                contentTop = $detailsContent.offset().top - 8
+            }
+
             if (scrollTop < contentTop) {
-               $detailsContent.removeClass('fixed');
-               calcHeight();
+                calcHeight(false);
+                $detailsContent.removeClass('fixed');
             }
             else {
-               $detailsContent.addClass('fixed');
-               calcHeight();
+                calcHeight(true);
+                $detailsContent.addClass('fixed');
             }
         });
         
@@ -183,13 +197,17 @@
         
         var lastUri = null;
         setInterval(function() {
+            var $detailsContent = $('#details-content');
+            if (!$detailsContent.is(":visible")) { return; }
+            
             var href = location.href;
             var idx = href.indexOf('#');
             if (idx > 0) {
                 var uri = unescape(href.substring(idx + 1));
                 if (lastUri != uri) {
                     lastUri = uri;
-                    $('#details-content').load(uri, function() {
+                    $detailsContent.load(uri, function() {
+                        calcWidth();
                         calcHeight();
                     });
                 }
@@ -197,12 +215,12 @@
             else {
                 if (lastUri != null) {
                     lastUri = null;
-                    $('#details-content').html('');
+                    $detailsContent.html('');
                 }
             }
         }, 250);
         
-        $("#tree-container")
+        $treeContainer
             .bind("loaded.jstree", function (event, data) {
                 var expandFirst = $('#tree-container').attr('expandFirst');
                 if ( expandFirst && expandFirst == "true" ) {
@@ -869,6 +887,7 @@
 		}
     };
     function initSystemInfoOptions() {
+
         $('#buttonset-tabs .ui-button').live('click', function (evt) {
             var forId = $(this).attr('for');
             var radio = $('#' + forId);
@@ -879,8 +898,927 @@
                 });
             }
         });
+
+        $('#buttonset-refresh .ui-button').live('click', function (evt) {
+            var forId = $(this).attr('for');
+            var radio = $('#' + forId);
+            var interval = radio.val();
+            if (typeof interval !== 'undefined') {
+                interval = parseInt(interval, 10);
+                $.system.monitor(interval * 1000);
+            }
+        });
+
+        $('#buttonset-threads .ui-button').live('click', function (evt) {
+            var forId = $(this).attr('for');
+            var radio = $('#' + forId);
+            var element = radio.val();
+            if (element) {
+                $('div.thread-container.ui-active').removeClass('ui-active').fadeOut(200, function() {
+                    $('#thread-container-' + element).addClass('ui-active').fadeIn(200);
+                });
+            }
+        });
+
+        $(window).resize(function() {
+            $('.graph').each(function() {
+                var $this = $(this);
+                if ($this.is(":visible")) {
+                    var plot = $this.data('plot');
+                    if (plot) { plot.resize(); }
+                }
+            });
+        });
         
         initGridlapses();
+        initSystemInfoData();
+        
+        var refresh = parseInt($('input[name="refresh"]:checked').val(), 10);
+        $.system.monitor(refresh * 1000);
+    };
+    function initSystemInfoData() {
+        $.system = {
+            MAX_POINTS : 100,
+            
+            listeners : [],
+            addDataListener : function(listener) {
+                $.system.listeners.push(listener);
+            },
+            
+            timer : null,
+            refresh : function(callback) {
+                $('#loadingIndicator').show();
+                $.get('<% pathPrefix %>system/remote/jmx', function(json) {
+                    for (var i = 0; i < $.system.listeners.length; i++) {
+                        $.system.listeners[i](json);
+                    }
+                }).complete(function() { 
+                    $('#loadingIndicator').hide();
+                    callback(); 
+                });            
+            },
+            
+            monitor : function(interval) {
+                var _handler = null;
+                if ($.system.timer) { clearTimeout($.system.timer); }
+                if (interval > 0) {
+                    (_handler = function() {
+                        $.system.timer = setTimeout(function() {
+                            $.system.refresh(_handler);
+                        }, interval);
+                    })();
+                }
+            },
+
+            formatDuration : function(time, type) {
+                var result = '';
+                
+                var days = (1000.0 * 60.0 * 60.0 * 24.0);
+                var value = Math.floor(time / days);
+                var time = time % days;
+                if (value > 0) { 
+                    if (type == 'time') { result += value.toFixed(0) + ':'; }
+                    else if (type == 'text') { result += value.toFixed(0) + 'd '; }
+                }
+        
+                var hours = (1000.0 * 60.0 * 60.0);
+                value = Math.floor(time / hours);
+                time = time % hours;
+                if (value > 0) { 
+                    if (type == 'time') { result += value.toFixed(0) + ':'; }
+                    else if (type == 'text') { result += value.toFixed(0) + 'h '; }
+                }
+                
+                minutes = (1000.0 * 60.0);
+                value = Math.floor(time / minutes);
+                time = time % minutes;
+                if (value > 0) { 
+                    if (type == 'time') { result += value.toFixed(0) + ':'; }
+                    else if (type == 'text') { result += value.toFixed(0) + 'm '; }
+                }
+                
+                seconds = (1000.0);
+                value = Math.floor(time / seconds);
+                time = time % seconds;
+                if (value > 0) { 
+                    if (type == 'time') { result += value.toFixed(0) + '.'; }
+                    else if (type == 'text') { result += value.toFixed(0) + 's '; }
+                }
+                
+                if (type == 'time') {
+                    result += time.toFixed(0);
+                }
+                
+                if (result.length == 0) {
+                    result = time + ' ms';
+                }
+                
+                return result;
+            },
+    
+            initPlot : function($container, data, options) {
+                var plot = $.plot($container, data, options);
+                $container.data('plot', plot);
+        
+                var previous = null;
+                $container.bind("mouseout", function() {
+                    previous = null;
+                    $.system.hideTooltip();
+                    
+                    plot.clearCrosshair();
+                    $container.data('plothover', null);
+                });
+                
+                $container.bind("plothover", function(event, pos, item) {
+                    var axes = plot.getAxes();
+                    if (pos.x < axes.xaxis.min || pos.x > axes.xaxis.max ||
+                        pos.y < axes.yaxis.min || pos.y > axes.yaxis.max) {
+                        return;
+                    }
+            
+                    var contents = '';
+                    var datapoint = null;
+                    var i, j, dataset = plot.getData();
+                    for (i = 0; i < dataset.length; i++) {
+                        var series = dataset[i];
+            
+                        // find the nearest points, x-wise
+                        for (j = 0; j < series.data.length; j++) {
+                            if (series.data[j][0] > pos.x) {
+                                break;
+                            }
+                        }
+                        
+                        // now interpolate
+                        var p, p1 = series.data[j - 1], 
+                               p2 = series.data[j];
+        
+                        if (p1 == null && p2 == null) { p = null; }
+                        else if (p1 == null) { p = p2[1]; }
+                        else if (p2 == null) { p = p1[1]; }
+                        else if (Math.abs(p1[0] - pos.x) < 
+                                 Math.abs(p2[0] - pos.x)) {
+                            p = p1;
+                        }
+                        else { p = p2; }
+                        
+                        datapoint = p;
+                        if (p != null) {
+                            if (contents.length == 0) {
+                                contents += axes.xaxis.tickFormatter(p[0], axes.xaxis) + '<br /><br />';
+                            }
+                            
+                            contents += series.label + ": " + axes.yaxis.tickFormatter(p[1], axes.yaxis) + '<br />';
+                        }
+                    }
+                    
+                    if (datapoint != null) {
+                        var poffset = $container.offset();
+                        var offset = plot.pointOffset({ x: datapoint[0], y: 0 });
+                        
+                        $container.data('plothover', [ pos, item ]);
+                        $.system.showTooltip(poffset.left + offset.left, pos.pageY, contents, $container);
+                        plot.lockCrosshair({ x: datapoint[0] });
+                    }
+                });
+            },
+    
+            initChart : function($container, type, formatter, callback) {
+                var options = {
+                    series: {
+                        bars: { show: (type == 'bar'), fill: true },
+                        lines: { show: (type == 'line'), fill: false },
+                        points: { show: false }
+                    },
+                    grid: {
+                        hoverable: true,
+                        clickable: true,
+                        autoHighlight: false
+                    },
+                    legend: { show: false },
+                    crosshair: { mode: "x" },
+                    xaxis: { 
+                        show: true, 
+                        mode: (type == 'line' ? 'time' : ''),
+                        twelveHourClock: true 
+                    },
+                    yaxis: { 
+                        show: true, 
+                        min: 0, 
+                        tickFormatter: formatter 
+                    },
+                };
+                
+                if (callback) {
+                    callback(options);
+                }
+        
+                var data = [ ], handlers = [ ];
+                for (var i = 4; i < arguments.length; i += 2) {
+                    handlers.push(arguments[i + 1]);
+                    
+                    var series = null;
+                    if (typeof arguments[i] == 'object') {
+                        series = arguments[i];
+                        series.data = [];
+                    }
+                    else {
+                        series = { label: arguments[i], data: [] };
+                    }
+                    
+                    data.push(series);
+                }
+        
+                $container.data('plot', null);
+                $container.data('plotdata', data);
+                $container.data('plothandlers', handlers);
+                $container.data('plotoptions', options);
+                $container.addClass('graph');
+            },
+
+            hideTooltip : function() {
+                $('#tooltip').fadeOut(200);
+            },
+    
+            showTooltip : function(x, y, contents, container) {
+                var $tooltip = $('#tooltip');
+                if ($tooltip.length == 0) {
+                    $tooltip = 
+                        $('<div id="tooltip"></div>')
+                            .css({
+                                position: 'absolute',
+                                display: 'none',
+                                border: '1px solid #fdd',
+                                padding: '5px',
+                                'background-color': '#000',
+                                color: '#FFF',
+                                opacity: 0.80,
+                                'z-index': 9999,
+                                'font-size': '12px',
+                                'border-radius': '3px'
+                            }
+                        ).appendTo("body");
+                        
+                    $tooltip.css({visibility: 'hidden'})
+                        .html(contents);
+                }
+                else {
+                    $tooltip.html(contents);
+                }
+        
+                var left = x, top = y,
+                    coffset = container.offset(),
+                    cwidth = container.width(), 
+                    cheight = container.height(),
+                    twidth = $tooltip.width(),
+                    theight = $tooltip.height();
+                    
+                // to the right first
+                if (left + twidth + 15 < coffset.left + cwidth) {
+                    left = left + 15;
+                }
+                
+                // to the left last
+                else { left = left - twidth - 15; }
+        
+                // to above first
+                if (top - theight - 15 > coffset.top) {
+                    top = top - theight - 15;
+                }
+                
+                // to bottom last
+                else { top = top + 15; }
+        
+                $tooltip.html(contents)
+                        .css({'left': left + 'px', top: top + 'px', visibility: 'visible' })
+                        .fadeIn(200);
+            }
+        };
+
+        initSystemInfoDataGeneral();
+        initSystemInfoDataOverview();
+        initSystemInfoDataMemory();  
+        initSystemInfoDataThreads();
+        initSystemInfoDataMBeans();
+        initSystemInfoDataInfo();
+    };
+    function initSystemInfoDataGeneral() {
+        $.system.addDataListener(function(json) {
+            var usedHeapMemory = json.memory.heap.used / 1024 / 1024;
+            var maxHeapMemory = json.memory.heap.max / 1024 / 1024;
+            var freeHeapMemory = maxHeapMemory - usedHeapMemory;
+            $('#freeHeapMemory .value .number').text(freeHeapMemory.toFixed(0));
+            $('#usedHeapMemory .value .number').text(usedHeapMemory.toFixed(0));
+            $('#totalHeapMemory .value .number').text(maxHeapMemory.toFixed(0));
+        
+            var usedNonHeapMemory = json.memory.nonheap.used / 1024 / 1024;
+            var maxNonHeapMemory = json.memory.nonheap.max / 1024 / 1024;
+            var freeNonHeapMemory = maxNonHeapMemory - usedNonHeapMemory;
+            $('#freeNonHeapMemory .value .number').text(freeNonHeapMemory.toFixed(0));
+            $('#usedNonHeapMemory .value .number').text(usedNonHeapMemory.toFixed(0));
+            $('#totalNonHeapMemory .value .number').text(maxNonHeapMemory.toFixed(0));
+        });
+        
+        $.system.addDataListener(function(json) {
+            $('.graph').each(function(idx) {
+                var $this = $(this),
+                    plot = $this.data('plot'),
+                    data = $this.data('plotdata'),
+                    handlers = $this.data('plothandlers'),
+                    options = $this.data('plotoptions');
+                
+                for (var i = 0; i < handlers.length; i++) {
+                    var point = handlers[i](json);
+                    if (point === null) { continue; }
+                    
+                    if (!$.isArray(point)) {
+                        point = [ json.timestamp, point ];
+                    }
+                    
+                    if ($.isArray(point[0])) {
+                        for (var j = 0; j < point.length; j++) {
+                            data[i].data.push(point[j]);
+                        }
+                    }
+                    else {
+                        if (options.series.bars.show) {
+                            data[i].data = [ point ];
+                        }
+                        else {
+                            data[i].data.push(point);
+                        }
+                    }
+                    
+                    if (data[i].data.length > $.system.MAX_POINTS) {
+                        // TODO: aggregate data over time period
+                        data[i].data.shift();
+                    }
+                }
+                
+                if (!plot) {
+                    if (!$this.is(':visible')) { return; }
+                    plot = $.system.initPlot($this, data, options);
+                }
+                else {
+                    plot.setData(data);
+                    if ($this.is(':visible')) {
+                        plot.resize();
+                    }
+                    
+                    plot.setupGrid();
+                    plot.draw();
+                    plot.clearCrosshair();
+                }
+                
+                var plothover = $this.data('plothover');
+                if (plothover) {
+                    $this.trigger('plothover', plothover[0], plothover[1]);
+                }
+            });
+        });
+    };
+    function initSystemInfoDataOverview() {
+        var prevUptime = -1, prevCputime = -1, 
+            calculateCpu = function(json) {
+                if (typeof json.os.cpu !== 'undefined') { return json.os.cpu; }
+                if (typeof json.os.processtime === 'undefined') { return 0; }
+                
+                var procs = json.os.processors;
+                var uptime = json.runtime.uptime;
+                var cputime = json.os.processtime;
+                if (prevUptime > 0 && prevCputime > 0) {
+                    var elapsedTime = uptime - prevUptime;
+                    var elapsedCpu = cputime - prevCputime;
+                    // CPU usage could go higher than 100% because elapsedTime
+                    // and elapsedCpu are not fetched simultaneously so limit
+                    // to 100
+                    json.os.cpu = Math.min(100.0, (elapsedCpu / (elapsedTime * procs) * 100.0));
+                }
+                else {
+                    json.os.cpu = 0;
+                }
+                
+                prevUptime = uptime;
+                prevCputime = cputime;
+                return json.os.cpu;
+            };
+        
+        $.system.addDataListener(function(json) {
+            $('#uptime').text($.system.formatDuration(json.runtime.uptime, 'text'));
+            
+            if (typeof json.os.processtime !== 'undefined') {
+                $('#processtime').text($.system.formatDuration(json.os.processtime, 'text'));
+            }
+            
+            $('#cpu-used').text(calculateCpu(json).toFixed(1) + '%');
+            
+            $('#heap-memory-used').text((json.memory.heap.used / 1024.0 / 1024.0).toFixed(1));
+            $('#heap-memory-committed').text((json.memory.heap.committed / 1024.0 / 1024.0).toFixed(1));
+            $('#heap-memory-max').text((json.memory.heap.max / 1024.0 / 1024.0).toFixed(1));
+            
+            //$('#oldgen-memory-used').text((json.pools.tenured.usage.used / 1024.0 / 1024.0).toFixed(1));
+            //$('#oldgen-memory-committed').text((json.pools.tenured.usage.committed / 1024.0 / 1024.0).toFixed(1));
+            //$('#oldgen-memory-max').text((json.pools.tenured.usage.max / 1024.0 / 1024.0).toFixed(1));
+            //$('#oldgen-memory-peak').text((json.pools.tenured.peak.used / 1024.0 / 1024.0).toFixed(1));
+            
+            $('#classes-loaded').text(json.classes.loaded);
+            $('#classes-unloaded').text(json.classes.unloaded);
+            
+            $('#threads-live').text(json.threads.count);
+            $('#threads-peak').text(json.threads.peak);
+            $('#threads-daemon').text(json.threads.daemon);
+            $('#threads-started').text(json.threads.total);
+        });
+            
+        $.system.initChart(
+            $('#cpu-usage'), 
+            'line',
+            function(y) {
+                return y.toFixed(1) + '%';
+            },
+            function(options) {
+                options.legend.show = true;
+                options.legend.position = 'nw';
+                options.yaxis.min = 0;
+                options.yaxis.max = 100;
+            },
+            
+            'CPU Usage', 
+            function(data) { 
+                return calculateCpu(data);
+            }
+        );
+        
+        $.system.initChart(
+            $('#heap-usage'), 
+            'line',
+            function(y) {
+                return (y / 1024 / 1024).toFixed(1) + ' MB';
+            },
+            function(options) {
+                options.legend.show = true;
+                options.legend.position = 'nw';
+                options.series.stack = true;
+                options.series.lines.fill = true;
+            },
+            
+            'Heap Used', 
+            function(data) { return data.memory.heap.used; },
+            //function(data) { return data.pools.tenured.usage.used; },
+            
+            'Heap Size',
+            function(data) { return data.memory.heap.committed; }
+            //function(data) { return data.pools.tenured.usage.committed; }
+        );
+    
+        $.system.initChart(
+            $('#class-usage'),
+            'line', 
+            function(y) { return y.toFixed(0); },
+            function(options) {
+                options.legend.show = true;
+                options.legend.position = 'nw';
+            },
+            
+            'Total Loaded Classes', 
+            function(data) {
+                return data.classes.loaded;
+            }
+        );
+        
+        $.system.initChart(
+            $('#thread-usage'),
+            'line', 
+            function(y) { return y.toFixed(0); },
+            function(options) {
+                options.legend.show = true;
+                options.legend.position = 'nw';
+            },
+            
+            'Live Threads', 
+            function(data) { return data.threads.count; },
+            
+            'Daemon Threads', 
+            function(data) { return data.threads.daemon; }
+        );
+    };
+    function initSystemInfoDataMemory() {
+        function initSpaces() {
+            $.system.initChart(
+                $('#memory-spaces'), 
+                'bar',
+                function(y) {
+                    return (y / 1024 / 1024).toFixed(1) + ' MB';
+                },
+                function(options) {
+                    options.series.stack = true;
+                    options.xaxis.ticks = [
+                        [ 1, 'Perm Gen' ],
+                        [ 3, 'Old Gen' ],
+                        [ 5, 'Eden' ]
+                    ];
+                },
+                
+                { label: 'Perm Gen Used', color: 0 }, 
+                function(data) { return [ 1, data.pools.perm.usage.used ]; },
+                
+                { label: 'Perm Gen Committed', color: '#e0e0e0' },
+                function(data) { return [ 1, data.pools.perm.usage.committed ]; },
+                
+                { label: 'Perm Gen Committed', color: '#eeeeee' },
+                function(data) { return [ 1, data.pools.perm.usage.max ]; },
+                
+                { label: 'Old Gen Used', color: 0 }, 
+                function(data) { return [ 3, data.pools.tenured.usage.used ]; },
+                
+                { label: 'Old Gen Committed', color: '#e0e0e0' },
+                function(data) { return [ 3, data.pools.tenured.usage.committed ]; },
+                
+                { label: 'Old Gen Size', color: '#eeeeee' },
+                function(data) { return [ 3, data.pools.tenured.usage.max ]; },
+                
+                { label: 'Eden Used', color: 0 }, 
+                function(data) { return [ 5, data.pools.eden.usage.used ]; },
+                
+                { label: 'Eden Committed', color: '#e0e0e0' },
+                function(data) { return [ 5, data.pools.eden.usage.committed ]; }
+            );
+        }
+        
+        function initCollector(id, property) {
+            var $container = $('#' + id);
+            $.system.initChart(
+                $container,
+                'line', 
+                function(y) {
+                    return (y / 1024 / 1024).toFixed(1) + ' MB';
+                },
+                function(options) {
+                    options.yaxis.labelWidth = 60;
+                    options.series.lines.fill = true;
+                },
+                
+                'Collection', 
+                function(data) {
+                    var last = $container.data('lastGC');
+                    var current = data.collectors[property].lastGC;
+                    if (current.start < 0) { return 0; }
+                    
+                    if (!last || last.start != current.start) {
+                        $container.data('lastGC', current);
+                        return [
+                            [ data.runtime.start + current.start - 1, 0 ],
+                            [ data.runtime.start + current.start, current.memory.total ],
+                            [ data.runtime.start + current.end, current.memory.total ],
+                            [ data.runtime.start + current.end + 1, 0 ]
+                        ];
+                    }
+                    
+                    return 0;
+                }
+            );
+        }
+        
+        function initUsage(id, property) {
+            $.system.initChart(
+                $('#' + id), 
+                'line',
+                function(y) {
+                    return (y / 1024 / 1024).toFixed(1) + ' MB';
+                },
+                function(options) {
+                    options.yaxis.labelWidth = 60;
+                },
+                
+                'Used', 
+                function(data) { return data.pools[property].usage.used; }
+            );
+        }
+        
+        initSpaces();
+
+        initCollector('young-collector', 'young');
+        initCollector('tenured-collector', 'tenured');
+        
+        initUsage('eden-usage', 'eden');
+        initUsage('survivor-usage', 'survivor');
+        initUsage('oldgen-usage', 'tenured');
+        
+        $.system.addDataListener(function(json) {
+            $('#young-collector-count').text(json.collectors.young.count);
+            $('#young-collector-time').text($.system.formatDuration(json.collectors.young.time, 'text'));
+            if (json.collectors.young.lastGC.start > 0) {
+                var offset = json.timestamp - (json.collectors.young.lastGC.start + json.runtime.start);
+                $('#young-collector-lastgc').text($.system.formatDuration(offset, 'text') + ' ago taking ' + $.system.formatDuration(json.collectors.young.lastGC.duration, 'text'));
+            }
+            
+            $('#tenured-collector-count').text(json.collectors.tenured.count);
+            $('#tenured-collector-time').text($.system.formatDuration(json.collectors.tenured.time, 'text'));
+            if (json.collectors.tenured.lastGC.start > 0) {
+                var offset = json.timestamp - (json.collectors.tenured.lastGC.start + json.runtime.start);
+                $('#tenured-collector-lastgc').text($.system.formatDuration(offset, 'text') + ' ago taking ' + $.system.formatDuration(json.collectors.tenured.lastGC.duration, 'text'));
+            }
+            
+            $('#eden-memory-used').text((json.pools.eden.usage.used / 1024.0 / 1024.0).toFixed(1));
+            $('#eden-memory-committed').text((json.pools.eden.usage.committed / 1024.0 / 1024.0).toFixed(1));
+            $('#eden-memory-max').text((json.pools.eden.usage.max / 1024.0 / 1024.0).toFixed(1));
+            $('#eden-memory-peak').text((json.pools.eden.peak.used / 1024.0 / 1024.0).toFixed(1));
+            
+            $('#survivor-memory-used').text((json.pools.survivor.usage.used / 1024.0 / 1024.0).toFixed(1));
+            $('#survivor-memory-committed').text((json.pools.survivor.usage.committed / 1024.0 / 1024.0).toFixed(1));
+            $('#survivor-memory-max').text((json.pools.survivor.usage.max / 1024.0 / 1024.0).toFixed(1));
+            $('#survivor-memory-peak').text((json.pools.survivor.peak.used / 1024.0 / 1024.0).toFixed(1));
+            
+            $('#oldgen-memory-used').text((json.pools.tenured.usage.used / 1024.0 / 1024.0).toFixed(1));
+            $('#oldgen-memory-committed').text((json.pools.tenured.usage.committed / 1024.0 / 1024.0).toFixed(1));
+            $('#oldgen-memory-max').text((json.pools.tenured.usage.max / 1024.0 / 1024.0).toFixed(1));
+            $('#oldgen-memory-peak').text((json.pools.tenured.peak.used / 1024.0 / 1024.0).toFixed(1));
+        });
+    };  
+    function initSystemInfoDataThreads() {
+        var MAX_METRICS = 120, 
+            MAX_DIFFERENTIAL = 5000,
+            THREAD_STATES = [
+                { color: 'black',   label: 'New Thread' },
+                { color: 'green',   label: 'Running' },
+                { color: 'red',     label: 'Blocked' },
+                { color: 'yellow',  label: 'Waiting' },
+                { color: 'yellow',  label: 'Timed Waiting' },
+                { color: 'black',   label: 'Terminated' }
+            ];
+        
+        var lastTimestamp = -1,
+            $grid = $('.grid'),
+            $gridnav = $('.grid-lhn'), 
+            $headers = $grid.find('.header');
+            $rows = $grid.find('.row'),
+            $table = $('#thread-container-perf table');
+
+        $.system.addDataListener(function(json) {
+            for (var i = 0; i < json.threads.threads.length; i++) {
+                var thread = json.threads.threads[i];
+                if (!thread || thread.id < 0) { continue; }
+                
+                var $perf = $('#thread-perf-' + thread.id);
+                if ($perf.length == 0) {
+                    var count = $table.children('tbody').children('tr').length + 1;
+                    var $row = $('' +
+                        '<tr id="thread-perf-' + thread.id + '" class="' + (count % 2 == 0 ? 'evenrow' : 'oddrow') + '">' +
+                            '<td><a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=' + thread.id + '" title="' + thread.name + '">' + thread.name + '</a></td>' +
+                            '<td class="cpu-time"></td>' +
+                            '<td class="blocked-time"></td>' +
+                            '<td class="waited-time"></td>' +
+                            '<td class="total-time"></td>' +
+                        '</tr>');                    
+                    
+                    $table.children('tbody').append($row);
+                    $perf = $('#thread-perf-' + thread.id);
+                    $perf.effect('pulsate');
+                }
+                
+                if ($perf.length == 1) {
+                    var totalTime = 
+                        thread.time.cpu + thread.blocked.time + 
+                        thread.waited.time;
+                    
+                    $perf.find('td.cpu-time')
+                        .attr('title', $.system.formatDuration(thread.time.user, 'time') + ' in user mode')
+                        .text($.system.formatDuration(thread.time.cpu, 'time'));
+                        
+                    $perf.find('td.waited-time')
+                        .attr('title', 'Waited ' + thread.waited.count + ' times')
+                        .text($.system.formatDuration(thread.waited.time, 'time'));
+                        
+                    $perf.find('td.blocked-time')
+                        .attr('title', 'Blocked ' + thread.blocked.count + ' times')
+                        .text($.system.formatDuration(thread.blocked.time, 'time'))
+                        
+                    $perf.find('td.total-time')
+                        .text($.system.formatDuration(totalTime, 'time'))
+                }
+            }
+        });
+                    
+        $.system.addDataListener(function(json) {
+            // calculate time differential and insert break if outstanding
+            var timestamp = json.timestamp;
+            if (lastTimestamp > 0 &&
+                timestamp - lastTimestamp > MAX_DIFFERENTIAL) {
+                
+                insertBreak();
+            }
+            
+            // insert regular metrics per thread
+            insertMetrics(json);
+            lastTimestamp = timestamp;
+            
+            // remove old metrics
+            purgeMetrics();
+        });
+        
+        function purgeMetrics() {
+            $headers.each(function() {
+                var $header = $(this),
+                    $metrics = $header.children('.metric');
+                    
+                if ($metrics.length > MAX_METRICS) {
+                    $($metrics[$metrics.length - 1]).remove();
+                }
+            });
+            
+            $rows.each(function() {
+                var $row = $(this),
+                    $metrics = $row.children('.metric');
+                    
+                if ($metrics.length > MAX_METRICS) {
+                    $($metrics[$metrics.length - 1]).remove();
+                }
+            });
+        }
+        
+        function insertBreak() {
+            var rowWidth = -1;
+            $headers.each(function() {
+                var $header = $(this);
+                if (rowWidth < 0) {
+                    var $metrics = $header.children('.metric');
+                    var twidth = ($metrics.length + 1) * 106;
+                    rowWidth = Math.max($grid.width(), twidth);
+                }
+                
+                $header.css('width', rowWidth + 'px');
+
+                var $metric = $('<div class="metric" style="text-align: center;"> --- </div>');
+                $header.prepend($metric);
+            });
+            
+            // move previous metrics in each row
+            $rows.each(function() {
+                var $row = $(this), width = $row.width();
+                $row.css('width', rowWidth + 'px');
+                
+                var $metric = $('<div class="metric process transparent"><span class="value">&nbsp;</span></div>'); 
+                $row.prepend($metric);
+            });
+        }
+        
+        function insertRow(thread) {
+            // calculate style
+            var count = $rows.length + 1;
+            
+            // append header if necessary
+            if ((count - 1) % 10 == 0) {
+                $placeholder = $('.grid-lhn .placeholder');
+                $placeholder.before($($gridnav.find('div.header.stathead')[0]).clone());
+                
+                var $scrollbar = $grid.find('div.scrollbar.last');
+                $scrollbar.before($($grid.find('div.header.stathead')[0]).clone());
+                $scrollbar.before($($grid.find('div.scrollbar')[0]).clone());
+                
+                $grid.data('gridlapse').initialize();
+            }
+            
+            // append label
+            var clazz = (count % 2 == 0 ? 'evenrow' : 'oddrow');
+            var $label = $('' +
+                '<div class="row stathead ' + clazz + '">' +
+                    '<div class="template" title="">' +
+                        '<a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=' + thread.id + '" title="' + thread.name + '">' +
+                            thread.name +
+                        '</a>' +
+                    '</div>' +
+                '</div>');
+                
+            $('.grid-lhn .placeholder').before($label);
+
+            // append row
+            var $row = $('<div id="row-' + thread.id + '" class="row ' + clazz + '"></div>');
+            $grid.find('.scrollbar.last').before($row);
+
+            var state = THREAD_STATES[0], 
+                label = state.label, color = state.color;
+                
+            var $metric = $('<div title="' + label + '" class="metric process ' + color + '"><span class="value">&nbsp;</span></div>'); 
+            $row.prepend($metric);
+            
+            // show effect
+            $row.effect('pulsate');
+            
+            // recalc
+            $headers = $grid.find('.header');
+            $rows = $grid.find('.row')
+        }
+        
+        function insertMetrics(json) {
+            var time = json.time;
+                    
+            // insert time frame into each header
+            var rowWidth = -1;
+            $headers.each(function() {
+                var $header = $(this);
+                if (rowWidth < 0) {
+                    var $metrics = $header.children('.metric');
+                    var twidth = ($metrics.length + 1) * 106;
+                    rowWidth = Math.max($grid.width(), twidth);
+                }
+                
+                $header.css('width', rowWidth + 'px');
+
+                var $metric = $('<div class="metric" style="left: -75px; width: 0px;">' + time + '</div>');
+                $header.prepend($metric);
+                $metric.animate({'left' : '0px', 'width' : '75px' });
+            });
+            
+            // move previous metrics in each row
+            $rows.each(function() {
+                var $row = $(this), width = $row.width();
+                $row.css('width', rowWidth + 'px');
+            });
+
+            // reinitialize the grid and scrollbars
+            var gridlapse = $grid.data('gridlapse');
+            gridlapse.initialize();
+            
+            // insert row per thread
+            for (var i = 0; i < json.threads.threads.length; i++) {
+                var thread = json.threads.threads[i];
+                if (!thread || thread.id < 0) { continue; }
+                
+                var $row = $('#row-' + thread.id);
+                if ($row.length == 0) {
+                    insertRow(thread);
+                    $row = $('#row-' + thread.id);
+                }
+                
+                if ($row.length > 0) {
+                    var state = THREAD_STATES[thread.state],
+                        label = state.label,
+                        clazz = 'metric process ' + state.color;
+                    
+                    var $metric = $('<div title="' + label + '" class="' + clazz + '" style="width: 0px;"><span class="value">&nbsp;</span></div>'); 
+                    $row.data('threading', time).prepend($metric);
+                    $metric.animate({ 'width' : '78px' });
+                }
+            }
+            
+            // cancel threads no longer valid
+            $rows.each(function() {
+                var $row = $(this);
+                var threading = $row.data('threading');
+                if (threading == time) { return; }
+                else if (threading == 0) {
+                    var $metric = $('<div class="metric process transparent" style="width: 0px;"><span class="value">&nbsp;</span></div>'); 
+                    $row.prepend($metric);
+                    $metric.animate({ 'width' : '78px' });
+                }
+                else { 
+                    var state = THREAD_STATES[5], 
+                        label = state.label, color = state.color;
+                        
+                    var $metric = $('<div title="' + label + '" class="metric process ' + color + '" style="width: 0px;"><span class="value">&nbsp;</span></div>'); 
+                    $row.data('threading', 0).prepend($metric);
+                    $metric.animate({ 'width' : '78px' });
+                }
+            });
+        }
+        
+        $('a.thread-details-link').click(function(event) {
+            var $this = $(this),
+                $dialog = $('#thread-details-dialog');
+                
+            $dialog.load($this.attr('href'), function() {
+                $dialog.attr('title', $this.text());
+                $dialog.dialog({ 
+                    modal: true, 
+                    width: 700, height: 400, 
+                    show: { effect: 'drop', direction: "up" }, 
+                    buttons: { 
+                        'Refresh' : function() { 
+                            $dialog.fadeOut('fast');
+                            $dialog.load($this.attr('href'), function() {
+                                $dialog.fadeIn('fast');
+                            });
+                        }, 
+                        'Close' : function() { $(this).dialog("close"); } 
+                    }
+                });
+            });
+              
+            event.preventDefault();
+            return false;
+        });
+    };
+    function initSystemInfoDataMBeans() {
+        // nothing to do
+    };
+    function initSystemInfoDataInfo() {
+        $('#button-refresh a').click(function(event) {
+            var $snapshot = $('#system-info-snapshot');
+            $snapshot.load($(this).attr('href') + ' #system-info-snapshot');
+            
+            event.preventDefault();
+            return false;
+        }); 
     };
     function initTemplateOptionLinks () {
         $(".template-options a").live("click", function (evt) {
@@ -1041,12 +1979,20 @@
 
         // setup container
         var initialize = function() {
-
+            // re-init vars
+            $grid = $gridlapse.find('.grid');
+            $gridLHN = $gridlapse.find('.grid-lhn');
+            $scrollbars = $gridlapse.find('.scrollbar');
+            $scrollers = $gridlapse.find('.scrollbar .scroller');
+            $tracker = $gridlapse.find('.grid-tracker');
+            $timers = $gridlapse.find('.timer');
+            $container = $gridlapse.find('.grid-container');
+            
             // initialize grid and scrollbars
             $grid.css('width', $container.width() - $gridLHN.width() - 5);
             $scrollbars.css('width', $grid.width() + 'px');
             $scrollers.css('width', (Math.pow($grid.width(), 2) / $grid[0].scrollWidth) + 'px');
-            $('.grid').scroll(function() {
+            $grid.scroll(function() {
                 $scrollbars.css('left', this.scrollLeft + 'px');
                 $scrollers.css('left', (this.scrollLeft / this.scrollWidth * 100.0) + '%');
             });
@@ -1109,11 +2055,11 @@
         // setup scrollbars
        
         $scrollbars
-            .mouseover(function(event) {
+            .live('mouseover', function(event) {
                 $timers.hide();
                 $tracker.hide();
             })
-            .mousedown(function(event) {
+            .live('mousedown', function(event) {
                 var offset = event.offsetX,
                     $scrollbar = $(this),
                     $scroller = $scrollbar.children('.scroller'),
@@ -1142,7 +2088,7 @@
                     scrollPage();
                 }
             })
-            .mouseup(function(event) {
+            .live('mouseup', function(event) {
                 if (scrolling && scrolling.interval) {
                     clearInterval(scrolling.interval);
                 }
@@ -1151,11 +2097,11 @@
             });
             
         $scrollers
-            .mouseover(function(event) {
+            .live('mouseover', function(event) {
                 $timers.hide();
                 $tracker.hide();
             })
-            .mousedown(function(event) {
+            .live('mousedown', function(event) {
                 dragging = {
                     pageX: event.pageX,
                     scrollLeft: $grid[0].scrollLeft,
@@ -1171,7 +2117,7 @@
         // setup grid dragging and trackers
              
         $grid.find('div.row')
-            .mousedown(function(event) {
+            .live('mousedown', function(event) {
                 dragging = {
                     mode: 'opposite',
                     pageX: event.pageX,
@@ -1189,7 +2135,7 @@
                 event.preventDefault();
                 return false;
             })
-            .mousemove(function(event) {
+            .live('mousemove', function(event) {
                 if (dragging) { return true; }
                 if ($tracker.length == 0 && $timers.length == 0) { return true; }
                 

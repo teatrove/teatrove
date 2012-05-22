@@ -1,5 +1,7 @@
 <% template getSystemInfo() 
 
+pathPrefix = call system.util.getPathPrefix()
+
 classLoadingMXBean = getClassLoadingMXBean();
 compilationMXBean = getCompilationMXBean();
 garbageCollectorMXBean = getGarbageCollectorMXBeans();
@@ -11,9 +13,20 @@ platformMBeanServer = getPlatformMBeanServer();
 runtimeMXBean = getRuntimeMXBean();
 threadMXBean = getThreadMXBean();
 
+pathSeparator = System.getProperty('path.separator', ':')
+
 %>
 
 <section>
+    <div class="controls">
+        <div class="controls-wrapper">
+            <div id="button-refresh" class="button">
+                <a href="<% pathPrefix %>/system/format/getSystemInfo">Refresh</a>
+            </div>
+        </div>
+    </div>
+    <br class="clear" /><br />
+    
     <div id="system-info-snapshot">
         <div class="table-container">
             <table cellspacing="1" cellpadding="3" class="tablehead">
@@ -162,7 +175,7 @@ threadMXBean = getThreadMXBean();
                 </thead>
                 <tbody>
                     <tr class="oddrow">
-                        <td>Arch</td>
+                        <td>Architecture</td>
                         <td><% operatingSystemMXBean.arch %></td>
                     </tr>
                     <tr class="evenrow">
@@ -206,19 +219,7 @@ threadMXBean = getThreadMXBean();
                     </tr>
                     <tr class="oddrow">
                         <td>Domains</td>
-                        <td><%
-                            if ( platformMBeanServer.domains != null ) {
-                                foreach ( p in 0..platformMBeanServer.domains.length-1 ) {
-                                    domain = platformMBeanServer.domains[p];
-    
-                                    'Domain ' p+1 ': "' domain '"';
-                                    
-                                    if ( p != platformMBeanServer.domains.length-1 ) {
-                                        ', '
-                                    }
-                                }
-                            }
-                        %></td>
+                        <td><% Arrays.toString(platformMBeanServer.domains) %></td>
                     </tr>
                     <tr class="evenrow">
                         <td>MBean Count</td>
@@ -241,7 +242,7 @@ threadMXBean = getThreadMXBean();
                 <tbody>
                     <tr class="oddrow">
                         <td>Boot Class Path</td>
-                        <td><% replace(runtimeMXBean.bootClassPath, ':', '<br />') %></td>
+                        <td><% replace(runtimeMXBean.bootClassPath, pathSeparator, '<br />') %></td>
                     </tr>
                     <tr class="evenrow">
                         <td>Boot Class Path Supported</td>
@@ -249,24 +250,15 @@ threadMXBean = getThreadMXBean();
                     </tr>
                     <tr class="oddrow">
                         <td>Class Path</td>
-                        <td><% replace(runtimeMXBean.classPath, ':', '<br />') %></td>
+                        <td><% replace(runtimeMXBean.classPath, pathSeparator, '<br />') %></td>
                     </tr>
                     <tr class="evenrow">
                         <td>Input Arguments</td>
-                        <td><%
-                            first = true;
-                            foreach ( arg in runtimeMXBean.inputArguments ) {
-                                if ( not first ) {
-                                    '<br />'
-                                }
-                                arg;
-                                first = false;
-                            }
-                        %></td>
+                        <td><% join(runtimeMXBean.inputArguments, '<br />') %></td>
                     </tr>
                     <tr class="oddrow">
                         <td>Library Path</td>
-                        <td><% replace(runtimeMXBean.libraryPath, ':', '<br />') %></td>
+                        <td><% replace(runtimeMXBean.libraryPath, pathSeparator, '<br />') %></td>
                     </tr>
                     <tr class="evenrow">
                         <td>Management Spec Version</td>
@@ -290,7 +282,7 @@ threadMXBean = getThreadMXBean();
                     </tr>
                     <tr class="oddrow">
                         <td>Start Time</td>
-                        <td><% runtimeMXBean.startTime %></td>
+                        <td><% createDate(runtimeMXBean.startTime) %> (<% runtimeMXBean.startTime %> ms)</td>
                     </tr>
                     <tr class="evenrow">
                         <td>System Properties</td>
@@ -307,7 +299,7 @@ threadMXBean = getThreadMXBean();
                     </tr>
                     <tr class="oddrow">
                         <td>Uptime</td>
-                        <td><% runtimeMXBean.uptime %></td>
+                        <td><% call system.util.getFormattedDuration(runtimeMXBean.uptime, 'text') %> (<% runtimeMXBean.uptime %> ms)</td>
                     </tr>
                     <tr class="evenrow">
                         <td>VM Name</td>
@@ -338,20 +330,7 @@ threadMXBean = getThreadMXBean();
                 <tbody>
                     <tr class="oddrow">
                         <td>All Thread Ids</td>
-                        <td><%
-                            if ( threadMXBean.allThreadIds != null ) {
-                                foreach ( t in 0..threadMXBean.allThreadIds.length-1 ) {
-                                    thread = threadMXBean.allThreadIds[t];
-    
-                                    //'Thread ' t+1 ': ' thread;
-                                    thread
-    
-                                    if ( t != threadMXBean.allThreadIds.length-1 ) {
-                                        ', '
-                                    }
-                                }
-                            }
-                        %></td>
+                        <td><% join(threadMXBean.allThreadIds, ', ') %></td>
                     </tr>
                     <tr class="evenrow">
                         <td>Current Thread CPU Time</td>

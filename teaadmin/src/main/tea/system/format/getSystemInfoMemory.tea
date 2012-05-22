@@ -26,7 +26,7 @@ tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
                     <div class="title">Young Collector</div>
                     <div class="info">
                         <span id="young-collector-count"><% youngCollectorMXBean.collectionCount %></span> collections, 
-                        <span id="young-collector-time"><% call system.util.getFormattedDuration(youngCollectorMXBean.collectionTime) %></span>, 
+                        <span id="young-collector-time"><% call system.util.getFormattedDuration(youngCollectorMXBean.collectionTime, 'text') %></span>, 
                         last GC: <span id="young-collector-lastgc">N/A</span>
                     </div>
                     <br class="clear" />
@@ -41,7 +41,7 @@ tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
                     <div class="title">Tenured Collector</div>
                     <div class="info">
                         <span id="tenured-collector-count"><% tenuredCollectorMXBean.collectionCount %></span> collections, 
-                        <span id="tenured-collector-time"><% call system.util.getFormattedDuration(tenuredCollectorMXBean.collectionTime) %></span>, 
+                        <span id="tenured-collector-time"><% call system.util.getFormattedDuration(tenuredCollectorMXBean.collectionTime, 'text') %></span>, 
                         last GC: <span id="tenured-collector-lastgc">N/A</span>
                     </div>
                     <br class="clear" />
@@ -80,146 +80,3 @@ tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
     
     <br class="clear" />
 </section>
-
-<script type="text/javascript">
-    
-    function initSpaces() {
-        initChart(
-            $('#memory-spaces'), 
-            'bar',
-            function(y) {
-                return (y / 1024 / 1024).toFixed(1) + ' MB';
-            },
-            function(options) {
-                options.series.stack = true;
-                options.xaxis.ticks = [
-                    [ 1, 'Perm Gen' ],
-                    [ 3, 'Old Gen' ],
-                    [ 5, 'Eden' ]
-                ];
-            },
-            
-            { label: 'Perm Gen Used', color: 0 }, 
-            function(data) { return [ 1, data.pools.perm.usage.used ]; },
-            
-            { label: 'Perm Gen Committed', color: '#e0e0e0' },
-            function(data) { return [ 1, data.pools.perm.usage.committed ]; },
-            
-            { label: 'Perm Gen Committed', color: '#eeeeee' },
-            function(data) { return [ 1, data.pools.perm.usage.max ]; },
-            
-            { label: 'Old Gen Used', color: 0 }, 
-            function(data) { return [ 3, data.pools.tenured.usage.used ]; },
-            
-            { label: 'Old Gen Committed', color: '#e0e0e0' },
-            function(data) { return [ 3, data.pools.tenured.usage.committed ]; },
-            
-            { label: 'Old Gen Size', color: '#eeeeee' },
-            function(data) { return [ 3, data.pools.tenured.usage.max ]; },
-            
-            { label: 'Eden Used', color: 0 }, 
-            function(data) { return [ 5, data.pools.eden.usage.used ]; },
-            
-            { label: 'Eden Committed', color: '#e0e0e0' },
-            function(data) { return [ 5, data.pools.eden.usage.committed ]; }
-        );
-    }
-    
-    function initCollector(id, property) {
-        var $container = $('#' + id);
-        initChart(
-            $container,
-            'line', 
-            function(y) {
-                return (y / 1024 / 1024).toFixed(1) + ' MB';
-            },
-            function(options) {
-                options.yaxis.labelWidth = 60;
-                options.series.lines.fill = true;
-            },
-            
-            'Collection', 
-            function(data) {
-                var last = $container.data('lastGC');
-                var current = data.collectors[property].lastGC;
-                if (current.start < 0) { return 0; }
-                
-                if (!last || last.start != current.start) {
-                    $container.data('lastGC', current);
-                    console.log('GC: ', data.runtime.start, current.start, data.timestamp);
-                    return [
-                        [ data.runtime.start + current.start - 1, 0 ],
-                        [ data.runtime.start + current.start, current.memory.total ],
-                        [ data.runtime.start + current.end, current.memory.total ],
-                        [ data.runtime.start + current.end + 1, 0 ]
-                    ];
-                }
-                
-                return 0;
-            }
-        );
-    }
-    
-    function initUsage(id, property) {
-        initChart(
-            $('#' + id), 
-            'line',
-            function(y) {
-                return (y / 1024 / 1024).toFixed(1) + ' MB';
-            },
-            function(options) {
-                options.yaxis.labelWidth = 60;
-            },
-            
-            'Used', 
-            function(data) { return data.pools[property].usage.used; }
-        );
-    }
-    
-    $(function() {
-        initSpaces();
-        
-        <% if (youngCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
-            initCollector('young-collector', 'young');
-        <% } %>
-        
-        <% if (tenuredCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
-            initCollector('tenured-collector', 'tenured');
-        <% } %>
-        
-        initUsage('eden-usage', 'eden');
-        initUsage('survivor-usage', 'survivor');
-        initUsage('oldgen-usage', 'tenured');
-        
-        addDataListener(function(json) {
-            $('#young-collector-count').text(json.collectors.young.count);
-            $('#young-collector-time').text(formatDuration(json.collectors.young.time));
-            if (json.collectors.young.lastGC.start > 0) {
-                var offset = json.timestamp - (json.collectors.young.lastGC.start + json.runtime.start);
-                $('#young-collector-lastgc').text(formatDuration(offset) + ' ago taking ' + formatDuration(json.collectors.young.lastGC.duration));
-            }
-            
-            $('#tenured-collector-count').text(json.collectors.tenured.count);
-            $('#tenured-collector-time').text(formatDuration(json.collectors.tenured.time));
-            if (json.collectors.tenured.lastGC.start > 0) {
-                var offset = json.timestamp - (json.collectors.tenured.lastGC.start + json.runtime.start);
-                $('#tenured-collector-lastgc').text(formatDuration(offset) + ' ago taking ' + formatDuration(json.collectors.tenured.lastGC.duration));
-            }
-            
-            $('#eden-memory-used').text((json.pools.eden.usage.used / 1024.0 / 1024.0).toFixed(1));
-            $('#eden-memory-committed').text((json.pools.eden.usage.committed / 1024.0 / 1024.0).toFixed(1));
-            $('#eden-memory-max').text((json.pools.eden.usage.max / 1024.0 / 1024.0).toFixed(1));
-            $('#eden-memory-peak').text((json.pools.eden.peak.used / 1024.0 / 1024.0).toFixed(1));
-            
-            $('#survivor-memory-used').text((json.pools.survivor.usage.used / 1024.0 / 1024.0).toFixed(1));
-            $('#survivor-memory-committed').text((json.pools.survivor.usage.committed / 1024.0 / 1024.0).toFixed(1));
-            $('#survivor-memory-max').text((json.pools.survivor.usage.max / 1024.0 / 1024.0).toFixed(1));
-            $('#survivor-memory-peak').text((json.pools.survivor.peak.used / 1024.0 / 1024.0).toFixed(1));
-            
-            $('#oldgen-memory-used').text((json.pools.tenured.usage.used / 1024.0 / 1024.0).toFixed(1));
-            $('#oldgen-memory-committed').text((json.pools.tenured.usage.committed / 1024.0 / 1024.0).toFixed(1));
-            $('#oldgen-memory-max').text((json.pools.tenured.usage.max / 1024.0 / 1024.0).toFixed(1));
-            $('#oldgen-memory-peak').text((json.pools.tenured.peak.used / 1024.0 / 1024.0).toFixed(1));
-        });
-    });
-</script>

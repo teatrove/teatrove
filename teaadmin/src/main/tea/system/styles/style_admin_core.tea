@@ -1032,6 +1032,19 @@ table .stress-percentage-bar.red {
     top: 10px !important;
 }
 
+#system-info-container #label-refresh,
+#system-info-container #label-tabs {
+    line-height: 26px;
+}
+
+#system-info-container #buttonset-refresh {
+    margin-right: 30px;
+}
+
+#system-info-container #buttonset-threads {
+    width: 100%;
+}
+
 .system-overview-graph {
     float: left; height: 350px; padding-bottom: 20px;
 }
@@ -1161,40 +1174,24 @@ table .stress-percentage-bar.red {
     font-size: 12px;
 }
 
+table.mbean-table {
+    border: 0;
+    width: 100%;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+tr.evenrow table.mbean-table { background: white; }
+tr.oddrow table.mbean-table { background: #f1f1f1; }
+table.mbean-table th, table.mbean-table td { border: 0 !important; }
+
 .janitor-methods td {
     width: 33%;
 }
 
 #buttonset-timeframe, #buttonset-zoom { margin-right: 30px; }
 
-#timelapse-container { padding-top: 10px; }
-    
-.gridlapse .grid-container .grid-lhn { float: left; width: 200px; overflow: hidden; white-space: nowrap; margin-right: 1px; }
-.gridlapse .grid-container .grid-lhn .header { color: white; height: 48px; border-bottom: 1px solid white; }
-.gridlapse .grid-container .grid-lhn .header .template { padding-left: 5px; font-size: 12px; font-weight: bold; }
-.gridlapse .grid-container .grid-lhn .placeholder { background-color: silver; height: 23px; border-bottom: 1px solid white; }
-.gridlapse .grid-container .grid-lhn .row { background-color: #c0c0c0; padding-left: 5px; font-size: 12px; font-weight: bold; border-bottom: 1px solid white; text-transform: none !important; }
-.gridlapse .grid-container .grid-lhn .row .template { padding: 5px 0; }
-.gridlapse .grid-container .grid-lhn .row .template .template-options { display: none; margin: -1px 4px 0 2px; }
-.gridlapse .grid-container .grid-lhn .row .template:hover .template-options { display: block; }
-.gridlapse .grid-container .grid-lhn .row .template a { display: block; color: white; text-decoration: none; }
-.gridlapse .grid-container .grid-lhn .row .template .path { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; }
-.gridlapse .grid-container .grid-lhn .row .template .name { display: block; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; }
-    
-.gridlapse .grid-container .grid { width: 0px; overflow-x: hidden; overflow-y: hidden; position: relative; }
-.gridlapse .grid-container .grid .header { color: white; height: 24px; position: relative; text-transform: none !important; }
-.gridlapse .grid-container .grid .header .metric { text-align: left; padding-left: 5px; }
-.gridlapse .grid-container .grid .metric { position: absolute; height: 24px; line-height: 24px; font-size: 12px; font-weight: bold; text-align: center; }
-.gridlapse .grid-container .grid .row { position: relative; border-bottom: 1px solid white; text-transform: none !important; }
-.gridlapse .grid-container .grid div.row:nth-child(even) { background-color: #efefef; }
-.gridlapse .grid-container .grid div.row:nth-child(odd) { background-color: white; }
-.gridlapse .grid-container .grid div.row:hover { background-color: #f5f5f5; }
-.gridlapse .grid-container .grid .process { height: 18px; border-radius: 5px; position: absolute; }
-.gridlapse .grid-container .grid .process:hover {  }
-.gridlapse .grid-container .grid .process .value { display: block; font-size: 11px; text-align: center; color: white; font-weight: bold; white-space: nowrap; overflow: hidden; }
-
-.gridlapse .grid-container .grid .process.green { 
-    border: 1px solid darkGreen; 
+div.green { 
     background-color: lightGreen;
     background-image: -moz-linear-gradient(top, lightGreen, darkGreen);
     background-image: -ms-linear-gradient(top, lightGreen, darkGreen);
@@ -1205,8 +1202,8 @@ table .stress-percentage-bar.red {
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='lightGreen', endColorstr='darkGreen', GradientType=0);
 }
-.gridlapse .grid-container .grid .process.yellow { 
-    border: 1px solid #FFC40D; 
+
+div.yellow { 
     background-color: yellow;
     background-image: -moz-linear-gradient(top, yellow, #FFC40D);
     background-image: -ms-linear-gradient(top, yellow, #FFC40D);
@@ -1217,8 +1214,8 @@ table .stress-percentage-bar.red {
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='yellow', endColorstr='#FFC40D', GradientType=0); 
 }
-.gridlapse .grid-container  .grid .process.red { 
-    border: 1px solid #9d261d; 
+
+div.red { 
     background-color: red;
     background-image: -moz-linear-gradient(top, red, #9d261d);
     background-image: -ms-linear-gradient(top, red, #9d261d);
@@ -1229,8 +1226,8 @@ table .stress-percentage-bar.red {
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='red', endColorstr='#9d261d', GradientType=0); 
 }
-.gridlapse .grid-container .grid .process.black { 
-    border: 1px solid #888; 
+
+div.black { 
     background-color: black;
     background-image: -moz-linear-gradient(top, #888, black);
     background-image: -ms-linear-gradient(top, #888, black);
@@ -1241,11 +1238,55 @@ table .stress-percentage-bar.red {
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#888', endColorstr='black', GradientType=0);
 }
-.gridlapse .grid-container .grid .process.white { 
-    border: 1px solid #555; 
+
+div.white { 
     background-color: white;
 }
 
+#timelapse-container { padding-top: 10px; }
+    
+.gridlapse .grid-container .grid-lhn { float: left; width: 200px; overflow: hidden; white-space: nowrap; margin-right: 1px; }
+.gridlapse .grid-container .grid-lhn .header { color: white; height: 48px; border-bottom: 1px solid white; }
+.gridlapse .grid-container .grid-lhn .header .template { padding-left: 5px; font-size: 12px; font-weight: bold; line-height: 48px; color: white; }
+.gridlapse .grid-container .grid-lhn .placeholder { background-color: silver; height: 23px; border-bottom: 1px solid white; }
+.gridlapse .grid-container .grid-lhn .row { height: 24px; background-color: #c0c0c0; padding-left: 5px; font-size: 12px; font-weight: bold; border-bottom: 1px solid white; text-transform: none !important; }
+.gridlapse .grid-container .grid-lhn .oddrow { background: white !important; }
+.gridlapse .grid-container .grid-lhn .evenrow { background: #f1f1f1 !important; }
+.gridlapse .grid-container .grid-lhn .row .template { padding: 5px 0; }
+.gridlapse .grid-container .grid-lhn .row .template .template-options { display: none; margin: -1px 4px 0 2px; }
+.gridlapse .grid-container .grid-lhn .row .template:hover .template-options { display: block; }
+.gridlapse .grid-container .grid-lhn .row .template a { display: block; color: white; text-decoration: none; }
+.gridlapse .grid-container .grid-lhn .oddrow a,
+.gridlapse .grid-container .grid-lhn .evenrow a { color: black !important; }
+.gridlapse .grid-container .grid-lhn .row .template .path { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; }
+.gridlapse .grid-container .grid-lhn .row .template .name { display: block; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; }
+    
+.gridlapse .grid-container .grid { width: 0px; overflow-x: hidden; overflow-y: hidden; position: relative; }
+.gridlapse .grid-container .grid .header { color: white; height: 24px; position: relative; text-transform: none !important; }
+.gridlapse .grid-container .grid .header .metric { text-align: left; padding-left: 5px; }
+.gridlapse .grid-container .grid .metric { height: 24px; line-height: 24px; font-size: 12px; font-weight: bold; text-align: center; }
+.gridlapse .grid-container .grid .row { height: 24px; position: relative; border-bottom: 1px solid white; text-transform: none !important; }
+.gridlapse .grid-container .grid .oddrow { background: white !important; }
+.gridlapse .grid-container .grid .evenrow { background: #f1f1f1 !important; }
+.gridlapse .grid-container .grid div.row:nth-child(even) { background-color: #f1f1f1; }
+.gridlapse .grid-container .grid div.row:nth-child(odd) { background-color: white; }
+.gridlapse .grid-container .grid div.row:hover { background-color: #f5f5f5; }
+.gridlapse .grid-container .grid .process { height: 18px; border-radius: 5px; position: absolute; }
+.gridlapse .grid-container .grid .process:hover {  }
+.gridlapse .grid-container .grid .process .value { display: block; font-size: 11px; text-align: center; color: white; font-weight: bold; white-space: nowrap; overflow: hidden; }
+
+.gridlapse-absolute .grid-container .grid .header .metric { position: absolute; }
+.gridlapse-absolute .grid-container .grid .metric { position: absolute; }
+
+.gridlapse-relative .grid-container .grid .header .metric { position: relative; border-left: 1px solid white; float: left; top: 0; }
+.gridlapse-relative .grid-container .grid .metric { position: relative; float: left; margin-left: 1px; width: 78px; top: 2px; }
+
+.gridlapse .grid-container .grid .process.green { border: 1px solid darkGreen; }
+.gridlapse .grid-container .grid .process.yellow { border: 1px solid #FFC40D; }
+.gridlapse .grid-container .grid .process.red { border: 1px solid #9d261d; }
+.gridlapse .grid-container .grid .process.black { border: 1px solid #888; }
+.gridlapse .grid-container .grid .process.white { border: 1px solid #555; }
+.gridlapse .grid-container .grid .process.transparent { border: 1px solid transparent; }
 
 .gridlapse .grid-container .grid div.scrollbar { height: 24px; border-bottom: 1px solid white; background-color:#efefef; position: relative; }
 .gridlapse .grid-container .grid div.scrollbar div.scroller { 

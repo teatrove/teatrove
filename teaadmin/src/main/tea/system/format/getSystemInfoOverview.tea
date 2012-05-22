@@ -14,6 +14,21 @@ operatingSystemMXBean = getOperatingSystemMXBean();
     <div class="system-overview-graph">
         <div>
             <div>
+                <div class="title">CPU Usage</div>
+                <div class="info">
+                    <% numberFormat('0') %>
+                    <span id="cpu-used">N/A</span>, 
+                    <% operatingSystemMXBean.availableProcessors %> processors
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="cpu-usage" class="graph"></div>
+        </div>
+    </div>
+    
+    <div class="system-overview-graph">
+        <div>
+            <div>
                 <div class="title">Heap Usage</div>
                 <div class="info">
                     <% numberFormat('0.0') %>
@@ -106,7 +121,7 @@ operatingSystemMXBean = getOperatingSystemMXBean();
                 </tr>
                 <tr class="evenrow">
                     <td>Uptime</td>
-                    <td><span id="uptime"><% call system.util.getFormattedDuration(runtimeMXBean.uptime) %></span></td>
+                    <td><span id="uptime"><% call system.util.getFormattedDuration(runtimeMXBean.uptime, 'text') %></span></td>
                 </tr>
                 <tr class="oddrow">
                     <td>Virtual Machine</td>
@@ -123,7 +138,7 @@ operatingSystemMXBean = getOperatingSystemMXBean();
                 <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
                     <tr class="evenrow">
                         <td>Process Time</td>
-                        <td><span id="processtime"><% call system.util.getFormattedDuration(operatingSystemMXBean.processCpuTime / 1000000.0) %>/span></td>
+                        <td><span id="processtime"><% call system.util.getFormattedDuration(operatingSystemMXBean.processCpuTime / 1000000.0, 'text') %>/span></td>
                     </tr>
                 <% } %>
             </tbody>
@@ -132,86 +147,3 @@ operatingSystemMXBean = getOperatingSystemMXBean();
     
     <br class="clear" />
 </section>
-
-<script type="text/javascript">
-
-    $(function() {
-        addDataListener(function(json) {
-            $('#uptime').text(formatDuration(json.runtime.uptime));
-            
-            <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
-                $('#processtime').text(formatDuration(json.os.processtime));
-            <% } %>
-            
-            $('#heap-memory-used').text((json.memory.heap.used / 1024.0 / 1024.0).toFixed(1));
-            $('#heap-memory-committed').text((json.memory.heap.committed / 1024.0 / 1024.0).toFixed(1));
-            $('#heap-memory-max').text((json.memory.heap.max / 1024.0 / 1024.0).toFixed(1));
-            
-            //$('#oldgen-memory-used').text((json.pools.tenured.usage.used / 1024.0 / 1024.0).toFixed(1));
-            //$('#oldgen-memory-committed').text((json.pools.tenured.usage.committed / 1024.0 / 1024.0).toFixed(1));
-            //$('#oldgen-memory-max').text((json.pools.tenured.usage.max / 1024.0 / 1024.0).toFixed(1));
-            //$('#oldgen-memory-peak').text((json.pools.tenured.peak.used / 1024.0 / 1024.0).toFixed(1));
-            
-            $('#classes-loaded').text(json.classes.loaded);
-            $('#classes-unloaded').text(json.classes.unloaded);
-            
-            $('#threads-live').text(json.threads.count);
-            $('#threads-peak').text(json.threads.peak);
-            $('#threads-daemon').text(json.threads.daemon);
-            $('#threads-started').text(json.threads.total);
-        });
-            
-        initChart(
-            $('#heap-usage'), 
-            'line',
-            function(y) {
-                return (y / 1024 / 1024).toFixed(1) + ' MB';
-            },
-            function(options) {
-                options.legend.show = true;
-                options.legend.position = 'nw';
-                options.series.stack = true;
-                options.series.lines.fill = true;
-            },
-            
-            'Heap Used', 
-            function(data) { return data.memory.heap.used; },
-            //function(data) { return data.pools.tenured.usage.used; },
-            
-            'Heap Size',
-            function(data) { return data.memory.heap.committed; }
-            //function(data) { return data.pools.tenured.usage.committed; }
-        );
-    
-        initChart(
-            $('#class-usage'),
-            'line', 
-            function(y) { return y.toFixed(0); },
-            function(options) {
-                options.legend.show = true;
-                options.legend.position = 'nw';
-            },
-            
-            'Total Loaded Classes', 
-            function(data) {
-                return data.classes.loaded;
-            }
-        );
-        
-        initChart(
-            $('#thread-usage'),
-            'line', 
-            function(y) { return y.toFixed(0); },
-            function(options) {
-                options.legend.show = true;
-                options.legend.position = 'nw';
-            },
-            
-            'Live Threads', 
-            function(data) { return data.threads.count; },
-            
-            'Daemon Threads', 
-            function(data) { return data.threads.daemon; }
-        );
-    });
-</script>

@@ -1,24 +1,13 @@
-<% template getSystemInfoMBeans()
-
-/*
-    MBeans
-    --------------------
-    
-    MBeans          Attributes   |   Operations   |   Metadata
-    
-    + JMImple       Name            Value
-    
-                    Value           6
-                    
-                    
-                    
-                    void dumpHeap ( p0 [_____] , p1 [_____] )
-*/
-
-%>
+<% template getSystemInfoMBeans() %>
 
 <section>
-
+    <div class="controls" style="float: left !important;">
+        <div class="controls-wrapper">
+            <div id="expandCollapseTree" class="button">Expand All</div>
+        </div>
+    </div>
+    <br class="clear" />
+    <br />
     <div id="tree-container" expandFirst="false">
         <ul>
         <%

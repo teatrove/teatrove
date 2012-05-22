@@ -1,31 +1,67 @@
 <% template getSystemInfoThreads()
 
-/*
+pathPrefix = call system.util.getPathPrefix()
 
-TODO:
-- consider adding a gap when time way out of bounds (more than a few secs)?
-- move margin, padding, border, float styles to separate gridlapse in core
-- IE support, FF, etc
-- show threads that have expired and dynamically add new threads
-
-- add user time / cpu time / wait time / block time
-- on hover row show stacktrace button 
-- add title for name of thread 
-- add stacktrace dialog
-
-*/
-
-    request = getRequest();
+request = getRequest();
+threading = request.parameters['threading'] ?: 'status'
     
-    threadMXBean = getThreadMXBean();
-    threads = threadMXBean.getThreadInfo(threadMXBean.allThreadIds, true, true)
-
-    currentTime = currentDateTime().millis
+threadMXBean = getThreadMXBean();
+threads = threadMXBean.getThreadInfo(threadMXBean.allThreadIds, true, true)
+sort(threads, 'threadName', false)
 
 %>
 
 <section>
-    <div class="gridlapse">
+    <div class="controls">
+        <div class="controls-wrapper">
+            <div id="buttonset-threads" class="buttonset">
+                <input type="radio" id="thread-status" name="threading" value="status" <% threading == 'status' ? 'checked="checked"' : '' %> /><label for="thread-status">Status</label>
+                <input type="radio" id="thread-perf" name="threading" value="perf" <% threading == 'perf' ? 'checked="checked"' : '' %> /><label for="thread-perf">Performance</label>
+            </div>
+        </div>
+    </div>
+    <br class="clear" /><br />
+        
+    <div id="thread-container-perf" class="thread-container <% (threading == 'perf' ? 'ui-active' : '') %>;" style="display: <% (threading == 'perf' ? 'block' : 'none') %>;">
+        <div class="table-container">
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="5">Thread Performance</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th>Thread</th>
+                        <th>Running</th>
+                        <th>Blocked</th>
+                        <th>Waiting</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <% 
+                    idx = 0
+                    foreach (thread in threads) { 
+                        idx = idx + 1
+                        cpuTime = threadMXBean.getThreadCpuTime(thread.threadId) / 1000000.0
+                        userTime = threadMXBean.getThreadUserTime(thread.threadId) / 1000000.0
+                        totalTime = cpuTime + thread.blockedTime + thread.waitedTime
+                %>
+                        <tr id="thread-perf-<% thread.threadId %>" class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                            <td><a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=<% thread.threadId %>" title="<% thread.threadName %>"><% thread.threadName %></a></td>
+                            <td class="cpu-time" title="<% call system.util.getFormattedDuration(userTime, 'time') %> in user mode"><% call system.util.getFormattedDuration(cpuTime, 'time') %></td>
+                            <td class="blocked-time" title="Blocked <% thread.blockedCount %> time(s)"><% call system.util.getFormattedDuration(thread.blockedTime, 'time') %></td>
+                            <td class="waited-time" title="Waited <% thread.waitedCount %> time(s)"><% call system.util.getFormattedDuration(thread.waitedTime, 'time') %></td>
+                            <td class="total-time"><% call system.util.getFormattedDuration(totalTime, 'time') %></td>
+                        </tr>
+                <% 
+                    }
+                %>
+                </tbody>
+            </table>
+        </div>        
+    </div>
+    
+    <div id="thread-container-status" class="gridlapse gridlapse-relative thread-container <% (threading == 'status' ? 'ui-active' : '') %>" style="display: <% (threading == 'status' ? 'block' : 'none') %>;">
     <div class="grid-container">
         <div class="grid-lhn">
         <%
@@ -38,14 +74,14 @@ TODO:
                 {
         %>
                     <div class="header stathead">
-                        <div class="template">&nbsp;</div>
+                        <div class="template">Thread</div>
                     </div>
         <%
                 }
         %>
-                <div class="row stathead" style="height: 24px;">
+                <div class="row stathead <% idx % 2 == 0 ? 'oddrow' : 'evenrow' %>">
                     <div class="template" title="">
-                        <a href="">
+                        <a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=<% thread.threadId %>" title="<% thread.threadName %>">
                             <% thread.threadName %>
                         </a>
                     </div>
@@ -64,7 +100,7 @@ TODO:
                 {
                     header = header + 1
         %>
-                    <div id="header-<% header %>" class="header stathead"></div>
+                    <div i2d="header-<% header %>" class="header stathead"></div>
                     <div class="scrollbar">
                         <div class="scroller">|||</div>
                     </div>
@@ -72,14 +108,14 @@ TODO:
                 }
         %>
                  
-            <div id="row-<% threads[idx].threadId %>" class="row" style="height: 24px;">
+            <div id="row-<% threads[idx].threadId %>" class="row <% idx % 2 == 0 ? 'oddrow' : 'evenrow' %>">
             </div>
         
         <%
             }
         %>
             
-            <div class="scrollbar">
+            <div class="scrollbar last">
                 <div class="scroller">|||</div>
             </div>
                     
@@ -89,100 +125,6 @@ TODO:
     <br class="clear" />
             
     </div>
+    
+    <div id="thread-details-dialog" title=""></div>
 </section>
-
-<script type="text/javascript">
-    $(function() {
-        var MAX_DIFFERENTIAL = 5000, 
-            COLORS = [ 'black', 'green', 'red', 'yellow', 'yellow', 'white' ];
-        
-        var lastTimestamp = -1,
-            $grid = $('.grid'), 
-            $headers = $grid.find('.header');
-            $rows = $grid.find('.row');
-            
-        addDataListener(function(json) {
-            // calculate time differential and insert break if outstanding
-            var timestamp = json.timestamp;
-            if (timestamp - json.timestamp > MAX_DIFFERENTIAL) {
-                insertBreak();
-            }
-            
-            // insert regular metrics per thread
-            insertMetrics(json);
-        });
-        
-        function insertBreak() {
-            var rowWidth = -1;
-            $headers.each(function() {
-                var $header = $(this);
-                if (rowWidth < 0) {
-                    var $metrics = $header.children('.metric');
-                    var twidth = ($metrics.length + 1) * 106;
-                    rowWidth = Math.max($grid.width(), twidth);
-                }
-                
-                $header.css('width', rowWidth + 'px');
-
-                var $metric = $('<div class="metric" style="position: relative !important; border-left: 1px solid white; float: left; left: -100px; width: 100px; background-color: white; text-align: center;"> ||| </div>');
-                $header.prepend($metric);
-            });
-            
-            // move previous metrics in each row
-            $rows.each(function() {
-                var $row = $(this), width = $row.width();
-                $row.css('width', rowWidth + 'px');
-                
-                var $metric = $('<div class="white" style="float: left; position: relative !important; margin-left: 1px; width: 103px; top: 2px;"><span class="value">&nbsp;</span></div>'); 
-                $row.prepend($metric);
-            });
-        }
-        
-        function insertMetrics(json) {
-            var time = json.time;
-                    
-            // insert time frame into each header
-            var rowWidth = -1;
-            $headers.each(function() {
-                var $header = $(this);
-                if (rowWidth < 0) {
-                    var $metrics = $header.children('.metric');
-                    var twidth = ($metrics.length + 1) * 106;
-                    rowWidth = Math.max($grid.width(), twidth);
-                }
-                
-                $header.css('width', rowWidth + 'px');
-
-                var $metric = $('<div class="metric" style="position: relative !important; border-left: 1px solid white; float: left; left: -100px; width: 0px;">' + time + '</div>');
-                $header.prepend($metric);
-                $metric.animate({'left' : '0px', 'width' : '100px' });
-            });
-            
-            // move previous metrics in each row
-            $rows.each(function() {
-                var $row = $(this), width = $row.width();
-                $row.css('width', rowWidth + 'px');
-            });
-
-            // reinitialize the grid and scrollbars
-            var gridlapse = $grid.data('gridlapse');
-            gridlapse.initialize();
-            
-            // insert row per thread
-            for (var i = 0; i < json.threads.threads.length; i++) {
-                var thread = json.threads.threads[i];
-                if (!thread || thread.id < 0) { continue; }
-                
-                var $row = $('#row-' + thread.id);
-                if ($row.length) {
-                    var clazz = 'metric process ' + COLORS[thread.state];
-                    
-                    var $metric = $('<div class="' + clazz + '" style="float: left; position: relative !important; margin-left: 1px; width: 0px; top: 2px;"><span class="value">&nbsp;</span></div>'); 
-                    $row.prepend($metric);
-                    $metric.animate({ 'width' : '103px' });
-                }
-            }
-        }
-    });
-
-</script>

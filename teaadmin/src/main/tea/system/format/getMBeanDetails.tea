@@ -6,7 +6,7 @@
 
 <div class="table-container">
     <div class="stathead" style="padding: 3px 7px;">
-        <div class="template-title" title="Summary for <% name %>">Summary for <% name %></div>
+        <div title="Summary for <% name %>">Summary for <% name %></div>
     </div>
     <div class="scroll">
     <table class="tablehead" cellpadding="3" cellspacing="1">
@@ -23,30 +23,33 @@
                 <td colspan="2"><% mbean.description %></td>
             </tr>
             
-            <tr class="colhead">
-                <td>Attributes</td>
-                <td>Type</td>
-                <td>Value</td>
-            </tr>
-            
-            <% idx = 0; foreach (attribute in mbean.attributes) { idx = idx + 1; %>
-                <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
-                    <td title="<% attribute.description %>"><% attribute.name %></td>
-                    <td><% attribute.type %></td>
-                    <td><% getMBeanAttribute(name, attribute.name) %></td>
+            <% if (mbean.attributes) { %>
+                <tr class="colhead">
+                    <td>Attributes</td>
+                    <td>Type</td>
+                    <td>Value</td>
                 </tr>
+
+                <% idx = 0; foreach (attribute in mbean.attributes) { idx = idx + 1; %>
+                    <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                        <td title="<% attribute.description %>"><% attribute.name %></td>
+                        <% call system.format.getMBeanAttribute(attribute.type, getMBeanAttribute(name, attribute.name)) %>
+                    </tr>
+                <% } %>
             <% } %>
-            
-            <tr class="colhead">
-                <td>Operations</td>
-                <td colspan="2">Return Type</td>
-            </tr>
-            
-            <% idx = 0; foreach (operation in mbean.operations) { idx = idx + 1; %>
-                <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
-                    <td title="<% operation.description %>"><% operation.name %></td>
-                    <td colspan="2"><% operation.returnType %></td>
+                        
+            <% if (mbean.operations) { %>
+                <tr class="colhead">
+                    <td>Operations</td>
+                    <td colspan="2">Return Type</td>
                 </tr>
+
+                <% idx = 0; foreach (operation in mbean.operations) { idx = idx + 1; %>
+                    <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                        <td title="<% operation.description %>"><% operation.name %></td>
+                        <td colspan="2"><% operation.returnType %></td>
+                    </tr>
+                <% } %>
             <% } %>
         </tbody>
     </table>

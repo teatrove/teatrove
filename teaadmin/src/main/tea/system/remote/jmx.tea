@@ -173,10 +173,11 @@
         "daemon" : <% threadMXBean.daemonThreadCount %>,
         "threads" : [
             <% 
+                numberFormat('0')
                 cpuTimes = 0L; userTimes = 0L;
                 foreach (thread in threadInfos) {
-                    cpuTime = threadMXBean.getThreadCpuTime(thread.threadId)
-                    userTime = threadMXBean.getThreadUserTime(thread.threadId)
+                    cpuTime = threadMXBean.getThreadCpuTime(thread.threadId) / 1000000.0
+                    userTime = threadMXBean.getThreadUserTime(thread.threadId) / 1000000.0
                     
                     cpuTimes = cpuTimes + cpuTime
                     userTimes = userTimes + userTime
@@ -204,8 +205,7 @@
         "aggregate" : {
             "time" : {
                 "cpu" : <% cpuTimes %>,
-                "user" : <% userTimes %>,
-                "total" : <% cpuTimes + userTimes %>
+                "user" : <% userTimes %>
             }
         }
     },
@@ -218,7 +218,9 @@
         "uptime" : <% runtimeMXBean.uptime %>
     },
     "os" : {
+        "processors" : <% operatingSystemMXBean.availableProcessors %>,
         <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
+            <% numberFormat('0.000') %>
             "processtime" : <% operatingSystemMXBean.processCpuTime / 1000000.0 %>
         <% } %>
     }
