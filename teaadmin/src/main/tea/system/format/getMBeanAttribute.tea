@@ -1,14 +1,32 @@
 <% template getMBeanAttribute(String type, Object value)
 
-if (value isa javax.management.openmbean.CompositeData or
+if (value == null) {
+    '<td>' call system.util.cleanClassName(type) '</td>'
+    '<td>'
+}
+else if (value isa javax.management.openmbean.CompositeData or
     value isa Map) {
     
     '<td colspan="2" style="white-space: normal;">'
 }
-else {
-    '<td>' type '</td>'
+else if (isArray(value)) {
+    base = getRootComponentType(value)
+    dimensions = getDimensions(value)
+    '<td>'
+        base.name
+        foreach (idx in 0..dimensions - 1) {
+            '[]'
+        }
+    '</td>'
     '<td>'
 }
+else {
+    '<td>' call system.util.cleanClassName(type) '</td>'
+    '<td>'
+}
+
+// handle nulls
+if (value == null) { 'null' }
 
 // handle arrays
 if (value isa Object[]) { join(value, '<br />') }

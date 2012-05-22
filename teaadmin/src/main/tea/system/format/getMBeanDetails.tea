@@ -47,7 +47,7 @@
                 <% idx = 0; foreach (operation in mbean.operations) { idx = idx + 1; %>
                     <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
                         <td title="<% operation.description %>"><% operation.name %></td>
-                        <td colspan="2"><% operation.returnType %></td>
+                        <td colspan="2"><% call system.util.cleanClassName(operation.returnType) %></td>
                     </tr>
                 <% } %>
             <% } %>
