@@ -37,7 +37,7 @@ import org.teatrove.trove.util.ClassInjector;
 public interface TemplateSource {
 
     public void init(TemplateSourceConfig config) throws Exception;
-
+    
     /**
      * Compile templates recursively
      *

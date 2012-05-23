@@ -991,7 +991,7 @@ public class AdminApplication implements AdminApp {
 
                 TemplateCompilationResults results =
                     new TemplateCompilationResults
-                        (Collections.synchronizedSet(new TreeSet()),
+                        (Collections.synchronizedMap(new TreeMap()),
                          new Hashtable());
 
                 Clustered[] peers =
@@ -1153,7 +1153,7 @@ public class AdminApplication implements AdminApp {
                                                    "template reload already in progress");
                     }
                     else {
-                        mResults.appendNames(res.getReloadedTemplateNames());
+                        mResults.appendTemplates(res.getReloadedTemplates());
                         mResults.appendErrors(res.getTemplateErrors());
                     }
                 }

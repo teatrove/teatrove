@@ -136,6 +136,7 @@
                             <div class="template" title="<% stat.templatePath %>.<% stat.templateName %>, avg <% stat.aggregateIntervalForRawData.durationStats.arithmeticMean %> ms">
                                 <div class="template-options">
                                     <a class="compile" href="remote/reload?reloadTemplates=selected&selectedTemplates=<% stat.fullTemplateName %>" title="Compile template"></a>
+                                    <a class="code" href="?page=viewer&name=<% stat.fullTemplateName %>" title="View template source code"></a>
                                     <a class="web" target="_blank" href="<% replace(stat.fullTemplateName, '.', '/') %>" title="Follow template url"></a>
                                     <a class="info" href="?page=template_info&name=<% stat.fullTemplateName %>" title="View template stats"></a>
                                     <a class="reset" href="remote/reset?name=<% stat.fullTemplateName %>" title="Reset template stats"></a>

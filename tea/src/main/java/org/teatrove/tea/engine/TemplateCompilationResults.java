@@ -16,13 +16,14 @@
 
 package org.teatrove.tea.engine;
 
-import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.teatrove.tea.compiler.CompilationUnit;
 
 /**
  *
@@ -36,13 +37,13 @@ public class TemplateCompilationResults implements java.io.Serializable {
     boolean mReloadInProgress;
 
     /** The set of successfully reloaded template names */
-    Set<String> mReloaded;
+    Map<String, CompilationUnit> mReloaded;
 
     /** Error map, where the key is the failed template name, and the
         value is a list of TemplateError objects for that template */
     Map<String, List<TemplateError>> mErrors;
 
-    public TemplateCompilationResults(Set<String> reloaded,
+    public TemplateCompilationResults(Map<String, CompilationUnit> reloaded,
                                       Map<String, List<TemplateError>> errors) {
         mErrors = errors;
         mReloaded = reloaded;
@@ -52,18 +53,20 @@ public class TemplateCompilationResults implements java.io.Serializable {
         mReloadInProgress = true;
     }
 
-    public boolean appendName(String name) {
+    public boolean appendTemplate(String name, CompilationUnit unit) {
         if (name == null) {
             return false;
         }
-        return mReloaded.add(name);
+        mReloaded.put(name, unit);
+        return true;
     }
 
-    public boolean appendNames(Collection<String> names) {
+    public boolean appendTemplates(Map<String, CompilationUnit> names) {
         if (names == null) {
             return false;
         }
-        return mReloaded.addAll(names);
+        mReloaded.putAll(names);
+        return true;
     }
 
     public boolean appendErrors(Map<String, List<TemplateError>> errors) {
@@ -121,7 +124,15 @@ public class TemplateCompilationResults implements java.io.Serializable {
     }
 
     public Set<String> getReloadedTemplateNames() {
+        return mReloaded.keySet();
+    }
+    
+    public Map<String, CompilationUnit> getReloadedTemplates() {
         return mReloaded;
+    }
+    
+    public CompilationUnit getReloadedTemplate(String templateName) {
+        return mReloaded.get(templateName);
     }
 
     public Map<String, List<TemplateError>> getTemplateErrors() {

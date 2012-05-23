@@ -160,7 +160,7 @@
                                     '<tr class="' rowClass '">\n'
                                         '<td class="left-align">'
                                             '<div class="template-pathname" style="line-height: 22px;">'
-                                                '<a class="methodName" href="' uri '" template="' tea.name '" title="Follow template url">' uri '</a>'
+                                                '<a class="methodName" href="' uri '" template="' tea.name '" title="View template details">' uri '</a>'
                                             '</div>'
                                             '<div class="template-options" style="padding: 2px 0 4px 0;">'
                                                 if ( needsReload ) {
@@ -168,6 +168,7 @@
                                                 } else {
                                                     '<span class="blank"></span>'
                                                 }
+                                                '<a class="code" href="?page=viewer&name=' tea.name '" title="View template source code"></a>'
                                                 '<a class="web" target="_blank" href="' uri '" title="Follow template url"></a>'
                                                 '<a class="info" href="?page=template_info&name='  tea.name '" title="View template stats"></a>'
                                                 '<a class="reset" href="remote/reset?name='  tea.name '" title="Reset template stats"></a>'

@@ -16,15 +16,30 @@
         root = pathTokens[0];
     }
 
+    found = false    
+    name = request.parameters['name']
+    if (name != null) {
+        foreach (function in admin.functions) {
+            if (function.name == name) {
+                found = true
+                query = replace(request.queryString, 'name=' & name, '')
+                contextType = function.descriptor.method.declaringClass.name
+                param = 'format/getContextFunctionDetails?context=' & contextType & '&function=' & function.name
+                sendRedirect(path & '?' & query & '#' & encodeParameter(param))
+            }
+        }
+    }
+    
+    if (not found) {
+
 %>
 		<article>
 			<section>
-				<div class="controls">
+				<div class="controls" style="float: left;">
 					<div class="controls-wrapper">
 					    <div><input id="tree-search-text" type="search" placeholder="Search" /></div>
                         <div id="showHideTypes" class="button">Hide Types</div>
                         <div id="expandCollapseTree" class="button">Expand All</div>
-                        <div id="toggleTree" class="button">Toggle All</div>
 					</div>
 				</div>
 				<br class="clear " />
@@ -72,3 +87,7 @@
                 <div class="clear"></div>
 			</section>
 		</article>
+		
+<%
+    }
+%>

@@ -240,12 +240,12 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
 
     @Override
     public TemplateCompilationResults checkTemplates(ClassInjector injector,
-            boolean all, String[] selectedTemplates)
+            boolean force, String... selectedTemplates)
         throws Exception {
         
         // TODO should we synch with reloading?
         TemplateCompilationResults results = 
-            super.checkTemplates(injector, all, selectedTemplates);
+            super.checkTemplates(injector, force, selectedTemplates);
         return results;
     }
 
@@ -324,7 +324,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 else {
                     TemplateCompilationResults transients =
                         results.getTransientResults();
-                    transients.appendNames(delegateResults.getReloadedTemplateNames());
+                    transients.appendTemplates(delegateResults.getReloadedTemplates());
                     transients.appendErrors(delegateResults.getTemplateErrors());
                 }
             }

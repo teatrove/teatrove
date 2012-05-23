@@ -93,7 +93,7 @@ public class TeaServletAdmin implements Restartable {
                 if(commandCode.intValue() == RELOAD_SELECTED_TEMPLATE_CHANGES) {
                     selectedTemplates = (String[])((Object[])paramObj)[1];
                     if(selectedTemplates==null) {
-                        return new TemplateCompilationResults(new HashSet(), new HashMap());
+                        return new TemplateCompilationResults(new HashMap(), new HashMap());
                     } 
                     for (int i = 0; i < selectedTemplates.length; i++) {
                         selectedTemplates[i] = selectedTemplates[i].replace('/', '.');

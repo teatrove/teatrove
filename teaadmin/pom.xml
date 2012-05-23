@@ -62,6 +62,7 @@
                         <context>org.teatrove.teaapps.contexts.NumberFormatContext</context>
                         <context>org.teatrove.teaapps.contexts.JMXContext</context>
                         <context>org.teatrove.teaapps.contexts.ArrayContext</context>
+                        <context>org.teatrove.teaadmin.viewer.TemplateViewerContext</context>
                     </contexts>
                 </contextClassBuilder>
             </configuration>

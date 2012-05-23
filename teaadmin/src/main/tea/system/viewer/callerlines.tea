@@ -1,0 +1,21 @@
+<% template callerlines(String id, String caller)
+
+view = getTemplateView(null, id)
+callerView = getTemplateView(null, caller)
+
+%>
+
+<ul>
+    <% foreach (callee in callerView.callees) { %>
+        <% if (callee.name == id) { %>
+            <li>
+                <a href="?page=viewer&name=<% callerView.simpleName %>&line=<% callee.line %>#line<% callee.line %>">
+                    <span class="line">line <% callee.line %></span>
+                    <span class="template">
+                        <% replace(replace(callee.statement, "<a ", "<span "), "</a>", "</span>") %>
+                    </span>
+                </a>
+            </li>
+        <% } %>
+    <% } %>
+</ul>

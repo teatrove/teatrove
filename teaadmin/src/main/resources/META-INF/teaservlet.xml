@@ -16,6 +16,10 @@
         <TeaServletAdmin>
             <class>org.teatrove.teaservlet.AdminApplication</class>
         </TeaServletAdmin>
+        
+        <TemplateViewer>
+            <class>org.teatrove.teaadmin.viewer.TemplateViewerApplication</class>
+        </TemplateViewer>
 
     </applications>
 

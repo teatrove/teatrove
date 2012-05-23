@@ -259,14 +259,15 @@ public class TemplateSourceImpl implements TemplateSource {
     }
 
     public TemplateCompilationResults checkTemplates(ClassInjector injector,
-                                                     boolean all,
-                                                     String[] selectedTemplates)
+                                                     boolean force,
+                                                     String... selectedTemplates)
         throws Exception {
         
         // setup results of checked templates
         TemplateCompilationResults results = new TemplateCompilationResults
         (
-            new TreeSet<String>(), new TreeMap<String, List<TemplateError>>()
+            new TreeMap<String, CompilationUnit>(), 
+            new TreeMap<String, List<TemplateError>>()
         );
 
         // setup package prefix and injector
@@ -287,7 +288,7 @@ public class TemplateSourceImpl implements TemplateSource {
         compiler.setRuntimeContext(getContextSource().getContextType());
         compiler.setCodeGenerationEnabled(false);
         compiler.addErrorListener(errorListener);
-        compiler.setForceCompile(all);
+        compiler.setForceCompile(force);
             
         // setup templates to compile
         String[] templates;
@@ -299,6 +300,7 @@ public class TemplateSourceImpl implements TemplateSource {
         
         // ensure selected templates are forcefully recompiled
         else {
+            force = true;
             templates = selectedTemplates;
             compiler.setForceCompile(true);
         }
@@ -315,11 +317,11 @@ public class TemplateSourceImpl implements TemplateSource {
                 continue templateLoop;
             }
 
-            if (unit.shouldCompile() && 
+            if ((force || unit.shouldCompile()) && 
                 !results.getReloadedTemplateNames().contains(templates[i])) {
 
                 compiler.getParseTree(unit);
-                results.appendName(templates[i]);
+                results.appendTemplate(templates[i], unit);
                 callerList.addAll(Arrays.asList(
                     TemplateRepository.getInstance().getCallers(unit.getName())
                 ));
@@ -553,7 +555,8 @@ public class TemplateSourceImpl implements TemplateSource {
                                              String[] selectedTemplates)
         throws Exception
     {
-        Set<String> reloadedTemplateNames = new TreeSet<String>();
+        Map<String, CompilationUnit> reloadedTemplates = 
+            new TreeMap<String, CompilationUnit>();
 
         if (injector == null) {
             injector = createClassInjector();
@@ -592,14 +595,20 @@ public class TemplateSourceImpl implements TemplateSource {
             List<String> results = Arrays.asList(compiler.compileAll(recurse));
             
             knownTemplateNames.addAll(results);
-            reloadedTemplateNames.addAll(results);
+            for (String result : results) {
+                reloadedTemplates.put(result, 
+                                      compiler.getCompilationUnit(result));
+            }
         } 
         else {
             List<String> results = 
                 Arrays.asList(compiler.compile(selectedTemplates));
             
             knownTemplateNames.addAll(results);
-            reloadedTemplateNames.addAll(results);
+            for (String result : results) {
+                reloadedTemplates.put(result, 
+                                      compiler.getCompilationUnit(result));
+            }
         }
 
         // get source file info for all templates
@@ -608,7 +617,7 @@ public class TemplateSourceImpl implements TemplateSource {
 
         // return results
         return new Results(
-            new TemplateCompilationResults(reloadedTemplateNames, 
+            new TemplateCompilationResults(reloadedTemplates, 
                                            errorListener.getTemplateErrors()),
             new TemplateAdapter(type, injector, mConfig.getPackagePrefix()),
             lastReloadTime,

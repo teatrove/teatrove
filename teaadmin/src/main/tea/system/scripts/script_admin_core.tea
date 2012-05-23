@@ -209,6 +209,7 @@
                     $detailsContent.load(uri, function() {
                         calcWidth();
                         calcHeight();
+                        initTemplateOptionLinks();
                     });
                 }
             }
@@ -426,6 +427,86 @@
             }
         });
     };
+    function initTemplateViewerOptions () {
+        $(window).load(function() {
+            if (location.href.indexOf('#line') > 0) {
+                document.body.scrollTop -= 50;
+            }
+        });
+
+        $('#template-viewer .template .call a').live('click', function (evt) {
+            var parent = '';
+            var href = location.href;
+            var idx = href.indexOf('&name=');
+            if (idx > 0) {
+                var lidx = href.indexOf('&', idx + 6);
+                parent = href.substring(idx + 6, lidx > 0 ? lidx : href.length);
+                idx = parent.lastIndexOf('.');
+                parent = (idx > 0 ? parent.substring(0, idx) : null);
+            }
+            
+            location.href = '?page=viewer&parent=' + parent + '&name=' + $(this).text();
+            event.preventDefault();
+            return false;
+        });
+        
+        $('#template-viewer .template .function a').live('click', function (evt) {
+            location.href = '?page=functions&name=' + $(this).text();
+            event.preventDefault();
+            return false;
+        });
+        
+        var setupTitles = function(id) {
+            $("#" + id + " li").each(function() {
+                var $this = $(this);
+                if (!$this.attr('title')) {
+                    var text = $this.children('a').text();
+                    text = text.replace(/\s*[\r\n]+\s*/g, " ").trim();
+                    $this.attr('title', text);
+                }
+            });
+        };
+        
+        setupTitles('callees');
+        setupTitles('callers');
+        setupTitles('caller-lines');
+        
+        $('#template-viewer .caller-link').live('click', function (evt) {
+            var $this = $(this);
+            var timer = setTimeout(function() {
+                var href = $this.attr('href');
+                var nidx = href.lastIndexOf('&name='), 
+                    pidx = href.lastIndexOf('&parent=');
+                    
+                var id = href.substring(nidx + 6);
+                var parent = href.substring(pidx + 8, nidx) 
+                $('#caller-lines').slideUp('fast', function() {
+                    $('#caller-lines').load('<% pathPrefix %>system/viewer/callerlines?id=' + parent + '&caller=' + id, function() {
+                        setupTitles('caller-lines');
+                        $('#caller-lines').slideDown('fast');
+                    });
+                });
+                
+                $this.data('timer', null);
+            }, 250);
+            
+            $this.data('timer', timer);
+            evt.preventDefault();
+            return false;
+        });
+        
+        $('#template-viewer .caller-link').live('dblclick', function (evt) {
+            var timer = $(this).data('timer');
+            if (timer != null) { clearTimeout(timer); }
+            
+            var href = $(this).attr('href');
+            location.href = href;
+            evt.preventDefault();
+            return false;
+        });
+        
+        initTemplateOptionLinks();
+    };
     function initCompileOptions () {
         $("#switch-autocompile").iphoneSwitch(
             "off",
@@ -619,6 +700,8 @@
             });
 			evt.preventDefault();
 		});
+		
+		initTemplateOptionLinks();
     };
     function getTemplateUpdates () {
         if ( $('#reload-container .sml-e').length == 0 ) {
@@ -1822,12 +1905,13 @@
     };
     function initTemplateOptionLinks () {
         $(".template-options a").live("click", function (evt) {
-            if ( $(this).is(".web") || $(this).is(".info") ) {
+            var $this = $(this);
+            if ( $this.is(".web") || $this.is(".info") || $this.is(".code") ) {
                 // follow link
-                //evt.preventDefault();
-            } else if ( $(this).is(".compile") || $(this).is(".reset") ) {
+                // evt.preventDefault();
+            } else if ( $this.is(".compile") || $this.is(".reset") ) {
                 $('#loadingIndicator').show();
-                var link = $(this);
+                var link = $this;
                 var url = $(link).attr('href');
                 var qs = $.deparam.querystring(url);
 
@@ -1904,7 +1988,7 @@
         });
     };
 	function initTemplateInfoOptions () {
-                initTemplateOptionLinks();
+        initTemplateOptionLinks();
 
 		var viewState = $.bbq.getState('view');
 		if ( viewState ) {
@@ -2458,7 +2542,10 @@
         if ( $("#janitor-container").length ) {
             initJanitorOptions();
         }
-
+        /* Viewer */
+        if ( $("#template-viewer").length ) {
+            initTemplateViewerOptions();
+        }
     });
 
 })(jQuery);
