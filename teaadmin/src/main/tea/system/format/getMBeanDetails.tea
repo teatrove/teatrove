@@ -20,7 +20,7 @@
             </tr>
             <tr class="evenrow">
                 <td>Description</td>
-                <td colspan="2"><% mbean.description %></td>
+                <td colspan="2"><% mbean.description ?: 'Not Available' %></td>
             </tr>
             
             <% if (mbean.attributes) { %>
@@ -30,12 +30,20 @@
                     <td>Value</td>
                 </tr>
 
-                <% idx = 0; foreach (attribute in mbean.attributes) { idx = idx + 1; %>
+                <% 
+                    idx = 0 
+                    foreach (attribute in mbean.attributes) { 
+                        if (attribute.readable) {
+                            idx = idx + 1
+                %>
                     <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
                         <td title="<% attribute.description %>"><% attribute.name %></td>
                         <% call system.format.getMBeanAttribute(attribute.type, getMBeanAttribute(name, attribute.name)) %>
                     </tr>
-                <% } %>
+                <%      }
+                    }
+                %>
+                
             <% } %>
                         
             <% if (mbean.operations) { %>

@@ -29,7 +29,7 @@ else {
 if (value == null) { 'null' }
 
 // handle arrays
-if (value isa Object[]) { join(value, '<br />') }
+else if (value isa Object[]) { join(value, '<br />') }
 else if (value isa int[]) { join(value, '<br />') }
 else if (value isa long[]) { join(value, '<br />') }
 else if (value isa double[]) { join(value, '<br />') }

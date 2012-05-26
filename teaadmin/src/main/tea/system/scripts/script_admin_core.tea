@@ -215,10 +215,31 @@
                 var uri = unescape(href.substring(idx + 1));
                 if (lastUri != uri) {
                     lastUri = uri;
-                    $detailsContent.load(uri, function() {
-                        calcWidth();
-                        calcHeight();
+                    $.get(uri, function(html) {
+                        $detailsContent.html(html);
+                        calcWidth(); calcHeight();
                         initTemplateOptionLinks();
+                    }).error(function(err) {
+                        var html = 
+                            '<div class="error message">' +
+                                '<strong>ERROR</strong>: Unable to load information (' + err.status + ')' +
+                            '</div>';
+                        
+                        if (err.responseText) {
+                            html += '<br /><div class="message">';
+                            var idx = err.responseText.indexOf('<body');
+                            if (idx < 0) {
+                                html += err.responseText;
+                            }
+                            else {
+                                var eidx = err.responseText.indexOf('</body>');
+                                html += err.responseText.substring(idx, eidx);
+                            }
+                            html += '</div>';
+                        }
+                        
+                        $detailsContent.html(html);
+                        calcWidth(); calcHeight();
                     });
                 }
             }
