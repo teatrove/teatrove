@@ -30,16 +30,17 @@ sort(threads, 'threadName', false)
                         <th colspan="5">Thread Performance</th>
                     </tr>
                     <tr class="colhead">
-                        <th>Thread</th>
-                        <th>Running</th>
-                        <th>Blocked</th>
-                        <th>Waiting</th>
-                        <th>Total</th>
+                        <th class="sort-option">Thread</th>
+                        <th class="sort-option">Running</th>
+                        <th class="sort-option">Blocked</th>
+                        <th class="sort-option">Waiting</th>
+                        <th class="sort-option">Total</th>
                     </tr>
                 </thead>
                 <tbody>
                 <% 
                     idx = 0
+                    numberFormat('0')
                     foreach (thread in threads) { 
                         idx = idx + 1
                         cpuTime = threadMXBean.getThreadCpuTime(thread.threadId) / 1000000.0
@@ -47,11 +48,11 @@ sort(threads, 'threadName', false)
                         totalTime = cpuTime + thread.blockedTime + thread.waitedTime
                 %>
                         <tr id="thread-perf-<% thread.threadId %>" class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
-                            <td><a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=<% thread.threadId %>" title="<% thread.threadName %>"><% thread.threadName %></a></td>
-                            <td class="cpu-time" title="<% call system.util.getFormattedDuration(userTime, 'time') %> in user mode"><% call system.util.getFormattedDuration(cpuTime, 'time') %></td>
-                            <td class="blocked-time" title="Blocked <% thread.blockedCount %> time(s)"><% call system.util.getFormattedDuration(thread.blockedTime, 'time') %></td>
-                            <td class="waited-time" title="Waited <% thread.waitedCount %> time(s)"><% call system.util.getFormattedDuration(thread.waitedTime, 'time') %></td>
-                            <td class="total-time"><% call system.util.getFormattedDuration(totalTime, 'time') %></td>
+                            <td data-value="<% thread.threadName %>"><a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=<% thread.threadId %>" title="<% thread.threadName %>"><% thread.threadName %></a></td>
+                            <td class="cpu-time" title="<% call system.util.getFormattedDuration(userTime, 'time') %> in user mode" data-value="<% cpuTime %>"><% call system.util.getFormattedDuration(cpuTime, 'time') %></td>
+                            <td class="blocked-time" title="Blocked <% thread.blockedCount %> time(s)" data-value="<% thread.blockedTime %>"><% call system.util.getFormattedDuration(thread.blockedTime, 'time') %></td>
+                            <td class="waited-time" title="Waited <% thread.waitedCount %> time(s)" data-value="<% thread.waitedTime %>"><% call system.util.getFormattedDuration(thread.waitedTime, 'time') %></td>
+                            <td class="total-time" data-value="<% totalTime %>"><% call system.util.getFormattedDuration(totalTime, 'time') %></td>
                         </tr>
                 <% 
                     }
@@ -100,7 +101,7 @@ sort(threads, 'threadName', false)
                 {
                     header = header + 1
         %>
-                    <div i2d="header-<% header %>" class="header stathead"></div>
+                    <div class="header stathead"></div>
                     <div class="scrollbar">
                         <div class="scroller">|||</div>
                     </div>

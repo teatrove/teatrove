@@ -690,9 +690,14 @@ ul.bulletlinks li {
 }
 
 table .sort-option {
+    cursor: pointer;
     color: #333333;
+}
+table a.sort-option {
+    display: block;
     text-decoration: underline;
 }
+
 table .trend-options {
     float: right;
     height: 16px;
@@ -1052,11 +1057,7 @@ table .stress-percentage-bar.red {
     float: left; height: 350px; padding-bottom: 20px;
 }
 
-@media (min-width: 1600px) {
-    .system-overview-graph { width: 33% !important; }
-}
-
-@media (min-width: 1000px) and (max-width: 1599px) {
+@media (min-width: 1000px) {
     .system-overview-graph { width: 50% !important; }
 }
 
@@ -1068,20 +1069,24 @@ table .stress-percentage-bar.red {
     padding: 0 15px 15px 15px;
 }
 
-.system-overview-graph .title {
+.system-overview-graph .title,
+.system-memory-graph .title {
     float: left; 
-    padding: 0 0 10px 0; 
+    padding: 0 0 0 60px; 
     font-weight: bold; 
     color: #333;
     font-size: 16px; 
     text-align: left;
+    height: 20px;
+    line-height: 40px;
 }
 
-.system-overview-graph .info {
+.system-overview-graph .info,
+.system-memory-graph .info {
     float: right; 
     font-size: 13px; 
     color: #555; 
-    margin-top: 10px;
+    margin: 10px 25px 0 0;
     text-align: right;
 }
 
@@ -1105,30 +1110,13 @@ table .stress-percentage-bar.red {
     padding: 0 15px 15px 15px;
 }
 
-.system-memory-graph .title {
-    float: left; 
-    padding: 0 0 10px 0; 
-    font-weight: bold; 
-    color: #333;
-    font-size: 16px; 
-    text-align: left;
-}
-
-.system-memory-graph .info {
-    float: right; 
-    font-size: 13px; 
-    color: #555; 
-    margin-top: 10px;
-    text-align: right;
-}
-
 .system-memory-graph .graph {
     width: 100%;
 }
 
 #memory-spaces { height: 700px; }
-#young-collector, #tenured-collector { height: 100px; }
-#eden-usage, #oldgen-usage { height: 170px; }
+#young-collector, #tenured-collector { height: 109px; }
+#eden-usage, #oldgen-usage { height: 175px; }
 
 #system-info-snapshot {
     margin-bottom: 16px;
