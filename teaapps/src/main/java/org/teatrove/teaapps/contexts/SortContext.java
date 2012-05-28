@@ -494,7 +494,7 @@ public class SortContext {
 	        else { return s1.compareTo(s2); }
 	    }
     }
-    
+
     /**
      * Special comparator used to allow non-Comparable properties to be
      * converted to strings and sorted accordingly.
@@ -519,7 +519,6 @@ public class SortContext {
             else if (object1 == null) { return 1; }
             else { return -1; }
         }
-        
     }
     
     /**

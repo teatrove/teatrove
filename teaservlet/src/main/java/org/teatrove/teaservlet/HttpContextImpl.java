@@ -16,35 +16,39 @@
 
 package org.teatrove.teaservlet;
 
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.AbstractList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Collection;
-import java.util.ArrayList;
-import java.util.AbstractList;
-import java.util.Iterator;
-import java.util.Set;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 import javax.servlet.http.HttpSession;
 
-import org.teatrove.trove.log.Log;
-import org.teatrove.trove.io.*;
-import org.teatrove.trove.net.*;
-
+import org.teatrove.tea.runtime.OutputReceiver;
+import org.teatrove.tea.runtime.Substitution;
 import org.teatrove.teaservlet.management.HttpContextManagement;
 import org.teatrove.teaservlet.util.DecodedRequest;
-
-import org.teatrove.tea.runtime.Substitution;
-import org.teatrove.tea.runtime.OutputReceiver;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.http.HttpServletResponseWrapper;
+import org.teatrove.trove.io.ByteBufferOutputStream;
+import org.teatrove.trove.io.ByteData;
+import org.teatrove.trove.io.CharToByteBuffer;
+import org.teatrove.trove.io.FileByteData;
+import org.teatrove.trove.log.Log;
+import org.teatrove.trove.net.HttpClient;
 
 /**
  * The context that is used by the template to return its data. This class 
@@ -710,10 +714,11 @@ implements HttpContext {
                 new ParameterValues(mRequest, name, value);
         }
         
+        @SuppressWarnings("unchecked")
         public HttpContext.StringArrayList getNames() {
             if (mNames == null) {
                 mNames = new HttpContext.StringArrayList();
-                Enumeration e = mRequest.getParameterNames();
+                Enumeration<String> e = mRequest.getParameterNames();
                 while (e.hasMoreElements()) {
                     mNames.add(e.nextElement());
                 }
@@ -722,7 +727,8 @@ implements HttpContext {
         }
     }
 
-    private static class ParameterValues extends AbstractList 
+    private static class ParameterValues 
+        extends AbstractList<HttpContext.Parameter> 
         implements HttpContext.ParameterValues
     {
         private final HttpServletRequest mRequest;
@@ -737,10 +743,12 @@ implements HttpContext {
             mValue = value;
         }
 
-        public Object get(int index) {
+        @Override
+        public Parameter get(int index) {
             return new Parameter(getParameterValues()[index]);
         }
 
+        @Override
         public int size() {
             return getParameterValues().length;
         }
@@ -809,10 +817,11 @@ implements HttpContext {
             return new Header(mRequest, name);
         }
         
+        @SuppressWarnings("unchecked")
         public HttpContext.StringArrayList getNames() {
             if (mNames == null) {
                 mNames = new HttpContext.StringArrayList();
-                Enumeration e = mRequest.getHeaderNames();
+                Enumeration<String> e = mRequest.getHeaderNames();
                 while (e.hasMoreElements()) {
                     mNames.add(e.nextElement());
                 }
@@ -901,10 +910,11 @@ implements HttpContext {
             return mRequest.getAttribute(name);
         }
         
+        @SuppressWarnings("unchecked")
         public HttpContext.StringArrayList getNames() {
             if (mNames == null) {
                 mNames = new HttpContext.StringArrayList();
-                Enumeration e = mRequest.getAttributeNames();
+                Enumeration<String> e = mRequest.getAttributeNames();
                 while (e.hasMoreElements()) {
                     mNames.add(e.nextElement());
                 }
@@ -928,13 +938,14 @@ implements HttpContext {
                 session.getAttribute(name) : null;
         }
         
+        @SuppressWarnings("unchecked")
         public HttpContext.StringArrayList getNames() {
             HttpSession session = mRequest.getSession();
             if (mRequest == null || session == null)
                 return null;
             if (mNames != null) {
                 mNames = new HttpContext.StringArrayList();
-                Enumeration e = session.getAttributeNames();
+                Enumeration<String> e = session.getAttributeNames();
                 while (e.hasMoreElements()) {
                     mNames.add(e.nextElement());
                 }

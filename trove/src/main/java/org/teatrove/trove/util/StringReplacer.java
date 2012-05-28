@@ -16,8 +16,8 @@
 
 package org.teatrove.trove.util;
 
-import java.util.Map;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * 
@@ -37,7 +37,8 @@ public class StringReplacer {
      *
      * @return the string with any replacements applied.
      */
-    public static String replace(String source, String pattern, String replacement) {
+    public static String replace(String source, String pattern, 
+                                 String replacement) {
         return replace(source, pattern, replacement, 0);
     }
 
@@ -70,13 +71,13 @@ public class StringReplacer {
 
         int sourceLength = source.length();
 
-        StringBuffer buf;
+        StringBuilder buf;
         if (fromIndex <= 0) {
             fromIndex = 0;
-            buf = new StringBuffer(sourceLength);
+            buf = new StringBuilder(sourceLength);
         }
         else if (fromIndex < sourceLength) {
-            buf = new StringBuffer(sourceLength);
+            buf = new StringBuilder(sourceLength);
             buf.append(source.substring(0, fromIndex));
         }
         else {
@@ -111,7 +112,8 @@ public class StringReplacer {
      * @param source the source string
      * @param patternReplacements pattern-replacement pairs
      */
-    public static String replace(String source, Map patternReplacements) {
+    public static 
+    String replace(String source, Map<String, String> patternReplacements) {
         if (source == null) {
             return null;
         }
@@ -120,12 +122,14 @@ public class StringReplacer {
         String[] patterns = new String[mapSize];
         String[] replacements = new String[mapSize];
 
-        Iterator it = patternReplacements.entrySet().iterator();
+        Iterator<Map.Entry<String, String>> it = 
+            patternReplacements.entrySet().iterator();
+        
         for (int i=0; it.hasNext(); i++) {
-            Map.Entry entry = (Map.Entry)it.next();
+            Map.Entry<String, String> entry = it.next();
             
-            patterns[i] = (String)entry.getKey();
-            replacements[i] = (String)entry.getValue();
+            patterns[i] = entry.getKey();
+            replacements[i] = entry.getValue();
         }
 
         return replace(source, patterns, replacements);
@@ -137,7 +141,7 @@ public class StringReplacer {
         int patternsLength = patterns.length;
 
         int sourceLength = source.length();
-        StringBuffer buf = new StringBuffer(sourceLength);
+        StringBuilder buf = new StringBuilder(sourceLength);
 
         for (int s=0; s<sourceLength; ) {
             int longestPattern = 0;
@@ -254,7 +258,7 @@ public class StringReplacer {
             }
         }
 
-        StringBuffer buf = new StringBuffer
+        StringBuilder buf = new StringBuilder
             (source.length() - pattern.length() + replacement.length());
         buf.append(source.substring(0, atIndex));
         buf.append(replacement);

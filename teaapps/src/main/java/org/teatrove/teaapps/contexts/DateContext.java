@@ -43,6 +43,20 @@ public class DateContext {
     public static final String YEAR = "y";
     
     /**
+     * Returns a standard Java Date object with the current date and time.
+     */
+    public java.util.Date currentDate() {
+        return new Date();
+    }
+
+    /**
+     * Returns a Joda DateTime object with the current date and time.
+     */
+    public org.joda.time.DateTime currentDateTime() {
+        return new org.joda.time.DateTime();
+    }
+
+    /**
      * Create a {@link Date} instance from the given string using the default 
      * input format <code>yyyyMMdd</code>.
      * 
