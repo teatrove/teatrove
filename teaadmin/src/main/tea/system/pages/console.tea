@@ -1,0 +1,43 @@
+<% template console()
+
+getTeaServletAdmin()
+result = compileSource("date = currentDate(); 'DATE: ' date")
+'RESULT: ' result.successful '<br />'
+'TEMPLATES: ' result.reloadedTemplateNames '<br />'
+'ERRORS: ' result.allTemplateErrors '<br />'
+
+'<hr />'
+
+if (result.reloadedTemplateNames) {
+    foreach (name in result.reloadedTemplateNames) {
+        dynamicTemplateCall(name);
+    }
+}
+
+/*
+
+ [ Validate] [ Compile ]   [ Hide | Templates | Functions | Applications ]
+
+ Source Code                             Templates
+ ___________________________________     _______________
+|                                   |   | MyApplication |
+|                                   |   |_______________|
+|                                   |   | getStuff      |
+|                                   |   | doStuff       |
+|                                   |   |               |
+|                                   |   |               |
+|                                   |   |               |
+|___________________________________|   |               |
+                                        |               |
+ Results                                |               |
+ ___________________________________    |               |
+|                                   |   |               |
+|                                   |   |               |
+|                                   |   |               |
+|                                   |   |               |   
+|                                   |   |               |
+|                                   |   |               |
+|                                   |   |               |
+|                                   |   |               |
+|___________________________________|   |_______________|
+*/
