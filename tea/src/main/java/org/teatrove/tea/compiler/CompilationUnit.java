@@ -187,7 +187,8 @@ public class CompilationUnit implements ErrorListener {
     }
     
     public boolean shouldCompile() {
-        return shouldCompile(getDestinationLastModified());
+        return getCompiler().isForceCompile() ||
+               shouldCompile(getDestinationLastModified());
     }
 
     protected boolean shouldCompile(long timestamp) {

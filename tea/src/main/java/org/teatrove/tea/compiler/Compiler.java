@@ -387,6 +387,16 @@ public class Compiler {
     }
 
     /**
+     * Get the flag of whether to force all templates to be compiled even if
+     * up-to-date.
+     * 
+     * @return true to compile all source, even if up-to-date
+     */
+    public boolean isForceCompile() {
+        return mForce;
+    }
+    
+    /**
      * Set the flag of whether to force all templates to be compiled even if
      * up-to-date.
      * 
