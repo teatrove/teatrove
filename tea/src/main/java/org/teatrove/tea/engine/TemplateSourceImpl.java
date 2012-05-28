@@ -354,6 +354,69 @@ public class TemplateSourceImpl implements TemplateSource {
         return results;
     }
 
+    /*
+    public TemplateCompilationResults compileSource(ClassInjector injector,
+                                                    String source) 
+        throws Exception {
+
+        // setup results of checked templates
+        TemplateCompilationResults results = new TemplateCompilationResults
+        (
+            new TreeMap<String, CompilationUnit>(), 
+            new TreeMap<String, List<TemplateError>>()
+        );
+
+        // setup package prefix and injector
+        String packagePrefix = mConfig.getPackagePrefix();
+        if (injector == null) {
+            injector = createClassInjector();
+        }
+        
+        // create merged compiler
+        Compiler compiler = createCompiler(injector, packagePrefix);
+        
+        // add string compiler
+        final String tmplName = "__dynamic__";
+        String tsource = "<% template " + tmplName + "() %>" + source;
+        StringCompilationProvider provider = new StringCompilationProvider();
+        provider.setTemplateSource(tmplName, tsource);
+        compiler.addCompilationProvider(provider);
+
+        // create error listener
+        TemplateErrorListener errorListener = createErrorListener();
+        
+        // setup compiler
+        compiler.setClassLoader(injector);
+        compiler.addImportedPackages(getImports());
+        compiler.setRuntimeContext(getContextSource().getContextType());
+        compiler.setCodeGenerationEnabled(false);
+        compiler.addErrorListener(errorListener);
+        compiler.setForceCompile(true);
+        
+        // compile selected source
+        CompilationUnit unit = compiler.getCompilationUnit(tmplName, null);
+        compiler.getParseTree(unit);
+        results.appendTemplate(tmplName, unit);
+
+        // append all template errors
+        results.appendErrors(errorListener.getTemplateErrors());
+        errorListener.close();
+
+        // update the template source
+        Set<String> knownTemplateNames = new TreeSet<String>();
+        knownTemplateNames.addAll(Arrays.asList(compiler.getAllTemplateNames()));
+        knownTemplateNames.add(tmplName);
+        mTemplateSourceFileInfo = 
+            createTemplateSourceFileInfo(compiler, knownTemplateNames); 
+
+        //return new TemplateImpl(new TemplateLoader(injector, packagePrefix)
+        //    .getTemplate(tmplName), null, null, 0);
+        
+        // return results
+        return results;
+    }
+    */
+    
     public ContextSource getContextSource() {
         return mConfig.getContextSource();
     }

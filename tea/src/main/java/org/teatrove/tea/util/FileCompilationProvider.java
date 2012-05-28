@@ -133,7 +133,7 @@ public class FileCompilationProvider implements CompilationProvider {
         }
 
         if (context == null) {
-            context = org.teatrove.tea.runtime.UtilityContext.class;
+            context = org.teatrove.tea.runtime.Context.class;
         }
 
         if (destDir == null) {

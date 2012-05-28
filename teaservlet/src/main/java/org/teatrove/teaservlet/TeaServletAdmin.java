@@ -16,23 +16,42 @@
 
 package org.teatrove.teaservlet;
 
+import java.beans.Introspector;
+import java.beans.MethodDescriptor;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.beans.*;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+import java.util.Vector;
+
 import javax.servlet.ServletContext;
-import org.teatrove.teaservlet.stats.*;
-import org.teatrove.teaservlet.util.NameValuePair;
-import org.teatrove.teaservlet.util.RemoteCompilationProvider;
-import org.teatrove.tea.runtime.TemplateLoader;
+
+import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.TemplateCallExtractor;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
-import org.teatrove.tea.compiler.TemplateCallExtractor;
-
+import org.teatrove.tea.engine.TemplateError;
+import org.teatrove.tea.runtime.TemplateLoader;
+import org.teatrove.teaservlet.stats.TeaServletRequestStats;
+import org.teatrove.teaservlet.stats.TemplateStats;
+import org.teatrove.teaservlet.util.NameValuePair;
+import org.teatrove.teaservlet.util.RemoteCompilationProvider;
+import org.teatrove.teaservlet.util.cluster.Restartable;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.log.LogEvent;
 import org.teatrove.trove.net.HttpClient;
@@ -40,7 +59,6 @@ import org.teatrove.trove.net.PlainSocketFactory;
 import org.teatrove.trove.net.PooledSocketFactory;
 import org.teatrove.trove.net.SocketFactory;
 import org.teatrove.trove.util.BeanComparator;
-import org.teatrove.teaservlet.util.cluster.Restartable;
 
 /**
  * The Admin object which contains all administrative information. This object
@@ -62,7 +80,7 @@ public class TeaServletAdmin implements Restartable {
     //private String[] mTemplateNamesFromLastSuccessfulReload;
     //private Date mTimeOfLastSuccessfulReload;
     private AppAdminLinks[] mAdminLinks;
-    private Comparator mTemplateOrdering;
+    private Comparator<TemplateWrapper> mTemplateOrdering;
     private ReloadLock mLock;
 
     /**
@@ -93,7 +111,7 @@ public class TeaServletAdmin implements Restartable {
                 if(commandCode.intValue() == RELOAD_SELECTED_TEMPLATE_CHANGES) {
                     selectedTemplates = (String[])((Object[])paramObj)[1];
                     if(selectedTemplates==null) {
-                        return new TemplateCompilationResults(new HashMap(), new HashMap());
+                        return new TemplateCompilationResults(new HashMap<String, CompilationUnit>(), new HashMap<String, List<TemplateError>>());
                     } 
                     for (int i = 0; i < selectedTemplates.length; i++) {
                         selectedTemplates[i] = selectedTemplates[i].replace('/', '.');
@@ -147,28 +165,30 @@ public class TeaServletAdmin implements Restartable {
         return mTeaServletEngine.getServletContext();
     }
 
+    @SuppressWarnings("unchecked")
     public NameValuePair[] getInitParameters() {
-        Enumeration e = mTeaServletEngine.getInitParameterNames();
-        List list = new ArrayList();
+        Enumeration<String> e = mTeaServletEngine.getInitParameterNames();
+        List<NameValuePair> list = new ArrayList<NameValuePair>();
         while (e.hasMoreElements()) {
-            String initName = (String)e.nextElement();
+            String initName = e.nextElement();
             list.add(new NameValuePair
                      (initName, mTeaServletEngine
                       .getInitParameter(initName)));
         }
-        return (NameValuePair[])list.toArray(new NameValuePair[list.size()]);
+        return list.toArray(new NameValuePair[list.size()]);
     }
 
+    @SuppressWarnings("unchecked")
     public NameValuePair[] getAttributes() {
         ServletContext context = getServletContext();
-        Enumeration e = context.getAttributeNames();
-        List list = new ArrayList();
+        Enumeration<String> e = context.getAttributeNames();
+        List<NameValuePair> list = new ArrayList<NameValuePair>();
         while (e.hasMoreElements()) {
-            String initName = (String)e.nextElement();
+            String initName = e.nextElement();
             list.add(new NameValuePair
                      (initName, context.getAttribute(initName)));
         }
-        return (NameValuePair[])list.toArray(new NameValuePair[list.size()]);
+        return list.toArray(new NameValuePair[list.size()]);
     }
 
     public Log getLog() {
@@ -194,7 +214,7 @@ public class TeaServletAdmin implements Restartable {
         for (int i=0; i < apps.length; i++) {
             infos[i] = new ApplicationInfo(names[i],
                                            apps[i],
-                                           (Class)appContextMap.get(apps[i]),
+                                           (Class<?>)appContextMap.get(apps[i]),
                                            prefixes[i]);
         }
 
@@ -216,7 +236,7 @@ public class TeaServletAdmin implements Restartable {
             MethodDescriptor[] methods = Introspector
                 .getBeanInfo(HttpContext.class)
                 .getMethodDescriptors();
-            List funcList = new Vector(50);
+            List<FunctionInfo> funcList = new Vector<FunctionInfo>(50);
 
             for (int j = -1; j < AppInf.length;j++) {
                 if (j >= 0) {
@@ -238,7 +258,7 @@ public class TeaServletAdmin implements Restartable {
                 }
             }
 
-            funcArray = (FunctionInfo[])funcList.toArray
+            funcArray = funcList.toArray
                 (new FunctionInfo[funcList.size()]);
             Arrays.sort(funcArray);
         }
@@ -274,6 +294,7 @@ public class TeaServletAdmin implements Restartable {
 
     }
 
+    @SuppressWarnings("unchecked")
     public void setTemplateOrdering(String orderBy) {
        boolean reverse = false;
        if (orderBy != null && orderBy.endsWith("-")) {
@@ -287,12 +308,14 @@ public class TeaServletAdmin implements Restartable {
            mTemplateOrdering = ((BeanComparator) mTemplateOrdering).reverse();
     }
 
+    @SuppressWarnings("unchecked")
     public TemplateLoader.Template[] getTemplates() {
         TemplateLoader.Template[] templates =
             mTeaServletEngine.getTemplateSource()
             .getLoadedTemplates();
-        Comparator c = BeanComparator.forClass(TemplateLoader.Template.class)
-            .orderBy("name");
+        Comparator<TemplateLoader.Template> c = 
+            BeanComparator.forClass(TemplateLoader.Template.class)
+                .orderBy("name");
         Arrays.sort(templates, c);
         return templates;
     }
@@ -301,12 +324,15 @@ public class TeaServletAdmin implements Restartable {
      * Provides an ordered array of available templates using a
      * handy wrapper class.
      */
+    @SuppressWarnings("unchecked")
     public TemplateWrapper[] getKnownTemplates() {
         if (mTemplateOrdering == null) {
             setTemplateOrdering("name");
         }
 
-        Set known = new TreeSet(BeanComparator.forClass(TemplateWrapper.class).orderBy("name"));
+        Comparator<TemplateWrapper> comparator = 
+            BeanComparator.forClass(TemplateWrapper.class).orderBy("name");
+        Set<TemplateWrapper> known = new TreeSet<TemplateWrapper>(comparator);
 
         TemplateLoader.Template[] loaded = mTeaServletEngine
             .getTemplateSource().getLoadedTemplates();
@@ -344,12 +370,12 @@ public class TeaServletAdmin implements Restartable {
             }
         }
 
-        List v = new ArrayList(known);
+        List<TemplateWrapper> v = new ArrayList<TemplateWrapper>(known);
         
         Collections.sort(v, mTemplateOrdering);
         
 //        return (TeaServletAdmin.TemplateWrapper[])known.toArray(new TemplateWrapper[known.size()]);
-        return (TeaServletAdmin.TemplateWrapper[])v.toArray(new TemplateWrapper[v.size()]);
+        return v.toArray(new TemplateWrapper[v.size()]);
     }
 
     public Date getTimeOfLastReload() {
@@ -357,7 +383,7 @@ public class TeaServletAdmin implements Restartable {
             .getTimeOfLastReload();
     }
 
-    public Class getTeaServletClass() {
+    public Class<?> getTeaServletClass() {
         Object obj = mTeaServletEngine.getServletContext()
             .getAttribute(TeaServlet.class.getName());
         if (obj != null) {
@@ -396,7 +422,7 @@ public class TeaServletAdmin implements Restartable {
 		String sourcePathString = mTeaServletEngine
  		                                    .getInitParameter("template.path");
 
-		List paths = new ArrayList();
+		List<String> paths = new ArrayList<String>();
 
 		if (sourcePathString != null) {
 			StringTokenizer sourcePathTokenizer =
@@ -415,7 +441,7 @@ public class TeaServletAdmin implements Restartable {
 			}
 		}
 		
-    	return (String[])paths.toArray(new String[paths.size()]);
+    	return paths.toArray(new String[paths.size()]);
     }
 
 	private String getRemoteTemplatePath(String remotePath) {    
@@ -479,25 +505,39 @@ public class TeaServletAdmin implements Restartable {
 	
     public ReloadableTemplate[] getReloadableTemplates() throws Exception {
 
-        Map tMap = mTeaServletEngine.getTemplateSource().listTouchedTemplates();
+        Map<String, Boolean> tMap = 
+            mTeaServletEngine.getTemplateSource().listTouchedTemplates();
         ReloadableTemplate[] arr = new ReloadableTemplate[tMap.size()];
 
         int j = 0;
-        Iterator it = tMap.entrySet().iterator(); 
+        Iterator<Map.Entry<String, Boolean>> it = tMap.entrySet().iterator(); 
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
+            Map.Entry<String, Boolean> entry = it.next();
 
-            ReloadableTemplate rt = new ReloadableTemplate(entry.getKey().toString());
-            rt.setSignatureChanged(((Boolean)entry.getValue()) == Boolean.TRUE);
+            ReloadableTemplate rt = new ReloadableTemplate(entry.getKey());
+            rt.setSignatureChanged(entry.getValue().booleanValue());
             arr[j++] = rt;
         }
 
         return arr;
     }
 
-    public TemplateCompilationResults checkTemplates(boolean forceAll, String[] templateNames) throws Exception {
-        return mTeaServletEngine.getTemplateSource().checkTemplates(null, forceAll, templateNames);
-    }    
+    public TemplateCompilationResults checkTemplates(boolean forceAll, 
+                                                     String[] templateNames) 
+        throws Exception {
+        
+        return mTeaServletEngine.getTemplateSource()
+            .checkTemplates(null, forceAll, templateNames);
+    }
+    
+    /*
+    public TemplateCompilationResults compileSource(String source)
+        throws Exception {
+        
+        return mTeaServletEngine.getTemplateSource()
+            .compileSource(null, source);
+    }
+    */
     
     public class TemplateWrapper {
 
@@ -533,6 +573,10 @@ public class TeaServletAdmin implements Restartable {
                 return getName().equals(((TemplateWrapper)obj).getName());
             }
             return false;
+        }
+        
+        public int hashCode() {
+            return getName().hashCode();
         }
 
         public TemplateLoader.Template getLoadedTemplate() {

@@ -16,15 +16,18 @@
 
 package org.teatrove.teaservlet;
 
-import java.beans.*;
+import java.beans.MethodDescriptor;
 import java.util.Set;
-import javax.servlet.*;
-import javax.servlet.http.*;
 
-import org.teatrove.tea.engine.TemplateCompilationResults;
+import javax.servlet.ServletException;
+
 import org.teatrove.tea.compiler.TemplateRepository;
-import org.teatrove.teaservlet.stats.*;
-import org.teatrove.teaservlet.util.ServerNote;
+import org.teatrove.tea.engine.TemplateCompilationResults;
+import org.teatrove.teaservlet.stats.AggregateInterval;
+import org.teatrove.teaservlet.stats.AggregateSummary;
+import org.teatrove.teaservlet.stats.Milestone;
+import org.teatrove.teaservlet.stats.TeaServletRequestStats;
+import org.teatrove.teaservlet.stats.TemplateStats;
 import org.teatrove.trove.classfile.TypeDesc;
 
 /**
@@ -62,7 +65,7 @@ public interface AdminContext extends TeaToolsContext {
      * Returns a Class object for a given name.
      * it basically lets templates perform Class.forName(classname);
      */
-    public Class getClassForName(String classname);
+    public Class<?> getClassForName(String classname);
   
     /**
      * Returns a list of class objects for each known subclass.
@@ -99,7 +102,7 @@ public interface AdminContext extends TeaToolsContext {
      * messages but will still return the contents of the message list.  
      * if the ID parameter is null, a list of all known IDs will be returned.
      */
-    public Set addNote(String ID, String contents, int lifespan);
+    public Set<?> addNote(String ID, String contents, int lifespan);
 
     public AdminApplication.ServerStatus[] getReloadStatusOfServers();
 
@@ -125,10 +128,51 @@ public interface AdminContext extends TeaToolsContext {
     
     public void setTemplateOrdering(String orderBy);
     
-    public TemplateCompilationResults checkTemplates(boolean all) throws Exception;
+    /**
+     * Check available templates and compile as needed.  To forcefully recompile
+     * all templates, specify <code>true</code>.  Otherwise, if 
+     * <code>false</code>, then only changed templates will be compiled as well
+     * as any dependent templates.
+     * 
+     * @param all <code>true</code> to recompile all templates,
+     *            <code>false</code> to only compile changed templates
+     *            
+     * @return The results of the compilation
+     * 
+     * @throws Exception If an unexpected error occurs other than compile errors
+     */
+    public TemplateCompilationResults checkTemplates(boolean all) 
+        throws Exception;
     
-    public TemplateCompilationResults checkTemplates(String[] templateNames) throws Exception;
-        
+    /**
+     * Check the given templates and compile as needed.  This will compile the
+     * specified templates as well as any dependent templates.
+     * 
+     * @param The names of the templates to check and compile
+     *            
+     * @return The results of the compilation
+     * 
+     * @throws Exception If an unexpected error occurs other than compile errors
+     */
+    public TemplateCompilationResults checkTemplates(String[] templateNames) 
+        throws Exception;
+       
+    /**
+     * Compile the given source into a temporary template to allow sampling of
+     * source. Note that the source should not include the template declaration
+     * as the declaration is automatically provided.
+     * 
+     * @param source The source of the template to compile
+     *            
+     * @return The results of the compilation
+     * 
+     * @throws Exception If an unexpected error occurs other than compile errors
+     */
+    /*
+    public TemplateCompilationResults compileSource(String source) 
+        throws Exception;
+    */
+    
     /* new template stats */
     
     /**

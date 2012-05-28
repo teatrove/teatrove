@@ -75,7 +75,7 @@ public class Compiler {
     private Set<String> mPreserveTree;
 
     private Class<?> mContextClass = 
-        org.teatrove.tea.runtime.UtilityContext.class;
+        org.teatrove.tea.runtime.Context.class;
     
     private Method[] mRuntimeMethods;
     private Method[] mStringConverters;
@@ -639,10 +639,9 @@ public class Compiler {
      * is compiled such that the first parameter of its execute method must
      * be an instance of the runtime context.
      *
-     * <p>Default implementation returns
-     * org.teatrove.tea.runtime.UtilityContext.
+     * <p>Default implementation returns org.teatrove.tea.runtime.Context.</p>
      *
-     * @see org.teatrove.tea.runtime.UtilityContext
+     * @see org.teatrove.tea.runtime.Context
      */
     public Class<?> getRuntimeContext() {
         return mContextClass;
