@@ -156,6 +156,7 @@ public class TemplateRepository {
      */
     public class TemplateInfo {
         String mName;
+        String mSourceFile;
         long mLastModified;
         TypeDesc mReturnType;
         TypeDesc[] mParameterTypes;
@@ -174,6 +175,7 @@ public class TemplateRepository {
         TemplateInfo(MethodInfo mi, long lastModified, File rootClassesDir, boolean precompiled) {
             mLastModified = lastModified;
             mName = mi.getClassFile().getClassName().replace('.', '/');
+            mSourceFile = mi.getClassFile().getSourceFile();
             mReturnType = mi.getMethodDescriptor().getReturnType();
             mParameterTypes = mi.getMethodDescriptor().getParameterTypes();
             mDependents = TemplateCallExtractor.getTemplatesCalled(
@@ -266,6 +268,8 @@ public class TemplateRepository {
         }
 
         public String getName() { return mName; }
+        
+        public String getSourceFile() { return mSourceFile; }
 
         public TypeDesc getReturnType() { return mReturnType; }
 

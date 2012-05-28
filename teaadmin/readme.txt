@@ -10,6 +10,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #107 to add template source path to template info
 - Fix #50 to add template viewer console with hyperlinking click through, outline, hiearchy, and source
 - Fix #49 to add full blown JMX console
 - Fix #93 with invalid source path on compilation errors
