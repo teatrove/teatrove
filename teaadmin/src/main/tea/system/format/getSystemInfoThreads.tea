@@ -80,7 +80,7 @@ sort(threads, 'threadName', false)
         <%
                 }
         %>
-                <div class="row stathead <% idx % 2 == 0 ? 'oddrow' : 'evenrow' %>">
+                <div id="row-<% threads[idx].threadId %>-label" class="row stathead <% idx % 2 == 0 ? 'oddrow' : 'evenrow' %>">
                     <div class="template" title="">
                         <a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=<% thread.threadId %>" title="<% thread.threadName %>">
                             <% thread.threadName %>
@@ -109,7 +109,7 @@ sort(threads, 'threadName', false)
                 }
         %>
                  
-            <div id="row-<% threads[idx].threadId %>" class="row <% idx % 2 == 0 ? 'oddrow' : 'evenrow' %>">
+            <div id="row-<% threads[idx].threadId %>" title="<% threads[idx].threadName %>" class="row <% idx % 2 == 0 ? 'oddrow' : 'evenrow' %>">
             </div>
         
         <%

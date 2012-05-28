@@ -1767,9 +1767,9 @@
                     $table.trigger("update"); 
                     
                     tableRow = tableRows['thread-perf-' + thread.id];
-                    if ($row.is(':visible')) {
-                        $row.effect('pulsate');
-                    }
+                    //if ($row.is(':visible')) {
+                    //    $row.effect('pulsate');
+                    //}
                 }
                 
                 if (tableRow) {
@@ -1818,8 +1818,9 @@
     function initSystemInfoDataThreadsGrid() {
         var MAX_METRICS = 300, 
             MAX_DIFFERENTIAL = 5000,
-            METRIC_WIDTH = 55, 
+            METRIC_WIDTH = 60, 
             ANIMATE = false,
+            NEW = 0, RUNNING = 1, BLOCKED = 2, WAITING = 3, TERMINATED = 5,
             THREAD_STATES = [
                 { color: 'black',   label: 'New Thread' },
                 { color: 'green',   label: 'Running' },
@@ -1834,6 +1835,10 @@
             $gridnav = $('.grid-lhn'); 
 
         $.system.addDataListener('thread-graph', function(json) {
+
+            // remove old metrics
+            purgeMetrics();
+
             // calculate time differential and insert break if outstanding
             var timestamp = json.timestamp;
             if (lastTimestamp > 0 &&
@@ -1844,14 +1849,14 @@
             
             // insert regular metrics per thread
             insertMetrics(json);
-            lastTimestamp = timestamp;
             
-            // remove old metrics
-            purgeMetrics();
+            // update timestamp
+            lastTimestamp = timestamp;
         });
         
         var $headers = null, headers = [];
         function initHeaders() {
+            headers = [];
             $headers = $grid.find('.header');
             $headers.each(function() {
                 var header = { header: $(this), metrics: [] };
@@ -1865,16 +1870,23 @@
         
         var $rows = null, rows = [], rowsMap = {};
         function initRows() {
+            rows = []; rowsMap = {};
             $rows = $grid.find('.row');
             $rows.each(function() {
-                var $row = $(this);
-                var row = { row: $row, metrics: [] };
+                var $row = $(this), id = $row.attr('id');
+                var row = { 
+                    row: $row, 
+                    label : $('#' + id + '-label'),
+                    title: $row.attr('title'), 
+                    metrics: [] 
+                };
+                
                 row.row.children('.metric').each(function() {
                     row.metrics.push($(this));
                 });
                 
                 rows.push(row);
-                rowsMap[$row.attr('id')] = row;
+                rowsMap[id] = row;
             });
         }
         
@@ -1896,30 +1908,58 @@
             }
         }
         
-        function insertBreak() {
-            var rowWidth = -1;
-            for (var i = 0; i < headers.length; i++) {
-                var header = headers[i], $header = header.header;
-                if (rowWidth < 0) {
-                    var twidth = (header.metrics.length + 1) * (METRIC_WIDTH + 7) + 1;
-                    rowWidth = Math.max($grid.width(), twidth);
-                }
-                
-                $header.css('width', rowWidth + 'px');
-
-                var $metric = $('<div class="metric" style="width: ' + METRIC_WIDTH + 'px; text-align: center;"> --- </div>');
-                $header.prepend($metric);
-                header.metrics.unshift($metric);
+        function calcRowWidth() {
+            var width = 0;
+            if (headers.length > 0) {
+                width = ((headers[0].metrics.length + 1) * (METRIC_WIDTH + 3));
             }
             
+            return Math.max($grid.width(), width);
+        }
+        
+        function updateRowWidths() {
+            var rowWidth = calcRowWidth(); 
+            $rows.css('width', rowWidth + 'px');
+            $headers.css('width', rowWidth + 'px');            
+        }
+        
+        function insertHeaderMetrics(text) {
+            var i, $header, $metric;
+            for (i = 0; i < headers.length; i++) {
+                $header = headers[i].header;
+                if (ANIMATE && $header.is(':visible')) {
+                    $metric = $('<div class="metric" style="left: -' + METRIC_WIDTH + 'px; width: 0px;">' + text + '</div>');
+                    $header.prepend($metric);
+                    headers[i].metrics.unshift($metric);
+                    $metric.animate({left: '0px', width: METRIC_WIDTH + 'px' });
+                }
+                else {
+                    $metric = $('<div class="metric" style="width: ' + METRIC_WIDTH + 'px;">' + text + '</div>');
+                    $header.prepend($metric);
+                    headers[i].metrics.unshift($metric); 
+                }
+            }
+        }
+        
+        function insertThreadMetrics(type) {
             for (var i = 0; i < rows.length; i++) {
-                var row = rows[i], $row = row.row;
-                $row.css('width', rowWidth + 'px');
-                
-                var $metric = $('<div class="metric process transparent" style="width: ' + METRIC_WIDTH + 'px;"><span class="value">&nbsp;</span></div>'); 
+                insertThreadMetric(rows[i], '', type);
+            }
+        }
+        
+        function insertThreadMetric(row, label, type) {
+            var $row = row.row, $metric;
+            if (ANIMATE && $row.is(':visible')) {
+                $metric = $('<div title="' + label + '" class="metric process ' + type + '" style="width: 0px;"><span class="value">&nbsp;</span></div>');
                 $row.prepend($metric);
                 row.metrics.unshift($metric);
+                $metric.animate({ width: METRIC_WIDTH + 'px' });
             }
+            else { 
+                $metric = $('<div title="' + label + '" class="metric process ' + type + '" style="width: ' + METRIC_WIDTH + 'px;"><span class="value">&nbsp;</span></div>');
+                $row.prepend($metric);
+                row.metrics.unshift($metric);
+            }        
         }
         
         function insertRow(thread) {
@@ -1937,11 +1977,28 @@
                 
                 $grid.data('gridlapse').initialize();
             }
+
+            var i = 0;
+            for (; i < rows.length; i++) {
+                if (rows[i].title.toUpperCase() > thread.name.toUpperCase()) { 
+                    break; 
+                }
+            }
+            
+            var $blabel = null, $brow = null;
+            if (i < rows.length) {
+                $brow = rows[i].row;
+                $blabel = rows[i].label;
+            }
+            else {
+                $brow = $grid.find('.scrollbar.last'); 
+                $blabel = $('.grid-lhn .placeholder');
+            }
             
             // append label
             var clazz = (count % 2 == 0 ? 'evenrow' : 'oddrow');
             var $label = $('' +
-                '<div class="row stathead ' + clazz + '">' +
+                '<div id="row-' + thread.id + '-label" class="row stathead ' + clazz + '">' +
                     '<div class="template" title="">' +
                         '<a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=' + thread.id + '" title="' + thread.name + '">' +
                             thread.name +
@@ -1949,129 +2006,103 @@
                     '</div>' +
                 '</div>');
                 
-            $('.grid-lhn .placeholder').before($label);
+            $blabel.before($label);
 
             // append row
-            var $row = $('<div id="row-' + thread.id + '" class="row ' + clazz + '"></div>');
-            $grid.find('.scrollbar.last').before($row);
+            var $row = $('<div id="row-' + thread.id + '" title="' + thread.name + '" class="row ' + clazz + '"></div>');
+            $brow.before($row);
 
-            var state = THREAD_STATES[0], 
-                label = state.label, color = state.color;
-                
-            var $metric = $('<div title="' + label + '" class="metric process ' + color + '" style="width: ' + METRIC_WIDTH + 'px;"><span class="value">&nbsp;</span></div>'); 
-            $row.prepend($metric);
-            
-            // show effect
-            if ($row.is(':visible')) {
-                $row.effect('pulsate');
-            }
-            
-            // recalc
+            // recalculate headers and rows
             initHeaders(); initRows();
+
+            // redo position of headers
+            var idx = Math.ceil(i / 10),
+                $gheaders = $gridnav.children('.header');
+                
+            for (; idx < $headers.length; idx++) {
+                var $header = headers[idx].header;
+                var $prev = $($header.prev());
+                var $rowscroll = $($header.next());
+                $prev.before($header);
+                $header.after($rowscroll);
+                
+                var $gheader = $($gheaders[idx]);
+                $prev = $($gheader.prev());
+                $prev.before($rowheaders[idx]);
+            }
+
+            // re-style each row
+            $grid.find('.row:odd').removeClass('oddrow').addClass('evenrow');
+            $gridnav.find('.row:odd').removeClass('oddrow').addClass('evenrow');
+            
+            $grid.find('.row:even').removeClass('evenrow').addClass('oddrow')
+            $gridnav.find('.row:even').removeClass('evenrow').addClass('oddrow');
+                        
+            // insert initial metric
+            var row = rowsMap['row-' + thread.id];
+            if (row) {
+                var state = THREAD_STATES[NEW];
+                insertThreadMetric(row, state.label, state.color);
+            }
+        }
+
+        function insertBreak() {
+            updateRowWidths();
+            insertHeaderMetrics('---');
+            insertThreadMetrics('transparent');
         }
         
         function insertMetrics(json) {
-            var time = json.time;
+            var time = json.time, i, thread, row, state, threading;
 
-            // insert time frame into each header
-            var rowWidth = -1;
-            for (var i = 0; i < headers.length; i++) {
-                var $header = headers[i].header;
-                if (rowWidth < 0) {
-                    var metrics = headers[i].metrics;
-                    var twidth = ((metrics.length + 1) * (METRIC_WIDTH + 7));
-                    rowWidth = Math.max($grid.width(), twidth);
-                }
-                
-                $header.css('width', rowWidth + 'px');
-
-                if (ANIMATE && $header.is(':visible')) {
-                    var $metric = $('<div class="metric" style="left: -' + METRIC_WIDTH + 'px; width: 0px;">' + time + '</div>');
-                    $header.prepend($metric);
-                    headers[i].metrics.unshift($metric);
-                    $metric.animate({left: '0px', width: METRIC_WIDTH + 'px' });
-                }
-                else {
-                    var $metric = $('<div class="metric" style="width: ' + METRIC_WIDTH + 'px;">' + time + '</div>');
-                    $header.prepend($metric);
-                    headers[i].metrics.unshift($metric); 
-                }
-            }
-
-            // move previous metrics in each row
-            for (var i = 0; i < rows.length; i++) {
-                var $row = rows[i].row;
-                $row.css('width', rowWidth + 'px');
-            }
+            // update all rows with the same width
+            updateRowWidths();
 
             // reinitialize the grid and scrollbars
-            var gridlapse = $grid.data('gridlapse');
-            gridlapse.resize();
-            
+            $grid.data('gridlapse').resize();
+
+            // insert header metrics
+            insertHeaderMetrics(time);
+
             // insert metric per thread
-            for (var i = 0; i < json.threads.threads.length; i++) {
-                var thread = json.threads.threads[i];
+            for (i = 0; i < json.threads.threads.length; i++) {
+                thread = json.threads.threads[i];
                 if (!thread || thread.id < 0) { continue; }
                 
-                var row = rowsMap['row-' + thread.id];
+                row = rowsMap['row-' + thread.id];
                 if (!row) {
                     insertRow(thread);
                     row = rowsMap['row-' + thread.id];
                 }
-                
+
                 if (row) {
-                    var $row = row.row,
-                        state = THREAD_STATES[thread.state],
-                        label = state.label,
-                        clazz = 'metric process ' + state.color;
-                    
-                    if (ANIMATE && $row.is(':visible')) {
-                        var $metric = $('<div title="' + label + '" class="' + clazz + '" style="width: 0px;"><span class="value">&nbsp;</span></div>');
-                        $row.data('threading', time).prepend($metric);
-                        row.metrics.unshift($metric);
-                        $metric.animate({ width: (METRIC_WIDTH + 4) + 'px' });
-                    }
-                    else { 
-                        var $metric = $('<div title="' + label + '" class="' + clazz + '" style="width: ' + (METRIC_WIDTH + 4) + 'px;"><span class="value">&nbsp;</span></div>');
-                        $row.data('threading', time).prepend($metric);
-                        row.metrics.unshift($metric);
-                    }
+                    row.row.data('threading', time);
+                    state = THREAD_STATES[thread.state];
+                    insertThreadMetric(row, state.label, state.color);
                 }
             }
             
-            // cancel threads no longer valid
-            for (var i = 0; i < rows.length; i++) {
-                var $row = rows[i].row;
-                var threading = $row.data('threading');
-                if (threading == time) { return; }
+            // insert metrics for no longer alive threads
+            for (i = 0; i < rows.length; i++) {
+                row = rows[i];
+                threading = row.row.data('threading');
+                
+                // previous step above sets threading to current time, so
+                // ignore this row if already processed
+                if (threading == time) { continue; }
+                
+                // when threading is 0, then the thread previously died per the
+                // step below, so just insert an empty metric
                 else if (threading == 0) {
-                    if (ANIMATE && $row.is(':visible')) {
-                        var $metric = $('<div class="metric process transparent" style="width: 0px;"><span class="value">&nbsp;</span></div>'); 
-                        $row.prepend($metric);
-                        rows[i].metrics.unshift($metric);
-                        $metric.animate({ width: (METRIC_WIDTH + 4) + 'px' });
-                    }
-                    else { 
-                        var $metric = $('<div class="metric process transparent" style="width: ' + (METRIC_WIDTH + 4) + 'px;"><span class="value">&nbsp;</span></div>'); 
-                        $row.prepend($metric);
-                        rows[i].metrics.unshift($metric);
-                    }
+                    insertThreadMetric(row, '', 'transparent');
                 }
+                
+                // otherwise, this thread must have died, so mark it as so
+                // and reset the threading state
                 else { 
-                    var state = THREAD_STATES[5], 
-                        label = state.label, color = state.color;
-                        
-                    if (ANIMATE && $row.is(':visible')) {
-                        var $metric = $('<div title="' + label + '" class="metric process ' + color + '" style="width: 0px;"><span class="value">&nbsp;</span></div>'); 
-                        $row.data('threading', 0).prepend($metric);
-                        rows[i].metrics.unshift($metric);
-                        $metric.animate({ width: (METRIC_WIDTH + 4) + 'px' });
-                    }
-                    else { 
-                        var $metric = $('<div title="' + label + '" class="metric process ' + color + '" style="width: ' + (METRIC_WIDTH + 4) + 'px;"><span class="value">&nbsp;</span></div>'); 
-                        $row.data('threading', 0).prepend($metric);
-                        rows[i].metrics.unshift($metric);
-                    }
+                    row.row.data('threading', 0);
+                    state = THREAD_STATES[TERMINATED];
+                    insertThreadMetric(row, state.label, state.color);
                 }
             }
         }
