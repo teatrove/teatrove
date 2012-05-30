@@ -30,7 +30,7 @@ import java.beans.*;
 public class TypeDescription extends FeatureDescription {
     
     /** The type to wrap and describe */
-    private Class mType;
+    private Class<?> mType;
     
     /** The BeanInfo for the type */
     private BeanInfo mBeanInfo;
@@ -40,7 +40,7 @@ public class TypeDescription extends FeatureDescription {
      * The TeaToolsUtils object provides the implementation of 
      * this class's methods.
      */
-    public TypeDescription(Class type, TeaToolsUtils utils) {
+    public TypeDescription(Class<?> type, TeaToolsUtils utils) {
         super(utils);
         mType = type;
     }
@@ -48,10 +48,21 @@ public class TypeDescription extends FeatureDescription {
     /**
      * Returns the type.
      */
-    public Class getType() {
+    public Class<?> getType() {
         return mType;
     }
 
+    /**
+     * Returns whether the given class or any of its super classe or interfaces,
+     * recursively, are deprecated.
+     * 
+     * @return <code>true</code> if the type is deprecated
+     * 
+     * @see Deprecated
+     */
+    public boolean isDeprecated() {
+        return getTeaToolsUtils().isDeprecated(mType);
+    }
 
     /**
      * Returns a Modifiers instance that can be used to check the type's
@@ -117,7 +128,7 @@ public class TypeDescription extends FeatureDescription {
      */
     public TypeDescription getArrayType() {
 
-        Class c = getTeaToolsUtils().getArrayType(mType);      
+        Class<?> c = getTeaToolsUtils().getArrayType(mType);      
         if (mType == c) {
             return this;
         }
@@ -168,7 +179,7 @@ public class TypeDescription extends FeatureDescription {
      * Any methods/properties/events in the stopClass or in its baseclasses 
      * will be ignored in the analysis
      */
-    public BeanInfo getBeanInfo(Class stopClass) 
+    public BeanInfo getBeanInfo(Class<?> stopClass) 
     throws IntrospectionException {
         return getTeaToolsUtils().getBeanInfo(mType, stopClass);
     }

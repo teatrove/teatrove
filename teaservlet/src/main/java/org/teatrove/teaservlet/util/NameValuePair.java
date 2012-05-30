@@ -22,20 +22,20 @@ import java.util.Map;
  * 
  * @author Brian S O'Neill
  */
-public class NameValuePair implements Comparable, java.io.Serializable {
-    private String mName;
-    private Object mValue;
+public class NameValuePair<T> implements Comparable<NameValuePair<T>>, java.io.Serializable {
 
-    public NameValuePair(String name, Object value) {
+    private static final long serialVersionUID = 1L;
+
+    private String mName;
+    private T mValue;
+
+    public NameValuePair(String name, T value) {
         mName = name;
         mValue = value;
     }
 
-    public NameValuePair(Map.Entry entry) {
-        if (entry.getKey() instanceof String) {
-            mName = (String)entry.getKey();
-        }
-
+    public NameValuePair(Map.Entry<String, T> entry) {
+        mName = entry.getKey();
         mValue = entry.getValue();
     }
 
@@ -43,13 +43,14 @@ public class NameValuePair implements Comparable, java.io.Serializable {
         return mName;
     }
 
-    public final Object getValue() {
+    public final T getValue() {
         return mValue;
     }
 
+    @SuppressWarnings("rawtypes")
     public boolean equals(Object other) {
         if (other instanceof NameValuePair) {
-            NameValuePair pair = (NameValuePair)other;
+            NameValuePair<?> pair = (NameValuePair) other;
             if (getName() == null) {
                 if (pair.getName() != null) {
                     return false;
@@ -74,6 +75,10 @@ public class NameValuePair implements Comparable, java.io.Serializable {
         }
         return false;
     }
+    
+    public int hashCode() {
+        return (mName.hashCode() ^ 17) & (mValue.hashCode() ^ 11);
+    }
 
     public String toString() {
         return getName() + '=' + getValue();
@@ -82,8 +87,8 @@ public class NameValuePair implements Comparable, java.io.Serializable {
     /**
      * Comparison is based on case-insensitive ordering of "name".
      */
-    public int compareTo(Object other) {
-        String otherName = ((NameValuePair)other).mName;
+    public int compareTo(NameValuePair<T> other) {
+        String otherName = other.mName;
 
         if (mName == null) {
             return otherName == null ? 0 : 1;

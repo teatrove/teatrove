@@ -44,8 +44,8 @@ admin = getTeaServletAdmin()
         else if (app.contextFunctions != null) {
             foreach (metDesc in app.contextFunctions) {
                 call PrintClassLink(metDesc.method.genericReturnType, false)
-                '&nbsp;<b>'call PrintMethodLink(metDesc,1)'</b>('
-                call PrintParameterDescriptors(metDesc.method.genericParameterTypes, metDesc.parameterDescriptors,false)
+                '&nbsp;<b>'call PrintMethodLink(metDesc.descriptor,1)'</b>('
+                call PrintParameterDescriptors(metDesc.method.genericParameterTypes, metDesc.descriptor.parameterDescriptors,false)
                 ') '
                 '<br>'
             }

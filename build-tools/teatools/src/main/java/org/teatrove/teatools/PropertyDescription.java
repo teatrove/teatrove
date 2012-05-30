@@ -17,6 +17,7 @@
 package org.teatrove.teatools;
 
 import java.beans.*;
+import java.lang.reflect.Method;
 
 /**
  * Wrapper for a PropertyDescriptor object.
@@ -56,6 +57,19 @@ public class PropertyDescription extends FeatureDescription {
      */
     public PropertyDescriptor getPropertyDescriptor() {
         return mPropertyDescriptor;
+    }
+    
+    /**
+     * Returns whether the given property is deprecated based on whether any
+     * of its read methods are deprecated.
+     * 
+     * @return <code>true</code> if the property is deprecated
+     * 
+     * @see Deprecated
+     */
+    public boolean isDeprecated() {
+        Method method = getPropertyDescriptor().getReadMethod();
+        return (method == null ? false : getTeaToolsUtils().isDeprecated(method));
     }
 
     //

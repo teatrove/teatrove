@@ -166,12 +166,12 @@ public class TeaServletAdmin implements Restartable {
     }
 
     @SuppressWarnings("unchecked")
-    public NameValuePair[] getInitParameters() {
+    public NameValuePair<String>[] getInitParameters() {
         Enumeration<String> e = mTeaServletEngine.getInitParameterNames();
-        List<NameValuePair> list = new ArrayList<NameValuePair>();
+        List<NameValuePair<String>> list = new ArrayList<NameValuePair<String>>();
         while (e.hasMoreElements()) {
             String initName = e.nextElement();
-            list.add(new NameValuePair
+            list.add(new NameValuePair<String>
                      (initName, mTeaServletEngine
                       .getInitParameter(initName)));
         }
@@ -179,13 +179,13 @@ public class TeaServletAdmin implements Restartable {
     }
 
     @SuppressWarnings("unchecked")
-    public NameValuePair[] getAttributes() {
+    public NameValuePair<Object>[] getAttributes() {
         ServletContext context = getServletContext();
         Enumeration<String> e = context.getAttributeNames();
-        List<NameValuePair> list = new ArrayList<NameValuePair>();
+        List<NameValuePair<Object>> list = new ArrayList<NameValuePair<Object>>();
         while (e.hasMoreElements()) {
             String initName = e.nextElement();
-            list.add(new NameValuePair
+            list.add(new NameValuePair<Object>
                      (initName, context.getAttribute(initName)));
         }
         return list.toArray(new NameValuePair[list.size()]);
@@ -204,7 +204,8 @@ public class TeaServletAdmin implements Restartable {
         ApplicationDepot depot = mTeaServletEngine.getApplicationDepot();
         TeaServletContextSource tscs = (TeaServletContextSource)
             mTeaServletEngine.getTemplateSource().getContextSource();
-        Map appContextMap = tscs.getApplicationContextTypes();
+        Map<Application, Class<?>> appContextMap = 
+            tscs.getApplicationContextTypes();
         Application[] apps = depot.getApplications();
         String[] names = depot.getApplicationNames();
         String[] prefixes = depot.getContextPrefixNames();
@@ -212,9 +213,8 @@ public class TeaServletAdmin implements Restartable {
         ApplicationInfo[] infos = new ApplicationInfo[apps.length];
 
         for (int i=0; i < apps.length; i++) {
-            infos[i] = new ApplicationInfo(names[i],
-                                           apps[i],
-                                           (Class<?>)appContextMap.get(apps[i]),
+            infos[i] = new ApplicationInfo(names[i], apps[i],
+                                           appContextMap.get(apps[i]),
                                            prefixes[i]);
         }
 
@@ -238,23 +238,20 @@ public class TeaServletAdmin implements Restartable {
                 .getMethodDescriptors();
             List<FunctionInfo> funcList = new Vector<FunctionInfo>(50);
 
-            for (int j = -1; j < AppInf.length;j++) {
-                if (j >= 0) {
-                    methods = AppInf[j].getContextFunctions();
+            for (int i = 0; i < methods.length; i++) {
+                MethodDescriptor m = methods[i];
+                if (m.getMethod().getDeclaringClass() != Object.class &&
+                    !m.getMethod().getName().equals("print") &&
+                    !m.getMethod().getName().equals("toString")) {
+                    
+                    funcList.add(new FunctionInfo(m, null));
                 }
-                for (int i=0; i<methods.length; i++) {
-                    MethodDescriptor m = methods[i];
-                    if (m.getMethod().getDeclaringClass() != Object.class &&
-                        !m.getMethod().getName().equals("print") &&
-                        !m.getMethod().getName().equals("toString")) {
-
-                        if (j >= 0) {
-                            funcList.add(new FunctionInfo(m, AppInf[j]));
-                        }
-                        else {
-                            funcList.add(new FunctionInfo(m, null));
-                        }
-                    }
+            }
+            
+            for (int i = 0; i < AppInf.length; i++) {
+                FunctionInfo[] ctxFunctions = AppInf[i].getContextFunctions();
+                for (int j = 0; j < ctxFunctions.length; j++) {
+                    funcList.add(ctxFunctions[j]);
                 }
             }
 

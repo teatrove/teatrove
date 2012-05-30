@@ -1510,6 +1510,14 @@ public class JavaClassGenerator extends CodeGenerator {
             // generate line number
             setLineNumber(node.getSourceInfo());
             
+            // handle class references
+            if (expr instanceof TypeExpression &&
+                "class".equals(node.getLookupName().getName())) {
+                
+                mBuilder.loadClass(makeDesc(expr.getType()));
+                return null;
+            }
+            
             // generate static field lookup if provided
             Field field = node.getReadProperty();
             if (field != null) {

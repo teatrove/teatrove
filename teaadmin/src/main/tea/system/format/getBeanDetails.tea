@@ -7,11 +7,18 @@
     if ( ( info == null ) or ( info.type == null ) ) {
         'Bean class not found: ' bean;
     } else {
-        props = info.teaBeanPropertyDescriptors;
+        props = info.teaBeanPropertyDescriptions;
 
         '<div class="table-container">'
             '<div class="stathead" style="padding: 3px 7px;">'
-                '<div title="Properties of ' info.fullName '">Properties of <strong>' info.fullName '</strong></div>'
+                '<div title="Properties of ' info.fullName '">'
+                    'Properties of ' 
+                    '<strong>'
+                        '<span class="' (info.deprecated ? 'deprecated' : '') '">'
+                            info.fullName 
+                        '</span>'
+                    '</strong>'
+                '</div>'
             '</div>'
             '<div class="scroll">'        
             '<table class="tablehead" cellpadding="3" cellspacing="1" style="border: 1px solid #CDCDCD; border-collapse: separate;">'
@@ -42,47 +49,47 @@
                     '</tr>'
                     rowClass = 'oddrow';
                     foreach ( property in props ) {
-                        if ( property isa java.beans.PropertyDescriptor ) {
-                            if ( property isa org.teatrove.tea.util.KeyedPropertyDescriptor ) {
-                                propertyType = property.keyedPropertyType;
+                        descriptor = property.propertyDescriptor
+                        deprecated = (info.deprecated or property.deprecated)
+                        if ( descriptor isa org.teatrove.tea.util.KeyedPropertyDescriptor ) {
+                            propertyType = descriptor.keyedPropertyType;
+                        } else {
+                            propertyType = descriptor.propertyType;
+                        }
+
+                        if ( propertyType != null ) {
+                            descriptions = call system.util.getBeanDescriptions();
+                            descName = info.fullName & "-" & property.name;
+                            if ( descriptions[descName] != null ) {
+                                description = descriptions[descName];
                             } else {
-                                propertyType = property.propertyType;
+                                description = descriptor.shortDescription;
+                            }
+                            if ( description == property.name ) {
+                                description = "&nbsp;";
                             }
 
-                            if ( propertyType != null ) {
-                                descriptions = call system.util.getBeanDescriptions();
-                                descName = info.fullName & "-" & property.name;
-                                if ( descriptions[descName] != null ) {
-                                    description = descriptions[descName];
-                                } else {
-                                    description = property.shortDescription;
-                                }
-                                if ( description == property.name ) {
-                                    description = "&nbsp;";
-                                }
-
-                                if ( rowClass == 'oddrow' ) {
-                                    rowClass = 'evenrow';
-                                } else {
-                                    rowClass = 'oddrow';
-                                }
-
-                                '<tr class="' rowClass '">'
-                                    '<td>'
-                                        //'Problem Cannot convert actual type of "non-null java.lang.Object" to formal type of "java.lang.Class",call system.util.printClassLink(propertyType, true);'
-                                        // call system.util.printClassLink(propertyType, true);
-                                        if ( propertyType isa Class ) {
-                                            call system.util.printClassLink(propertyType, true);
-                                        }
-                                    '</td>'
-                                    '<td>'
-                                        property.name
-                                    '</td>'
-                                    '<td>'
-                                        description
-                                    '</td>'
-                                '</tr>'
+                            if ( rowClass == 'oddrow' ) {
+                                rowClass = 'evenrow';
+                            } else {
+                                rowClass = 'oddrow';
                             }
+
+                            '<tr class="' rowClass '">'
+                                '<td class="' (deprecated ? 'deprecated' : '') '">'
+                                    //'Problem Cannot convert actual type of "non-null java.lang.Object" to formal type of "java.lang.Class",call system.util.printClassLink(propertyType, true);'
+                                    // call system.util.printClassLink(propertyType, true);
+                                    if ( propertyType isa Class ) {
+                                        call system.util.printClassLink(propertyType, true);
+                                    }
+                                '</td>'
+                                '<td class="' (deprecated ? 'deprecated' : '') '">'
+                                    property.name
+                                '</td>'
+                                '<td class="' (deprecated ? 'deprecated' : '') '">'
+                                    description
+                                '</td>'
+                            '</tr>'
                         }
                     }
                 }

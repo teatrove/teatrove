@@ -1250,17 +1250,22 @@ public class TypeChecker {
 
                 int cnt = MethodMatcher.match(methods, name, actualTypes);
                 if (cnt == MethodMatcher.AMBIGUOUS) {
-                    error("functioncallexpression.ambiguous", node);
+                    error("functioncallexpression.ambiguous", name, node);
                     return null;
                 }
                 else if (cnt <= 0) {
-                    error("functioncallexpression.not.found", node);
+                    error("functioncallexpression.not.found", name, node);
                     return null;
                 }
 
                 m = methods[0];
             }
 
+            if (expr instanceof TypeExpression && 
+                !Modifier.isStatic(m.getModifiers())) {
+                error("functioncallexpression.not.static", name, node);
+            }
+            
             node.setCalledMethod(m);
             for (int i=0; i<length; i++) {
                 Type converted =
@@ -1656,24 +1661,32 @@ public class TypeChecker {
                 if (expr instanceof TypeExpression) {
                     String property = node.getLookupName().getName();
 
+                    // check if constant class
+                    if ("class".equals(property)) {
+                        node.setReadProperty(null);
+                        node.setType(new Type(expr.getType().getNaturalClass().getClass()));
+                    }
+
                     // lookup field and error out if invalid
-                    Field field = null;
-                    try { field = clazz.getField(property); }
-                    catch (Exception exception) {
-                        error("property.not.found", node);
-                        return true;
+                    else {
+                        Field field = null;
+                        try { field = clazz.getField(property); }
+                        catch (Exception exception) {
+                            error("property.not.found", node);
+                            return null;
+                        }
+    
+                        // ensure field is static
+                        if (!Modifiers.isStatic(field.getModifiers())) {
+                            error("field.not.static", node);
+                            return null;
+                        }
+    
+                        // save static field and type
+                        node.setReadProperty(field);
+                        node.setType(new Type(field.getType(),
+                                              field.getGenericType()));
                     }
-
-                    // ensure field is static
-                    if (!Modifiers.isStatic(field.getModifiers())) {
-                        error("field.not.static", node);
-                        return true;
-                    }
-
-                    // save static field and type
-                    node.setReadProperty(field);
-                    node.setType(new Type(field.getType(),
-                                          field.getGenericType()));
 
                     // return success
                     return null;

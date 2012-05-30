@@ -15,6 +15,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #96 adding deprecated support to application and function info
 - Fix #41 updating compilation system including remote and servlet context compilation providers
 - Fix #56 to add better logging support to asset management feature
 

@@ -52,7 +52,7 @@
 
                             idStringFunc = 'tree_' & contextFunction.name & '_' & c;
                             '<li id="' idStringFunc '"  rel="function" details="format/getContextFunctionDetails?context=' contextFunction.descriptor.method.declaringClass.name '&function=' contextFunction.name '">\n';
-                                '<a href="#">'
+                                '<a href="#" class="' (contextFunction.deprecated ? 'deprecated' : '') '">'
                                     contextFunction.descriptor.name ' : ' call system.util.printClassInfo(contextFunction.descriptor.method.returnType);
                                 '</a>\n';
                                 types = contextFunction.descriptor.method.parameterTypes;

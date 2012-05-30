@@ -12,6 +12,8 @@ Change History
 
 4.1.2 to 4.1.3
 =============================
+- Fix #118 throwing error if invoking non-static method statically
+- Fix #113 adding support for Type.class expressions
 - Fix #107 adding template source path to generated source
 - Fix #110 removing UtilityContext to separate contexts
 - Fix #98 to enable support for comparisons and addition with runtime analysis of Numbers
