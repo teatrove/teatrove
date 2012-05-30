@@ -127,7 +127,7 @@ public class TypeChecker {
 
         synchronized (mListeners) {
             for (int i = 0; i < mListeners.size(); i++) {
-                ((ErrorListener)mListeners.elementAt(i)).compileError(e);
+                mListeners.elementAt(i).compileError(e);
             }
         }
     }
@@ -2205,14 +2205,9 @@ public class TypeChecker {
             check(left);
             check(right);
 
-            Type type = Type.BOOLEAN_TYPE;
-
-            if (binaryTypeCheck(node, Boolean.class)) {
-                left.convertTo(type);
-                right.convertTo(type);
-            }
-
-            node.setType(type);
+            // NOTE: no need to check left and right types as the Truthful
+            // detector in the generator will ensure they match
+            node.setType(Type.BOOLEAN_TYPE);
 
             return null;
         }
@@ -2224,14 +2219,9 @@ public class TypeChecker {
             check(left);
             check(right);
 
-            Type type = Type.BOOLEAN_TYPE;
-
-            if (binaryTypeCheck(node, Boolean.class)) {
-                left.convertTo(type);
-                right.convertTo(type);
-            }
-
-            node.setType(type);
+            // NOTE: no need to check left and right types as the Truthful
+            // detector in the generator will ensure they match
+            node.setType(Type.BOOLEAN_TYPE);
 
             return null;
         }
