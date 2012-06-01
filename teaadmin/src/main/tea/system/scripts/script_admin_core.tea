@@ -155,8 +155,12 @@
                 if (uri.length > 0 && lastUri != uri) {
                     lastUri = uri;
                     $.get(uri, function(html) {
-                        $detailsContent.html(html);
-                        if (callback) { callback('navigate', uri); }
+                        var processed = false;
+                        if (callback) { 
+                            processed = callback('navigate', uri); 
+                        }
+                        
+                        if (!processed) { $detailsContent.html(html); }
                         $navBack.button('option', 'disabled', false);
                         
                         initTemplateOptionLinks();
@@ -178,9 +182,13 @@
                             }
                             html += '</div>';
                         }
-                        
-                        $detailsContent.html(html);
-                        if (callback) { callback('error', uri); }
+
+                        var processed = false;
+                        if (callback) { 
+                            processed = callback('error', uri); 
+                        }
+                                                
+                        if (!processed) { $detailsContent.html(html); }
                         $navBack.button('option', 'disabled', false);
                     });
                 }
@@ -189,8 +197,12 @@
                 if (lastUri != null) {
                     lastUri = null;
                     
-                    $detailsContent.html('');
-                    if (callback) { callback('home', null); }
+                    var processed = false;
+                    if (callback) { 
+                        processed = callback('home', null);
+                    }
+                    
+                    if (!processed) { console.log('RESET TO EMPTY'); $detailsContent.html(''); }
                     $navBack.button('option', 'disabled', true);
                 }
             }
@@ -880,7 +892,9 @@
             $templates = $('#details-templates'),
             $functions = $('#details-functions'),
             $applications = $('#details-applications'),
-            $current = $applications;
+            $current = $applications,
+            $execute = $('#execute'),
+            $errors = $('#errors');
                 
         // handle resize events and make sure source and details spread
         // properly on the screen
@@ -894,28 +908,43 @@
         $(window).resize(resize);
         
         // support ajax compilation and execution
-        $('#execute').click(function(event) {
-            var $this = $(this);
-            $this.button( "option", "disabled", false );
+        
+        var execute = function() {
+            $execute.button("option", "disabled", false);
             $('#loadingIndicator').show();
             $.ajax({
                 type: 'post',
                 url: '<% pathPrefix %>/system/remote/execute',
                 data : { source: $textarea.val() },
                 success: function (html) {
+                    $errors.hide().html('');
                     $result.html(html).show();
-                    result = $result[0]
+                    
+                    resize();
+                    result = $result[0];
                     if (typeof result.scrollIntoView !== 'undefined') {
                         result.scrollIntoView();
                     }
                 },
+                statusCode: {
+                    450: function(response) {
+                        $result.hide().html('');
+                        $errors.html(response.responseText).show();
+                        
+                        SyntaxHighlighter.highlight();
+                        resize();
+                    }
+                },
                 complete: function () {
-                    $this.button( "option", "disabled", false );
+                    $execute.button("option", "disabled", false);
                     $('#loadingIndicator').hide();
-                    SyntaxHighlighter.highlight();
+                    
                 }
             });
-            
+        };
+
+        $('#execute').click(function(event) {
+            execute();
             event.preventDefault();
         });
         
@@ -926,13 +955,14 @@
             
             var swidth = $source.width(), dwidth = $details.width(); 
             $details.animate({width: '0px'}, { 
-                complete: function() { $details.hide(); }, 
+                complete: function() { $details.hide(); resize(); }, 
                 step: function(now, fx) { 
                     $source.width(swidth + (dwidth - now)); 
                 } 
             });
         }
         
+        var origWidth = $details.width();
         var showDetails = function($tab) {
             $current.hide(); $details.append($current); 
             $content.html(''); $content.append($tab); $tab.show(); 
@@ -941,7 +971,8 @@
             if ($details.width() > 0) { return; }
             
             var swidth = $source.width(), dwidth = $details.width(); 
-            $details.show().animate({width: '500px'}, { 
+            $details.show().animate({width: origWidth + 'px'}, { 
+                complete: function() { resize(); },
                 step: function(now, fx) { 
                     $source.width(swidth - now); 
                 } 
@@ -965,12 +996,12 @@
                 event.preventDefault(); 
             });
             
-            $container.find('.collapse').click(function() { 
+            $container.find('.collapse').click(function(event) { 
                 $tbody.hide();
                 event.preventDefault(); 
             });
             
-            $container.find('.expand').click(function() { 
+            $container.find('.expand').click(function(event) { 
                 $tbody.show();
                 event.preventDefault(); 
             });
@@ -988,13 +1019,29 @@
         // setup details navigation
         
         initDetailsNavigation(function(type, uri) {
-            if (!uri) { $content.append($current); $current.show(); }
-            else { $current.hide(); $details.append($current); }
+            if (!uri) { 
+                $content.html('').append($current);
+                $current.show();
+                return true; 
+            }
+            else { 
+                $current.hide(); 
+                $details.append($current);
+                return false;
+            }
         });
         
         // init highlighter
         
         SyntaxHighlighter.all();
+        
+        // init key support on textarea
+        $textarea.keypress(function(event) {
+            if (event.ctrlKey && (event.which == 10 || event.which == 13)) {
+                execute();
+                event.preventDefault();
+            }
+        });
     };
     function initInstrumentationOptions () {
         $("#buttonset-compile .ui-button").live('click', function (evt) {

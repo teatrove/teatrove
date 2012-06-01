@@ -8,6 +8,7 @@ if (source) {
         result.output
     }
     else {
+        setStatus(450)
         errors = result.templateErrors
         if ( errors != null and errors.length > 0 ) {
             '<div class="sml-s sml-e">\n'
@@ -37,5 +38,11 @@ if (source) {
     }
 }
 else {
-    'ERROR: no source specified'
+    '<div class="sml-s sml-e">\n'
+        '<div class="sm-imc sml-imc">\n'
+            '<ul class="sml-cnt">\n'
+                '<li class="arial13"><em>No source provided</em></li>'
+            '</ul>'
+        '</div>'
+    '</div>'
 }

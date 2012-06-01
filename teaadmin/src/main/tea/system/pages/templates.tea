@@ -12,11 +12,18 @@
 %>
 		<article>
 			<section>
-				<div class="controls" style="float: left;">
-					<div class="controls-wrapper">
+				<div class="controls" style="width: 100%;">
+					<div class="controls-wrapper left-float">
                         <div><input id="tree-search-text" type="search" placeholder="Search" /></div>
                         <div id="expandCollapseTree" class="button">Expand All</div>
 					</div>
+					
+					<div class="controls-wrapper right-float">
+                        <div id="buttonset-nav" class="buttonset">
+                            <a href="#" id="nav_back">&lt;</a>
+                            <a href="#" id="nav_fwd">&gt;</a>
+                        </div>
+                    </div>
 				</div>
 				<br class="clear" />
                 <div id="tree-container" expandFirst="true">
