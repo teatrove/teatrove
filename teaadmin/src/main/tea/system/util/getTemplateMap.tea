@@ -1,0 +1,34 @@
+<% template getTemplateMap()
+
+// create list of maps
+templateMap = createSortedMap() as SortedMap<String, SortedMap>;
+
+// traverse all known templates
+admin = getTeaServletAdmin();
+foreach ( tea in admin.knownTemplates ) {
+    tokens = tokenize(tea.name, '.');
+
+    parentMap = templateMap;
+    foreach ( i in 0..tokens.length-1 ) {
+        token = tokens[i];
+
+        if ( parentMap == null ) {
+            parentMap = createSortedMap() as SortedMap<String, SortedMap>;
+        }
+
+        if ( i < tokens.length - 1 ) {
+            if ( containsKey(parentMap, token) ) {
+                childMap = parentMap[token];
+            } else {
+                childMap = createSortedMap() as SortedMap<String, SortedMap>;
+            }
+            put(parentMap, token, childMap);
+            parentMap = childMap;
+        } else {
+            put(parentMap, token, null);
+        }
+    }
+}
+
+// return template map
+templateMap

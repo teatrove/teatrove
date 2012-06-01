@@ -1,0 +1,44 @@
+<% template printTemplateTable (String templatePath, SortedMap<String, SortedMap> templateMap)
+
+    pathPrefix = call system.util.getPathPrefix()
+    
+%>
+
+    <thead>
+    <tr class="colhead">
+        <td style="white-space: normal; cursor: pointer;">
+            <% templatePath ?: '/' %>
+        </td>
+    </tr>
+    </thead>    
+    <tbody>
+
+<%
+        idx = 0
+        foreach (entry in entrySet(templateMap)) {
+            if (entry.value == null) {
+                idx = idx + 1
+                name = entry.key
+                if (templatePath) {
+                    name = templatePath.substring(1).replace('/', '.') & '.' & name
+                } 
+%>
+                <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                    <td style="white-space: nowrap;">
+                        <a href="<% pathPrefix %>/system/format/getTemplateDetails?name=<% name %>">
+                            <% name %>
+                        </a>
+                    </td>
+                </tr>
+<%
+            }
+        }
+%>
+    </tbody>
+<%
+        foreach (entry in entrySet(templateMap)) {
+            value = entry.value
+            if (value isa SortedMap) {
+                call printTemplateTable(templatePath & '/' & entry.key, value)
+            }
+        }

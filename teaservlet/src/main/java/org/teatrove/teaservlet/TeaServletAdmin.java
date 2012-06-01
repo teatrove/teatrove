@@ -46,6 +46,8 @@ import org.teatrove.tea.compiler.TemplateCallExtractor;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
 import org.teatrove.tea.engine.TemplateError;
+import org.teatrove.tea.engine.TemplateExecutionResult;
+import org.teatrove.tea.runtime.Context;
 import org.teatrove.tea.runtime.TemplateLoader;
 import org.teatrove.teaservlet.stats.TeaServletRequestStats;
 import org.teatrove.teaservlet.stats.TemplateStats;
@@ -527,14 +529,14 @@ public class TeaServletAdmin implements Restartable {
             .checkTemplates(null, forceAll, templateNames);
     }
     
-    /*
-    public TemplateCompilationResults compileSource(String source)
+    public TemplateExecutionResult compileSource(String source)
         throws Exception {
         
-        return mTeaServletEngine.getTemplateSource()
-            .compileSource(null, source);
+        TemplateExecutionResult result =
+            mTeaServletEngine.getTemplateSource().compileSource(null, source);
+        
+        return result;
     }
-    */
     
     public class TemplateWrapper {
 

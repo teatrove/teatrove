@@ -5,60 +5,25 @@
 
     call system.util.handleRequest(request);
     
-    templates = admin.knownTemplates;
+    templateMap = call system.util.getTemplateMap()
 
-    path = request.requestURI;
     servletName = call system.util.getServletName();
-    root = "";
-    extension = "";
-
-    if ( servletName != "" ) {
-        pathTokens = tokenize(path, '/');
-        if ( pathTokens.length > 0 ) {
-            root = pathTokens[0];
-            info("root: "&root);
-        }
-    }
-    
-    // create list of maps
-    templateMap = createSortedMap();
-
-    // traverse all known templates
-    foreach ( tea in templates ) {
-        shortPath = tea.name;
-        fullPath = root & '.' & shortPath;
-        tokens = tokenize(fullPath, '.');
-
-        parentMap = templateMap;
-        foreach ( i in 0..tokens.length-1 ) {
-            token = tokens[i];
-
-            if ( parentMap == null ) {
-                parentMap = createSortedMap();
-            }
-
-            if ( i < tokens.length - 1 ) {
-                if ( containsKey(parentMap, token) ) {
-                    childMap = parentMap[token] as SortedMap;
-                } else {
-                    childMap = createSortedMap();
-                }
-                put(parentMap, token, childMap);
-                parentMap = childMap;
-            } else {
-                put(parentMap, token, null);
-            }
-        }
-    }
 
 %>
 		<article>
 			<section>
-				<div class="controls" style="float: left;">
-					<div class="controls-wrapper">
+				<div class="controls" style="width: 100%;">
+					<div class="controls-wrapper left-float">
                         <div><input id="tree-search-text" type="search" placeholder="Search" /></div>
                         <div id="expandCollapseTree" class="button">Expand All</div>
 					</div>
+					
+					<div class="controls-wrapper right-float">
+                        <div id="buttonset-nav" class="buttonset">
+                            <a href="#" id="nav_back">&lt;</a>
+                            <a href="#" id="nav_fwd">&gt;</a>
+                        </div>
+                    </div>
 				</div>
 				<br class="clear" />
                 <div id="tree-container" expandFirst="true">

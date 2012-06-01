@@ -46,6 +46,7 @@ import org.teatrove.tea.runtime.TemplateLoader;
 import org.teatrove.tea.util.FileCompilationProvider;
 import org.teatrove.tea.util.JarCompilationProvider;
 import org.teatrove.tea.util.ResourceCompilationProvider;
+import org.teatrove.tea.util.StringCompilationProvider;
 import org.teatrove.trove.io.LinePositionReader;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.ClassInjector;
@@ -354,32 +355,29 @@ public class TemplateSourceImpl implements TemplateSource {
         return results;
     }
 
-    /*
-    public TemplateCompilationResults compileSource(ClassInjector injector,
-                                                    String source) 
+    public TemplateExecutionResult compileSource(ClassInjector injector,
+                                                  String source) 
         throws Exception {
 
-        // setup results of checked templates
-        TemplateCompilationResults results = new TemplateCompilationResults
-        (
-            new TreeMap<String, CompilationUnit>(), 
-            new TreeMap<String, List<TemplateError>>()
-        );
-
         // setup package prefix and injector
+        // NOTE: we create an injector that uses the internal injector so that
+        // loaded classes are not shared and may be independently garbage
+        // collected
         String packagePrefix = mConfig.getPackagePrefix();
         if (injector == null) {
-            injector = createClassInjector();
+            injector = new ClassInjector(createClassInjector());
         }
         
         // create merged compiler
-        Compiler compiler = createCompiler(injector, packagePrefix);
+        // NOTE: we specify no output directory so that dynamic templates are
+        // not preserved
+        Compiler compiler = createCompiler(injector, packagePrefix, null);
         
         // add string compiler
-        final String tmplName = "__dynamic__";
-        String tsource = "<% template " + tmplName + "() %>" + source;
+        final String name = "__dynamic" + System.nanoTime() + "__";
+        String tsource = "<% template " + name + "() %>\n" + source;
         StringCompilationProvider provider = new StringCompilationProvider();
-        provider.setTemplateSource(tmplName, tsource);
+        provider.setTemplateSource(name, tsource);
         compiler.addCompilationProvider(provider);
 
         // create error listener
@@ -389,33 +387,31 @@ public class TemplateSourceImpl implements TemplateSource {
         compiler.setClassLoader(injector);
         compiler.addImportedPackages(getImports());
         compiler.setRuntimeContext(getContextSource().getContextType());
-        compiler.setCodeGenerationEnabled(false);
+        compiler.setCodeGenerationEnabled(true);
         compiler.addErrorListener(errorListener);
         compiler.setForceCompile(true);
         
         // compile selected source
-        CompilationUnit unit = compiler.getCompilationUnit(tmplName, null);
+        CompilationUnit unit = compiler.getCompilationUnit(name, null);
         compiler.getParseTree(unit);
-        results.appendTemplate(tmplName, unit);
 
-        // append all template errors
-        results.appendErrors(errorListener.getTemplateErrors());
+        // close out the error listener
         errorListener.close();
+        List<TemplateError> errors = 
+            errorListener.getTemplateErrors().get(name);
 
-        // update the template source
-        Set<String> knownTemplateNames = new TreeSet<String>();
-        knownTemplateNames.addAll(Arrays.asList(compiler.getAllTemplateNames()));
-        knownTemplateNames.add(tmplName);
-        mTemplateSourceFileInfo = 
-            createTemplateSourceFileInfo(compiler, knownTemplateNames); 
-
-        //return new TemplateImpl(new TemplateLoader(injector, packagePrefix)
-        //    .getTemplate(tmplName), null, null, 0);
+        // lookup resulting template
+        Template template = null;
+        if (errors == null || errors.size() == 0) {
+            long timestamp = System.currentTimeMillis();
+            TemplateLoader.Template loaded = 
+                new TemplateLoader(injector, packagePrefix).getTemplate(name);
+            template = new TemplateImpl(loaded, this, null, timestamp);
+        }
         
         // return results
-        return results;
+        return new TemplateExecutionResult(unit, errors, template);
     }
-    */
     
     public ContextSource getContextSource() {
         return mConfig.getContextSource();
@@ -515,10 +511,16 @@ public class TemplateSourceImpl implements TemplateSource {
     protected Compiler createCompiler(ClassInjector injector, 
                                       String packagePrefix) {
         
+        return createCompiler(injector, packagePrefix, mCompiledDir);
+    }
+    
+    protected Compiler createCompiler(ClassInjector injector, 
+                                      String packagePrefix,
+                                      File outputDir) {
+        
         Compiler compiler = new Compiler
         (
-            injector, packagePrefix, mCompiledDir, mEncoding, 
-            mPrecompiledTolerance
+            injector, packagePrefix, outputDir, mEncoding, mPrecompiledTolerance
         );
         
         CompilationProvider[] providers = parseProviders(mProperties);

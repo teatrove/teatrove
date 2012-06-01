@@ -23,6 +23,7 @@ import javax.servlet.ServletException;
 
 import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.engine.TemplateCompilationResults;
+import org.teatrove.tea.engine.TemplateExecutionResult;
 import org.teatrove.teaservlet.stats.AggregateInterval;
 import org.teatrove.teaservlet.stats.AggregateSummary;
 import org.teatrove.teaservlet.stats.Milestone;
@@ -158,20 +159,19 @@ public interface AdminContext extends TeaToolsContext {
         throws Exception;
        
     /**
-     * Compile the given source into a temporary template to allow sampling of
-     * source. Note that the source should not include the template declaration
-     * as the declaration is automatically provided.
+     * Compile the given source into a temporary template and immediately
+     * execute it to allow sampling of source and dynamic capabilities. Note 
+     * that the source should not include the template declaration as the 
+     * declaration is automatically provided.
      * 
      * @param source The source of the template to compile
      *            
-     * @return The results of the compilation
+     * @return The results of the compilation and execution
      * 
      * @throws Exception If an unexpected error occurs other than compile errors
      */
-    /*
-    public TemplateCompilationResults compileSource(String source) 
+    public TemplateExecutionResult executeSource(String source) 
         throws Exception;
-    */
     
     /* new template stats */
     

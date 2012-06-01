@@ -1,0 +1,31 @@
+<% template getFunctionMap()
+
+admin = getTeaServletAdmin();
+
+// create list of maps
+functionMap = null
+letterMap = createSortedMap() as SortedMap<String, SortedMap<String, org.teatrove.teaservlet.FunctionInfo>>;
+
+// traverse all known functions
+lastLetter = null
+functions = admin.functions
+sort(functions, 'descriptor.name', false)
+foreach ( func in functions ) {
+    curLetter = func.descriptor.name[0].toUpperCase()
+    
+    if (curLetter != lastLetter) {
+        lastLetter = curLetter
+        functionMap = createSortedMap() as SortedMap<String, org.teatrove.teaservlet.FunctionInfo>
+        put(letterMap, curLetter, functionMap)
+    }
+
+    name = func.name & '_' & func.descriptor.method.returnType.name & '_'
+    foreach (paramType in func.descriptor.method.parameterTypes) {
+        name = name & paramType.name & '_'
+    }
+    
+    put(functionMap, name, func)
+}
+
+// return letter map
+letterMap

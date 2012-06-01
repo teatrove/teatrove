@@ -46,6 +46,11 @@ import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
 import org.teatrove.tea.engine.TemplateError;
+import org.teatrove.tea.engine.TemplateExecutionResult;
+import org.teatrove.tea.runtime.Context;
+import org.teatrove.tea.runtime.DefaultContext;
+import org.teatrove.tea.runtime.OutputReceiver;
+import org.teatrove.tea.runtime.Substitution;
 import org.teatrove.teaservlet.stats.AggregateInterval;
 import org.teatrove.teaservlet.stats.AggregateSummary;
 import org.teatrove.teaservlet.stats.Milestone;
@@ -612,11 +617,9 @@ public class AdminApplication implements AdminApp {
         public void dynamicTemplateCall(String templateName, Object[] params)
             throws Exception
         {
-            org.teatrove.tea.runtime.Context context = mResponse
-                .getHttpContext();
+            Context context = mResponse.getHttpContext();
 
-            Template currentTemplate =
-                (Template)mRequest.getTemplate();
+            Template currentTemplate = (Template) mRequest.getTemplate();
 
             org.teatrove.tea.runtime.TemplateLoader.Template td =
                 mTeaServlet.getEngine().findTemplate(templateName,
@@ -1096,14 +1099,28 @@ public class AdminApplication implements AdminApp {
             return mTSAdmin.checkTemplates(false, templateNames);
         }
         
-        /*
-        public TemplateCompilationResults compileSource(String source)
+        public TemplateExecutionResult executeSource(String source)
             throws Exception {
-            
-            return mTSAdmin.compileSource(source);
-        }
-        */
 
+            // compile the given source
+            TemplateExecutionResult result = mTSAdmin.compileSource(source);
+            
+            // execute if no errors
+            if (result.isSuccessful()) {
+                // invoke the template stealing the output to a local buffer
+                Context context = mResponse.getHttpContext();
+                TemplateExecutionReceiver receiver =
+                    new TemplateExecutionReceiver(context, result.getTemplate());
+                mResponse.stealOutput(receiver, receiver);
+              
+                // set the output of the invocation
+                result.setOutput(receiver.getOutput());
+            }
+            
+            // return the result of compilation and output
+            return result;
+        }
+        
         public TeaToolsContext.HandyClassInfo getHandyClassInfo(Class clazz) {
             if (clazz != null) {
                 return new HandyClassInfoImpl(clazz);
@@ -1204,6 +1221,81 @@ public class AdminApplication implements AdminApp {
                     mLog.warn(re2);
                 }
             }
+        }
+    }
+    
+    protected static class TemplateExecutionReceiver 
+        implements Substitution, OutputReceiver {
+    
+        private final Context context;
+        private final Template template;
+        private final StringBuilder output;
+        
+        public TemplateExecutionReceiver(Context context, Template template) {
+            this(context, template, 4096);
+        }
+        
+        public TemplateExecutionReceiver(Context context, Template template,
+                                         int bufSize) {
+            this.context = context;
+            this.template = template;
+            this.output = new StringBuilder(bufSize);
+        }
+        
+        public String getOutput() { 
+            return output.toString(); 
+        }
+        
+        @Override
+        public void substitute(Context context) 
+            throws Exception {
+            
+            template.execute(context, new Object[0]);
+        }
+        
+        @Override
+        public void substitute() throws Exception {
+            this.substitute(context);
+        }
+        
+        @Override
+        public Object getIdentifier() {
+            throw new UnsupportedOperationException("getIdentifier");
+        }
+        
+        @Override
+        public Substitution detach() {
+            throw new UnsupportedOperationException("detach");
+        }
+        
+        @Override
+        public void write(String str, int off, int len) throws IOException {
+            output.append(str, off, off + len);
+        }
+        
+        @Override
+        public void write(String str) throws IOException {
+            output.append(str);
+        }
+        
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            output.append(cbuf, off, len);
+        }
+        
+        @Override
+        public void write(char[] cbuf) throws IOException {
+            output.append(cbuf);
+        }
+        
+        @Override
+        public void write(int c) throws IOException {
+            output.append((char) c);
+        }
+        
+        @Override
+        public void print(Object obj) throws Exception {
+            output.append(context.toString(obj));
         }
     }
 }
