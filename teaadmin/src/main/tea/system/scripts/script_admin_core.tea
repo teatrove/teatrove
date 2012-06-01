@@ -129,15 +129,104 @@
             $("#tree-container ul li").show();
         }
     };
-    function initTree () {
-        var $window = $(window),
+    function initDetailsNavigation(callback) {
+        var $navBack = $('#nav_back'),
+            $navForward = $('#nav_fwd'),
             $detailsContent = $('#details-content'),
             $detailsParent = $detailsContent.parent(),
+            $detailsSection = $detailsContent.parents('section');
+
+        $.updateLocation = function(uri) {
+            var href = location.href;
+            var idx = href.indexOf('#');
+            if (idx > 0) { href = href.substring(0, idx); }
+            location.href = href + '#' + escape(uri);
+        }
+
+        var lastUri = null;
+        setInterval(function() {
+            var $detailsContent = $('#details-content');
+            if (!$detailsContent.is(":visible")) { return; }
+            
+            var href = location.href;
+            var idx = href.indexOf('#');
+            if (idx > 0 && idx + 1 < href.length) {
+                var uri = unescape(href.substring(idx + 1));
+                if (uri.length > 0 && lastUri != uri) {
+                    lastUri = uri;
+                    $.get(uri, function(html) {
+                        $detailsContent.html(html);
+                        if (callback) { callback('navigate', uri); }
+                        $navBack.button('option', 'disabled', false);
+                        
+                        initTemplateOptionLinks();
+                    }).error(function(err) {
+                        var html = 
+                            '<div class="error message">' +
+                                '<strong>ERROR</strong>: Unable to load information (' + err.status + ')' +
+                            '</div>';
+                        
+                        if (err.responseText) {
+                            html += '<br /><div class="message">';
+                            var idx = err.responseText.indexOf('<body');
+                            if (idx < 0) {
+                                html += err.responseText;
+                            }
+                            else {
+                                var eidx = err.responseText.indexOf('</body>');
+                                html += err.responseText.substring(idx, eidx);
+                            }
+                            html += '</div>';
+                        }
+                        
+                        $detailsContent.html(html);
+                        if (callback) { callback('error', uri); }
+                        $navBack.button('option', 'disabled', false);
+                    });
+                }
+            }
+            else {
+                if (lastUri != null) {
+                    lastUri = null;
+                    
+                    $detailsContent.html('');
+                    if (callback) { callback('home', null); }
+                    $navBack.button('option', 'disabled', true);
+                }
+            }
+        }, 250);
+
+        $navBack.button('option', 'disabled', true)
+            .click(function(event) { 
+                history.back(); 
+                event.preventDefault(); 
+            });
+        
+        $navForward.button('option', 'disabled', false)
+            .click(function(event) { 
+                history.forward();
+                event.preventDefault(); 
+            });
+
+        $("#details-content a").live('click', function (evt) {
+            var href = $(this).attr('href');
+            var target = $(this).attr('target');
+            if ( !target && href && href != '#' ) {
+                $.updateLocation(href);
+                evt.preventDefault();
+            }
+        });            
+    };
+    
+    function initTree () {
+        var $window = $(window),
             $treeContainer = $('#tree-container'),
-            $detailsSection = $detailsContent.parents('section'),
             isFixedNav = !$(document).children().hasClass('ie'),
             navPadding = (isFixedNav ? 50 : 0),
-            contentTop = -1;
+            contentTop = -1,
+            $detailsContent = $('#details-content'),
+            $detailsParent = $detailsContent.parent(),
+            $detailsSection = $detailsContent.parents('section');
             
         var calcHeight = function(isFixed) {
             var $scroll = $detailsContent.find('div.scroll');
@@ -197,59 +286,9 @@
             }
         });
         
-        var updateLocation = function(uri) {
-            var href = location.href;
-            var idx = href.indexOf('#');
-            if (idx > 0) { href = href.substring(0, idx); }
-            location.href = href + '#' + escape(uri);
-        }
-        
-        var lastUri = null;
-        setInterval(function() {
-            var $detailsContent = $('#details-content');
-            if (!$detailsContent.is(":visible")) { return; }
-            
-            var href = location.href;
-            var idx = href.indexOf('#');
-            if (idx > 0) {
-                var uri = unescape(href.substring(idx + 1));
-                if (lastUri != uri) {
-                    lastUri = uri;
-                    $.get(uri, function(html) {
-                        $detailsContent.html(html);
-                        calcWidth(); calcHeight();
-                        initTemplateOptionLinks();
-                    }).error(function(err) {
-                        var html = 
-                            '<div class="error message">' +
-                                '<strong>ERROR</strong>: Unable to load information (' + err.status + ')' +
-                            '</div>';
-                        
-                        if (err.responseText) {
-                            html += '<br /><div class="message">';
-                            var idx = err.responseText.indexOf('<body');
-                            if (idx < 0) {
-                                html += err.responseText;
-                            }
-                            else {
-                                var eidx = err.responseText.indexOf('</body>');
-                                html += err.responseText.substring(idx, eidx);
-                            }
-                            html += '</div>';
-                        }
-                        
-                        $detailsContent.html(html);
-                        calcWidth(); calcHeight();
-                    });
-                }
-            }
-            else {
-                if (lastUri != null) {
-                    lastUri = null;
-                    $detailsContent.html('');
-                }
-            }
-        }, 250);
+        initDetailsNavigation(function() {
+            calcWidth(); calcHeight();
+        });
         
         $treeContainer
             .bind("loaded.jstree", function (event, data) {
@@ -316,7 +355,7 @@
             var details = $(this).attr('details');
             if ( details ) {
                 if ( loadLeaf ) {
-                    updateLocation(details); 
+                    $.updateLocation(details); 
                 }
             }
             // must do this because evt.stopPropagation() breaks tree
@@ -340,14 +379,6 @@
                 if ( href != '#' ) {
                     window.open(href, '_blank');
                 }
-            }
-        });
-        $("#details-content a").live('click', function (evt) {
-            var href = $(this).attr('href');
-            var target = $(this).attr('target');
-            if ( !target && href && href != '#' ) {
-                updateLocation(href);
-                evt.preventDefault();
             }
         });
     };
@@ -838,6 +869,132 @@
                 $('#reload-container-history').show();
             }
         }
+    };
+    function initConsole() {
+        var $source = $('#source'), 
+            $textarea = $source.find('textarea'),
+            $details = $('#details'), 
+            $console = $('#console'),
+            $result = $('#result'),
+            $content = $('#details-content'),
+            $templates = $('#details-templates'),
+            $functions = $('#details-functions'),
+            $applications = $('#details-applications'),
+            $current = $applications;
+                
+        // handle resize events and make sure source and details spread
+        // properly on the screen
+        
+        var resize = function() { 
+            var width = $console.width() - $details.width() - 20; 
+            $source.css('width', width + 'px'); 
+        };
+        
+        resize();
+        $(window).resize(resize);
+        
+        // support ajax compilation and execution
+        $('#execute').click(function(event) {
+            var $this = $(this);
+            $this.button( "option", "disabled", false );
+            $('#loadingIndicator').show();
+            $.ajax({
+                type: 'post',
+                url: '<% pathPrefix %>/system/remote/execute',
+                data : { source: $textarea.val() },
+                success: function (html) {
+                    $result.html(html).show();
+                    result = $result[0]
+                    if (typeof result.scrollIntoView !== 'undefined') {
+                        result.scrollIntoView();
+                    }
+                },
+                complete: function () {
+                    $this.button( "option", "disabled", false );
+                    $('#loadingIndicator').hide();
+                    SyntaxHighlighter.highlight();
+                }
+            });
+            
+            event.preventDefault();
+        });
+        
+        // support hiding and showing the details
+        
+        var hideDetails = function() {
+            if ($details.width() == 0) { return; }
+            
+            var swidth = $source.width(), dwidth = $details.width(); 
+            $details.animate({width: '0px'}, { 
+                complete: function() { $details.hide(); }, 
+                step: function(now, fx) { 
+                    $source.width(swidth + (dwidth - now)); 
+                } 
+            });
+        }
+        
+        var showDetails = function($tab) {
+            $current.hide(); $details.append($current); 
+            $content.html(''); $content.append($tab); $tab.show(); 
+            $current = $tab;
+            
+            if ($details.width() > 0) { return; }
+            
+            var swidth = $source.width(), dwidth = $details.width(); 
+            $details.show().animate({width: '500px'}, { 
+                step: function(now, fx) { 
+                    $source.width(swidth - now); 
+                } 
+            });
+        }
+        
+        // setup detail actions
+        
+        $('#show_none').click(function() { hideDetails(); });
+        $('#show_templates').click(function() { showDetails($templates); });
+        $('#show_functions').click(function() { showDetails($functions); });
+        $('#show_applications').click(function() { showDetails($applications); });
+        
+        // setup toggle behavior
+        
+        var initToggling = function($container) {
+            var $tbody = $container.find('tbody');
+            
+            $container.find('.toggle').click(function(event) { 
+                $tbody.toggle();
+                event.preventDefault(); 
+            });
+            
+            $container.find('.collapse').click(function() { 
+                $tbody.hide();
+                event.preventDefault(); 
+            });
+            
+            $container.find('.expand').click(function() { 
+                $tbody.show();
+                event.preventDefault(); 
+            });
+            
+            $container.find('thead tr.colhead td').click(function(event) {
+                $(this).parents('thead').next('tbody').toggle();
+                event.preventDefault();
+            });
+        };
+        
+        initToggling($templates);
+        initToggling($functions);
+        initToggling($applications);
+        
+        // setup details navigation
+        
+        initDetailsNavigation(function(type, uri) {
+            if (!uri) { $content.append($current); $current.show(); }
+            else { $current.hide(); $details.append($current); }
+        });
+        
+        // init highlighter
+        
+        SyntaxHighlighter.all();
     };
     function initInstrumentationOptions () {
         $("#buttonset-compile .ui-button").live('click', function (evt) {
@@ -2759,6 +2916,10 @@
             initCompileOptions();
             getTemplateUpdates();
             templateInterval = setInterval(getTemplateUpdates, 10000);
+        }
+        /* Console */
+        if ( $("#console-container").length ) {
+            initConsole();
         }
         /* Templates, Applications, and Functions */
         if ( $("#tree-container").length ) {

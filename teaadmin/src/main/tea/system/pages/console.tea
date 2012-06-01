@@ -1,43 +1,116 @@
-<% template console()
-
-getTeaServletAdmin()
-result = compileSource("date = currentDate(); 'DATE: ' date")
-'RESULT: ' result.successful '<br />'
-'TEMPLATES: ' result.reloadedTemplateNames '<br />'
-'ERRORS: ' result.allTemplateErrors '<br />'
-
-'<hr />'
-
-if (result.reloadedTemplateNames) {
-    foreach (name in result.reloadedTemplateNames) {
-        dynamicTemplateCall(name);
-    }
-}
+<% template console(Map config)
 
 /*
+- add nav buttons to allow detail containers
+- consider pushing errors to top of page and not scrolling
 
- [ Validate] [ Compile ]   [ Hide | Templates | Functions | Applications ]
+- move script/styles to core
+- test and validate in IE
 
- Source Code                             Templates
- ___________________________________     _______________
-|                                   |   | MyApplication |
-|                                   |   |_______________|
-|                                   |   | getStuff      |
-|                                   |   | doStuff       |
-|                                   |   |               |
-|                                   |   |               |
-|                                   |   |               |
-|___________________________________|   |               |
-                                        |               |
- Results                                |               |
- ___________________________________    |               |
-|                                   |   |               |
-|                                   |   |               |
-|                                   |   |               |
-|                                   |   |               |   
-|                                   |   |               |
-|                                   |   |               |
-|                                   |   |               |
-|                                   |   |               |
-|___________________________________|   |_______________|
 */
+
+admin = getTeaServletAdmin()
+
+request = getRequest();
+call system.util.handleRequest(request);
+    
+pathPrefix = call system.util.getPathPrefix()
+
+%>
+
+<article>
+    <section id="console">
+        <form action="<% pathPrefix %>/system/console?" method="post">
+        <input type="hidden" name="page" value="console" />
+        
+        <div class="controls" style="width: 100%;">
+            <div class="controls-wrapper" style="float: left;">
+                <div id="buttonset-execute" class="buttonset" style="float: left;">
+                    <a id="execute" href="#" class="button">Execute</a>
+                </div>
+                
+                <div id="loadingIndicator"></div>
+            </div>
+            
+            <div class="controls-wrapper" style="width: 500px;">
+                <div id="buttonset-nav" class="buttonset" style="float: left;">
+                    <a href="#" id="nav_back">&lt;</a>
+                    <a href="#" id="nav_fwd">&gt;</a>
+                </div>
+                
+                <div id="buttonset-show" class="buttonset" style="float: right;">
+                    <input type="radio" id="show_none" name="radio" /><label for="show_none">None</label>
+                    <input type="radio" id="show_templates" name="radio" /><label for="show_templates">Templates</label>
+                    <input type="radio" id="show_functions" name="radio" /><label for="show_functions">Functions</label>
+                    <input type="radio" id="show_applications" name="radio" checked="checked" /><label for="show_applications">Applications</label>
+                </div>
+            </div>
+        </div>
+        <br class="clear" />
+        <div id="console-container">
+            <div id="details" style="float: right; width: 500px;">
+                <div id="details-content" style="display: block;">
+                    <div id="details-applications" style="display: block;">
+                        <div class="stathead" style="padding: 3px 7px;">
+                            <div style="float: right; line-height: 17px; font-size: 10px; color: white;">
+                                <a href="#" class="expand" style="color: white;">Expand All</a> &nbsp; | &nbsp; 
+                                <a href="#" class="collapse" style="color: white;">Collapse All</a> &nbsp; | &nbsp; 
+                                <a href="#" class="toggle" style="color: white;">Toggle All</a>
+                            </div>
+                            Applications
+                        </div>
+                        <div class="scroll">
+                            <table class="tablehead" cellpadding="3" cellspacing="1">
+                            <%
+                                call system.util.printApplicationTable()
+                            %>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="details-templates" style="display: none;">
+                    <div class="stathead" style="padding: 3px 7px;">
+                        <div style="float: right; line-height: 17px; font-size: 10px; color: white;">
+                            <a href="#" class="expand" style="color: white;">Expand All</a> &nbsp; | &nbsp; 
+                            <a href="#" class="collapse" style="color: white;">Collapse All</a> &nbsp; | &nbsp; 
+                            <a href="#" class="toggle" style="color: white;">Toggle All</a>
+                        </div>
+                        Templates
+                    </div>
+                    <div class="scroll">
+                        <table class="tablehead" cellpadding="3" cellspacing="1">
+                        <%
+                            templateMap = call system.util.getTemplateMap()
+                            call system.util.printTemplateTable('', templateMap);
+                        %>
+                        </table>
+                    </div>
+                </div>
+                <div id="details-functions" style="display: none;">
+                    <div class="stathead" style="padding: 3px 7px;">
+                        <div style="float: right; line-height: 17px; font-size: 10px; color: white;">
+                            <a href="#" class="expand" style="color: white;">Expand All</a> &nbsp; | &nbsp; 
+                            <a href="#" class="collapse" style="color: white;">Collapse All</a> &nbsp; | &nbsp; 
+                            <a href="#" class="toggle" style="color: white;">Toggle All</a>
+                        </div>
+                        Functions
+                    </div>
+                    <div class="scroll">
+                        <table class="tablehead" cellpadding="3" cellspacing="1">
+                        <%
+                            functionMap = call system.util.getFunctionMap()
+                            call system.util.printFunctionTable(functionMap)
+                        %>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="source">
+                <textarea name="source"></textarea>
+            </div>
+        </div>
+        </form>
+    </section>
+    
+    <section id="result" style="display: none;"></section>
+</article>

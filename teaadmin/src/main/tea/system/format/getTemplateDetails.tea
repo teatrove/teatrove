@@ -118,7 +118,7 @@
 
                             templateTokens = tokenize(dependent, '/');
                             templateFile = templateTokens[templateTokens.length-1];
-                            templatePath = pathPrefix & replaceLast(dependent, templateFile, '');
+                            templatePath = '/' & replaceLast(dependent, templateFile, '');
 
                             rowClass = 'oddrow';
                             if ( j % 2 == 1 ) {
@@ -201,7 +201,7 @@
                             callerTemplateInfo = getTemplateInfo(callerNamePath);
                             callerTokens = tokenize(callerName, '/');
                             callerFile = callerTokens[callerTokens.length-1];
-                            callerPath = pathPrefix & replaceLast(callerName, callerFile, '');
+                            callerPath = '/' & replaceLast(callerName, callerFile, '');
 
                             rowClass = 'oddrow';
                             if ( j % 2 == 1 ) {
