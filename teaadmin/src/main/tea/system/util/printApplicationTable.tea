@@ -42,7 +42,7 @@
                         <% func.name %> ( 
 <%
                         types = func.method.parameterTypes
-                        descriptors = func.parameterDescriptors
+                        descriptors = func.descriptor.parameterDescriptors
                         if (descriptors != null) {
                             length = descriptors.length
                             foreach (p in 0..length-1) {
