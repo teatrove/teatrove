@@ -20,9 +20,11 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -454,7 +456,18 @@ public abstract class DefaultContext extends Writer
         
         // handle non-recursive states
         if (level > 1 && !recursive) {
-            buffer.append("('").append(toString(object)).append("')");
+            buffer.append("('");
+            if (object instanceof Collection) {
+                buffer.append("size=").append(((Collection) object).size());
+            }
+            else if (object instanceof Map) {
+                buffer.append("size=").append(((Map) object).size());
+            }
+            else if (object.getClass().isArray()) {
+                buffer.append("length=").append(Array.getLength(object));
+            }
+            else { buffer.append(toString(object)); }
+            buffer.append("')");
             return;
         }
 
@@ -466,6 +479,91 @@ public abstract class DefaultContext extends Writer
         
         // add object as processed
         objects.add(object);
+
+        // handle collection classes
+        if (object instanceof Collection) {
+            int index = 0;
+            buffer.append("([");
+            for (Object item : ((Collection) object)) {
+                
+                // format and append separators as necessary
+                if (index > 0) {
+                    buffer.append(", ");
+                }
+                if (format) {
+                    buffer.append('\n');
+                    for (int j = 0; j < level; j++) { buffer.append("    "); }
+                }
+                
+                buffer.append(index).append('=');
+                dump0(buffer, item, level + 1, recursive, format, objects);
+                
+                index++;
+            }
+            
+            if (format && index > 0) {
+                buffer.append('\n');
+                for (int j = 0; j < level - 1; j++) { buffer.append("    "); }
+            }
+            
+            buffer.append("])");
+            return;
+        }
+        else if (object instanceof Map) {
+            int index = 0;
+            buffer.append("({");
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) object).entrySet()) {
+                
+                // format and append separators as necessary
+                if (index > 0) {
+                    buffer.append(", ");
+                }
+                if (format) {
+                    buffer.append('\n');
+                    for (int j = 0; j < level; j++) { buffer.append("    "); }
+                }
+                
+                Object value = entry.getValue();
+                buffer.append(toString(entry.getKey())).append('=');
+                dump0(buffer, value, level + 1, recursive, format, objects);
+                
+                index++;
+            }
+            
+            if (format && index > 0) {
+                buffer.append('\n');
+                for (int j = 0; j < level - 1; j++) { buffer.append("    "); }
+            }
+            
+            buffer.append("})");
+            return;
+        }
+        else if (object.getClass().isArray()) {
+            buffer.append("([");
+            int length = Array.getLength(object);
+            for (int i = 0; i < length; i++) {
+                // format and append separators as necessary
+                if (i > 0) {
+                    buffer.append(", ");
+                }
+                if (format) {
+                    buffer.append('\n');
+                    for (int j = 0; j < level; j++) { buffer.append("    "); }
+                }
+                
+                buffer.append(i).append('=');
+                Object value = Array.get(object, i);
+                dump0(buffer, value, level + 1, recursive, format, objects);
+            }
+            
+            if (format && length > 0) {
+                buffer.append('\n');
+                for (int j = 0; j < level - 1; j++) { buffer.append("    "); }
+            }
+            
+            buffer.append("])");
+            return;
+        }
         
         // handle custom objects by listing bean properties
         Map<String, PropertyDescriptor> properties =
