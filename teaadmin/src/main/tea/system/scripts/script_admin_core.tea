@@ -20,7 +20,39 @@
         MEGABYTE = (KILOBYTE * 1024.0);
     
     /* ajax setup */
-    $.ajaxSetup({ cache: false });
+    var ajaxId = null;
+    $.ajaxSetup({ 
+        cache: false,
+        statusCode: {
+            200: function() {
+                if (ajaxId) {
+                    $.gritter.remove(ajaxId);
+                    ajaxId = null;
+                }
+            }
+        },
+        error: function(xhr) {
+            if (ajaxId) {
+                $.gritter.remove(ajaxId);
+            }
+            
+            var text = null, image = null;
+            if (xhr.status <= 0) {
+                text = 'The server appears to be unresponsive or down. Check that the server is still running and responding.';
+            }
+            else {
+                text = 'The server reported error ' + xhr.status + '.'
+                image = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
+            }
+            
+            ajaxId = $.gritter.add({
+                title: 'Server error',
+                text: text,
+                image: image,
+                sticky: true 
+            });
+        }
+    });
     
     /* model */
     global.Admin = {
