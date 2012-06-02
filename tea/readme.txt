@@ -12,6 +12,7 @@ Change History
 
 4.1.2 to 4.1.3
 =============================
+- Fix #120 adding 'dump' method to the default context
 - Fix #118 throwing error if invoking non-static method statically
 - Fix #113 adding support for Type.class expressions
 - Fix #107 adding template source path to generated source

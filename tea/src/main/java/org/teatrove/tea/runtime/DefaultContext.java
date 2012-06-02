@@ -16,15 +16,20 @@
 
 package org.teatrove.tea.runtime;
 
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,6 +38,8 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.ReadableInstant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.teatrove.tea.util.BeanAnalyzer;
+import org.teatrove.trove.generics.GenericType;
 import org.teatrove.trove.util.DecimalFormat;
 import org.teatrove.trove.util.Pair;
 
@@ -381,6 +388,127 @@ public abstract class DefaultContext extends Writer
             mDecimalFormat.format(n);
     }
 
+    /**
+     * @hidden
+     */
+    public String dump(Object object) {
+        return dump(object, true, false);
+    }
+    
+    /**
+     * @hidden
+     */
+    public String dump(Object object, boolean recursive) {
+        return dump(object, recursive, false);
+    }
+    
+    /**
+     * @hidden
+     */
+    public String dump(Object object, boolean recursive, boolean format) {
+        StringBuilder buffer = new StringBuilder(1024);
+        try { 
+            dump0(buffer, object, 1, recursive, format, new HashSet<Object>()); 
+        }
+        catch (IntrospectionException ie) {
+            buffer.setLength(0);
+            buffer.append(object.getClass().getName())
+                  .append("(")
+                      .append(ie.getClass().getName())
+                      .append("(\"").append(ie.getMessage()).append("\")")
+                  .append(")");
+        }
+        
+        return buffer.toString();
+    }
+
+    @SuppressWarnings("rawtypes")
+    protected void dump0(StringBuilder buffer, Object object, int level,
+                         boolean recursive, boolean format, Set<Object> objects) 
+        throws IntrospectionException {
+
+        // handle null values
+        if (object == null) { 
+            buffer.append(toString((Object) null));
+            return;
+        }
+    
+        // append type information
+        String hash = Integer.toHexString(System.identityHashCode(object));
+        buffer.append(object.getClass().getName()).append("@").append(hash);
+        
+        // handle known types
+        if (object instanceof String) {
+            buffer.append("(\"").append(toString((String) object)).append("\")");
+            return;
+        }
+        else if (object instanceof Number || object instanceof Boolean ||
+                 object instanceof Date || object instanceof ReadableInstant) {
+            buffer.append('(').append(toString(object)).append(')');
+            return;
+        }
+        else if (object instanceof Class) {
+            buffer.append("('").append(((Class) object).getName()).append("')");
+            return;
+        }
+        
+        // handle non-recursive states
+        if (level > 1 && !recursive) {
+            buffer.append("('").append(toString(object)).append("')");
+            return;
+        }
+
+        // handle already visited types
+        if (objects.contains(object)) {
+            buffer.append("()");
+            return;
+        }
+        
+        // add object as processed
+        objects.add(object);
+        
+        // handle custom objects by listing bean properties
+        Map<String, PropertyDescriptor> properties =
+            BeanAnalyzer.getAllProperties(new GenericType(object.getClass()));
+        
+        int index = 0;
+        buffer.append('(');
+        for (String name : properties.keySet()) {
+            if ("class".equals(name)) { continue; }
+            PropertyDescriptor property = properties.get(name);
+            
+            // get and verify read method
+            Method method = property.getReadMethod();
+            if (method == null) { continue; }
+            
+            // get and verify actual value
+            Object result = null;
+            try { result = method.invoke(object); }
+            catch (Exception exception) { result = exception; }
+            
+            // format and append separators as necessary
+            if (index > 0) {
+                buffer.append(", ");
+            }
+            if (format) {
+                buffer.append('\n');
+                for (int j = 0; j < level; j++) { buffer.append("    "); }
+            }
+            
+            buffer.append(name).append('=');
+            dump0(buffer, result, level + 1, recursive, format, objects);
+            
+            index++;
+        }
+        
+        if (format && index > 0) {
+            buffer.append('\n');
+            for (int j = 0; j < level - 1; j++) { buffer.append("    "); }
+        }
+        
+        buffer.append(')');
+    }
+    
     public void setLocale(Locale locale) {
         if (locale == null) {
             mLocale = null;

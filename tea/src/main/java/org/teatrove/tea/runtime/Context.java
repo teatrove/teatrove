@@ -155,6 +155,51 @@ public interface Context extends OutputReceiver {
     public String toString(double n);
 
     /**
+     * Dump the contents of the given object by reflectively listing each 
+     * bean property of the given object.  This also recursively dumps all
+     * sub-properties. See {@link #dump(Object, boolean)} to avoid recursively
+     * dumping the entire object graph.
+     * 
+     * @param object The object to dump
+     * 
+     * @return The object graph as a string
+     * 
+     * @see #dump(Object, boolean, boolean)
+     */
+    public String dump(Object object);
+    
+    /**
+     * Dump the contents of the given object by reflectively listing each 
+     * bean property of the given object.  This also recursively dumps all
+     * sub-properties if <code>recursive</code> is <cod>true</code>.  Otherwise,
+     * it only dumps the first level of objects.
+     * 
+     * @param object The object to dump
+     * @param recursive  The state of whether to dump properties recursively
+     * 
+     * @return The object graph as a string
+     * 
+     * @see #dump(Object, boolean, boolean)
+     */
+    public String dump(Object object, boolean recursive);
+    
+    /**
+     * Dump the contents of the given object by reflectively listing each 
+     * bean property of the given object.  This also recursively dumps all
+     * sub-properties if <code>recursive</code> is <cod>true</code>.  Otherwise,
+     * it only dumps the first level of objects.  The <code>format</code> 
+     * parameter may be used to add extra newline and spaces when outputting the
+     * graph for a cleaner look.
+     * 
+     * @param object The object to dump
+     * @param recursive  The state of whether to dump properties recursively
+     * @param format  The state of whether to output a formatted graph or not
+     * 
+     * @return The formatted object graph as a string
+     */
+    public String dump(Object object, boolean recursive, boolean format);
+    
+    /**
      * Setting the locale resets date and number formats to the default for
      * that locale. Setting a locale of null resets date and number formats
      * to the system defaults.
