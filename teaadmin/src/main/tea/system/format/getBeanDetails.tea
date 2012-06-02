@@ -8,7 +8,6 @@
         'Bean class not found: ' bean;
     } else {
         props = info.teaBeanPropertyDescriptions;
-
         '<div class="table-container">'
             '<div class="stathead" style="padding: 3px 7px;">'
                 '<div title="Properties of ' info.fullName '">'
@@ -25,7 +24,7 @@
                 '<tbody>'
                 if ( info.description != "" ) {
                     '<tr class="colhead">'
-                        '<td colspan="3" class="left-align">'
+                        '<td colspan="3" class="left-align" style="white-space: normal;">'
                             'Description'
                         '</td>'
                     '</tr>'
@@ -37,17 +36,17 @@
                 }
                 if ( props != null and props.length > 0 ) {
                     '<tr class="colhead">'
-                        '<td class="center-align">'
+                        '<td class="left-align">'
                             'Type'
                         '</td>'
-                        '<td class="center-align">'
+                        '<td class="left-align">'
                             'Name'
                         '</td>'
-                        '<td class="center-align">'
+                        '<td class="left-align">'
                             'Description'
                         '</td>'
                     '</tr>'
-                    rowClass = 'oddrow';
+                    rowClass = 'evenrow';
                     foreach ( property in props ) {
                         descriptor = property.propertyDescriptor
                         deprecated = (info.deprecated or property.deprecated)
@@ -88,6 +87,31 @@
                                 '</td>'
                                 '<td class="' (deprecated ? 'deprecated' : '') '">'
                                     description
+                                '</td>'
+                            '</tr>'
+                        }
+                    }
+                    
+                    functions = info.teaContextMethodDescriptions
+                    if (functions) {
+                        '<tr class="colhead">'
+                            '<td colspan="3" class="left-align">'
+                                'Functions'
+                            '</td>'
+                        '</tr>'
+                        
+                        rowClass = 'evenrow';
+                        foreach (func in functions) {
+                        
+                            if ( rowClass == 'oddrow' ) {
+                                rowClass = 'evenrow';
+                            } else {
+                                rowClass = 'oddrow';
+                            }
+
+                            '<tr class="' rowClass '">'
+                                '<td colspan="3" class="left-align">'
+                                    call system.util.printFunctionDetails(info, func)
                                 '</td>'
                             '</tr>'
                         }

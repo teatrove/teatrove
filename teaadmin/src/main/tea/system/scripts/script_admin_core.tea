@@ -161,13 +161,22 @@
             $("#tree-container ul li").show();
         }
     };
-    function initDetailsNavigation(callback) {
+    function initDetailsNavigation(options) {
         var $navBack = $('#nav_back'),
             $navForward = $('#nav_fwd'),
             $detailsContent = $('#details-content'),
             $detailsParent = $detailsContent.parent(),
-            $detailsSection = $detailsContent.parents('section');
+            $detailsSection = $detailsContent.parents('section'),
+            before = after = null;
 
+        if (options && typeof options.before === 'function') {
+            before = options.before;
+        }
+        
+        if (options && typeof options.after === 'function') {
+            after = options.after;
+        }
+        
         $.updateLocation = function(uri) {
             var href = location.href;
             var idx = href.indexOf('#');
@@ -188,14 +197,15 @@
                     lastUri = uri;
                     $.get(uri, function(html) {
                         var processed = false;
-                        if (callback) { 
-                            processed = callback('navigate', uri); 
+                        if (before) { 
+                            processed = before('navigate', uri); 
                         }
                         
                         if (!processed) { $detailsContent.html(html); }
                         $navBack.button('option', 'disabled', false);
                         
                         initTemplateOptionLinks();
+                        if (after) { after('navigate', uri); }
                     }).error(function(err) {
                         var html = 
                             '<div class="error message">' +
@@ -216,12 +226,13 @@
                         }
 
                         var processed = false;
-                        if (callback) { 
-                            processed = callback('error', uri); 
+                        if (before) { 
+                            processed = before('error', uri); 
                         }
                                                 
                         if (!processed) { $detailsContent.html(html); }
                         $navBack.button('option', 'disabled', false);
+                        if (after) { after('error', uri); }
                     });
                 }
             }
@@ -230,12 +241,13 @@
                     lastUri = null;
                     
                     var processed = false;
-                    if (callback) { 
-                        processed = callback('home', null);
+                    if (before) { 
+                        processed = before('home', null);
                     }
                     
-                    if (!processed) { console.log('RESET TO EMPTY'); $detailsContent.html(''); }
+                    if (!processed) { $detailsContent.html(''); }
                     $navBack.button('option', 'disabled', true);
+                    if (after) { after('home', null); }
                 }
             }
         }, 250);
@@ -330,9 +342,9 @@
             }
         });
         
-        initDetailsNavigation(function() {
+        initDetailsNavigation({ after: function() {
             calcWidth(); calcHeight();
-        });
+        }});
         
         $treeContainer
             .bind("loaded.jstree", function (event, data) {
@@ -1050,7 +1062,7 @@
         
         // setup details navigation
         
-        initDetailsNavigation(function(type, uri) {
+        initDetailsNavigation({ before : function(type, uri) {
             if (!uri) { 
                 $content.html('').append($current);
                 $current.show();
@@ -1061,7 +1073,7 @@
                 $details.append($current);
                 return false;
             }
-        });
+        }});
         
         // init highlighter
         
