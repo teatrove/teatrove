@@ -22,6 +22,16 @@
             '<div class="scroll">'        
             '<table class="tablehead" cellpadding="3" cellspacing="1" style="border: 1px solid #CDCDCD; border-collapse: separate;">'
                 '<tbody>'
+                '<tr class="colhead">'
+                    '<td colspan="3" class="left-align">'
+                        'Information'
+                    '</td>'
+                '</tr>'
+                '<tr>'
+                    '<td colspan="3" class="left-align" style="white-space: normal;">'
+                        call system.util.printClassDeclaration(info)
+                    '</td>'
+                '</tr>'
                 if ( info.description != "" ) {
                     '<tr class="colhead">'
                         '<td colspan="3" class="left-align" style="white-space: normal;">'
@@ -37,10 +47,10 @@
                 if ( props != null and props.length > 0 ) {
                     '<tr class="colhead">'
                         '<td class="left-align">'
-                            'Type'
+                            'Properties'
                         '</td>'
                         '<td class="left-align">'
-                            'Name'
+                            'Type'
                         '</td>'
                         '<td class="left-align">'
                             'Description'
@@ -50,9 +60,32 @@
                     foreach ( property in props ) {
                         descriptor = property.propertyDescriptor
                         deprecated = (info.deprecated or property.deprecated)
+                        
+                        propertyType = null as java.lang.reflect.Type
+                        
+                        // handle keyed properties
                         if ( descriptor isa org.teatrove.tea.util.KeyedPropertyDescriptor ) {
-                            propertyType = descriptor.keyedPropertyType;
-                        } else {
+                            propertyType = descriptor.keyedPropertyType?.genericType;
+                        } 
+                        
+                        // check read method and its generic return type
+                        if (propertyType == null) {
+                            propertyType = descriptor.readMethod?.genericReturnType
+                        }
+                        
+                        // check write method and its generic param type
+                        if (propertyType == null) {
+                            writeMethod = descriptor.writeMethod
+                            if (writeMethod) {
+                                paramTypes = writeMethod.genericParameterTypes
+                                if (paramTypes) {
+                                    propertyType = paramTypes[0]
+                                }
+                            }
+                        }
+                        
+                        // fallback to standard property type
+                        if (propertyType == null) {
                             propertyType = descriptor.propertyType;
                         }
 
@@ -76,14 +109,10 @@
 
                             '<tr class="' rowClass '">'
                                 '<td class="' (deprecated ? 'deprecated' : '') '">'
-                                    //'Problem Cannot convert actual type of "non-null java.lang.Object" to formal type of "java.lang.Class",call system.util.printClassLink(propertyType, true);'
-                                    // call system.util.printClassLink(propertyType, true);
-                                    if ( propertyType isa Class ) {
-                                        call system.util.printClassLink(propertyType, true);
-                                    }
+                                    property.name
                                 '</td>'
                                 '<td class="' (deprecated ? 'deprecated' : '') '">'
-                                    property.name
+                                    call system.util.printClassLink(propertyType, true);
                                 '</td>'
                                 '<td class="' (deprecated ? 'deprecated' : '') '">'
                                     description

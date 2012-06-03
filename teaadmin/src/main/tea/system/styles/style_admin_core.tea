@@ -382,6 +382,9 @@ article section .signature {
     font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 .tablehead th, .tablehead td {
     border: 0 none;
@@ -700,6 +703,7 @@ ul.bulletlinks li {
     margin-bottom: 20px;
 }
 
+ 
 .jstree-default.jstree-focused, #logs-container, #details-container {
     background: none repeat scroll 0 0 transparent !important;
 }
@@ -1629,3 +1633,13 @@ footer section {
 }
 
 .deprecated { text-decoration: line-through !important; }
+
+.package { font-style: italic; font-size: 11px;  }
+.class { font-weight: bold; font-size: 12px; }
+.class .generics { font-style: italic; }
+.superclass { margin-left: 30px; font-size: 11px; font-style: italic; }
+.interfaces { margin-left: 30px; font-size: 11px; font-style: italic; }
+.subclasses, .hiearchy { margin-top: 15px; font-style: italic; font-size: 11px; }
+.subclasses a.title, .hiearchy a.title { padding-left: 0 !important; }
+.subclasses ul, .subclasses li, .hiearchy ul, .hiearchy li { list-style-type: none; padding: 0; margin: 0; }
+.subclasses li, .hiearchy li { padding-left: 30px !important; }

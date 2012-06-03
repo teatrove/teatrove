@@ -21,6 +21,16 @@
             '<div class="scroll">'
             '<table class="tablehead" cellpadding="3" cellspacing="1">'
                 '<tbody>'
+                '<tr class="colhead">'
+                    '<td colspan="3" class="left-align">'
+                        'Information'
+                    '</td>'
+                '</tr>'
+                '<tr>'
+                    '<td colspan="3" class="left-align" style="white-space: normal;">'
+                        call system.util.printClassDeclaration(info)
+                    '</td>'
+                '</tr>'
                 if ( info.description != "" ) {
                     '<tr class="colhead">'
                         '<td colspan="3" class="left-align">'
@@ -40,7 +50,7 @@
                         '</td>'
                     '</tr>'
 
-                    rowClass = 'oddrow';
+                    rowClass = 'evenrow';
                     foreach ( metDesc in descriptions ) {
                         if ( rowClass == 'oddrow' ) {
                             rowClass = 'evenrow';
@@ -50,58 +60,7 @@
                         
                         '<tr class="' rowClass '">'
                             '<td>'
-                                '<div>'
-                                    deprecated = info.deprecated or metDesc.deprecated
-                                    if (deprecated) { '<span class="deprecated">' }
-                                    
-                                    call system.util.printMethodLink(metDesc.methodDescriptor, 1)
-                                    '&nbsp;'
-                                    '('
-                                    parameterTypes = metDesc.method.parameterTypes;
-                                    parameterDescriptors = metDesc.methodDescriptor.parameterDescriptors;
-                                    link = true;
-                                    if ( parameterTypes == null or parameterTypes.length == 0 ) {
-                                        if ( parameterDescriptors != null ) {
-                                            foreach ( index in 0..parameterDescriptors.length-1 ) {
-                                                if ( index > 0 ) {
-                                                    ', '
-                                                }
-                                                name = parameterDescriptors[index]
-                                                if ( name != null ) {
-                                                    call system.util.printClassLink(getClassForName(name.displayName), link)
-
-                                                    '&nbsp;' name.name
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        foreach ( index in 0..parameterTypes.length - 1 ) {
-                                            if ( index > 0 ) {
-                                                ', '
-                                            }
-                                            call system.util.printClassLink(parameterTypes[index], link)
-                                            if ( parameterDescriptors != null ) {
-                                                name = parameterDescriptors[index]
-                                                if ( name != null ) {
-                                                    '&nbsp;' name.name
-                                                }
-                                            }
-                                        }
-                                    }
-                                    ')'
-                                    
-                                    if (deprecated) { '</span>' }
-                                '</div>'
-                                if ( metDesc.methodDescriptor?.shortDescription != null and metDesc.methodDescriptor?.shortDescription != metDesc.method.name ) {
-                                    '<div class="italic left-margin-20 top-margin-10">'
-                                        getFirstSentence(metDesc.methodDescriptor.shortDescription);
-                                    '</div>'
-                                }
-                                if ( metDesc.method.returnType.name != 'void' ) {
-                                    '<div class="left-margin-20 top-margin-10">'
-                                        'Returns: ' call system.util.printClassLink(metDesc.method.returnType, true)
-                                    '</div>'
-                                }
+                                call system.util.printFunctionDetails(info, metDesc) 
                             '</td>'
                         '</tr>'
                     }

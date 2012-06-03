@@ -21,6 +21,7 @@ import org.teatrove.tea.compiler.JavaClassGenerator;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -96,7 +97,7 @@ public class TemplateLoader {
     public final synchronized Template getTemplate(String name)
         throws ClassNotFoundException, NoSuchMethodException, LinkageError
     {
-        Template template = (Template)mTemplates.get(name);
+        Template template = mTemplates.get(name);
         if (template == null) {
             template = loadTemplate(name);
             mTemplates.put(name, template);
@@ -108,8 +109,7 @@ public class TemplateLoader {
      * Returns all the templates that have been loaded thus far.
      */
     public final synchronized Template[] getLoadedTemplates() {
-        return (Template[])mTemplates.values().toArray
-            (new Template[mTemplates.size()]);
+        return mTemplates.values().toArray(new Template[mTemplates.size()]);
     }
 
     protected Template loadTemplate(String name)
@@ -146,6 +146,16 @@ public class TemplateLoader {
         public Class<?> getContextType();
 
         /**
+         * Returns the type that this template returns.
+         */
+        public Class<?> getReturnType();
+        
+        /**
+         * Returns the generic type that this template returns.
+         */
+        public Type getGenericReturnType();
+        
+        /**
          * Returns the parameter names that this template accepts. The length
          * of the returned array is the same as returned by getParameterTypes.
          * If any template parameter names is unknown, the array entry is null.
@@ -157,6 +167,13 @@ public class TemplateLoader {
          * of the returned array is the same as returned by getParameterNames.
          */
         public Class<?>[] getParameterTypes();
+        
+        /**
+         * Returns the generic parameter types that this template accepts. The
+         * length of the returned array is the same as returned by
+         * getParameterTypes.
+         */
+        public Type[] getGenericParameterTypes();
 
         /**
          * Executes this template using the given runtime context instance and
@@ -182,8 +199,10 @@ public class TemplateLoader {
 
         private transient Method mExecuteMethod;
         private transient Class<?> mReturnType;
+        private transient Type mGenericReturnType;
         private transient String[] mParameterNames;
         private transient Class<?>[] mParameterTypes;
+        private transient Type[] mGenericParameterTypes;
 
         private TemplateImpl(String name, Class<?> clazz)
             throws NoSuchMethodException
@@ -209,12 +228,24 @@ public class TemplateLoader {
             return mExecuteMethod.getParameterTypes()[0];
         }
 
+        public Class<?> getReturnType() {
+            return mReturnType;
+        }
+        
+        public Type getGenericReturnType() {
+            return mGenericReturnType;
+        }
+        
         public String[] getParameterNames() {
-            return (String[])mParameterNames.clone();
+            return mParameterNames.clone();
         }
 
         public Class<?>[] getParameterTypes() {
-            return (Class[])mParameterTypes.clone();
+            return mParameterTypes.clone();
+        }
+        
+        public Type[] getGenericParameterTypes() {
+            return mGenericParameterTypes.clone();
         }
 
         public void execute(Context context, Object[] parameters)
@@ -295,8 +326,10 @@ public class TemplateLoader {
             }
 
             mReturnType = mExecuteMethod.getReturnType();
+            mGenericReturnType = mExecuteMethod.getGenericReturnType();
 
             Class<?>[] methodParams = mExecuteMethod.getParameterTypes();
+            Type[] genericMethodParams = mExecuteMethod.getGenericParameterTypes();
             if (methodParams.length == 0 ||
                 !Context.class.isAssignableFrom(methodParams[0])) {
 
@@ -308,9 +341,11 @@ public class TemplateLoader {
             int length = methodParams.length - 1;
             mParameterNames = new String[length];
             mParameterTypes = new Class[length];
+            mGenericParameterTypes = new Type[length];
 
             for (int i=0; i<length; i++) {
                 mParameterTypes[i] = methodParams[i + 1];
+                mGenericParameterTypes[i] = genericMethodParams[i + 1];
             }
 
             try {

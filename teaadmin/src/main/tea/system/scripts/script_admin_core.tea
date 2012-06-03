@@ -437,6 +437,16 @@
                 }
             }
         });
+        
+        $('.subclasses > a').live('click', function(event) { 
+            $('.subclasses > ul').toggle(); 
+            event.preventDefault(); 
+        });
+        
+        $('.hiearchy > a').live('click', function(event) { 
+            $('.hiearchy > ul').toggle(); 
+            event.preventDefault(); 
+        });
     };
 
     /* logs */

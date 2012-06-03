@@ -19,6 +19,7 @@ package org.teatrove.tea.engine;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -1139,12 +1140,24 @@ public class TemplateSourceImpl implements TemplateSource {
             return mTemplate.getContextType();
         }
 
+        public Class<?> getReturnType() {
+            return mTemplate.getReturnType();
+        }
+        
+        public Type getGenericReturnType() {
+            return mTemplate.getGenericReturnType();
+        }
+        
         public String[] getParameterNames() {
             return mTemplate.getParameterNames();
         }
 
         public Class<?>[] getParameterTypes() {
             return mTemplate.getParameterTypes();
+        }
+        
+        public Type[] getGenericParameterTypes() {
+            return mTemplate.getGenericParameterTypes();
         }
 
         public void execute(Context context, Object[] parameters)

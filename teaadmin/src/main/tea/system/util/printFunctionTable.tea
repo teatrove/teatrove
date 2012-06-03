@@ -24,20 +24,22 @@
             <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
                 <td style="white-space: nowrap;">
                     <a href="<% pathPrefix %>/system/format/getContextFunctionDetails?context=<% func.descriptor.method.declaringClass.name %>&function=<% func.name %>">
-                        <% func.descriptor.name %> ( 
+                        <% func.descriptor.name %>
+                    </a> ( 
 <%
-                        types = func.descriptor.method.parameterTypes
+                        types = func.descriptor.method.genericParameterTypes
                         descriptors = func.descriptor.parameterDescriptors
-                        if (descriptors != null) {
-                            length = descriptors.length
+                        if (types) {
+                            length = types.length
                             foreach (p in 0..length-1) {
 %>
-                                <% call system.util.printClassInfo(types[p]) %> <% descriptors[p].name; %><% (p < length-1 ? ', ' : '') %>
+                                <% call system.util.printClassLink(types[p], true) %> 
+                                <% descriptors?[p]?.name ?: ''; %><% (p < length-1 ? ', ' : '') %>
 <%
                             }
                         }
 %>
-                        ) : <% call system.util.printClassInfo(func.descriptor.method.returnType) %>
+                        ) : <% call system.util.printClassLink(func.descriptor.method.genericReturnType, true) %>
                     </a>
                 </td>
             </tr>

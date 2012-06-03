@@ -39,20 +39,22 @@
             <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
                 <td style="white-space: nowrap;">
                     <a href="<% pathPrefix %>/system/format/getContextFunctionDetails?context=<% app.contextType.name %>&function=<% func.name %>">
-                        <% func.name %> ( 
+                        <% func.name %>
+                    </a> ( 
 <%
-                        types = func.method.parameterTypes
+                        types = func.method.genericParameterTypes
                         descriptors = func.descriptor.parameterDescriptors
-                        if (descriptors != null) {
-                            length = descriptors.length
+                        if (types) {
+                            length = types.length
                             foreach (p in 0..length-1) {
 %>
-                                <% call system.util.printClassInfo(types[p]) %> <% descriptors[p].name; %><% (p < length-1 ? ', ' : '') %>
+                                <% call system.util.printClassLink(types[p], true) %> 
+                                <% descriptors?[p]?.name ?: ''; %><% (p < length-1 ? ', ' : '') %>
 <%
                             }
                         }
 %>
-                        ) : <% call system.util.printClassInfo(func.method.returnType) %>
+                        ) : <% call system.util.printClassLink(func.method.genericReturnType, true) %>
                     </a>
                 </td>
             </tr>

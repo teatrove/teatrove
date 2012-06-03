@@ -21,6 +21,16 @@
             '<div class="scroll">'
             '<table class="tablehead" cellpadding="3" cellspacing="1">'
                 '<tbody>'
+                '<tr class="colhead">'
+                    '<td colspan="3" class="left-align">'
+                        'Information'
+                    '</td>'
+                '</tr>'
+                '<tr>'
+                    '<td colspan="3" class="left-align" style="white-space: normal;">'
+                        call system.util.printClassDeclaration(info)
+                    '</td>'
+                '</tr>'
                 if ( descriptions != null and descriptions.length > 0 ) {
                     '<tr class="colhead">'
                         '<td>'

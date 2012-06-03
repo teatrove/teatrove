@@ -9,7 +9,7 @@ descriptor = metDesc.methodDescriptor
     call system.util.printMethodLink(descriptor, 1)
     '&nbsp;'
     '('
-    parameterTypes = metDesc.method.parameterTypes;
+    parameterTypes = metDesc.method.genericParameterTypes;
     parameterDescriptors = descriptor.parameterDescriptors;
     link = true;
     if ( parameterTypes == null or parameterTypes.length == 0 ) {
@@ -41,24 +41,14 @@ descriptor = metDesc.methodDescriptor
         }
     }
     ')'
-    /*
-    ' : '
-    if ( metDesc.method.returnType.name != 'void' ) {
-        call system.util.printClassLink(metDesc.method.returnType, true);
-    } else {
-        metDesc.method.returnType.name
-    }
-    */
+
+    ' : <span class="italic">' call system.util.printClassLink(metDesc.method.genericReturnType, true) '</span>'
     
     if (deprecated) { '</span>' }
 '</div>'
+
 if ( descriptor?.shortDescription != null and descriptor?.shortDescription != metDesc.method.name ) {
     '<div class="italic left-margin-20 top-margin-10">'
         getFirstSentence(descriptor?.shortDescription);
-    '</div>'
-}
-if ( metDesc.method.returnType.name != 'void' ) {
-    '<div class="left-margin-20 top-margin-10">'
-        'Returns: ' call system.util.printClassLink(metDesc.method.returnType, true)
     '</div>'
 }

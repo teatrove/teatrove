@@ -143,6 +143,11 @@ public class JavaClassGenerator extends CodeGenerator {
     private static TypeDesc makeDesc(Class<?> clazz) {
         return TypeDesc.forClass(clazz);
     }
+    
+    private static TypeDesc makeDesc(Class<?> clazz, 
+                                     java.lang.reflect.Type genericType) {
+        return TypeDesc.forClass(clazz, genericType);
+    }
 
     private static TypeDesc makeDesc(Type type) {
         return makeDesc(type, true);
@@ -150,9 +155,9 @@ public class JavaClassGenerator extends CodeGenerator {
 
     private static TypeDesc makeDesc(Type type, boolean natural) {
         if (natural) {
-            return makeDesc(type.getNaturalClass());
+            return makeDesc(type.getNaturalClass(), type.getGenericClass());
         } else {
-            return makeDesc(type.getObjectClass());
+            return makeDesc(type.getObjectClass(), type.getGenericClass());
         }
     }
 

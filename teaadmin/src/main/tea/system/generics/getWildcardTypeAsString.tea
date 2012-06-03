@@ -1,0 +1,53 @@
+<% template getWildcardTypeAsString(java.lang.reflect.WildcardType type, StringBuilder result, Boolean showLink, Boolean showVariables, Boolean resolveVariables)
+
+found = false
+foreach (bounds in type.upperBounds)
+{
+    found = true
+    if (bounds isa java.lang.Class)
+    {
+        if (bounds.name == 'java.lang.Object')
+        {
+            append(result, '?')
+        }
+        else
+        {
+            append(result, '? extends ')
+            call system.generics.getGenericTypeAsString(bounds, result, showLink, showVariables, false)
+        }
+    }
+    else
+    {
+        append(result, '? extends ')
+        call system.generics.getGenericTypeAsString(bounds, result, showLink, showVariables, false)
+    }
+}
+
+foreach (bounds in type.lowerBounds)
+{
+    found = true
+    if (bounds isa java.lang.Class)
+    {
+        if (bounds.name == 'java.lang.Object')
+        {
+            append(result, '?')
+        }
+        else
+        {
+            append(result, '? super ')
+            call system.generics.getGenericTypeAsString(bounds, result, showLink, showVariables, false)
+        }
+    }
+    else
+    {
+        append(result, '? super ')
+        call system.generics.getGenericTypeAsString(bounds, result, showLink, showVariables, false)
+    }
+}
+
+if (not found)
+{
+    append(result, '?')
+}
+
+%>

@@ -10,6 +10,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #100 adding generic and type information to beans, apps, etc
 - Fix #114 adding function details to bean details
 - Fix #115 adding global ajax handler for error handling
 - Fix #111 adding compile console for quick template compiles
