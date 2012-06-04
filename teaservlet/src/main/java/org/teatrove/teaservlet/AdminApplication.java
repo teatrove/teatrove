@@ -45,7 +45,7 @@ import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
-import org.teatrove.tea.engine.TemplateError;
+import org.teatrove.tea.engine.TemplateIssue;
 import org.teatrove.tea.engine.TemplateExecutionResult;
 import org.teatrove.tea.runtime.Context;
 import org.teatrove.tea.runtime.DefaultContext;
@@ -666,7 +666,7 @@ public class AdminApplication implements AdminApp {
                 getTeaServletAdmin().getApplications();
             for (int j=0;j<applications.length;j++) {
                 if (appName.equals(applications[j].getName())) {
-                    return ((Application)applications[j].getValue())
+                    return (applications[j].getValue())
                         .createContext(mRequest,mResponse);
                 }
             }
@@ -978,7 +978,7 @@ public class AdminApplication implements AdminApp {
             Map expectedTypes = mRequest.getApplicationContextTypes();
 
             for (int j = 0; j < apps.length; j++) {
-                Application app = (Application)apps[j].getValue();
+                Application app = apps[j].getValue();
                 Class<?> currentContextType = app.getContextType();
                 Class<?> expectedContextType = (Class<?>) expectedTypes.get(app);
                 if (currentContextType != expectedContextType) {
@@ -1017,7 +1017,7 @@ public class AdminApplication implements AdminApp {
                 TemplateCompilationResults results =
                     new TemplateCompilationResults
                         (Collections.synchronizedMap(new TreeMap<String, CompilationUnit>()),
-                         new Hashtable<String, List<TemplateError>>());
+                         new Hashtable<String, List<TemplateIssue>>());
 
                 Clustered[] peers =
                     mClusterManager.getCluster().getKnownPeers();
@@ -1121,7 +1121,7 @@ public class AdminApplication implements AdminApp {
             return result;
         }
         
-        public TeaToolsContext.HandyClassInfo getHandyClassInfo(Class clazz) {
+        public TeaToolsContext.HandyClassInfo getHandyClassInfo(Class<?> clazz) {
             if (clazz != null) {
                 return new HandyClassInfoImpl(clazz);
             }
@@ -1197,7 +1197,7 @@ public class AdminApplication implements AdminApp {
                     }
                     else {
                         mResults.appendTemplates(res.getReloadedTemplates());
-                        mResults.appendErrors(res.getTemplateErrors());
+                        mResults.appendIssues(res.getTemplateIssues());
                     }
                 }
                 else {

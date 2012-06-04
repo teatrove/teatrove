@@ -20,6 +20,7 @@ import java.beans.MethodDescriptor;
 import java.lang.reflect.Method;
 
 import org.teatrove.teaservlet.util.NameValuePair;
+import org.teatrove.trove.util.ClassUtils;
 
 /**
  * 
@@ -52,40 +53,7 @@ public class FunctionInfo extends NameValuePair<MethodDescriptor> {
             return true; 
         }
         
-        Method method = getValue().getMethod();
-        return isDeprecated(method.getDeclaringClass(), method.getName(), 
-                            method.getParameterTypes());
-    }
-   
-    public static boolean isDeprecated(Class<?> clazz, 
-        String methodName, Class<?>... paramTypes) {
-        
-        // check if method is annotated
-        try {
-            Method method = 
-                clazz.getDeclaredMethod(methodName, paramTypes);
-            
-            if (method.getAnnotation(Deprecated.class) != null) {
-                return true;
-            }
-        }
-        catch (NoSuchMethodException nsme) {
-            // ignore and continue
-        }
-        
-        // check superclass
-        Class<?> superClass = clazz.getSuperclass();
-        if (superClass != null) {
-            return isDeprecated(superClass, methodName, paramTypes);
-        }
-        
-        // check interfaces
-        for (Class<?> iface : clazz.getInterfaces()) {
-            return isDeprecated(iface, methodName, paramTypes);
-        }
-        
-        // none found
-        return false;
+        return ClassUtils.isDeprecated(getValue().getMethod());
     }
     
     public int compareTo(FunctionInfo other) {

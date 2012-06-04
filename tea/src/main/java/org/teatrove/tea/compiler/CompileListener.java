@@ -21,6 +21,7 @@ package org.teatrove.tea.compiler;
  *
  * @author Brian S O'Neill
  */
-public interface ErrorListener extends java.util.EventListener {
-    public void compileError(ErrorEvent e);
+public interface CompileListener extends java.util.EventListener {
+    public void compileError(CompileEvent e);
+    public void compileWarning(CompileEvent e);
 }

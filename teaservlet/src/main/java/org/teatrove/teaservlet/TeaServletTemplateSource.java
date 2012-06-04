@@ -28,7 +28,7 @@ import org.teatrove.tea.compiler.StatusListener;
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
-import org.teatrove.tea.engine.TemplateError;
+import org.teatrove.tea.engine.TemplateIssue;
 import org.teatrove.tea.engine.TemplateSource;
 import org.teatrove.tea.engine.TemplateSourceConfig;
 import org.teatrove.tea.engine.TemplateSourceImpl;
@@ -325,7 +325,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                     TemplateCompilationResults transients =
                         results.getTransientResults();
                     transients.appendTemplates(delegateResults.getReloadedTemplates());
-                    transients.appendErrors(delegateResults.getTemplateErrors());
+                    transients.appendIssues(delegateResults.getTemplateErrors());
                 }
             }
 
@@ -383,13 +383,13 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
             }
 
             if ( ! templateCompilationResults.isSuccessful()) {
-                List<TemplateError> errors = 
+                List<TemplateIssue> errors = 
                     templateCompilationResults.getAllTemplateErrors();
                 mLog.warn(errors.size() + " errors encountered.");
-                Iterator<TemplateError> errorIt = errors.iterator();
+                Iterator<TemplateIssue> errorIt = errors.iterator();
                 while (errorIt.hasNext()) {
-                    TemplateError error = errorIt.next();
-                    mLog.warn(error.getDetailedErrorMessage() + " : " + 
+                    TemplateIssue error = errorIt.next();
+                    mLog.warn(error.getDetailedMessage() + " : " + 
                               error.getSourceLine());
                 }
             }

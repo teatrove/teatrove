@@ -72,7 +72,7 @@ import org.teatrove.trove.io.SourceReader;
 /**
  * A Parser creates the parse tree for a template by reading tokens emitted by
  * a {@link Scanner}. The parse tree represents the entire template as a
- * data structure composed of specialized nodes. Add an {@link ErrorListener}
+ * data structure composed of specialized nodes. Add an {@link CompileListener}
  * to capture any syntax errors detected by the Parser.
  *
  * @author Brian S O'Neill
@@ -81,7 +81,7 @@ public class Parser {
     private Scanner mScanner;
     private CompilationUnit mUnit;
 
-    private Vector<ErrorListener> mListeners = new Vector<ErrorListener> (1);
+    private Vector<CompileListener> mListeners = new Vector<CompileListener> (1);
     private int mErrorCount = 0;
     private int mEOFErrorCount = 0;
 
@@ -97,20 +97,20 @@ public class Parser {
         mFormatter = MessageFormatter.lookup(this);
     }
 
-    public void addErrorListener(ErrorListener listener) {
+    public void addCompileListener(CompileListener listener) {
         mListeners.addElement(listener);
     }
 
-    public void removeErrorListener(ErrorListener listener) {
+    public void removeCompileListener(CompileListener listener) {
         mListeners.removeElement(listener);
     }
 
-    private void dispatchParseError(ErrorEvent e) {
+    private void dispatchParseError(CompileEvent e) {
         mErrorCount++;
 
         synchronized (mListeners) {
             for (int i = 0; i < mListeners.size(); i++) {
-                ((ErrorListener)mListeners.elementAt(i)).compileError(e);
+                mListeners.elementAt(i).compileError(e);
             }
         }
     }
@@ -127,7 +127,8 @@ public class Parser {
             }
         }
 
-        dispatchParseError(new ErrorEvent(this, str, culprit, mUnit));
+        dispatchParseError(new CompileEvent(this, CompileEvent.Type.ERROR,
+                                            str, culprit, mUnit));
     }
 
     private void error(String str, String arg, Token culprit) {
@@ -142,18 +143,20 @@ public class Parser {
             }
         }
 
-        dispatchParseError(new ErrorEvent(this, str, culprit, mUnit));
+        dispatchParseError(new CompileEvent(this, CompileEvent.Type.ERROR,
+                                            str, culprit, mUnit));
     }
 
     private void error(String str, SourceInfo info) {
         str = mFormatter.format(str);
-        dispatchParseError(new ErrorEvent(this, str, info, mUnit));
+        dispatchParseError(new CompileEvent(this, CompileEvent.Type.ERROR,
+                                            str, info, mUnit));
     }
 
     /**
      * Returns a parse tree by its root node. The parse tree is generated
      * from tokens read from the scanner. Any errors encountered while
-     * parsing are delivered by dispatching an event. Add an error listener
+     * parsing are delivered by dispatching an event. Add a compile listener
      * in order to capture parse errors.
      *
      * @return Non-null template node, even if there were errors during
@@ -960,7 +963,8 @@ public class Parser {
             switch (token.getID()) {
             case Token.ASSIGN:
                 error("equality.misuse.assign", token);
-                token = new Token(token.getSourceInfo(), Token.EQ);
+                token = new Token(token.getSourceInfo(), Token.EQ);                // fall-through
+                //$FALL-THROUGH$
             case Token.EQ:
             case Token.NE:
                 read();
@@ -1469,7 +1473,7 @@ public class Parser {
      *
      * @author Brian S O'Neill
      */
-    private static class Tester implements ErrorListener {
+    private static class Tester implements CompileListener {
         public static void test(String[] arg) throws Exception {
             new Tester(arg[0]);
         }
@@ -1477,9 +1481,9 @@ public class Parser {
         public Tester(String filename) throws Exception {
             Reader file = new BufferedReader(new FileReader(filename));
             Scanner scanner = new Scanner(new SourceReader(file, "<%", "%>"));
-            scanner.addErrorListener(this);
+            scanner.addCompileListener(this);
             Parser parser = new Parser(scanner);
-            parser.addErrorListener(this);
+            parser.addCompileListener(this);
             Template tree = parser.parse();
 
             if (tree != null) {
@@ -1488,8 +1492,12 @@ public class Parser {
             }
         }
 
-        public void compileError(ErrorEvent e) {
-            System.out.println(e.getDetailedErrorMessage());
+        public void compileError(CompileEvent e) {
+            System.err.println(e.getDetailedMessage());
+        }
+        
+        public void compileWarning(CompileEvent e) {
+            System.out.println(e.getDetailedMessage());
         }
     }
 }

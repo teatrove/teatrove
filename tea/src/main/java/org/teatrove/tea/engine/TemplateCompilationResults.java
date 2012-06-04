@@ -17,6 +17,7 @@
 package org.teatrove.tea.engine;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -40,12 +41,12 @@ public class TemplateCompilationResults implements java.io.Serializable {
     Map<String, CompilationUnit> mReloaded;
 
     /** Error map, where the key is the failed template name, and the
-        value is a list of TemplateError objects for that template */
-    Map<String, List<TemplateError>> mErrors;
+        value is a list of TemplateIssue objects for that template */
+    Map<String, List<TemplateIssue>> mIssues;
 
     public TemplateCompilationResults(Map<String, CompilationUnit> reloaded,
-                                      Map<String, List<TemplateError>> errors) {
-        mErrors = errors;
+                                      Map<String, List<TemplateIssue>> issues) {
+        mIssues = issues;
         mReloaded = reloaded;
     }
 
@@ -69,58 +70,58 @@ public class TemplateCompilationResults implements java.io.Serializable {
         return true;
     }
 
-    public boolean appendErrors(Map<String, List<TemplateError>> errors) {
-        if (errors == null || errors.isEmpty())
+    public boolean appendIssues(Map<String, List<TemplateIssue>> issues) {
+        if (issues == null || issues.isEmpty())
             return false;
 
-        if (mErrors == null)
-            mErrors = new Hashtable<String, List<TemplateError>>();
+        if (mIssues == null)
+            mIssues = new Hashtable<String, List<TemplateIssue>>();
 
-        Iterator<String> keyIterator = errors.keySet().iterator();
+        Iterator<String> keyIterator = issues.keySet().iterator();
         while (keyIterator.hasNext()) {
             String name = keyIterator.next();
 
-            List<TemplateError> templateErrors = mErrors.get(name);
+            List<TemplateIssue> templateIssues = mIssues.get(name);
 
-            if (templateErrors == null) {
-                templateErrors = new ArrayList<TemplateError>();
-                mErrors.put(name, templateErrors);
+            if (templateIssues == null) {
+                templateIssues = new ArrayList<TemplateIssue>();
+                mIssues.put(name, templateIssues);
             }
 
-            List<TemplateError> newErrors = errors.get(name);
-            templateErrors.addAll(newErrors);
+            List<TemplateIssue> newErrors = issues.get(name);
+            templateIssues.addAll(newErrors);
         }
 
         return true;
     }
 
-    public boolean appendError(String templateName, TemplateError error) {
-        if (templateName == null || error == null) {
+    public boolean appendIssue(String templateName, TemplateIssue issue) {
+        if (templateName == null || issue == null) {
             return false;
         }
 
-        List<TemplateError> templateErrors = mErrors.get(templateName);
+        List<TemplateIssue> templateIssues = mIssues.get(templateName);
 
-        if (templateErrors == null) {
-            templateErrors = new ArrayList<TemplateError>();
-            mErrors.put(templateName, templateErrors);
+        if (templateIssues == null) {
+            templateIssues = new ArrayList<TemplateIssue>();
+            mIssues.put(templateName, templateIssues);
         }
 
-        return templateErrors.add(error);
+        return templateIssues.add(issue);
     }
 
-    public boolean appendErrors(String templateName,
-                                List<TemplateError> errors) {
-        if (templateName == null || errors == null || errors.isEmpty())
+    public boolean appendIssues(String templateName,
+                                List<TemplateIssue> issues) {
+        if (templateName == null || issues == null || issues.isEmpty())
             return false;
 
-        List<TemplateError> templateErrors = mErrors.get(templateName);
-        if (templateErrors == null) {
-            templateErrors = new ArrayList<TemplateError>();
-            mErrors.put(templateName, templateErrors);
+        List<TemplateIssue> templateIssues = mIssues.get(templateName);
+        if (templateIssues == null) {
+            templateIssues = new ArrayList<TemplateIssue>();
+            mIssues.put(templateName, templateIssues);
         }
 
-        return templateErrors.addAll(errors);
+        return templateIssues.addAll(issues);
     }
 
     public Set<String> getReloadedTemplateNames() {
@@ -135,27 +136,103 @@ public class TemplateCompilationResults implements java.io.Serializable {
         return mReloaded.get(templateName);
     }
 
-    public Map<String, List<TemplateError>> getTemplateErrors() {
-        return mErrors;
+    public Map<String, List<TemplateIssue>> getTemplateIssues() {
+        return mIssues;
+    }
+    
+    public Map<String, List<TemplateIssue>> getTemplateErrors() {
+        Map<String, List<TemplateIssue>> errors =
+            new HashMap<String, List<TemplateIssue>>();
+        
+        for (Map.Entry<String, List<TemplateIssue>> entry : mIssues.entrySet()) {
+            List<TemplateIssue> list = new ArrayList<TemplateIssue>();
+            for (TemplateIssue issue : entry.getValue()) {
+                if (issue.isError()) { list.add(issue); }
+            }
+            
+            if (!list.isEmpty()) {
+                errors.put(entry.getKey(), list);
+            }
+        }
+        
+        return errors;
+    }
+    
+    public Map<String, List<TemplateIssue>> getTemplateWarnings() {
+        Map<String, List<TemplateIssue>> warnings =
+            new HashMap<String, List<TemplateIssue>>();
+        
+        for (Map.Entry<String, List<TemplateIssue>> entry : mIssues.entrySet()) {
+            List<TemplateIssue> list = new ArrayList<TemplateIssue>();
+            for (TemplateIssue issue : entry.getValue()) {
+                if (issue.isWarning()) { list.add(issue); }
+            }
+            
+            if (!list.isEmpty()) {
+                warnings.put(entry.getKey(), list);
+            }
+        }
+        
+        return warnings;
     }
 
-    public List<TemplateError> getAllTemplateErrors() {
-        if (mErrors == null || mErrors.isEmpty())
+    public List<TemplateIssue> getAllTemplateIssues() {
+        if (mIssues == null || mIssues.isEmpty())
             return null;
 
-        ArrayList<TemplateError> errors = new ArrayList<TemplateError>();
+        ArrayList<TemplateIssue> errors = new ArrayList<TemplateIssue>();
 
-        Iterator<List<TemplateError>> values = mErrors.values().iterator();
+        Iterator<List<TemplateIssue>> values = mIssues.values().iterator();
         while (values.hasNext())
             errors.addAll(values.next());
 
         return errors;
     }
 
-    public boolean isSuccessful() {
-        return (mErrors == null || mErrors.size() == 0);
-    }
+    public List<TemplateIssue> getAllTemplateErrors() {
+        if (mIssues == null || mIssues.isEmpty())
+            return null;
 
+        List<TemplateIssue> errors = new ArrayList<TemplateIssue>();
+        Iterator<List<TemplateIssue>> values = mIssues.values().iterator();
+        while (values.hasNext()) {
+            for (TemplateIssue issue : values.next()) {
+                if (issue.isError()) {
+                    errors.add(issue);
+                }
+            }
+        }
+
+        return errors;
+    }
+    
+    public List<TemplateIssue> getAllTemplateWarnings() {
+        if (mIssues == null || mIssues.isEmpty())
+            return null;
+
+        List<TemplateIssue> warnings = new ArrayList<TemplateIssue>();
+        Iterator<List<TemplateIssue>> values = mIssues.values().iterator();
+        while (values.hasNext()) {
+            for (TemplateIssue issue : values.next()) {
+                if (issue.isWarning()) {
+                    warnings.add(issue);
+                }
+            }
+        }
+
+        return warnings;
+    }
+    
+    public boolean isSuccessful() {
+        for (List<TemplateIssue> issues : mIssues.values()) {
+            for (TemplateIssue issue : issues) {
+                if (issue.isError()) { return false; }
+            }
+        }
+        
+        return true;
+    }
+   
     public void setAlreadyReloading(boolean inProgress) {
         mReloadInProgress = inProgress;
     }

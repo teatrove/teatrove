@@ -19,14 +19,17 @@ package org.teatrove.tea.engine;
 import java.util.List;
 import java.util.Map;
 
-import org.teatrove.tea.compiler.ErrorListener;
+import org.teatrove.tea.compiler.CompileListener;
 
 /**
  * 
  * @author Jonathan Colwell
  */
-public interface TemplateErrorListener extends ErrorListener {
-    public Map<String, List<TemplateError>> getTemplateErrors();
+public interface TemplateCompileListener extends CompileListener {
+    
+    public Map<String, List<TemplateIssue>> getTemplateIssues();
+    public Map<String, List<TemplateIssue>> getTemplateErrors();
+    public Map<String, List<TemplateIssue>> getTemplateWarnings();
 
     /**
      * Close listener to dispose of any resources (i.e. open files) that the

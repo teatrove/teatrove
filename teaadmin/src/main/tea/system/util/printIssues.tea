@@ -1,0 +1,41 @@
+<% template printIssues(String type, List issues)
+
+if (issues) {
+    '<div class="sml-s sml-' type ' sml-issues">\n'
+        '<div class="sm-imc sml-imc">\n'
+            '<ul class="sml-cnt">\n'
+                previousTemplatePath = null;
+                foreach ( issue in issues ) {
+                    if ( issue isa org.teatrove.tea.engine.TemplateIssue ) {
+                        issueString = "";
+                        issueString = issueString & call system.util.cleanString(trimLeading(issue.startOfLine));
+                        issueString = issueString & call system.util.cleanString(issue.startOfIssue);
+                        issueString = issueString & call system.util.cleanString(issue.detail);
+                        issueString = issueString & call system.util.cleanString(issue.endOfIssue);
+                        issueString = issueString & call system.util.cleanString(issue.endOfLine);
+
+                        templatePath = issue.sourcePath;
+                        if ( previousTemplatePath != null and templatePath != previousTemplatePath ) {
+                            // close previous
+                            '</li>\n'
+                        }
+
+                        if ( templatePath != previousTemplatePath ) {
+                            '<li class="arial13">\n'
+                                '<div class="template-path">'
+                                    templatePath
+                                '</div>\n'
+                        }
+                        '<div class="error-detail">'
+                            issue.message
+                        '</div>\n'
+                        '<pre class="brush: java; first-line: ' issue.lineNumber '">' issueString '</pre>'
+                        
+                        previousTemplatePath = templatePath;
+                    }
+                }
+                '</li>\n'
+            '</ul>\n'
+        '</div>\n'
+    '</div>\n'
+}

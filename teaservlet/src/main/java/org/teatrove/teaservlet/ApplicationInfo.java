@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.teatrove.teaservlet.util.NameValuePair;
-import org.teatrove.teatools.TeaToolsUtils;
+import org.teatrove.trove.util.ClassUtils;
 
 /**
  *
@@ -43,12 +43,11 @@ public class ApplicationInfo extends NameValuePair<Application> {
     }
 
     public boolean isDeprecated() {
-        TeaToolsUtils utils = new TeaToolsUtils();
-        if (utils.isDeprecated(getContextType())) {
+        if (ClassUtils.isDeprecated(getContextType())) {
             return true;
         }
         
-        return utils.isDeprecated(this.getValue().getClass());
+        return ClassUtils.isDeprecated(this.getValue().getClass());
     }
     
     public Class<?> getContextType() {

@@ -1,16 +1,20 @@
 package org.teatrove.tea.templates;
 
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.teatrove.tea.compiler.CompileEvent;
+import org.teatrove.tea.compiler.CompileListener;
 import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.tea.compiler.ErrorEvent;
-import org.teatrove.tea.compiler.ErrorListener;
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.MergedContextSource;
 import org.teatrove.tea.runtime.Context;
@@ -31,6 +35,7 @@ public abstract class AbstractTemplateTest {
     protected Map<String, ContextSource> contexts;
     protected MergedContextSource context ;
     protected AtomicInteger counter = new AtomicInteger(0);
+    protected List<CompileListener> listeners = new ArrayList<CompileListener>();
 
     public AbstractTemplateTest() {
         contexts = new HashMap<String, ContextSource>();
@@ -49,6 +54,15 @@ public abstract class AbstractTemplateTest {
         });
     }
 
+    public void addCompileListener(CompileListener listener) {
+        this.listeners.add(listener);
+    }
+    
+    public void adddMockListener(int expectedErrors, int expectedWarnings) {
+        addCompileListener(new MockCompileListener(expectedErrors, 
+                                                   expectedWarnings));
+    }
+    
     public void addContext(final String name, final Object context) {
         contexts.put(name.concat("$"), new ContextSource() {
 
@@ -137,16 +151,10 @@ public abstract class AbstractTemplateTest {
         compiler.addCompilationProvider(provider);
 
         // setup context
-        
         compiler.setRuntimeContext(getContext().getContextType());
 
         // setup error handler
-        compiler.addErrorListener(new ErrorListener() {
-            @Override
-            public void compileError(ErrorEvent e) {
-                System.err.println(e.getDetailedErrorMessage());
-            }
-        });
+        compiler.addCompileListener(createCompileListener());
 
         // add sources for templates
         provider.setTemplateSource(template, source);
@@ -155,6 +163,13 @@ public abstract class AbstractTemplateTest {
         String[] results = compiler.compile(template);
         if (results == null || results.length < 1) {
             throw new IllegalStateException("unable to compile");
+        }
+        
+        // validate expectations
+        for (CompileListener listener : listeners) {
+            if (listener instanceof MockCompileListener) {
+                ((MockCompileListener) listener).validate();
+            }
         }
     }
 
@@ -178,17 +193,19 @@ public abstract class AbstractTemplateTest {
         compiler.setRuntimeContext(getContext().getContextType());
 
         // setup error handler
-        compiler.addErrorListener(new ErrorListener() {
-            @Override
-            public void compileError(ErrorEvent e) {
-                System.err.println(e.getDetailedErrorMessage());
-            }
-        });
+        compiler.addCompileListener(createCompileListener());
 
         // compile templates
         String[] results = compiler.compile(template);
         if (results == null || results.length < 1) {
             throw new IllegalStateException("unable to compile");
+        }
+        
+        // validate expectations
+        for (CompileListener listener : listeners) {
+            if (listener instanceof MockCompileListener) {
+                ((MockCompileListener) listener).validate();
+            }
         }
     }
 
@@ -290,5 +307,65 @@ public abstract class AbstractTemplateTest {
 
         // return code
         return outcome;
+    }
+    
+    protected CompileListener createCompileListener() {
+        return new CompileListener() {
+            @Override
+            public void compileError(CompileEvent e) {
+                System.err.println("ERROR: " + e.getDetailedMessage());
+                for (CompileListener listener : listeners) {
+                    listener.compileError(e);
+                }
+            }
+            
+            @Override
+            public void compileWarning(CompileEvent e) {
+                System.out.println("WARNING: " + e.getDetailedMessage());
+                for (CompileListener listener : listeners) {
+                    listener.compileWarning(e);
+                }
+            }
+        };
+    }
+    
+    public class MockCompileListener implements CompileListener {
+
+        private int expectedErrors;
+        private int expectedWarnings;
+        
+        public MockCompileListener(int expectedErrors, int expectedWarnings) {
+            this.expectedErrors = expectedErrors;
+            this.expectedWarnings = expectedWarnings;
+        }
+        
+        public void validate() {
+            if (this.expectedErrors != 0) {
+                fail("did not meet expected errors: " + 
+                     this.expectedErrors + " remaining");
+            }
+            
+            if (this.expectedWarnings != 0) {
+                fail("did not meet expected warnings: " + 
+                     this.expectedWarnings + " remaining");
+            }
+        }
+        
+        @Override
+        public void compileError(CompileEvent e) {
+            this.expectedErrors--;
+            if (this.expectedErrors < 0) {
+                fail("exceeded number of expected errors");
+            }
+        }
+
+        @Override
+        public void compileWarning(CompileEvent e) {
+            this.expectedWarnings--;
+            if (this.expectedWarnings < 0) {
+                fail("exceeded number of expected warnings");
+            }
+        }
+        
     }
 }

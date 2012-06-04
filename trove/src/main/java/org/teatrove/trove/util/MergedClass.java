@@ -1107,6 +1107,11 @@ public class MergedClass {
             mi.addException(exceptions[i].getName());
         }
 
+        // Check for deprecation
+        if (ClassUtils.isDeprecated(method)) {
+            mi.addRuntimeVisibleAnnotation(TypeDesc.forClass(Deprecated.class));
+        }
+        
         // Delegate to wrapped object.
         CodeBuilder builder = new CodeBuilder(mi);
         if (!Modifier.isStatic(method.getModifiers())) {
@@ -1176,6 +1181,11 @@ public class MergedClass {
             mi.addException(exceptions[i].getName());
         }
 
+        // Check for deprecation
+        if (ClassUtils.isDeprecated(method)) {
+            mi.addRuntimeVisibleAnnotation(TypeDesc.forClass(Deprecated.class));
+        }
+        
         // Delegate to wrapped object.
         CodeBuilder builder = new CodeBuilder(mi);
 

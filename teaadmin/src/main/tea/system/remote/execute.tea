@@ -16,16 +16,16 @@ if (source) {
                     '<ul class="sml-cnt">\n'
                         '<li class="arial13">'
                         foreach ( e in errors ) {
-                            if ( e isa org.teatrove.tea.engine.TemplateError ) {
+                            if ( e isa org.teatrove.tea.engine.TemplateIssue ) {
                                 errorString = "";
-                                errorString = errorString & call system.util.cleanString(trimLeading(e.lineStart));
-                                errorString = errorString & call system.util.cleanString(e.errorStart);
+                                errorString = errorString & call system.util.cleanString(trimLeading(e.startOfLine));
+                                errorString = errorString & call system.util.cleanString(e.startOfIssue);
                                 errorString = errorString & call system.util.cleanString(e.detail);
-                                errorString = errorString & call system.util.cleanString(e.errorEnd);
-                                errorString = errorString & call system.util.cleanString(e.lineEnd);
+                                errorString = errorString & call system.util.cleanString(e.endOfIssue);
+                                errorString = errorString & call system.util.cleanString(e.endOfLine);
 
                                 '<div class="error-detail">'
-                                    e.errorMessage
+                                    e.message
                                 '</div>\n'
                                 '<pre class="brush: java; first-line: ' e.lineNumber '">' errorString '</pre>'
                             }

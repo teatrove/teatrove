@@ -10,17 +10,17 @@ public class TemplateExecutionResult implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private CompilationUnit unit;
-    private List<TemplateError> errors;
+    private List<TemplateIssue> errors;
     private Template template;
     private String output;
     
     public TemplateExecutionResult(CompilationUnit unit, 
-                                   List<TemplateError> errors) {
+                                   List<TemplateIssue> errors) {
         this(unit, errors, null);
     }
     
     public TemplateExecutionResult(CompilationUnit unit, 
-                                   List<TemplateError> errors, 
+                                   List<TemplateIssue> errors, 
                                    Template template) {
         this.unit = unit;
         this.errors = errors;
@@ -29,7 +29,7 @@ public class TemplateExecutionResult implements Serializable {
     
     public CompilationUnit getCompilationUnit() { return this.unit; }
     public Template getTemplate() { return this.template; }
-    public List<TemplateError> getTemplateErrors() { return this.errors; }
+    public List<TemplateIssue> getTemplateErrors() { return this.errors; }
     
     public boolean isSuccessful() {
         return (this.template != null &&

@@ -710,23 +710,7 @@
                 url += '?testCompile=all';
             }
 
-            if ( isReady ) {
-                $.ajax({
-                    url: url,
-                    success: function (data) {
-                        $("#reload-container").html(data);
-                    },
-                    complete: function () {
-                        $(".controls-wrapper .ui-button").removeClass('ui-state-active');
-                        $(".controls-wrapper .ui-button").button( "option", "disabled", false );
-                        $('#loadingIndicator').hide();
-                        SyntaxHighlighter.highlight();
-                    }
-                });
-            } else {
-                $("#reload-container").html('Feature is not ready yet.');
-                $('#loadingIndicator').hide();
-            }
+            reloadTemplates(isReady, url);
         });
         $("#buttonset-compile .ui-button").click( function (evt) {
             $(".controls-wrapper .ui-button").button( "option", "disabled", true );
@@ -755,25 +739,44 @@
                 url += '?reloadTemplates=changes&cluster=true';
             }
 
-            if ( isReady ) {
-                $.ajax({
-                    url: url,
-                    success: function (data) {
-                        $("#reload-container").html(data);
-                    },
-                    complete: function () {
-                        $(".controls-wrapper .ui-button").removeClass('ui-state-active');
-                        $(".controls-wrapper .ui-button").button( "option", "disabled", false );
-                        $('#loadingIndicator').hide();
-                        SyntaxHighlighter.highlight();
-                    }
-                });
-            } else {
-                $("#reload-container").html('Feature is not ready yet.');
-                $('#loadingIndicator').hide();
-            }
+            reloadTemplates(isReady, url);
         });
 
+        function reloadTemplates(isReady, url) {
+            var $status = $("#status-container");
+            
+            // clear previous timer if valid
+            var timer = $status.data('timer');
+            if (timer) { clearTimeout(timer); $status.data('timer', null); }
+            
+            if ( isReady ) {
+                $status.slideUp(function() { 
+                    $(this).html('');
+                    $.ajax({
+                        url: url,
+                        success: function (data) {
+                            $status.html(data).slideDown();
+                            if ($status.find('.sml-issues').length == 0) {
+                                getTemplateUpdates();
+                                $status.data('timer', setTimeout(function() {
+                                    $status.slideUp();
+                                }, 5000));
+                            }
+                        },
+                        complete: function () {
+                            $(".controls-wrapper .ui-button").removeClass('ui-state-active');
+                            $(".controls-wrapper .ui-button").button( "option", "disabled", false );
+                            $('#loadingIndicator').hide();
+                            SyntaxHighlighter.highlight();
+                        }
+                    });
+                });
+            } else {
+                $status.html('Feature is not ready yet.').show();
+                $('#loadingIndicator').hide();
+            }        
+        };
+        
         $('.sml-w .reloadableTemplates').live('click', function(evt) {
             // cookie test
             if ( $.cookies.test() ) {
@@ -831,7 +834,7 @@
 		initTemplateOptionLinks();
     };
     function getTemplateUpdates () {
-        if ( $('#reload-container .sml-e').length == 0 ) {
+        //if ( $('#reload-container .sml-issues').length == 0 ) {
             $('#loadingIndicator').show();
             $.ajax({
                 url: "remote/reload?findUpdates=true",
@@ -865,32 +868,35 @@
                     prettyLinks();
                 }
             });
-        }
+        //}
     };
     function autocompileTemplates () {
         $('#loadingIndicator').show();
-        $.ajax({
-            url: "remote/reload?reloadTemplates=changes",
-            success: function (data) {
-                updateCompileHistory();
-                $("#reload-container").html(data);
-            },
-            complete: function () {
-                $('#loadingIndicator').hide();
-                SyntaxHighlighter.highlight();
-                prettyLinks();
-            }
+        $("#status-container").slideUp(function() { 
+            $(this).html('');
+            $.ajax({
+                url: "remote/reload?reloadTemplates=changes",
+                success: function (data) {
+                    updateCompileHistory();
+                    $("#status-container").html(data).slideDown();
+                },
+                complete: function () {
+                    $('#loadingIndicator').hide();
+                    SyntaxHighlighter.highlight();
+                    prettyLinks();
+                }
+            });
         });
     };
     function updateCompileHistory () {
-        if ( $('#reload-container .sml-c, #reload-container .sml-e').length != 0 ) {
+        if ( $('#status-container .sml-c, #status-container .sml-e').length != 0 ) {
             var d = new Date();
             var currentTime = d.getTime();
 
             var compileHTML = '';
             var errorHTML = '';
             var previousError = '';
-            $('#reload-container .sml-cnt li').each( function (i,val1) {
+            $('#status-container .sml-cnt li').each( function (i,val1) {
                 var newCompile = $(val1);
                 $('#reload-container-history .sml-cnt li').each( function (j,val2) {
                     var oldCompile = $(val2);
@@ -930,7 +936,7 @@
             }
 
             if ( !$('#reload-container-history').is(":visible") ) {
-                $('.table-container').hide();
+                // $('.table-container').hide();
                 $('#reload-container-history-label').show();
                 $('#reload-container-history').show();
             }
@@ -1191,12 +1197,19 @@
 							var msg = 'No changes detected.';
 							var img = '<% pathPrefix %>system/assets/images/notification-info.png';
 
-							if ( $(data).closest('.sml-e').length > 0 ) {
+							if ( $(data).closest('.sml-issues.sml-e').length > 0 ) {
 
 								img = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
 								msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
-							} else if ( $(data).closest('.sml-c').length > 0 ) {
+							}
+							else if ( $(data).closest('.sml-issues.sml-w').length > 0 ) {
+
+                                img = '<% pathPrefix %>system/assets/images/notification-correct.png';
+                                msg = 'Template compiled successfully with warnings';
+
+                            }
+                            else if ( $(data).closest('.sml-c').length > 0 ) {
 
 								img = '<% pathPrefix %>system/assets/images/notification-correct.png';
 								msg = 'Template compiled successfully!';
@@ -2427,12 +2440,19 @@
                             var msg = 'No changes detected.';
                             var img = '<% pathPrefix %>system/assets/images/notification-info.png';
 
-                            if ( $(data).closest('.sml-e').length > 0 ) {
+                            if ( $(data).closest('.sml-issues.sml-e').length > 0 ) {
 
                                 img = '<% pathPrefix %>system/assets/images/notification-incorrect.png';
                                 msg = 'Template contains errors.<br/>[<a href="?page=compile" style="color: red !important; text-decoration: underline;">Try again</a>]';
 
-                            } else if ( $(data).closest('.sml-c').length > 0 ) {
+                            }
+                            else if ( $(data).closest('.sml-issues.sml-w').length > 0 ) {
+
+                                img = '<% pathPrefix %>system/assets/images/notification-correct.png';
+                                msg = 'Template compiled successfully with warnings';
+
+                            }
+                            else if ( $(data).closest('.sml-c').length > 0 ) {
 
                                 img = '<% pathPrefix %>system/assets/images/notification-correct.png';
                                 msg = 'Template compiled successfully!';

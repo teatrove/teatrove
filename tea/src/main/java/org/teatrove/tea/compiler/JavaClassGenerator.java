@@ -253,11 +253,108 @@ public class JavaClassGenerator extends CodeGenerator {
     private List<Object> mInitializerStatements =
         new ArrayList<Object>();
 
+    private MessageFormatter mFormatter;
+
     public JavaClassGenerator(CompilationUnit unit) {
         super(unit.getParseTree());
         mUnit = unit;
+        mFormatter = MessageFormatter.lookup(this);
     }
 
+    @SuppressWarnings("unused")
+    private void error(String str, Node culprit) {
+        str = mFormatter.format(str);
+        error(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg, Node culprit) {
+        str = mFormatter.format(str, arg);
+        error(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg1, String arg2, Node culprit) {
+        str = mFormatter.format(str, arg1, arg2);
+        error(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg1, String arg2, String arg3,
+                       Node culprit) {
+        str = mFormatter.format(str, arg1, arg2, arg3);
+        error(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg, Token culprit) {
+        str = mFormatter.format(str, arg);
+        error(str, culprit.getSourceInfo());
+    }
+
+    private void error(String str, SourceInfo info) {
+        dispatchCompileError(new CompileEvent(this, CompileEvent.Type.ERROR,
+                                              str, info, mUnit));
+    }
+    
+    @SuppressWarnings("unused")
+    private void error(String str, String arg, SourceInfo info) {
+        str = mFormatter.format(str, arg);
+        error(str, info);
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg1, String arg2, SourceInfo info) {
+        str = mFormatter.format(str, arg1, arg2);
+        error(str, info);
+    }
+
+    private void warn(String str, Node culprit) {
+        str = mFormatter.format(str);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, Node culprit) {
+        str = mFormatter.format(str, arg);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, String arg1, String arg2, Node culprit) {
+        str = mFormatter.format(str, arg1, arg2);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg1, String arg2, String arg3,
+                      Node culprit) {
+        str = mFormatter.format(str, arg1, arg2, arg3);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, Token culprit) {
+        str = mFormatter.format(str, arg);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, SourceInfo info) {
+        dispatchCompileWarning(new CompileEvent(this, CompileEvent.Type.WARNING,
+                                                str, info, mUnit));
+    }
+    
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, SourceInfo info) {
+        str = mFormatter.format(str, arg);
+        warn(str, info);
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg1, String arg2, SourceInfo info) {
+        str = mFormatter.format(str, arg1, arg2);
+        warn(str, info);
+    }
+    
     public void writeTo(OutputStream out) throws IOException {
         String className = mUnit.getName();
         String targetPackage = mUnit.getTargetPackage();
@@ -621,7 +718,7 @@ public class JavaClassGenerator extends CodeGenerator {
         Modifiers flags = new Modifiers();
         flags.setPrivate(true);
         while (it.hasNext()) {
-            Variable v = (Variable)it.next();
+            Variable v = it.next();
             flags.setStatic(v.isStatic());
             flags.setTransient(v.isTransient());
             TypeDesc td = makeDesc(v);
@@ -801,14 +898,14 @@ public class JavaClassGenerator extends CodeGenerator {
                         mBuilder.storeLocal(startTime);
                     }
 
-                    generate((Node)mCaseNodes.get(size));
+                    generate(mCaseNodes.get(size));
 
                     // Inject post-call profiling bytecode.
                     if (profilingEnabled && size > 0) {
                         mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                             "getInvocationObserver", methodObserverType);
                         mBuilder.loadConstant(mUnit.getName());
-                        mBuilder.loadConstant((String) mCallerToSubNoList.get(size - 1));
+                        mBuilder.loadConstant(mCallerToSubNoList.get(size - 1));
                         mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                             "getInvocationObserver", methodObserverType);
                         mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
@@ -895,7 +992,7 @@ public class JavaClassGenerator extends CodeGenerator {
             Label dumpException = mBuilder.createLabel();
 
             for (int i=0; i<size; i++) {
-                GuardHandler gh = (GuardHandler)mExceptionGuardHandlers.get(i);
+                GuardHandler gh = mExceptionGuardHandlers.get(i);
                 mBuilder.exceptionHandler(gh.tryStart, gh.tryEnd,
                                           "java.lang.RuntimeException");
                 // Subroutine will pop exception object off stack.
@@ -1858,8 +1955,6 @@ public class JavaClassGenerator extends CodeGenerator {
             Label elseLabel = mBuilder.createLabel();
             Label endLabel = mBuilder.createLabel();
 
-            // TODO: ternary invalid types with object & primitive
-
             // if elvis relationship (then/condition the same), generate shared
             // statement
             if (thenPart == condition) {
@@ -1901,8 +1996,6 @@ public class JavaClassGenerator extends CodeGenerator {
             // get associated types
             Type ltype = left.getType();
             Type rtype = right.getType();
-            Class<?> clazz = 
-            ltype.getCompatibleType(rtype).getNaturalClass();
 
             // create local variables
             generate(left);
@@ -2100,10 +2193,21 @@ public class JavaClassGenerator extends CodeGenerator {
                 
                 // otherwise, compare at runtime as strings
                 else {
+                    warn("compare.not.convertible",
+                          ltype.getClassName(), rtype.getClassName(), node);
+                    
                     mBuilder.loadLocal(lvar);
+                    if (ltype.isPrimitive()) {
+                        typeConvertEnd(ltype, ltype.toNonPrimitive(), false);
+                    }
+                    
                     mBuilder.invoke(getMethod(Object.class, "toString"));
                     
                     mBuilder.loadLocal(rvar);
+                    if (rtype.isPrimitive()) {
+                        typeConvertEnd(rtype, rtype.toNonPrimitive(), false);
+                    }
+                    
                     mBuilder.invoke(getMethod(Object.class, "toString"));
                     
                     Method method =
@@ -2738,7 +2842,8 @@ public class JavaClassGenerator extends CodeGenerator {
                     // any other case, just pop last value (assume true)
                     // if expected true, then branch
                     else {
-                        // TODO: warn that type is unknown and non-truthful
+                        // warn("truthful.object.expression", expr);
+                        
                         mBuilder.pop();
                         if (whenTrue) { 
                             mBuilder.branch(invert ? branch : label); 
@@ -2905,7 +3010,7 @@ public class JavaClassGenerator extends CodeGenerator {
                     // numbers must be converted down to primitives to be
                     // compared...this is potentially dangerous as we are
                     // converting types
-                    // TODO: include a warning to the compiler
+                    warn("compare.as.double", expr);
                     
                     Method doubleMethod = 
                         getMethod(Number.class, "doubleValue");
@@ -4087,7 +4192,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 }
             }
             else if (longRange) {
-                mBuilder.loadConstant((long)endIndexValue);
+                mBuilder.loadConstant(endIndexValue);
                 mBuilder.math(Opcode.LCMP);
                 mBuilder.ifZeroComparisonBranch(startLabel, choice);
             }
@@ -4514,7 +4619,7 @@ public class JavaClassGenerator extends CodeGenerator {
             if (!mVariableMap.containsKey(var)) {
                 declareVariable(var, null);
             }
-            return (LocalVariable)mVariableMap.get(var);
+            return mVariableMap.get(var);
         }
 
         private void loadFromVariable(Variable var) {
@@ -4534,7 +4639,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 }
             }
             else {
-                LocalVariable local = (LocalVariable)mVariableMap.get(var);
+                LocalVariable local = mVariableMap.get(var);
                 if (local == null) {
                     throw new RuntimeException
                         ("Attempting to read from uninitialized local " +
@@ -4588,11 +4693,11 @@ public class JavaClassGenerator extends CodeGenerator {
 
                         if (clazz == int.class) {
                             if (amount >= 0) {
-                                mBuilder.loadConstant((int)amount);
+                                mBuilder.loadConstant(amount);
                                 mBuilder.math(Opcode.IADD);
                             }
                             else {
-                                mBuilder.loadConstant((int)-amount);
+                                mBuilder.loadConstant(-amount);
                                 mBuilder.math(Opcode.ISUB);
                             }
                         }

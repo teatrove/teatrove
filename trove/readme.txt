@@ -8,6 +8,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #96 adding @Deprecated to merged classs methods
 - Adding annotation support to classfile (thanks to the Cojen library)
 - Fix #19 to support file, classpath, or any URL-supported protocol for resources
 - Fix #55 and cleanup merged context to better support generics and bridge methods

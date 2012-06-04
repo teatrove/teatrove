@@ -36,7 +36,7 @@ import java.util.TreeSet;
 import org.teatrove.tea.compiler.CompilationProvider;
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.tea.compiler.ErrorEvent;
+import org.teatrove.tea.compiler.CompileEvent;
 import org.teatrove.tea.compiler.SourceInfo;
 import org.teatrove.tea.compiler.StatusEvent;
 import org.teatrove.tea.compiler.StatusListener;
@@ -269,7 +269,7 @@ public class TemplateSourceImpl implements TemplateSource {
         TemplateCompilationResults results = new TemplateCompilationResults
         (
             new TreeMap<String, CompilationUnit>(), 
-            new TreeMap<String, List<TemplateError>>()
+            new TreeMap<String, List<TemplateIssue>>()
         );
 
         // setup package prefix and injector
@@ -281,15 +281,15 @@ public class TemplateSourceImpl implements TemplateSource {
         // create merged compiler
         Compiler compiler = createCompiler(injector, packagePrefix);
 
-        // create error listener
-        TemplateErrorListener errorListener = createErrorListener();
+        // create compile listener
+        TemplateCompileListener compileListener = createCompileListener();
         
         // setup compiler
         compiler.setClassLoader(injector);
         compiler.addImportedPackages(getImports());
         compiler.setRuntimeContext(getContextSource().getContextType());
         compiler.setCodeGenerationEnabled(false);
-        compiler.addErrorListener(errorListener);
+        compiler.addCompileListener(compileListener);
         compiler.setForceCompile(force);
             
         // setup templates to compile
@@ -348,9 +348,9 @@ public class TemplateSourceImpl implements TemplateSource {
             }
         }
 
-        // append all template errors
-        results.appendErrors(errorListener.getTemplateErrors());
-        errorListener.close();
+        // append all template issues
+        results.appendIssues(compileListener.getTemplateIssues());
+        compileListener.close();
 
         // return results
         return results;
@@ -381,25 +381,27 @@ public class TemplateSourceImpl implements TemplateSource {
         provider.setTemplateSource(name, tsource);
         compiler.addCompilationProvider(provider);
 
-        // create error listener
-        TemplateErrorListener errorListener = createErrorListener();
+        // create compile listener
+        TemplateCompileListener compileListener = createCompileListener();
         
         // setup compiler
         compiler.setClassLoader(injector);
         compiler.addImportedPackages(getImports());
         compiler.setRuntimeContext(getContextSource().getContextType());
         compiler.setCodeGenerationEnabled(true);
-        compiler.addErrorListener(errorListener);
+        compiler.addCompileListener(compileListener);
         compiler.setForceCompile(true);
         
         // compile selected source
         CompilationUnit unit = compiler.getCompilationUnit(name, null);
         compiler.getParseTree(unit);
 
-        // close out the error listener
-        errorListener.close();
-        List<TemplateError> errors = 
-            errorListener.getTemplateErrors().get(name);
+        // close out the compile listener
+        compileListener.close();
+        List<TemplateIssue> issues = 
+            compileListener.getTemplateIssues().get(name);
+        List<TemplateIssue> errors = 
+            compileListener.getTemplateErrors().get(name);
 
         // lookup resulting template
         Template template = null;
@@ -411,7 +413,7 @@ public class TemplateSourceImpl implements TemplateSource {
         }
         
         // return results
-        return new TemplateExecutionResult(unit, errors, template);
+        return new TemplateExecutionResult(unit, issues, template);
     }
     
     public ContextSource getContextSource() {
@@ -546,12 +548,12 @@ public class TemplateSourceImpl implements TemplateSource {
                                                StatusListener listener)
         throws Exception
     {
-        TemplateErrorListener errorListener = createErrorListener();
+        TemplateCompileListener compileListener = createCompileListener();
         try {
-            return actuallyCompileTemplates(injector, all, true, errorListener, listener);
+            return actuallyCompileTemplates(injector, all, true, compileListener, listener);
         }
         finally {
-            errorListener.close();
+            compileListener.close();
         }
     }
 
@@ -569,23 +571,24 @@ public class TemplateSourceImpl implements TemplateSource {
                                                StatusListener listener)
         throws Exception
     {
-        TemplateErrorListener errorListener = createErrorListener();
+        TemplateCompileListener compileListener = createCompileListener();
         try {
-            return actuallyCompileTemplates(injector, all, recurse, errorListener, listener, null);
+            return actuallyCompileTemplates(injector, all, recurse, 
+                                            compileListener, listener, null);
         }
         finally {
-            errorListener.close();
+            compileListener.close();
         }
     }
 
     protected Results actuallyCompileTemplates(ClassInjector injector,
                                                boolean all,
                                                boolean recurse,
-                                               TemplateErrorListener errorListener,
+                                               TemplateCompileListener compileListener,
                                                StatusListener listener)
         throws Exception
     {
-        return actuallyCompileTemplates(injector, all, recurse, errorListener, listener, null);
+        return actuallyCompileTemplates(injector, all, recurse, compileListener, listener, null);
     }
 
     protected Results actuallyCompileTemplates(ClassInjector injector,
@@ -600,13 +603,13 @@ public class TemplateSourceImpl implements TemplateSource {
                                                String[] selectedTemplates)
         throws Exception
     {
-        TemplateErrorListener errorListener = createErrorListener();
+        TemplateCompileListener compileListener = createCompileListener();
         try {
             return actuallyCompileTemplates(injector, false, false, 
-                errorListener, listener, selectedTemplates);
+                compileListener, listener, selectedTemplates);
         }
         finally {
-            errorListener.close();
+            compileListener.close();
         }
     }
 
@@ -616,7 +619,7 @@ public class TemplateSourceImpl implements TemplateSource {
     private Results actuallyCompileTemplates(ClassInjector injector,
                                              boolean all,
                                              boolean recurse,
-                                             TemplateErrorListener errorListener,
+                                             TemplateCompileListener compileListener,
                                              StatusListener listener,
                                              String[] selectedTemplates)
         throws Exception
@@ -641,7 +644,7 @@ public class TemplateSourceImpl implements TemplateSource {
         compiler.setClassLoader(injector);
         compiler.setRuntimeContext(type);
         compiler.setExceptionGuardianEnabled(exceptionGuardian);
-        compiler.addErrorListener(errorListener);
+        compiler.addCompileListener(compileListener);
             
         if (listener != null) {
             compiler.addStatusListener(listener);
@@ -684,7 +687,7 @@ public class TemplateSourceImpl implements TemplateSource {
         // return results
         return new Results(
             new TemplateCompilationResults(reloadedTemplates, 
-                                           errorListener.getTemplateErrors()),
+                                           compileListener.getTemplateIssues()),
             new TemplateAdapter(type, injector, mConfig.getPackagePrefix()),
             lastReloadTime,
             knownTemplateNames,
@@ -720,8 +723,8 @@ public class TemplateSourceImpl implements TemplateSource {
              false);
     }
 
-    protected TemplateErrorListener createErrorListener() {
-        return new ErrorRetriever();
+    protected TemplateCompileListener createCompileListener() {
+        return new CompileRetriever();
     }
 
     private String[] parseImports(PropertyMap properties) {
@@ -888,51 +891,91 @@ public class TemplateSourceImpl implements TemplateSource {
         }
     }
 
-    protected class ErrorRetriever implements TemplateErrorListener {
-        protected Map<String, List<TemplateError>> mTemplateErrors =
-            new Hashtable<String, List<TemplateError>>();
+    protected class CompileRetriever implements TemplateCompileListener {
+        protected Map<String, List<TemplateIssue>> mTemplateIssues =
+            new Hashtable<String, List<TemplateIssue>>();
 
-        /** Reads error line from template files */
+        /** Reads line from template files */
         private LinePositionReader mOpenReader;
 
         private CompilationUnit mOpenUnit;
 
-        public Map<String, List<TemplateError>> getTemplateErrors() {
-            return mTemplateErrors;
+        public Map<String, List<TemplateIssue>> getTemplateIssues() {
+            return mTemplateIssues;
+        }
+        
+        public Map<String, List<TemplateIssue>> getTemplateErrors() {
+            Map<String, List<TemplateIssue>> errors = 
+                new Hashtable<String, List<TemplateIssue>>();
+            
+            for (Map.Entry<String, List<TemplateIssue>> entry: mTemplateIssues.entrySet()) {
+                List<TemplateIssue> list = new ArrayList<TemplateIssue>();
+                for (TemplateIssue issue : entry.getValue()) {
+                    if (issue.isError()) { list.add(issue); }
+                }
+                
+                if (!list.isEmpty()) {
+                    errors.put(entry.getKey(), list);
+                }
+            }
+            
+            return errors;
+        }
+        
+        public Map<String, List<TemplateIssue>> getTemplateWarnings() {
+            Map<String, List<TemplateIssue>> warnings = 
+                new Hashtable<String, List<TemplateIssue>>();
+            
+            for (Map.Entry<String, List<TemplateIssue>> entry: mTemplateIssues.entrySet()) {
+                List<TemplateIssue> list = new ArrayList<TemplateIssue>();
+                for (TemplateIssue issue : entry.getValue()) {
+                    if (issue.isWarning()) { list.add(issue); }
+                }
+                
+                if (!list.isEmpty()) {
+                    warnings.put(entry.getKey(), list);
+                }
+            }
+            
+            return warnings;
         }
 
         /**
          * This method is called for each error that occurs while compiling
          * templates. The error is reported in the log and in the error list.
          */
-        public void compileError(ErrorEvent event) {
-            mConfig.getLog().warn("Error in " +
-                                  event.getDetailedErrorMessage());
+        public void compileError(CompileEvent event) {
+            compileIssue(event);
+        }
+
+        public void compileWarning(CompileEvent event) {
+            compileIssue(event);
+        }
+        
+        public void compileIssue(CompileEvent event) {
+            mConfig.getLog().warn(event.getType().toString() + 
+                                  " in " + event.getDetailedMessage());
 
             CompilationUnit unit = event.getCompilationUnit();
-            if (unit == null) {
-                return;
-            }
+            if (unit == null) { return; }
 
             String templateName = unit.getName();
-
-            List<TemplateError> errors = mTemplateErrors.get(templateName);
-            if (errors == null) {
-                errors = new ArrayList<TemplateError>();
-                mTemplateErrors.put(templateName, errors);
+            List<TemplateIssue> issues = mTemplateIssues.get(templateName);
+            if (issues == null) {
+                issues = new ArrayList<TemplateIssue>();
+                mTemplateIssues.put(templateName, issues);
             }
 
             String sourcePath = unit.getSourcePath();
+            TemplateIssue issue = createTemplateIssue(sourcePath, event);
 
-            TemplateError templateError = createTemplateError(sourcePath, event);
-
-            if (templateError != null) {
-                errors.add(templateError);
+            if (issue != null) {
+                issues.add(issue);
             }
         }
-
-        protected TemplateError createTemplateError(String sourcePath,
-                                                  ErrorEvent event) {
+        
+        protected TemplateIssue createTemplateIssue(String sourcePath,
+                                                    CompileEvent event) {
             SourceInfo info = event.getSourceInfo();
             if (info == null) {
                 return null;
@@ -945,13 +988,13 @@ public class TemplateSourceImpl implements TemplateSource {
 
             Date lastModifiedDate = new Date(new File(sourcePath).lastModified());
 
-            String errorMessage = event.getErrorMessage();
-            String detailedErrorMessage = event.getDetailedErrorMessage();
+            String message = event.getMessage();
+            String detailedMessage = event.getDetailedMessage();
             String sourceInfoMessage = event.getSourceInfoMessage();
 
             int lineNumber = -1;
-            int errorStartPos = -1;
-            int errorEndPos = -1;
+            int startPos = -1;
+            int eEndPos = -1;
             int detailPos = -1;
 
             int linePos = -1;
@@ -961,8 +1004,8 @@ public class TemplateSourceImpl implements TemplateSource {
 
             try {
                 lineNumber = info.getLine();
-                errorStartPos = info.getStartPosition();
-                errorEndPos = info.getEndPosition();
+                startPos = info.getStartPosition();
+                eEndPos = info.getEndPosition();
                 detailPos = info.getDetailPosition();
 
                 if (mOpenReader == null ||
@@ -983,10 +1026,10 @@ public class TemplateSourceImpl implements TemplateSource {
                 lineStr = mOpenReader.readLine();
                 lineStr = LinePositionReader.cleanWhitespace(lineStr);
 
-                int indentSize = errorStartPos - linePos;
+                int indentSize = startPos - linePos;
                 String indent = LinePositionReader.createSequence(' ', indentSize);
 
-                int markerSize = errorEndPos - errorStartPos + 1;
+                int markerSize = eEndPos - startPos + 1;
                 String marker = LinePositionReader.createSequence('^', markerSize);
                 underline = indent + marker;
             }
@@ -994,13 +1037,17 @@ public class TemplateSourceImpl implements TemplateSource {
                 mLog.error(ex);
             }
 
-            return new TemplateError
-                (sourcePath, lastModifiedDate,
-                 errorMessage, detailedErrorMessage, sourceInfoMessage,
+            int state = -1;
+            if (event.isError()) { state = TemplateIssue.ERROR; }
+            else if (event.isWarning()) { state = TemplateIssue.WARNING; }
+            
+            return new TemplateIssue
+                (sourcePath, lastModifiedDate, state,
+                 message, detailedMessage, sourceInfoMessage,
                  lineStr, underline, lineNumber,
-                 errorStartPos, errorEndPos,
-                 errorStartPos - linePos,
-                 errorEndPos - linePos + 1,
+                 startPos, eEndPos,
+                 startPos - linePos,
+                 eEndPos - linePos + 1,
                  detailPos - linePos);
         }
 

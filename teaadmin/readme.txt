@@ -10,11 +10,12 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #96 adding warning message support, including deprecation
+- Fix #96 marking properties, functions, applications, etc as deprecated
 - Fix #100 adding generic and type information to beans, apps, etc
 - Fix #114 adding function details to bean details
 - Fix #115 adding global ajax handler for error handling
 - Fix #111 adding compile console for quick template compiles
-- Fix #96 marking properties, functions, applications, etc as deprecated
 - Fix #107 to add template source path to template info
 - Fix #50 to add template viewer console with hyperlinking click through, outline, hiearchy, and source
 - Fix #49 to add full blown JMX console

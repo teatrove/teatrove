@@ -83,13 +83,14 @@ import org.teatrove.tea.parsetree.VariableRef;
 import org.teatrove.tea.util.BeanAnalyzer;
 import org.teatrove.tea.util.GenericPropertyDescriptor;
 import org.teatrove.trove.classfile.Modifiers;
+import org.teatrove.trove.util.ClassUtils;
 
 /**
  * A TypeChecker operates on a template's parse tree, created by a
  * {@link Parser}, filling in type information while it checks the validity of
  * the whole template. After a template has been type-checked and there are no
  * errors, the template is ready for code generation. Add an
- * {@link ErrorListener} to capture any semantic errors detected by the
+ * {@link CompileListener} to capture any semantic errors detected by the
  * TypeChecker.
  *
  * @author Brian S O'Neill
@@ -99,8 +100,9 @@ public class TypeChecker {
     private String[] mImports;
     private boolean mHasImports = false;
 
-    private Vector<ErrorListener> mListeners = new Vector<ErrorListener>(1);
+    private Vector<CompileListener> mListeners = new Vector<CompileListener>(1);
     private int mErrorCount = 0;
+    private int mWarningCount = 0;
 
     private ClassLoader mClassLoader;
     private boolean mExceptionGuardian;
@@ -114,15 +116,15 @@ public class TypeChecker {
         mFormatter = MessageFormatter.lookup(this);
     }
 
-    public void addErrorListener(ErrorListener listener) {
+    public void addCompileListener(CompileListener listener) {
         mListeners.addElement(listener);
     }
 
-    public void removeErrorListener(ErrorListener listener) {
+    public void removeCompileListener(CompileListener listener) {
         mListeners.removeElement(listener);
     }
 
-    private void dispatchParseError(ErrorEvent e) {
+    private void dispatchParseError(CompileEvent e) {
         mErrorCount++;
 
         synchronized (mListeners) {
@@ -131,46 +133,102 @@ public class TypeChecker {
             }
         }
     }
+    
+    private void dispatchParseWarning(CompileEvent e) {
+        mWarningCount++;
+
+        synchronized (mListeners) {
+            for (int i = 0; i < mListeners.size(); i++) {
+                mListeners.elementAt(i).compileWarning(e);
+            }
+        }
+    }
 
     private void error(String str, Node culprit) {
         str = mFormatter.format(str);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
     private void error(String str, String arg, Node culprit) {
         str = mFormatter.format(str, arg);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
     private void error(String str, String arg1, String arg2, Node culprit) {
         str = mFormatter.format(str, arg1, arg2);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
     private void error(String str, String arg1, String arg2, String arg3,
                        Node culprit) {
         str = mFormatter.format(str, arg1, arg2, arg3);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
     private void error(String str, String arg, Token culprit) {
         str = mFormatter.format(str, arg);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
+    private void error(String str, SourceInfo info) {
+        dispatchParseError(new CompileEvent(this, CompileEvent.Type.ERROR,
+                                            str, info, mUnit));
+    }
+    
     private void error(String str, String arg, SourceInfo info) {
         str = mFormatter.format(str, arg);
-        dispatchParseError(new ErrorEvent(this, str, info, mUnit));
+        error(str, info);
     }
 
     private void error(String str, String arg1, String arg2, SourceInfo info) {
         str = mFormatter.format(str, arg1, arg2);
-        dispatchParseError(new ErrorEvent(this, str, info, mUnit));
+        error(str, info);
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, Node culprit) {
+        str = mFormatter.format(str);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, String arg, Node culprit) {
+        str = mFormatter.format(str, arg);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, String arg1, String arg2, Node culprit) {
+        str = mFormatter.format(str, arg1, arg2);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg1, String arg2, String arg3,
+                      Node culprit) {
+        str = mFormatter.format(str, arg1, arg2, arg3);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, Token culprit) {
+        str = mFormatter.format(str, arg);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, SourceInfo info) {
+        dispatchParseWarning(new CompileEvent(this, CompileEvent.Type.WARNING,
+                                              str, info, mUnit));
+    }
+    
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, SourceInfo info) {
+        str = mFormatter.format(str, arg);
+        warn(str, info);
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg1, String arg2, SourceInfo info) {
+        str = mFormatter.format(str, arg1, arg2);
+        warn(str, info);
     }
 
     /**
@@ -275,6 +333,10 @@ public class TypeChecker {
 
     public int getErrorCount() {
         return mErrorCount;
+    }
+    
+    public int getWarningCount() {
+        return mWarningCount;
     }
 
     protected class Visitor extends TreeWalker {
@@ -1266,6 +1328,10 @@ public class TypeChecker {
                 error("functioncallexpression.not.static", name, node);
             }
             
+            if (ClassUtils.isDeprecated(m)) {
+                warn("functioncallexpression.deprecated", name, node);
+            }
+            
             node.setCalledMethod(m);
             for (int i=0; i<length; i++) {
                 Type converted =
@@ -1799,6 +1865,10 @@ public class TypeChecker {
                     node.convertTo(Type.STRING_TYPE);
                 }
 
+                if (ClassUtils.isDeprecated(rmethod)) {
+                    warn("functioncallexpression.deprecated", lookupName, node);
+                }
+                
                 node.setReadMethod(rmethod);
             }
 
@@ -1885,7 +1955,6 @@ public class TypeChecker {
                             node.convertTo(elementType);
                         }
 
-                        node.setReadMethod(m);
                         lookupIndex.convertTo(lookupType);
                         node.setReadMethod(m);
                         node.setType(new Type(m.getReturnType()));
@@ -2274,15 +2343,6 @@ public class TypeChecker {
             // determine compatibility
             Type ltype = left.getType();
             Type rtype = right.getType();
-            if (ltype != null && rtype != null &&
-                ltype.convertableFrom(rtype) == -1 &&
-                rtype.convertableFrom(ltype) == -1) {
-                
-                /*
-                warn("compare.not.convertible",
-                      ltype.getClassName(), rtype.getClassName(), node);
-                */
-            }
 
             // convert to a compatible type
             if (ltype != null && rtype != null) {

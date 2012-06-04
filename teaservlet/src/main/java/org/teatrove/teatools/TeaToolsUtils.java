@@ -288,27 +288,10 @@ implements TeaToolsConstants {
      * deprecated.
      * 
      * @see Deprecated
+     * @see ClassUtils#isDeprecated(Class)
      */
     public boolean isDeprecated(Class<?> clazz) {
-
-        // check if class is marked as deprecated
-        if (clazz.getAnnotation(Deprecated.class) != null) { 
-            return true; 
-        }
-        
-        // check if super class is deprecated
-        Class<?> superClass = clazz.getSuperclass();
-        if (superClass != null) {
-            return isDeprecated(superClass);
-        }
-        
-        // check if interfaces are deprecated
-        for (Class<?> iface : clazz.getInterfaces()) {
-            return isDeprecated(iface);
-        }
-        
-        // not deprecated
-        return false;
+        return ClassUtils.isDeprecated(clazz);
     }
     
     /**
@@ -316,50 +299,10 @@ implements TeaToolsConstants {
      * declaration is deprecated.
      * 
      * @see Deprecated
+     * @see ClassUtils#isDeprecated(Method)
      */
     public boolean isDeprecated(Method method) {
-        return isDeprecated(method.getDeclaringClass(), method.getName(), 
-                            method.getParameterTypes());
-    }
-   
-    /**
-     * Returns whether the given method or any super method or interface
-     * declaration is deprecated.
-     * 
-     * @see Deprecated
-     */
-    protected boolean isDeprecated(Class<?> clazz, 
-        String methodName, Class<?>... paramTypes) {
-        
-        // check if type is annotated
-        if (isDeprecated(clazz)) { return true; }
-        
-        // check if method is annotated
-        try {
-            Method method = 
-                clazz.getDeclaredMethod(methodName, paramTypes);
-            
-            if (method.getAnnotation(Deprecated.class) != null) {
-                return true;
-            }
-        }
-        catch (NoSuchMethodException nsme) {
-            // ignore and continue
-        }
-        
-        // check superclass
-        Class<?> superClass = clazz.getSuperclass();
-        if (superClass != null) {
-            return isDeprecated(superClass, methodName, paramTypes);
-        }
-        
-        // check interfaces
-        for (Class<?> iface : clazz.getInterfaces()) {
-            return isDeprecated(iface, methodName, paramTypes);
-        }
-        
-        // none found
-        return false;
+        return ClassUtils.isDeprecated(method);
     }
     
     /**

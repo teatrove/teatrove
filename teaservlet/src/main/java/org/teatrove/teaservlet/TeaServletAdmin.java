@@ -45,9 +45,8 @@ import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.TemplateCallExtractor;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
-import org.teatrove.tea.engine.TemplateError;
 import org.teatrove.tea.engine.TemplateExecutionResult;
-import org.teatrove.tea.runtime.Context;
+import org.teatrove.tea.engine.TemplateIssue;
 import org.teatrove.tea.runtime.TemplateLoader;
 import org.teatrove.teaservlet.stats.TeaServletRequestStats;
 import org.teatrove.teaservlet.stats.TemplateStats;
@@ -113,7 +112,7 @@ public class TeaServletAdmin implements Restartable {
                 if(commandCode.intValue() == RELOAD_SELECTED_TEMPLATE_CHANGES) {
                     selectedTemplates = (String[])((Object[])paramObj)[1];
                     if(selectedTemplates==null) {
-                        return new TemplateCompilationResults(new HashMap<String, CompilationUnit>(), new HashMap<String, List<TemplateError>>());
+                        return new TemplateCompilationResults(new HashMap<String, CompilationUnit>(), new HashMap<String, List<TemplateIssue>>());
                     } 
                     for (int i = 0; i < selectedTemplates.length; i++) {
                         selectedTemplates[i] = selectedTemplates[i].replace('/', '.');
