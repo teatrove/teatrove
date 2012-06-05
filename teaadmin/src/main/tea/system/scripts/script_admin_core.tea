@@ -68,6 +68,8 @@
             // make the indicator a stack operation so that multiple invokes to
             // show keep it displayed for the longest running invocation
             $loadingIndicator = $('#loadingIndicator');
+            
+            $loadingIndicator.data('count', 0);
             $loadingIndicator.showNow = $loadingIndicator.show;
             $loadingIndicator.hideNow = $loadingIndicator.hide;
             $loadingIndicator.show = function() {
