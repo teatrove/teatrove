@@ -60,8 +60,31 @@
         ,version: "0.1"
     };
 
-    var templateInterval;
-
+    var templateInterval, $loadingIndicator;
+    
+    /* loading indicator */
+    function getLoadingIndicator() {
+        if (!$loadingIndicator) {
+            // make the indicator a stack operation so that multiple invokes to
+            // show keep it displayed for the longest running invocation
+            $loadingIndicator = $('#loadingIndicator');
+            $loadingIndicator.showNow = $loadingIndicator.show;
+            $loadingIndicator.hideNow = $loadingIndicator.hide;
+            $loadingIndicator.show = function() {
+                var cnt = $loadingIndicator.data('count');
+                $loadingIndicator.data('count', cnt + 1);
+                $loadingIndicator.showNow();
+            };
+            $loadingIndicator.hide = function() {
+                var cnt = Math.max($loadingIndicator.data('count'), 1);
+                $loadingIndicator.data('count', cnt - 1);
+                if (cnt <= 1) { $loadingIndicator.hideNow(); }
+            };
+        }
+        
+        return $loadingIndicator;
+    }
+    
     /* nav */
     $('header a').live('click', function (evt) {
         if ( $(this).attr('href') == '#' ) {
@@ -203,7 +226,8 @@
                         
                         if (!processed) { $detailsContent.html(html); }
                         $navBack.button('option', 'disabled', false);
-                        
+         
+                        initBeanDetailsLinks();
                         initTemplateOptionLinks();
                         if (after) { after('navigate', uri); }
                     }).error(function(err) {
@@ -437,16 +461,6 @@
                 }
             }
         });
-        
-        $('.subclasses > a').live('click', function(event) { 
-            $('.subclasses > ul').toggle(); 
-            event.preventDefault(); 
-        });
-        
-        $('.hiearchy > a').live('click', function(event) { 
-            $('.hiearchy > ul').toggle(); 
-            event.preventDefault(); 
-        });
     };
 
     /* logs */
@@ -529,7 +543,7 @@
             showLast = false;
         }
 
-        $('#loadingIndicator').show();
+        getLoadingIndicator().show();
         $.ajax({
             url: "format/getLogEvents?showLast="+showLast,
             success: function (data) {
@@ -537,7 +551,7 @@
             },
             complete: function () {
                 filterLogEvents();
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }
         });
     };
@@ -686,9 +700,6 @@
             }
         );
         $("#buttonset-validate .ui-button").click( function (evt) {
-            $(".controls-wrapper .ui-button").button( "option", "disabled", true );
-            $('#loadingIndicator').show();
-
             var isReady = true;
             var url = 'remote/reload';
 
@@ -713,9 +724,6 @@
             reloadTemplates(isReady, url);
         });
         $("#buttonset-compile .ui-button").click( function (evt) {
-            $(".controls-wrapper .ui-button").button( "option", "disabled", true );
-            $('#loadingIndicator').show();
-
             var isReady = true;
             var url = 'remote/reload';
 
@@ -745,17 +753,22 @@
         function reloadTemplates(isReady, url) {
             var $status = $("#status-container");
             
+             getLoadingIndicator().show();
+             $(".controls-wrapper .ui-button").button( "option", "disabled", true );
+             
             // clear previous timer if valid
             var timer = $status.data('timer');
             if (timer) { clearTimeout(timer); $status.data('timer', null); }
             
             if ( isReady ) {
                 $status.slideUp(function() { 
-                    $(this).html('');
+                    $status.html('');
                     $.ajax({
                         url: url,
                         success: function (data) {
                             $status.html(data).slideDown();
+                            
+                            updateCompileHistory();
                             if ($status.find('.sml-issues').length == 0) {
                                 getTemplateUpdates();
                                 $status.data('timer', setTimeout(function() {
@@ -766,14 +779,15 @@
                         complete: function () {
                             $(".controls-wrapper .ui-button").removeClass('ui-state-active');
                             $(".controls-wrapper .ui-button").button( "option", "disabled", false );
-                            $('#loadingIndicator').hide();
+                            getLoadingIndicator().hide();
                             SyntaxHighlighter.highlight();
+                            prettyLinks();
                         }
                     });
                 });
             } else {
                 $status.html('Feature is not ready yet.').show();
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }        
         };
         
@@ -834,59 +848,41 @@
 		initTemplateOptionLinks();
     };
     function getTemplateUpdates () {
-        //if ( $('#reload-container .sml-issues').length == 0 ) {
-            $('#loadingIndicator').show();
-            $.ajax({
-                url: "remote/reload?findUpdates=true",
-                success: function (data) {
-                    var result = data;
+        getLoadingIndicator().show();
+        $.ajax({
+            url: "remote/reload?findUpdates=true",
+            success: function (data) {
+                var result = data;
+                $("#reload-container").html(result);
 
-                    updateCompileHistory();
+                updateCompileHistory();
 
-                    $("#reload-container").html(result);
-
-                    // cookie test
-                    if ( $.cookies.test() ) {
-                        // browser is accepting cookies
-                        var selectedTemplatesString = $.cookies.get('selectedTemplates');
-                        if ( selectedTemplatesString && selectedTemplatesString.length ) {
-                            var selectedTemplatesArray = selectedTemplatesString.split(',');
-                            $(result).find('input').each( function(i,val) {
-                                var name = $(val).attr('name');
-                                var templateIndex = $.inArray(name, selectedTemplatesArray);
-                                if ( templateIndex > -1 ) {
-                                    var replaceName = name.replace(/\./g, '_');
-                                    $('#template_'+replaceName).attr('checked', 'checked');
-                                }
-                            });
-                        }
+                // cookie test
+                if ( $.cookies.test() ) {
+                    // browser is accepting cookies
+                    var selectedTemplatesString = $.cookies.get('selectedTemplates');
+                    if ( selectedTemplatesString && selectedTemplatesString.length ) {
+                        var selectedTemplatesArray = selectedTemplatesString.split(',');
+                        $(result).find('input').each( function(i,val) {
+                            var name = $(val).attr('name');
+                            var templateIndex = $.inArray(name, selectedTemplatesArray);
+                            if ( templateIndex > -1 ) {
+                                var replaceName = name.replace(/\./g, '_');
+                                $('#template_'+replaceName).attr('checked', 'checked');
+                            }
+                        });
                     }
-                },
-                complete: function () {
-                    $('#loadingIndicator').hide();
-                    SyntaxHighlighter.highlight();
-                    prettyLinks();
                 }
-            });
-        //}
+            },
+            complete: function () {
+                getLoadingIndicator().hide();
+                SyntaxHighlighter.highlight();
+                prettyLinks();
+            }
+        });
     };
     function autocompileTemplates () {
-        $('#loadingIndicator').show();
-        $("#status-container").slideUp(function() { 
-            $(this).html('');
-            $.ajax({
-                url: "remote/reload?reloadTemplates=changes",
-                success: function (data) {
-                    updateCompileHistory();
-                    $("#status-container").html(data).slideDown();
-                },
-                complete: function () {
-                    $('#loadingIndicator').hide();
-                    SyntaxHighlighter.highlight();
-                    prettyLinks();
-                }
-            });
-        });
+        reloadTemplates("remote/reload?reloadTemplates=changes", true);
     };
     function updateCompileHistory () {
         if ( $('#status-container .sml-c, #status-container .sml-e').length != 0 ) {
@@ -971,7 +967,7 @@
         
         var execute = function() {
             $execute.button("option", "disabled", false);
-            $('#loadingIndicator').show();
+            getLoadingIndicator().show();
             $.ajax({
                 type: 'post',
                 url: '<% pathPrefix %>/system/remote/execute',
@@ -997,7 +993,7 @@
                 },
                 complete: function () {
                     $execute.button("option", "disabled", false);
-                    $('#loadingIndicator').hide();
+                    getLoadingIndicator().hide();
                     
                 }
             });
@@ -1106,7 +1102,7 @@
     function initInstrumentationOptions () {
         $("#buttonset-compile .ui-button").live('click', function (evt) {
             $(".controls-wrapper .ui-button").button( "option", "disabled", true );
-            $('#loadingIndicator').show();
+            getLoadingIndicator().show();
 
             var url = 'remote/reload';
 
@@ -1155,7 +1151,7 @@
                 complete: function () {
                     $("#buttonset-compile .ui-button").removeClass('ui-state-active');
 					$("#buttonset-compile .ui-button").button( "option", "disabled", false );
-					$('#loadingIndicator').hide();
+					getLoadingIndicator().hide();
                 }
             });
         });
@@ -1180,7 +1176,7 @@
 				// follow link
                 //evt.preventDefault();
             } else if ( $(this).is(".compile") || $(this).is(".reset") ) {
-		        $('#loadingIndicator').show();
+		        getLoadingIndicator().show();
 				var link = $(this);
 				var url = $(link).attr('href');
 				var qs = $.deparam.querystring(url);
@@ -1254,7 +1250,7 @@
 						}
 		            },
 		            complete: function () {
-		                $('#loadingIndicator').hide();
+		                getLoadingIndicator().hide();
 		                
 		                if ($("#instrumentation-container").length) {
 		                    getInstrumentationUpdates();
@@ -1323,8 +1319,6 @@
         $.system.monitor(refresh * 1000);
     };
     function initSystemInfoData() {
-        var $loadingIndicator = $('#loadingIndicator');
-        
         $.system = {
             MAX_POINTS : 100,
             
@@ -1335,14 +1329,14 @@
             
             timer : null,
             refresh : function(callback) {
-                $loadingIndicator.show();
+                getLoadingIndicator().show();
                 $.get('<% pathPrefix %>system/remote/jmx', function(json) {
                     for (var i = 0; i < $.system.listeners.length; i++) {
                         var listener = $.system.listeners[i];
                         listener.callback(json);
                     }
                 }).complete(function() { 
-                    $loadingIndicator.hide();
+                    getLoadingIndicator().hide();
                     callback(); 
                 });            
             },
@@ -1633,19 +1627,25 @@
             $totalNonHeapMemory = $('#totalNonHeapMemory .value .number');
         
         $.system.addDataListener('general-text', function(json) {
-            var usedHeapMemory = json.memory.heap.used / 1024 / 1024;
-            var maxHeapMemory = json.memory.heap.max / 1024 / 1024;
-            var freeHeapMemory = maxHeapMemory - usedHeapMemory;
-            $freeHeapMemory.text(freeHeapMemory.toFixed(0));
-            $usedHeapMemory.text(usedHeapMemory.toFixed(0));
-            $totalHeapMemory.text(maxHeapMemory.toFixed(0));
-        
-            var usedNonHeapMemory = json.memory.nonheap.used / 1024 / 1024;
-            var maxNonHeapMemory = json.memory.nonheap.max / 1024 / 1024;
-            var freeNonHeapMemory = maxNonHeapMemory - usedNonHeapMemory;
-            $freeNonHeapMemory.text(freeNonHeapMemory.toFixed(0));
-            $usedNonHeapMemory.text(usedNonHeapMemory.toFixed(0));
-            $totalNonHeapMemory.text(maxNonHeapMemory.toFixed(0));
+            if (typeof json.memory !== 'undefined') {
+                if (typeof json.memory.heap !== 'undefined') {
+                    var usedHeapMemory = json.memory.heap.used / 1024 / 1024;
+                    var maxHeapMemory = json.memory.heap.max / 1024 / 1024;
+                    var freeHeapMemory = maxHeapMemory - usedHeapMemory;
+                    $freeHeapMemory.text(freeHeapMemory.toFixed(0));
+                    $usedHeapMemory.text(usedHeapMemory.toFixed(0));
+                    $totalHeapMemory.text(maxHeapMemory.toFixed(0));
+                }
+                
+                if (typeof json.memory.nonheap !== 'undefined') {
+                    var usedNonHeapMemory = json.memory.nonheap.used / 1024 / 1024;
+                    var maxNonHeapMemory = json.memory.nonheap.max / 1024 / 1024;
+                    var freeNonHeapMemory = maxNonHeapMemory - usedNonHeapMemory;
+                    $freeNonHeapMemory.text(freeNonHeapMemory.toFixed(0));
+                    $usedNonHeapMemory.text(usedNonHeapMemory.toFixed(0));
+                    $totalNonHeapMemory.text(maxNonHeapMemory.toFixed(0));
+                }
+            }
         });
         
         var $graphs = $('.graph');
@@ -1757,9 +1757,11 @@
             
             $cpuUsed.text(calculateCpu(json).toFixed(1) + '%');
             
-            $heapMemoryUsed.text((json.memory.heap.used / MEGABYTE).toFixed(1));
-            $heapMemoryCommitted.text((json.memory.heap.committed / MEGABYTE).toFixed(1));
-            $heapMemoryMax.text((json.memory.heap.max / MEGABYTE).toFixed(1));
+            if (typeof json.memory.heap !== 'undefined') {
+                $heapMemoryUsed.text((json.memory.heap.used / MEGABYTE).toFixed(1));
+                $heapMemoryCommitted.text((json.memory.heap.committed / MEGABYTE).toFixed(1));
+                $heapMemoryMax.text((json.memory.heap.max / MEGABYTE).toFixed(1));
+            }
             
             $classesLoaded.text(json.classes.loaded);
             $classesUnloaded.text(json.classes.unloaded);
@@ -1960,34 +1962,48 @@
             $oldGenMemoryPeak = $('#oldgen-memory-peak');
         
         $.system.addDataListener('memory-text', function(json) {
-            $youngCollectorCount.text(json.collectors.young.count);
-            $youngCollectorTime.text($.system.formatDuration(json.collectors.young.time, 'text'));
-            if (json.collectors.young.lastGC.start > 0) {
-                var offset = json.timestamp - (json.collectors.young.lastGC.start + json.runtime.start);
-                $youngCollectorLastGC.text($.system.formatDuration(offset, 'text') + ' ago taking ' + $.system.formatDuration(json.collectors.young.lastGC.duration, 'text'));
+            if (typeof json.collectors !== 'undefined') {
+                if (typeof json.collectors.young !== 'undefined') {
+                    $youngCollectorCount.text(json.collectors.young.count);
+                    $youngCollectorTime.text($.system.formatDuration(json.collectors.young.time, 'text'));
+                    if (json.collectors.young.lastGC.start > 0) {
+                        var offset = json.timestamp - (json.collectors.young.lastGC.start + json.runtime.start);
+                        $youngCollectorLastGC.text($.system.formatDuration(offset, 'text') + ' ago taking ' + $.system.formatDuration(json.collectors.young.lastGC.duration, 'text'));
+                    }
+                }
+            
+                if (typeof json.collectors.tenured !== 'undefined') {
+                    $tenuredCollectorCount.text(json.collectors.tenured.count);
+                    $tenuredCollectorTime.text($.system.formatDuration(json.collectors.tenured.time, 'text'));
+                    if (json.collectors.tenured.lastGC.start > 0) {
+                        var offset = json.timestamp - (json.collectors.tenured.lastGC.start + json.runtime.start);
+                        $tenuredCollectorLastGC.text($.system.formatDuration(offset, 'text') + ' ago taking ' + $.system.formatDuration(json.collectors.tenured.lastGC.duration, 'text'));
+                    }
+                }
             }
             
-            $tenuredCollectorCount.text(json.collectors.tenured.count);
-            $tenuredCollectorTime.text($.system.formatDuration(json.collectors.tenured.time, 'text'));
-            if (json.collectors.tenured.lastGC.start > 0) {
-                var offset = json.timestamp - (json.collectors.tenured.lastGC.start + json.runtime.start);
-                $tenuredCollectorLastGC.text($.system.formatDuration(offset, 'text') + ' ago taking ' + $.system.formatDuration(json.collectors.tenured.lastGC.duration, 'text'));
+            if (json.pools) {
+                if (json.pools.eden) {
+                    $edenMemoryUsed.text((json.pools.eden.usage.used / MEGABYTE).toFixed(1));
+                    $edenMemoryCommitted.text((json.pools.eden.usage.committed / MEGABYTE).toFixed(1));
+                    $edenMemoryMax.text((json.pools.eden.usage.max / MEGABYTE).toFixed(1));
+                    $edenMemoryPeak.text((json.pools.eden.peak.used / MEGABYTE).toFixed(1));
+                }
+                
+                if (json.pools.survivor) {
+                    $survivorMemoryUsed.text((json.pools.survivor.usage.used / MEGABYTE).toFixed(1));
+                    $survivorMemoryCommitted.text((json.pools.survivor.usage.committed / MEGABYTE).toFixed(1));
+                    $survivorMemoryMax.text((json.pools.survivor.usage.max / MEGABYTE).toFixed(1));
+                    $survivorMemoryPeak.text((json.pools.survivor.peak.used / MEGABYTE).toFixed(1));
+                }
+                
+                if (json.pools.tenured) {
+                    $oldGenMemoryUsed.text((json.pools.tenured.usage.used / MEGABYTE).toFixed(1));
+                    $oldGenMemoryCommitted.text((json.pools.tenured.usage.committed / MEGABYTE).toFixed(1));
+                    $oldGenMemoryMax.text((json.pools.tenured.usage.max / MEGABYTE).toFixed(1));
+                    $oldGenMemoryPeak.text((json.pools.tenured.peak.used / MEGABYTE).toFixed(1));
+                }
             }
-            
-            $edenMemoryUsed.text((json.pools.eden.usage.used / MEGABYTE).toFixed(1));
-            $edenMemoryCommitted.text((json.pools.eden.usage.committed / MEGABYTE).toFixed(1));
-            $edenMemoryMax.text((json.pools.eden.usage.max / MEGABYTE).toFixed(1));
-            $edenMemoryPeak.text((json.pools.eden.peak.used / MEGABYTE).toFixed(1));
-            
-            $survivorMemoryUsed.text((json.pools.survivor.usage.used / MEGABYTE).toFixed(1));
-            $survivorMemoryCommitted.text((json.pools.survivor.usage.committed / MEGABYTE).toFixed(1));
-            $survivorMemoryMax.text((json.pools.survivor.usage.max / MEGABYTE).toFixed(1));
-            $survivorMemoryPeak.text((json.pools.survivor.peak.used / MEGABYTE).toFixed(1));
-            
-            $oldGenMemoryUsed.text((json.pools.tenured.usage.used / MEGABYTE).toFixed(1));
-            $oldGenMemoryCommitted.text((json.pools.tenured.usage.committed / MEGABYTE).toFixed(1));
-            $oldGenMemoryMax.text((json.pools.tenured.usage.max / MEGABYTE).toFixed(1));
-            $oldGenMemoryPeak.text((json.pools.tenured.peak.used / MEGABYTE).toFixed(1));
         });
     };  
     function initSystemInfoDataThreads() {
@@ -2299,7 +2315,7 @@
                 
                 var $gheader = $($gheaders[idx]);
                 $prev = $($gheader.prev());
-                $prev.before($rowheaders[idx]);
+                $prev.before($gheaders[idx]);
             }
 
             // re-style each row
@@ -2423,7 +2439,7 @@
                 // follow link
                 // evt.preventDefault();
             } else if ( $this.is(".compile") || $this.is(".reset") ) {
-                $('#loadingIndicator').show();
+                getLoadingIndicator().show();
                 var link = $this;
                 var url = $(link).attr('href');
                 var qs = $.deparam.querystring(url);
@@ -2497,7 +2513,7 @@
                         }
                     },
                     complete: function () {
-                        $('#loadingIndicator').hide();
+                        getLoadingIndicator().hide();
                         if (getInstrumentationUpdates) {
                             getInstrumentationUpdates();
                         }
@@ -2558,7 +2574,18 @@
 			evt.preventDefault();
 		});
 	};
-	function initTimelapseOptions () {
+	function initBeanDetailsLinks() {
+	    $('.subclasses > a').live('click', function(event) { 
+            $('.subclasses > ul').toggle(); 
+            event.preventDefault(); 
+        });
+        
+        $('.hiearchy > a').live('click', function(event) { 
+            $('.hiearchy > ul').toggle(); 
+            event.preventDefault(); 
+        });
+    };
+  	function initTimelapseOptions () {
 	   initGridlapses();
 	   initTemplateOptionLinks();
 	};
@@ -2813,7 +2840,7 @@
         setTimeout(initialize, 250);
     };
     function getInstrumentationUpdates () {
-        $('#loadingIndicator').show();
+        getLoadingIndicator().show();
 
         var url = 'format/getInstrumentationTable';
 
@@ -2840,14 +2867,14 @@
             },
             complete: function () {
                 $(".controls-wrapper .ui-button").button( "option", "disabled", false );
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }
         });
     };
 
     /* live dashboard */
     function getLatestCompilations () {
-        $('#loadingIndicator').show();
+        getLoadingIndicator().show();
         $.ajax({
             url: "format/getLatestCompilations",
             success: function (data) {
@@ -2855,67 +2882,67 @@
             },
             complete: function () {
                 prettyLinks();
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }
         });
     };
     function getHeaviestTemplates () {
-        $('#loadingIndicator').show();
+        getLoadingIndicator().show();
         $.ajax({
             url: "format/getHeaviestTemplates",
             success: function (data) {
                 $("#heaviest-templates").find("ul").html(data);
             },
             complete: function () {
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }
         });
     };
     function getMostTemplateInvokes () {
-        $('#loadingIndicator').show();
+        getLoadingIndicator().show();
         $.ajax({
             url: "format/getMostTemplateInvokes",
             success: function (data) {
                 $("#most-invokes").find("ul").html(data);
             },
             complete: function () {
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }
         });
     };
     function getSlowestTemplates () {
-        $('#loadingIndicator').show();
+        getLoadingIndicator().show();
         $.ajax({
             url: "format/getSlowestTemplates",
             success: function (data) {
                 $("#slowest-templates").find("ul").html(data);
             },
             complete: function () {
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }
         });
     };
     function getUncompiledTemplates () {
-        $('#loadingIndicator').show();
+        getLoadingIndicator().show();
         $.ajax({
             url: "format/getUncompiledTemplates",
             success: function (data) {
                 $("#uncompiled-templates").find("ul").html(data);
             },
             complete: function () {
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }
         });
     };
     function getStressedTemplates () {
-        $('#loadingIndicator').show();
+        getLoadingIndicator().show();
         $.ajax({
             url: "format/getStressedTemplates",
             success: function (data) {
                 $("#stressed-templates").find("ul").html(data);
             },
             complete: function () {
-                $('#loadingIndicator').hide();
+                getLoadingIndicator().hide();
             }
         });
     };
@@ -3001,6 +3028,7 @@
         var serverName = window.location.host;
         $("ul.breadcrumbs .serverName").text(serverName);
 
+        getLoadingIndicator();
 		$(".accordion").accordion({ header: "h3", active: false, collapsible: true });
 		$(".button").button();
 		$(".buttonset").buttonset();

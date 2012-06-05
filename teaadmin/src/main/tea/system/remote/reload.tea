@@ -81,6 +81,7 @@
             '<div class="sml-s sml-w">\n'
                 '<div class="sm-imc sml-imc">\n'
                     '<ul class="sml-cnt">\n'
+                        sort(reloadableTemplates, 'name', false)
                         foreach ( t in reloadableTemplates ) {
                             '<li class="arial13bold">\n'
                                 underscorePath = replace(t.name, '/', '_');

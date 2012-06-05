@@ -31,10 +31,10 @@ import org.teatrove.trove.util.PropertyMap;
  */
 public class JMXContext implements Context {
 	
-    private String[] edenSpace = { "Eden Space", "PS Eden Space" };
+    private String[] edenSpace = { "Eden Space", "PS Eden Space", "Nursery" };
     private String[] survivorSpace = { "Survivor Space", "PS Survivor Space" };
-    private String[] permGen = { "Perm Gen", "PS Perm Gen" };
-    private String[] tenuredGen = { "Tenured Gen", "PS Old Gen" };
+    private String[] permGen = { "Perm Gen", "PS Perm Gen", "Class Memory" };
+    private String[] tenuredGen = { "Tenured Gen", "PS Old Gen", "Old Space" };
     
     /**
      * Default constructor.
@@ -183,7 +183,7 @@ public class JMXContext implements Context {
             return bean;
         }
     
-        return null;
+        return getGarbageCollectorMXBeans().get(0);
     }
 
     /**
@@ -211,7 +211,7 @@ public class JMXContext implements Context {
             }
         }
     
-        return null;
+        return getGarbageCollectorMXBeans().get(0);
     }
 
     /**

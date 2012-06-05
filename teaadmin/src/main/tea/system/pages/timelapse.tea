@@ -52,7 +52,7 @@
                     <div role="label">Show Last</div>
                     <div id="buttonset-timeframe" class="buttonset">
                         <% foreach (idx in #(1, 5, 15, 30)) { %>
-                            <a href="?page=system.pages.timelapse&timeframe=<% idx %>&zoom=<% zoom %>" class="button <% timeframe == idx ? 'ui-state-active' : '' %>"><% idx %> min<% idx > 1 ? 's' : '' %></a>
+                            <a href="?page=timelapse&timeframe=<% idx %>&zoom=<% zoom %>" class="button <% timeframe == idx ? 'ui-state-active' : '' %>"><% idx %> min<% idx > 1 ? 's' : '' %></a>
                         <% } %>
                     </div>
                     
@@ -61,22 +61,22 @@
                         <% if (zoom <= 0) { %>
                             <a href="#" class="button disabled">Zoom Out</a>
                         <% } else { %>
-                            <a href="?page=system.pages.timelapse&timeframe=<% timeframe %>&zoom=<% zoom - 1 %>" class="button">Zoom Out</a>
+                            <a href="?page=timelapse&timeframe=<% timeframe %>&zoom=<% zoom - 1 %>" class="button">Zoom Out</a>
                         <% } %>
                         
                         <% if (zoom >= 10) { %>
                             <a href="#" class="button disabled">Zoom In</a>
                         <% } else { %>
-                            <a href="?page=system.pages.timelapse&timeframe=<% timeframe %>&zoom=<% zoom + 1 %>" class="button">Zoom In</a>
+                            <a href="?page=timelapse&timeframe=<% timeframe %>&zoom=<% zoom + 1 %>" class="button">Zoom In</a>
                         <% } %>
                     </div>
                     
                     <div role="label">Order By</div>
                     <div id="buttonset-orderby" class="buttonset">
-                        <a href="?page=system.pages.timelapse&sort=path&direction=<% sort == 'path' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'path' ? 'ui-state-active' : '' %>">Path</a>
-                        <a href="?page=system.pages.timelapse&sort=name&direction=<% sort == 'name' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'name' ? 'ui-state-active' : '' %>">Name</a>
-                        <a href="?page=system.pages.timelapse&sort=recent&direction=<% sort == 'recent' and direction == 'desc' ? 'asc' : 'desc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'recent' ? 'ui-state-active' : '' %>">Recent</a>
-                        <a href="?page=system.pages.timelapse&sort=duration&direction=<% sort == 'duration' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'duration' ? 'ui-state-active' : '' %>">Duration</a>
+                        <a href="?page=timelapse&sort=path&direction=<% sort == 'path' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'path' ? 'ui-state-active' : '' %>">Path</a>
+                        <a href="?page=timelapse&sort=name&direction=<% sort == 'name' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'name' ? 'ui-state-active' : '' %>">Name</a>
+                        <a href="?page=timelapse&sort=recent&direction=<% sort == 'recent' and direction == 'desc' ? 'asc' : 'desc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'recent' ? 'ui-state-active' : '' %>">Recent</a>
+                        <a href="?page=timelapse&sort=duration&direction=<% sort == 'duration' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'duration' ? 'ui-state-active' : '' %>">Duration</a>
                     </div>
                 </div>
             </div>

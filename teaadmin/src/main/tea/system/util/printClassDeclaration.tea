@@ -65,13 +65,15 @@ if (subclasses != null and subclasses.length > 0) {
 '<div class="hiearchy">'
     '<a href="#" class="title">Class Hiearchy</a>'
     '<ul class="hide">'
-        parents = createArrayList() as List<Class>
+        parents = createArrayList() as List<java.lang.reflect.Type>
         parent = info.type.superclass
+        gparent = info.type.genericSuperclass
         foreach (i in 1..10) {
             if (parent == null) { break; }
             
-            add(parents, 0, parent)
+            add(parents, 0, gparent)
             parent = parent.superclass
+            gparent = parent.genericSuperclass
         }
         
         foreach (parent in parents) {

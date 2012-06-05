@@ -80,7 +80,7 @@ public class AssetEngine {
             throw new IllegalStateException("asset engine not initialized");
         }
         else if (this.loaders.isEmpty()) {
-            log.warn("no asset loaders configured!");
+            log.debug("no asset loaders configured!");
             return null;
         }
 

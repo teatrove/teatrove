@@ -1,0 +1,126 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.teatrove</groupId>
+    <artifactId>teatrove</artifactId>
+    <version>4.1.3-espn-4-SNAPSHOT</version>
+  </parent>
+  
+  <groupId>org.teatrove</groupId>
+  <artifactId>teaadmin</artifactId>
+  
+  <packaging>jar</packaging>
+
+  <name>TeaAdmin</name>
+  
+  <url>http://www.teatrove.org</url>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+  
+  <dependencies>
+    
+    <!-- tea stuff -->
+
+    <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>teaservlet</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.teatrove</groupId>
+      <artifactId>teaapps</artifactId>
+    </dependency>
+
+    <!-- general -->
+    
+  </dependencies>
+
+  <build>
+    <plugins>
+    
+        <!-- BEGIN ESPN UPDATE: add repackaging plugin -->
+        <plugin>
+            <groupId>com.espn.maven.plugins</groupId>
+            <artifactId>teatrove-legacy-repackager</artifactId>
+            <version>${repackaging.plugin.version}</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>repackage-sources</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <outputDirectory>${project.build.directory}/repackaged-sources</outputDirectory>
+                <additionalRoots>
+                    <param>src/main/tea</param>
+                </additionalRoots>
+            </configuration>  
+        </plugin>
+        <!-- END ESPN UPDATE -->
+      
+        <!-- TODO Add back in -->
+        <plugin>
+            <groupId>org.teatrove</groupId>
+            <artifactId>teacompiler-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <configuration>
+                <force>true</force>
+                <guardian>true</guardian>
+                <!-- BEGIN ESPN UPDATE: use repackaged sources -->
+                <defaultSourceDirectory>${project.build.directory}/repackaged-sources/src/main/tea</defaultSourceDirectory>
+                <!-- END ESPN UPDATE -->
+                <!-- BEGIN ESPN UPDATE: rename org.teatrove to com.go in merged class names and app names -->
+                <contextClassBuilder implementation="com.go.maven.plugins.teacompiler.contextclassbuilder.MergedContextClassBuilder">
+                     <!-- <mergedClassName>com.go.teaservlet.admin.MergedAdminContext</mergedClassName> -->
+                     <contexts>
+                        <context>com.go.teaservlet.AdminHttpContext</context>
+                        <context>com.go.teaapps.contexts.StringContext</context>
+                        <context>com.go.teaapps.contexts.MapContext</context>
+                        <context>com.go.teaapps.contexts.ListContext</context>
+                        <context>com.go.teaapps.contexts.DateContext</context>
+                        <context>com.go.teaapps.contexts.MathContext</context>
+                        <context>com.go.teaapps.contexts.NumberFormatContext</context>
+                        <context>com.go.teaapps.contexts.JMXContext</context>
+                        <context>com.go.teaapps.contexts.ArrayContext</context>
+                        <context>com.go.teaapps.contexts.SortContext</context>
+                        <context>com.go.teaadmin.viewer.TemplateViewerContext</context>
+                    </contexts>
+                </contextClassBuilder>
+                <!-- END ESPN UPDATE -->
+            </configuration>
+            <executions>
+                <execution>
+                    <id>compile-tea</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <dependencies>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>tea</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>trove</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.teatrove</groupId>
+                    <artifactId>teaapps</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </plugin>
+
+    </plugins>
+  </build>
+  
+</project>
