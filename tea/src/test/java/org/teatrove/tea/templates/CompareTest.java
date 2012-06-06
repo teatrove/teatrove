@@ -45,6 +45,45 @@ public class CompareTest extends AbstractTemplateTest {
     }
     
     @Test
+    public void testNulls() throws Exception {
+        String sig = "Integer a";
+        Object[] params = { null };
+        
+        assertEquals("valid", 
+                     executeSource("if (a != 2) { 'valid' }", sig, params));
+
+        assertEquals("", 
+                     executeSource("if (a == 2) { 'valid' }", sig, params));
+        
+        assertEquals("valid", 
+                     executeSource("(a != 2 ? 'valid' : '')", sig, params));
+        
+        assertEquals("", 
+                     executeSource("(a == 2 ? 'valid' : '')", sig, params));
+        
+        assertEquals("valid", 
+                     executeSource("if (5.3 != a) { 'valid' }", sig, params));
+
+        assertEquals("", 
+                     executeSource("if (5.3 == a) { 'valid' }", sig, params));
+        
+        assertEquals("valid", 
+                     executeSource("(5.3 != a ? 'valid' : '')", sig, params));
+        
+        assertEquals("", 
+                     executeSource("(5.3 == a ? 'valid' : '')", sig, params));
+        
+        assertEquals("valid", 
+                     executeSource("(null == a ? 'valid' : '')", sig, params));
+        
+        assertEquals("valid", 
+                     executeSource("(a == null ? 'valid' : '')", sig, params));
+        
+        assertEquals("valid", 
+                     executeSource("(a == a ? 'valid' : '')", sig, params));
+    }
+    
+    @Test
     public void testIncompatibleTypes() throws Exception {
 
         // validate relational

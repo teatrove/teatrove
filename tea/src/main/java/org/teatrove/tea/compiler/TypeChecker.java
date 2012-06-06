@@ -2152,7 +2152,7 @@ public class TypeChecker {
                 Class<?> clazz = type.getObjectClass();
 
                 if (type.hasPrimitivePeer() &&
-                    // TODO: needed? leftType.isNonNull() && rightType.isNonNull() &&
+                    leftType.isNonNull() && rightType.isNonNull() &&
                     (leftType.isPrimitive() || leftType.hasPrimitivePeer()) &&
                     (rightType.isPrimitive() || rightType.hasPrimitivePeer()))
                 {
