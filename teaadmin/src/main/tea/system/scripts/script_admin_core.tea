@@ -658,6 +658,7 @@
                 $('#buttonset-validate').fadeOut('fast');
                 $('#label-compile').fadeOut('fast');
                 $('#buttonset-compile').fadeOut('fast');
+                $('#reload-container').fadeOut('fast');
 
                 if (!$("#switch-autorefresh").hasClass('state-on')) {
                     $("#switch-autorefresh").click();
@@ -672,6 +673,7 @@
                 $('#buttonset-validate').fadeIn('fast');
                 $('#label-compile').fadeIn('fast');
                 $('#buttonset-compile').fadeIn('fast');
+                $('#reload-container').fadeIn('fast');
 
                 $("#switch-autocompile").removeClass('state-on').addClass('state-off');
                 
@@ -752,30 +754,47 @@
             reloadTemplates(isReady, url);
         });
 
-        function reloadTemplates(isReady, url) {
+        function autocompileTemplates () {
+            reloadTemplates(true, "remote/reload?reloadTemplates=changes", true);
+        };
+    
+        function reloadTemplates(isReady, url, auto) {
             var $status = $("#status-container");
             
-             getLoadingIndicator().show();
-             $(".controls-wrapper .ui-button").button( "option", "disabled", true );
+            getLoadingIndicator().show();
+            $(".controls-wrapper .ui-button").button( "option", "disabled", true );
              
             // clear previous timer if valid
             var timer = $status.data('timer');
             if (timer) { clearTimeout(timer); $status.data('timer', null); }
             
             if ( isReady ) {
-                $status.slideUp(function() { 
-                    $status.html('');
+                var invoke = function() { 
+                    if (!auto) { $status.html(''); }
+                    
                     $.ajax({
                         url: url,
                         success: function (data) {
-                            $status.html(data).slideDown();
+                            $status.html(data);
+                            if (!auto) { $status.slideDown(); }
                             
                             updateCompileHistory();
                             if ($status.find('.sml-issues').length == 0) {
-                                getTemplateUpdates();
-                                $status.data('timer', setTimeout(function() {
-                                    $status.slideUp();
-                                }, 5000));
+                                if (auto) {
+                                    if ($status.find('.sml-c').length > 0) {
+                                        $status.slideDown();
+                                    }
+                                    else { $status.slideUp(); }
+                                }
+                                else {
+                                    getTemplateUpdates();
+                                    $status.data('timer', setTimeout(function() {
+                                        $status.slideUp();
+                                    }, 5000));
+                                }
+                            }
+                            else if (auto) {
+                                $status.slideDown();
                             }
                         },
                         complete: function () {
@@ -786,7 +805,14 @@
                             prettyLinks();
                         }
                     });
-                });
+                };
+                
+                if (auto) {
+                    invoke();
+                }
+                else { 
+                    $status.slideUp(invoke); 
+                }
             } else {
                 $status.html('Feature is not ready yet.').show();
                 getLoadingIndicator().hide();
@@ -882,9 +908,6 @@
                 prettyLinks();
             }
         });
-    };
-    function autocompileTemplates () {
-        reloadTemplates("remote/reload?reloadTemplates=changes", true);
     };
     function updateCompileHistory () {
         if ( $('#status-container .sml-c, #status-container .sml-e').length != 0 ) {
