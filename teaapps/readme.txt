@@ -9,6 +9,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #134 adding createLinkedHashMap to MapContext
 - Fix #110 moving UtilityContext into StringContext, NumberFormatContext, DateContext, etc
 - Add join methods to ArrayContext and ListContext
 - Fix #77 to add HTMLContext for HTML-based pagination methods 
