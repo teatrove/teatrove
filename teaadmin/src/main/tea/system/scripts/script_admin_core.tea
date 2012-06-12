@@ -1014,6 +1014,16 @@
                         
                         SyntaxHighlighter.highlight();
                         resize();
+                    },
+                    500: function(response) {
+                        $errors.hide().html('');
+                        $result.html(response.responseText).show();
+                        
+                        resize();
+                        result = $result[0];
+                        if (typeof result.scrollIntoView !== 'undefined') {
+                            result.scrollIntoView();
+                        }
                     }
                 },
                 complete: function () {
