@@ -1,0 +1,28 @@
+<% template configure()
+
+request = getRequest()
+parameters = request.parameters
+
+edenSpace = parameters['eden-space']
+survivorSpace = parameters['survivor-space']
+tenuredGen = parameters['tenured-gen']
+permGen = parameters['perm-gen']
+
+youngCollector = parameters['young-collector']
+tenuredCollector = parameters['tenured-collector']
+
+if (edenSpace) { setEdenMemoryPool(edenSpace) }
+if (survivorSpace) { setSurvivorMemoryPool(survivorSpace) }
+if (tenuredGen) { setTenuredMemoryPool(tenuredGen) }
+if (permGen) { setPermGenMemoryPool(permGen) }
+
+if (youngCollector) { setYoungCollector(youngCollector) }
+if (tenuredCollector) { setTenuredCollector(tenuredCollector) }
+
+pathPrefix = call system.util.getPathPrefix();
+if (saveJMXSettings()) {
+    sendRedirect(pathPrefix & 'system/console?page=system_information&tab=memory');
+}
+else {
+    sendRedirect(pathPrefix & 'system/console?page=system_information&tab=memory&configure=true');
+}

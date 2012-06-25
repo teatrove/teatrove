@@ -138,7 +138,7 @@ operatingSystemMXBean = getOperatingSystemMXBean();
                 <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
                     <tr class="evenrow">
                         <td>Process Time</td>
-                        <td><span id="processtime"><% call system.util.getFormattedDuration(operatingSystemMXBean.processCpuTime / 1000000.0, 'text') %>/span></td>
+                        <td><span id="processtime"><% call system.util.getFormattedDuration(operatingSystemMXBean.processCpuTime / 1000000.0, 'text') %></span></td>
                     </tr>
                 <% } %>
             </tbody>

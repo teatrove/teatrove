@@ -64,7 +64,8 @@ public class ThrowableCatcherApplication implements Application {
 	        try {
 	            ContextConfig configSupport = new ContextConfig(
 	                config.getProperties(), config.getLog(), 
-	                config.getName(), config.getPlugins()
+	                config.getName(), config.getPlugins(),
+	                config.getServletContext()
 	            );
 	            
 	            Class<?> clazz = Class.forName(throwableHandlerClass);

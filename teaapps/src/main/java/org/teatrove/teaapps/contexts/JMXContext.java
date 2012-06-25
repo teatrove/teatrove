@@ -1,5 +1,9 @@
 package org.teatrove.teaapps.contexts;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
@@ -12,7 +16,9 @@ import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -23,6 +29,7 @@ import javax.management.ObjectName;
 
 import org.teatrove.teaapps.Context;
 import org.teatrove.teaapps.ContextConfig;
+import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.PropertyMap;
 
 /**
@@ -31,10 +38,31 @@ import org.teatrove.trove.util.PropertyMap;
  */
 public class JMXContext implements Context {
 	
-    private String[] edenSpace = { "Eden Space", "PS Eden Space", "Nursery" };
-    private String[] survivorSpace = { "Survivor Space", "PS Survivor Space" };
-    private String[] permGen = { "Perm Gen", "PS Perm Gen", "Class Memory" };
-    private String[] tenuredGen = { "Tenured Gen", "PS Old Gen", "Old Space" };
+    public static final String[] EDEN_SPACE_DEFAULTS = { 
+        "Eden Space", "PS Eden Space", "Par Eden Space", "Nursery" 
+    };
+    
+    public static final String[] SURVIVOR_SPACE_DEFAULTS = {
+        "Survivor Space", "PS Survivor Space", "Par Survivor Space"
+    };
+    
+    public static final String[] PERM_GEN_DEFAULTS = {
+        "Perm Gen", "PS Perm Gen", "Par Perm Gen", "CMS Par Gen", "Class Memory"
+    };
+    
+    public static final String[] TENURED_GEN_DEFAULTS = {
+        "Tenured Gen", "PS Old Gen", "Par Old Gen", "CMS Old Gen", "Old Space"
+    };
+    
+    private ContextConfig config;
+    
+    private String[] edenSpace = EDEN_SPACE_DEFAULTS;
+    private String[] survivorSpace = SURVIVOR_SPACE_DEFAULTS;
+    private String[] permGen = PERM_GEN_DEFAULTS;
+    private String[] tenuredGen = TENURED_GEN_DEFAULTS;
+    
+    private String[] youngCollector = new String[0];
+    private String[] tenuredCollector = new String[0];
     
     /**
      * Default constructor.
@@ -48,46 +76,297 @@ public class JMXContext implements Context {
      * are supported:
      * 
      * <dl>
-     *   <dt>edenSpace</dt>
-     *   <dd>The name of the eden space memory pool (default: Eden Space)</dd>
+     *   <dt>EdenSpace</dt>
+     *   <dd>The name of the eden space memory pool</dd>
      *   
-     *   <dt>survivorSpace</dt>
-     *   <dd>The name of the survivor space memory pool (default: Survivor Space)</dd>
+     *   <dt>SurvivorSpace</dt>
+     *   <dd>The name of the survivor space memory pool</dd>
      *   
-     *   <dt>permGen</dt>
-     *   <dd>The name of the perm gen memory pool (default: Perm Gen)</dd>
+     *   <dt>PermGen</dt>
+     *   <dd>The name of the perm gen memory pool</dd>
      *   
-     *   <dt>tenuredGen</dt>
-     *   <dd>The name of the tenured/old gen memory pool (default: Tenured Gen)/dd>
+     *   <dt>TenuredGen</dt>
+     *   <dd>The name of the tenured/old gen memory pool</dd>
+     *   
+     *   <dt>YoungCollector</dt>
+     *   <dd>The name of the young garbage collector</dd>
+     *   
+     *   <dt>TenuredCollector</dt>
+     *   <dd>The name of the tenured garbage collector</dd>
      * </dl>
+     * 
+     * @see #EDEN_SPACE_DEFAULTS
+     * @see #SURVIVOR_SPACE_DEFAULTS
+     * @see #PERM_GEN_DEFAULTS
+     * @see #TENURED_GEN_DEFAULTS
      */
     public void init(ContextConfig config) {
+        this.config = config;
+        
         PropertyMap properties = config.getProperties();
         String edenSpace = properties.getString("EdenSpace");
         if (edenSpace != null) {
-            this.edenSpace = new String[] { edenSpace };
+            this.setEdenMemoryPool(edenSpace);
         }
         
         String survivorSpace = properties.getString("SurvivorSpace");
         if (survivorSpace != null) {
-            this.survivorSpace = new String[] { survivorSpace };
+            this.setSurvivorMemoryPool(survivorSpace);
         }
         
         String tenuredGen = properties.getString("TenuredGen");
         if (tenuredGen != null) {
-            this.tenuredGen = new String[] { tenuredGen };
+            this.setTenuredMemoryPool(tenuredGen);
         }
         
         String permGen = properties.getString("PermGen");
         if (permGen != null) {
-            this.permGen = new String[] { permGen };
+            this.setPermGenMemoryPool(permGen);
+        }
+        
+        String youngCollector = properties.getString("YoungCollector");
+        if (youngCollector != null) {
+            this.setYoungCollector(youngCollector);
+        }
+        
+        String tenuredCollector = properties.getString("TenuredCollector");
+        if (tenuredCollector != null) {
+            this.setTenuredCollector(tenuredCollector);
         }
         
         // enable contention
         getThreadMXBean().setThreadCpuTimeEnabled(true);
         getThreadMXBean().setThreadContentionMonitoringEnabled(true);
+        
+        // load the settings if possible
+        loadJMXSettings();
     }
     
+    /**
+     * Check whether or not the context is properly configured with valid
+     * memory pools and collectors, including eden, survivor, and tenured
+     * generations.
+     * 
+     * @return <code>true</code> if properly configured, otherwise false
+     */
+    public boolean validateJMX() {
+        if (getEdenMemoryPoolMXBean() == null ||
+            getSurvivorMemoryPoolMXBean() == null ||
+            getTenuredMemoryPoolMXBean() == null ||
+            getYoungCollectorMXBean() == null ||
+            getTenuredCollectorMXBean() == null) {
+            
+            return false;
+        }
+        
+        return true;
+    }
+    
+    protected File getSettingsFile() {
+        Log log = config.getLog();
+        
+        // get the temp dir
+        final String TEMP_DIR = "javax.servlet.context.tempdir";
+        File tempDir = (File) config.getServletContext().getAttribute(TEMP_DIR);
+        
+        // validate the dir exists
+        if (tempDir == null) {
+            tempDir = new File(".");
+            if (!tempDir.exists()) {
+                log.warn("No temporary directory to save JMX settings");
+                return null;
+            }
+        }
+        
+        // create and validate file
+        File settingsFile = new File(tempDir, "jmx.properties");
+        return settingsFile;
+    }
+    
+    protected void saveSetting(Properties properties, 
+                               String name, String[] array) {
+        if (array != null && array.length == 1) {
+            properties.put(name, array[0]);
+        }
+    }
+
+    /**
+     * Load the previously saved and configured JMX settings for memory pools 
+     * and collectors.  The settings are stored in the temporary/working 
+     * directory of the servlet. 
+     * 
+     * @return true if successfully saved, false otherwise
+     * 
+     * @see #saveJMXSettings()
+     */
+    public boolean loadJMXSettings() {
+        Log log = config.getLog();
+        
+        // load settings file
+        // if non-existant, nothing to load so return success
+        File settingsFile = getSettingsFile();
+        if (!settingsFile.exists()) { return true; }
+        
+        // validate file is readable
+        if (!settingsFile.canRead()) {
+            log.warn("Temporary directory not readable for JMX settings");
+            return false;
+        }
+        
+        // create the properties
+        Properties properties = new Properties();
+        
+        // load the properties
+        FileInputStream in = null;
+        try { 
+            in = new FileInputStream(settingsFile);
+            properties.load(in);
+        }
+        catch (IOException ioe) {
+            log.error("Unable to load JMX settings: " + ioe.getMessage());
+            log.error(ioe);
+            return false;
+        }
+        finally {
+            try { if (in != null) { in.close(); } }
+            catch (IOException e) { /* ignore */ }
+        }
+        
+        // load the settings
+        String value;
+        
+        value = properties.getProperty("EdenSpace");
+        if (value != null) { edenSpace = new String[] { value }; }
+        
+        value = properties.getProperty("SurvivorSpace");
+        if (value != null) { survivorSpace = new String[] { value }; }
+        
+        value = properties.getProperty("PermGen");
+        if (value != null) { permGen = new String[] { value }; }
+        
+        value = properties.getProperty("TenuredGen");
+        if (value != null) { tenuredGen = new String[] { value }; }
+        
+        value = properties.getProperty("YoungCollector");
+        if (value != null) { youngCollector = new String[] { value }; }
+        
+        value = properties.getProperty("TenuredCollector");
+        if (value != null) { tenuredCollector = new String[] { value }; }
+        
+        // success
+        return true;
+    }
+    
+    /**
+     * Save the configured JMX settings for memory pools and collectors so that
+     * the customized settings will be persisted across restarts.  The settings
+     * are stored in the temporary/working directory of the servlet. 
+     * 
+     * @return true if successfully saved, false otherwise
+     */
+    public boolean saveJMXSettings() {
+        Log log = config.getLog();
+        
+        // create and validate file
+        File settingsFile = getSettingsFile();
+        
+        // create the jmx properties state
+        Properties properties  = new Properties();
+        
+        saveSetting(properties, "EdenSpace", edenSpace);
+        saveSetting(properties, "SurvivorSpace", survivorSpace);
+        saveSetting(properties, "PermGen", permGen);
+        saveSetting(properties, "TenuredGen", tenuredGen);
+        
+        saveSetting(properties, "YoungCollector", youngCollector);
+        saveSetting(properties, "TenuredCollector", tenuredCollector);
+        
+        // save the properties
+        String comment = "Saved JMX settings on " + new Date();
+        FileOutputStream out = null;
+        
+        try {
+            out = new FileOutputStream(settingsFile);
+            properties.store(out, comment);
+        }
+        catch (IOException ioe) {
+            log.error("Unable to save JMX settings: " + ioe.getMessage());
+            log.error(ioe);
+            return false;
+        }
+        finally {
+            try { if (out != null) { out.close(); } }
+            catch (IOException e) { /* ignore */ }
+        }
+        
+        // success
+        return true;
+    }
+    
+    /**
+     * Set the name of the eden space region.  This should reflect the name of
+     * the actual {@link MemoryPoolMXBean} containing the eden space stats.
+     * 
+     * @param edenSpace The name of the eden space
+     */
+    public void setEdenMemoryPool(String edenSpace) {
+        this.edenSpace = new String[] { edenSpace };
+    }
+    
+    /**
+     * Set the name of the survivor space region.  This should reflect the name
+     * of the actual {@link MemoryPoolMXBean} containing the survivor space 
+     * stats.
+     * 
+     * @param survivorSpace The name of the survivor space
+     */
+    public void setSurvivorMemoryPool(String survivorSpace) {
+        this.survivorSpace = new String[] { survivorSpace };
+    }
+    
+    /**
+     * Set the name of the tenured, or old, generation.  This should reflect the
+     * name of the actual {@link MemoryPoolMXBean} containing the tenured
+     * generation stats.
+     * 
+     * @param tenuredGen The name of the tenured generation
+     */
+    public void setTenuredMemoryPool(String tenuredGen) {
+        this.tenuredGen = new String[] { tenuredGen };
+    }
+    
+    /**
+     * Set the name of the perm generation.  This should reflect the name of the 
+     * actual {@link MemoryPoolMXBean} containing the perm generation stats.
+     * 
+     * @param permGen The name of the perm generation
+     */
+    public void setPermGenMemoryPool(String permGen) {
+        this.permGen = new String[] { permGen };
+    }
+    
+    /**
+     * Set the name of the young garbage collector.  This should reflect the
+     * name of the actual {@link GarbageCollectorMXBean} containing the young
+     * collector stats.
+     * 
+     * @param youngCollector The name of the young collector
+     */
+    public void setYoungCollector(String youngCollector) {
+        this.youngCollector = new String[] { youngCollector };
+    }
+    
+    /**
+     * Set the name of the tenured garbage collector.  This should reflect the
+     * name of the actual {@link GarbageCollectorMXBean} containing the tenured
+     * collector stats.
+     * 
+     * @param tenuredCollector The name of the tenured collector
+     */
+    public void setTenuredCollector(String tenuredCollector) {
+        this.tenuredCollector = new String[] { tenuredCollector };
+    }
+
     /**
      * Get the {@link ClassLoadingMXBean} MBean in the running application.
      * 
@@ -157,22 +436,50 @@ public class JMXContext implements Context {
     }
 
     /**
+     * Get the {@link GarbageCollectorMXBean} with one of the given names.  The
+     * first matching collector is returned. If no garbage collector exists for 
+     * the given name, then <code>null</code> is returned.
+     * 
+     * @param names The names of the garbage collector to search for
+     * 
+     * @return The associated garbage collector or <code>null</code>
+     * 
+     * @see #getGarbageCollectorMXBeans()
+     */
+    public GarbageCollectorMXBean getGarbageCollectorMXBean(String[] names) {
+        for (String name : names) {
+            GarbageCollectorMXBean bean = this.getGarbageCollectorMXBean(name);
+            if (bean != null) { return bean; }
+        }
+        
+        return null;
+    }
+    
+    /**
      * Get the {@link GarbageCollectorMXBean} that is associated with purely
-     * the young generation including the eden and survivor spaces.  This
-     * returns the first collector that excludes the tenured generation based
-     * on the <code>tenuredGen</code> configuration or <code>Tenured Gen</code>
-     * by default.  If no collector is found, then <code>null</code> is 
-     * returned.
+     * the young generation including the eden and survivor spaces.  This 
+     * returns the collector that has the configured <code>YoungCollector</code> 
+     * name.  If no collector has been configured, then this attempts to return
+     * the first collector that excludes the tenured generation based on the 
+     * <code>TenuredGen</code> configuration or one of the known defaults.  If 
+     * no collector is found, then <code>null</code> is returned.
      * 
      * @return The young generation collector or <code>null</code>
-     * 
+     *
+     * @see #setYoungCollector(String)
      * @see #getTenuredMemoryPoolMXBean()
      * @see #getGarbageCollectorMXBean(String)
      * @see #getGarbageCollectorMXBeans()
+     * 
+     * @see #TENURED_GENERATION_POOLS
      */
     public GarbageCollectorMXBean getYoungCollectorMXBean() {
-        outer: for (GarbageCollectorMXBean bean : getGarbageCollectorMXBeans()) {
-            for (String pool : bean.getMemoryPoolNames()) {
+        GarbageCollectorMXBean bean = 
+            this.getGarbageCollectorMXBean(this.youngCollector);
+        if (bean != null) { return bean; }
+        
+        outer: for (GarbageCollectorMXBean bean2 : getGarbageCollectorMXBeans()) {
+            for (String pool : bean2.getMemoryPoolNames()) {
                 for (String name : this.tenuredGen) {
                     if (pool.equals(name)) {
                         continue outer;
@@ -180,38 +487,47 @@ public class JMXContext implements Context {
                 }
             }
             
-            return bean;
+            return bean2;
         }
-    
-        return getGarbageCollectorMXBeans().get(0);
+
+        return null;
     }
 
     /**
      * Get the {@link GarbageCollectorMXBean} that is associated with the old or
      * tenured generations collection.  The same collector may also be
-     * associated with young generations. This returns the first collector that 
-     * includes the tenured generation based on the <code>tenuredGen</code> 
-     * configuration or <code>Tenured Gen</code> by default.  If no collector 
-     * is found, then <code>null</code> is returned.
+     * associated with young generations. This  returns the collector that has 
+     * the configured <code>TenuredCollector</code> name.  If no collector has 
+     * been configured, then this attempts to return the first collector that 
+     * includes the tenured generation based on the <code>TenuredGen</code> 
+     * configuration or one of the known defaults.  If no collector is found, 
+     * then <code>null</code> is returned.
      * 
      * @return The tenured generation collector or <code>null</code>
      * 
+     * @see #setTenuredCollector(String)
      * @see #getTenuredMemoryPoolMXBean()
      * @see #getGarbageCollectorMXBean(String)
      * @see #getGarbageCollectorMXBeans()
+     * 
+     * @see #TENURED_GENERATION_POOLS
      */
     public GarbageCollectorMXBean getTenuredCollectorMXBean() {
-        for (GarbageCollectorMXBean bean : getGarbageCollectorMXBeans()) {
-            for (String pool : bean.getMemoryPoolNames()) {
+        GarbageCollectorMXBean bean = 
+            this.getGarbageCollectorMXBean(this.tenuredCollector);
+        if (bean != null) { return bean; }
+        
+        for (GarbageCollectorMXBean bean2 : getGarbageCollectorMXBeans()) {
+            for (String pool : bean2.getMemoryPoolNames()) {
                 for (String name : this.tenuredGen) {
                     if (pool.equals(name)) {
-                        return bean;
+                        return bean2;
                     }
                 }
             }
         }
     
-        return getGarbageCollectorMXBeans().get(0);
+        return null;
     }
 
     /**
@@ -287,79 +603,88 @@ public class JMXContext implements Context {
     }
 
     /**
-     * Get the {@link MemoryPoolMXBean} associated with the eden space in the
-     * young generation.  This returns the memory pool that either has the
-     * configured <code>edenSpace</code> name or <code>Eden Space</code> by
-     * default as is the case with JDK 6+ runtimes.  If the given pool cannot
-     * be found, then <code>null</code> is returned.
+     * Get the {@link MemoryPoolMXBean} with one of the given names. The first 
+     * matching memory pool is returned. If no memory pool exists for the given 
+     * names, then <code>null</code> is returned.
      * 
-     * @return The memory pool for the eden space or <code>null</code>
+     * @param names The names of the memory pools to search
      * 
-     * @see #getMemoryPoolMXBean(String)
+     * @return The associated memory pool or <code>null</code>
+     * 
      * @see #getMemoryPoolMXBeans()
      */
-    public MemoryPoolMXBean getEdenMemoryPoolMXBean() {
-        for (String name : this.edenSpace) {
+    public MemoryPoolMXBean getMemoryPoolMXBean(String[] names) {
+        for (String name : names) {
             MemoryPoolMXBean bean = getMemoryPoolMXBean(name);
             if (bean != null) { return bean; }
         }
         
         return null;
+    }
+    
+    /**
+     * Get the {@link MemoryPoolMXBean} associated with the eden space in the
+     * young generation.  This returns the memory pool that either has the
+     * configured <code>EdenSpace</code> name or one of the known defaults.  If 
+     * the given pool cannot be found, then <code>null</code> is returned.
+     * 
+     * @return The memory pool for the eden space or <code>null</code>
+     * 
+     * @see #setEdenMemoryPool(String)
+     * @see #getMemoryPoolMXBean(String)
+     * @see #getMemoryPoolMXBeans()
+     * @see #EDEN_SPACE_DEFAULTS
+     */
+    public MemoryPoolMXBean getEdenMemoryPoolMXBean() {
+        return this.getMemoryPoolMXBean(this.edenSpace);
     }
 
     /**
      * Get the {@link MemoryPoolMXBean} associated with the survivor space in 
      * the young generation.  This returns the memory pool that either has the
-     * configured <code>survivorSpace</code> name or <code>Surivor Space</code> 
-     * by default as is the case with JDK 6+ runtimes.  If the given pool cannot
-     * be found, then <code>null</code> is returned.
+     * configured <code>SurvivorSpace</code> name or one of the known defaults.  
+     * If the given pool cannot be found, then <code>null</code> is returned.
      * 
      * @return The memory pool for the survivor space or <code>null</code>
      * 
+     * @see #setSurvivorMemoryPool(String)
      * @see #getMemoryPoolMXBean(String)
      * @see #getMemoryPoolMXBeans()
+     * @see #SURVIVOR_SPACE_DEFAULTS
      */
     public MemoryPoolMXBean getSurvivorMemoryPoolMXBean() {
-        for (String name : this.survivorSpace) {
-            MemoryPoolMXBean bean = getMemoryPoolMXBean(name);
-            if (bean != null) { return bean; }
-        }
-        
-        return null;
+        return this.getMemoryPoolMXBean(this.survivorSpace);
     }
 
     /**
      * Get the {@link MemoryPoolMXBean} associated with the perm generation.  
      * This returns the memory pool that either has the configured 
-     * <code>permGen</code> name or <code>Perm Gen</code> by default as is the 
-     * case with JDK 6+ runtimes.  If the given pool cannot
-     * be found, then <code>null</code> is returned.
+     * <code>PermGen</code> name or one of the known defaults.  If the given 
+     * pool cannot be found, then <code>null</code> is returned.
      * 
      * @return The memory pool for the perm gen or <code>null</code>
      * 
+     * @see #setPermGenMemoryPool(String)
      * @see #getMemoryPoolMXBean(String)
      * @see #getMemoryPoolMXBeans()
+     * @see #PERM_GEN_DEFAULTS
      */
     public MemoryPoolMXBean getPermGenMemoryPoolMXBean() {
-        for (String name : this.permGen) {
-            MemoryPoolMXBean bean = getMemoryPoolMXBean(name);
-            if (bean != null) { return bean; }
-        }
-        
-        return null;
+        return this.getMemoryPoolMXBean(this.permGen);
     }
 
     /**
      * Get the {@link MemoryPoolMXBean} associated with the tenured gen in the
      * old generation.  This returns the memory pool that either has the
-     * configured <code>tenuredGen</code> name or <code>Tenured Gen</code> by
-     * default as is the case with JDK 6+ runtimes.  If the given pool cannot
-     * be found, then <code>null</code> is returned.
+     * configured <code>TenuredGen</code> name or one of the known defaults.  If 
+     * the given pool cannot be found, then <code>null</code> is returned.
      * 
      * @return The memory pool for the tenured gen or <code>null</code>
      * 
+     * @see #setTenuredMemoryPool(String)
      * @see #getMemoryPoolMXBean(String)
      * @see #getMemoryPoolMXBeans()
+     * @see #TENURED_GEN_DEFAULTS
      */
     public MemoryPoolMXBean getTenuredMemoryPoolMXBean() {
         for (String name : this.tenuredGen) {

@@ -1648,7 +1648,9 @@
 
         initSystemInfoDataGeneral();
         initSystemInfoDataOverview();
-        initSystemInfoDataMemory();  
+        if ($('#system-info-memory-section').length) {
+            initSystemInfoDataMemory();
+        }  
         initSystemInfoDataThreads();
         initSystemInfoDataMBeans();
         initSystemInfoDataInfo();

@@ -10,6 +10,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #142 adding ability to save/load JMX settings
 - Fix #96 adding warning message support, including deprecation
 - Fix #96 marking properties, functions, applications, etc as deprecated
 - Fix #100 adding generic and type information to beans, apps, etc

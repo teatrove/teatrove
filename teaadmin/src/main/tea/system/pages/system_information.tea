@@ -6,6 +6,7 @@
     pathPrefix = call system.util.getPathPrefix();
     call system.util.handleRequest(request);
 
+    configured = validateJMX()
     memoryMXBean = getMemoryMXBean();
 
     tab = request.parameters['tab'] ?: 'overview'
