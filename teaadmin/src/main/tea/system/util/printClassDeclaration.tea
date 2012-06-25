@@ -72,8 +72,8 @@ if (subclasses != null and subclasses.length > 0) {
             if (parent == null) { break; }
             
             add(parents, 0, gparent)
-            parent = parent.superclass
             gparent = parent.genericSuperclass
+            parent = parent.superclass
         }
         
         foreach (parent in parents) {

@@ -370,7 +370,7 @@ public interface Context extends OutputReceiver {
      * -        default negative prefix. 
      * %        multiply by 100 and show as percentage 
      * ?        multiply by 1000 and show as per mille 
-     * \u00a4        currency sign; replaced by currency symbol;
+     * \\u00a4        currency sign; replaced by currency symbol;
      * &nbsp;        if doubled, replaced by international currency 
      * &nbsp;        symbol. If present in a pattern, the monetary
      * &nbsp;        decimal separator is used instead of the decimal 
@@ -403,7 +403,7 @@ public interface Context extends OutputReceiver {
      * -        default negative prefix. 
      * %        multiply by 100 and show as percentage 
      * ?        multiply by 1000 and show as per mille 
-     * \u00a4        currency sign; replaced by currency symbol;
+     * \\u00a4        currency sign; replaced by currency symbol;
      * &nbsp;        if doubled, replaced by international currency 
      * &nbsp;        symbol. If present in a pattern, the monetary
      * &nbsp;        decimal separator is used instead of the decimal 

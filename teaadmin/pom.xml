@@ -42,7 +42,69 @@
   <build>
 	<plugins>
     
-        <!-- TODO Add back in -->
+        <plugin>
+            <groupId>org.teatrove</groupId>
+            <artifactId>package-info-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <configuration>
+              <packageRoot>org.teatrove</packageRoot>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>create-package-infos</goal>
+                </goals>
+              </execution>
+            </executions>
+        </plugin>
+      
+        <!-- Use a Javadoc doclet to generate BeanInfo classes -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.7</version>
+            <executions>
+                <execution>
+                    <id>generate-beaninfo</id>
+                    <phase>generate-sources</phase>
+                    <configuration>
+                        <useStandardDocletOptions>false</useStandardDocletOptions>
+                        <reportOutputDirectory>${project.build.directory}/generated-sources/beaninfo
+                        </reportOutputDirectory>
+                        <destDir>.</destDir>
+                        <doclet>org.teatrove.toolbox.beandoc.BeanDocDoclet</doclet>
+                        <docletArtifact>
+                            <groupId>org.teatrove</groupId>
+                            <artifactId>toolbox</artifactId>
+                            <version>${project.version}</version>
+                        </docletArtifact>
+                    </configuration>
+                    <goals>
+                        <goal>javadoc</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+                <execution>
+                    <id>add-beaninfo-sources</id>
+                    <goals>
+                        <goal>add-source</goal>
+                    </goals>
+                    <configuration>
+                        <sources>
+                            <source>${project.build.directory}/generated-sources/beaninfo</source>
+                        </sources>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        
         <plugin>
             <groupId>org.teatrove</groupId>
             <artifactId>teacompiler-maven-plugin</artifactId>
