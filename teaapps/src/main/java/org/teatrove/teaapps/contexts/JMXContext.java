@@ -47,7 +47,7 @@ public class JMXContext implements Context {
     };
     
     public static final String[] PERM_GEN_DEFAULTS = {
-        "Perm Gen", "PS Perm Gen", "Par Perm Gen", "CMS Par Gen", "Class Memory"
+        "Perm Gen", "PS Perm Gen", "Par Perm Gen", "CMS Perm Gen", "Class Memory"
     };
     
     public static final String[] TENURED_GEN_DEFAULTS = {
@@ -153,6 +153,7 @@ public class JMXContext implements Context {
         if (getEdenMemoryPoolMXBean() == null ||
             getSurvivorMemoryPoolMXBean() == null ||
             getTenuredMemoryPoolMXBean() == null ||
+            getPermGenMemoryPoolMXBean() == null ||
             getYoungCollectorMXBean() == null ||
             getTenuredCollectorMXBean() == null) {
             
