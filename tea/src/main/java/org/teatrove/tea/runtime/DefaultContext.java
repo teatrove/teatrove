@@ -394,14 +394,14 @@ public abstract class DefaultContext extends Writer
      * @hidden
      */
     public String dump(Object object) {
-        return dump(object, true, false);
+        return dump(object, true, true);
     }
     
     /**
      * @hidden
      */
     public String dump(Object object, boolean recursive) {
-        return dump(object, recursive, false);
+        return dump(object, recursive, true);
     }
     
     /**
