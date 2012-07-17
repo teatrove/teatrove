@@ -8,6 +8,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #152 fixing signature calculation for wildcard types using 'super'
 - Fix #96 adding @Deprecated to merged classs methods
 - Adding annotation support to classfile (thanks to the Cojen library)
 - Fix #19 to support file, classpath, or any URL-supported protocol for resources

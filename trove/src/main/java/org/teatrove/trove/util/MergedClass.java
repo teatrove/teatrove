@@ -82,6 +82,9 @@ public class MergedClass {
     public static final int OBSERVER_ACTIVE = 2;    // Invocation events enabled and active.
     public static final int OBSERVER_EXTERNAL = 4;    // Invocation events enabled but triggered externally.
 
+    private static final boolean DEBUG = 
+        Boolean.getBoolean(MergedClass.class.getName().concat(".DEBUG"));
+    
     static {
         try {
             cMergedMap = new IdentityMap(7);
@@ -499,6 +502,11 @@ public class MergedClass {
             );
         }
 
+        if (DEBUG) {
+            String output = outputClassToFile(cf);
+            System.out.println("Saved merged class to: " + output);
+        }
+        
         Class<?> merged;
         try {
             merged = injector.loadClass(cf.getClassName());
@@ -514,7 +522,6 @@ public class MergedClass {
     private static String outputClassToFile(ClassFile cf) {
         try {
             File file = 
-                //new File(new File("C:/opt/projects/git/teatrove/teaadmin"), cf.getClassName() + ".class");
                 File.createTempFile(cf.getClassName(), ".class");
             FileOutputStream out = new FileOutputStream(file);
             cf.writeTo(out);

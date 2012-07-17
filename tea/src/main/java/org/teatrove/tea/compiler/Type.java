@@ -1103,13 +1103,17 @@ public class Type implements java.io.Serializable {
      * @return the conversion cost, or -1 if the other can't assign to this
      */
     public int convertableFrom(Type other) {
-        if (equals(other)) {
-            return 1;
-        }
+        //if (equals(other)) {
+          //  return 1;
+        //}
 
         Class<?> thisNat = mNaturalClass;
         Class<?> otherNat = other.mNaturalClass;
 
+        if (thisNat.equals(otherNat)) {
+            return 1;
+        }
+        
         if (thisNat.isAssignableFrom(otherNat)) {
             return 2;
         }
@@ -1166,6 +1170,20 @@ public class Type implements java.io.Serializable {
         return cost;
     }
 
+    /**
+     * Check if a type is convertable including support for varargs.  If varargs
+     * is true, then this will add 40 to the total cost such that non-varargs
+     * will always take precedence.
+     * 
+     * @see #convertableFrom(Type)
+     */
+    public int convertableFrom(Type other, boolean vararg) {
+        int cost = convertableFrom(other);
+        if (cost < 0) { return cost; }
+        
+        return (vararg ? cost + 40 : cost);
+    }
+    
     private static int typeCode(Class<?> clazz) {
         if (clazz.isPrimitive()) {
             if (clazz == boolean.class) {
