@@ -8,6 +8,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #157 adding ability to provide merged context with additional interfaces
 - Fix #152 fixing signature calculation for wildcard types using 'super'
 - Fix #96 adding @Deprecated to merged classs methods
 - Adding annotation support to classfile (thanks to the Cojen library)
