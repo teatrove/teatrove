@@ -676,10 +676,14 @@ public class TeaServlet extends HttpServlet {
         throws IOException {
         
         // get the associated system path
-        String context = appRequest.getContextPath();
-        String requestURI = appRequest.getRequestURI();
-        if (requestURI.startsWith(context)) {
-            requestURI = requestURI.substring(context.length());
+        String requestURI = null;
+        if ((requestURI = appRequest.getPathInfo()) == null) {
+            String context = appRequest.getContextPath();
+            
+            requestURI = appRequest.getRequestURI();
+            if (requestURI.startsWith(context)) {
+                requestURI = requestURI.substring(context.length());
+            }
         }
 
         // check for valid asset
