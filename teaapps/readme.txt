@@ -9,6 +9,7 @@ Change History
 
 4.1.2 to 4.1.3
 ===============================
+- Fix #169 adding mergeArrays to ArrayContext
 - Fix #142 adding ability to save/load JMX settings
 - Fix #134 adding createLinkedHashMap to MapContext
 - Fix #110 moving UtilityContext into StringContext, NumberFormatContext, DateContext, etc
