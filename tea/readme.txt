@@ -10,8 +10,9 @@ compiler. A much smaller amount of code supports Tea in a runtime environment.
 
 Change History
 
-4.1.2 to 4.1.3
+4.1.2 to 4.2.0
 =============================
+- Adding BeanInfo plugin to generate bean info properties
 - Fix #157 adding back UtilityContext for backwards compatibility
 - Fix #154 fixng ambiguous edge cases when using varargs
 - Fix #96 adding deprecated and warning message support
