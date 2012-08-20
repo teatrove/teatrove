@@ -7,8 +7,9 @@ available to the TeaServlet.
 
 Change History
 
-4.1.2 to 4.1.3
+4.1.2 to 4.2.0
 ===============================
+- Add createDateWithValidation to DateContext
 - Fix #169 adding mergeArrays to ArrayContext
 - Fix #142 adding ability to save/load JMX settings
 - Fix #134 adding createLinkedHashMap to MapContext
