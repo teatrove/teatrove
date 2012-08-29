@@ -9,6 +9,8 @@ Change History
 
 4.1.2 to 4.2.0
 ===============================
+- Fix #185 fixing stack overflow from sortList
+- Removing deprecation for now
 - Add createDateWithValidation to DateContext
 - Fix #169 adding mergeArrays to ArrayContext
 - Fix #142 adding ability to save/load JMX settings
