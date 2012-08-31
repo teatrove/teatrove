@@ -24,7 +24,6 @@ import java.util.Vector;
 import javax.servlet.ServletContext;
 
 import org.teatrove.tea.compiler.CompilationProvider;
-import org.teatrove.tea.compiler.StatusListener;
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
@@ -37,6 +36,7 @@ import org.teatrove.teaservlet.util.ServletContextCompilationProvider;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.ClassInjector;
 import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.StatusListener;
 
 /**
  *

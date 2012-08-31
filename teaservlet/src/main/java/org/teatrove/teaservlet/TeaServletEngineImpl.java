@@ -16,7 +16,21 @@
 
 package org.teatrove.teaservlet;
 
-import org.teatrove.tea.compiler.StatusListener;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
@@ -27,19 +41,11 @@ import org.teatrove.teaservlet.management.HttpContextManagementMBean;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.log.LogEvent;
 import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.StatusEvent;
+import org.teatrove.trove.util.StatusListener;
 import org.teatrove.trove.util.Utils;
 import org.teatrove.trove.util.plugin.Plugin;
 import org.teatrove.trove.util.plugin.PluginContext;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.*;
 
 /**
  *
@@ -62,6 +68,9 @@ public class TeaServletEngineImpl implements TeaServletEngine {
 
     private PluginContext mPluginContext;
     
+    private StatusListener mTemplateListener;
+    private StatusListener mApplicationListener;
+
     private boolean initialized;
     private Exception initializationException;
 
@@ -70,9 +79,15 @@ public class TeaServletEngineImpl implements TeaServletEngine {
     }
     
     protected void compileTemplates(StatusListener listener) {
+        TeaServletTemplateSource source = getTemplateSource();
+        
+        if (listener != null) {
+            listener.statusStarted(new StatusEvent(source, 0, 0, null));
+        }
+
         try {
             mLog.debug("loading templates");
-            getTemplateSource().compileTemplates(null, false, listener);
+            source.compileTemplates(null, false, listener);
         }
         catch (Exception e) {
             mLog.error(e);
@@ -80,6 +95,10 @@ public class TeaServletEngineImpl implements TeaServletEngine {
         }
         finally {
             initialized = true;
+        }
+        
+        if (listener != null) {
+            listener.statusCompleted(new StatusEvent(source, 0, 0, null));
         }
     }
     
@@ -120,7 +139,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
             }
             
             // compile templates
-            compileTemplates();
+            compileTemplates(mTemplateListener);
         }
         catch (Exception e) {
             throw new ServletException(e);
@@ -191,6 +210,22 @@ public class TeaServletEngineImpl implements TeaServletEngine {
         mProperties = properties;
     }
 
+    public StatusListener getTemplateListener() {
+        return mTemplateListener;
+    }
+    
+    public void setTemplateListener(StatusListener listener) {
+        mTemplateListener = listener;
+    }
+    
+    public StatusListener getApplicationListener() {
+        return mApplicationListener;
+    }
+    
+    public void setApplicationListener(StatusListener listener) {
+        mApplicationListener = listener;
+    }
+    
     public TeaServletTransaction createTransaction
         (HttpServletRequest request, HttpServletResponse response)
         throws IOException {

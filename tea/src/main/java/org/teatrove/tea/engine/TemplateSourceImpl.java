@@ -38,8 +38,6 @@ import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
 import org.teatrove.tea.compiler.CompileEvent;
 import org.teatrove.tea.compiler.SourceInfo;
-import org.teatrove.tea.compiler.StatusEvent;
-import org.teatrove.tea.compiler.StatusListener;
 import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.compiler.TemplateRepository.TemplateInfo;
 import org.teatrove.tea.runtime.Context;
@@ -51,7 +49,10 @@ import org.teatrove.tea.util.StringCompilationProvider;
 import org.teatrove.trove.io.LinePositionReader;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.ClassInjector;
+import org.teatrove.trove.util.DefaultStatusListener;
 import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.StatusEvent;
+import org.teatrove.trove.util.StatusListener;
 
 /**
  * This class should be created using the {@link TemplateSourceFactory}
@@ -1218,7 +1219,7 @@ public class TemplateSourceImpl implements TemplateSource {
         }
     }
 
-    public class CompilerStatusLogger implements StatusListener {
+    public class CompilerStatusLogger extends DefaultStatusListener {
         @SuppressWarnings("unused")
         private String mSrc;
 

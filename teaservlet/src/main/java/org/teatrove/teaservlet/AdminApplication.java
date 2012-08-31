@@ -39,6 +39,7 @@ import java.util.Vector;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.teatrove.tea.compiler.CompilationUnit;
@@ -274,40 +275,11 @@ public class AdminApplication implements AdminApp {
         return AdminContext.class;
     }
 
-    void adminCheck(ApplicationRequest request, ApplicationResponse response)
-        throws AbortTemplateException
-    {
-        if (mAdminKey == null) {
-            return;
-        }
-
-        // Check for admin key.
-        String adminParam = request.getParameter(mAdminKey);
-
-        // Look in cookie for admin param.
-        if (adminParam == null) {
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (int i = 0; i < cookies.length; i++) {
-                    Cookie cookie = cookies[i];
-                    if (cookie.getName().equals(mAdminKey)) {
-                        adminParam = cookie.getValue();
-                    }
-                }
-            }
-        }
-
-        if (adminParam != null && adminParam.equals(mAdminValue)) {
-            // Set the admin param in the cookie.
-            Cookie c = new Cookie(mAdminKey, adminParam);
-            // Save cookie for 7 days.
-            c.setMaxAge(24 * 60 * 60 * 7);
-            c.setPath("/");
-            response.addCookie(c);
-        }
-        else {
-            // User is unauthorized.
-
+    void adminCheck(ApplicationRequest request, 
+                    ApplicationResponse response) 
+        throws AbortTemplateException {
+        
+        if (!adminCheck(mAdminKey, mAdminValue, request, response)) {
             mLog.warn("Unauthorized Admin access to " +
                       request.getRequestURI() +
                       " from " + request.getRemoteAddr() +
@@ -322,6 +294,44 @@ public class AdminApplication implements AdminApp {
             }
 
             throw new AbortTemplateException();
+        }
+    }
+    
+    
+    public static boolean adminCheck(String adminKey, String adminValue,
+                                     HttpServletRequest request, 
+                                     HttpServletResponse response) {
+        if (adminKey == null) {
+            return true;
+        }
+
+        // Check for admin key.
+        String adminParam = request.getParameter(adminKey);
+
+        // Look in cookie for admin param.
+        if (adminParam == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (int i = 0; i < cookies.length; i++) {
+                    Cookie cookie = cookies[i];
+                    if (cookie.getName().equals(adminKey)) {
+                        adminParam = cookie.getValue();
+                    }
+                }
+            }
+        }
+
+        if (adminParam != null && adminParam.equals(adminValue)) {
+            // Set the admin param in the cookie.
+            Cookie c = new Cookie(adminKey, adminParam);
+            // Save cookie for 7 days.
+            c.setMaxAge(24 * 60 * 60 * 7);
+            c.setPath("/");
+            response.addCookie(c);
+            return true;
+        }
+        else {
+            return false;
         }
     }
 

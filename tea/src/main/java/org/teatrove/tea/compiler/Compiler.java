@@ -38,6 +38,8 @@ import java.util.Vector;
 import org.teatrove.tea.parsetree.Template;
 import org.teatrove.trove.io.SourceReader;
 import org.teatrove.trove.util.ClassInjector;
+import org.teatrove.trove.util.StatusEvent;
+import org.teatrove.trove.util.StatusListener;
 
 /**
  * The Tea compiler. This class is abstract, and a few concrete
