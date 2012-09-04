@@ -224,6 +224,10 @@ implements HttpContext {
     public void setHeader(String name, Date value) {
         mResponse.setDateHeader(name, value.getTime());
     }
+    
+    public void flushBuffer() throws IOException {
+        mResponse.flushBuffer();
+    }
 
     public String encodeParameter(String str, String encoding) {
         try {

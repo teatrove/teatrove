@@ -45,6 +45,7 @@ import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.TemplateCallExtractor;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
+import org.teatrove.tea.engine.TemplateCompilationStatus;
 import org.teatrove.tea.engine.TemplateExecutionResult;
 import org.teatrove.tea.engine.TemplateIssue;
 import org.teatrove.tea.runtime.TemplateLoader;
@@ -83,6 +84,7 @@ public class TeaServletAdmin implements Restartable {
     private AppAdminLinks[] mAdminLinks;
     private Comparator<TemplateWrapper> mTemplateOrdering;
     private ReloadLock mLock;
+    private TemplateCompilationStatus mStatusListener;
 
     /**
      * Initializes the Admin object for the specific TeaServletEngine instance.
@@ -92,7 +94,7 @@ public class TeaServletAdmin implements Restartable {
         mTeaServletEngine = engine;
         mLock = new ReloadLock();
     }
-
+    
     public Object restart(Object paramObj)
         throws RemoteException {
 
@@ -125,30 +127,40 @@ public class TeaServletAdmin implements Restartable {
             
             if (commandCode == null) {
                 return mTeaServletEngine.getTemplateSource()
-                    .compileTemplates(null, false);
+                    .compileTemplates(null, false, mStatusListener);
             }
             else {
+                Object result = null;
                 switch (commandCode.intValue()) {
 
                 case RELOAD_CONTEXT:
-					System.out.println("DEBUG: restart RELOAD_CONTEXT");
+					getLog().debug("DEBUG: restart RELOAD_CONTEXT");
                     return mTeaServletEngine.reloadContextAndTemplates(false);
 
                 case RELOAD_ALL_TEMPLATES:
-					System.out.println("DEBUG: restart RELOAD_ALL_TEMPLATES");
-                    return mTeaServletEngine.getTemplateSource()
-                        .compileTemplates(null, true);
+                    mStatusListener = new TemplateCompilationStatus();
+                    getLog().debug("DEBUG: restart RELOAD_ALL_TEMPLATES");
+                    result = mTeaServletEngine.getTemplateSource()
+                        .compileTemplates(null, true, mStatusListener);
+                    mStatusListener = null;
+                    return result;
 
-                    case RELOAD_SELECTED_TEMPLATE_CHANGES:
-                        System.out.println("DEBUG: restart RELOAD_SELECTED_TEMPLATE_CHANGES");
-                        return mTeaServletEngine.getTemplateSource()
-                            .compileTemplates(null, selectedTemplates);
+                case RELOAD_SELECTED_TEMPLATE_CHANGES:
+                    mStatusListener = new TemplateCompilationStatus();
+                    getLog().debug("DEBUG: restart RELOAD_SELECTED_TEMPLATE_CHANGES");
+                    result = mTeaServletEngine.getTemplateSource()
+                        .compileTemplates(null, mStatusListener, selectedTemplates);
+                    mStatusListener = null;
+                    return result;
 
                 case RELOAD_TEMPLATE_CHANGES:
                 default:
-					System.out.println("DEBUG: restart RELOAD_TEMPLATE_CHANGES");
-                    return mTeaServletEngine.getTemplateSource()
-                        .compileTemplates(null, false);
+                    mStatusListener = new TemplateCompilationStatus();
+                    getLog().debug("DEBUG: restart RELOAD_TEMPLATE_CHANGES");
+                    result = mTeaServletEngine.getTemplateSource()
+                        .compileTemplates(null, false, mStatusListener);
+                    mStatusListener = null;
+                    return result;
                 }
             }
         }
@@ -379,6 +391,10 @@ public class TeaServletAdmin implements Restartable {
     public Date getTimeOfLastReload() {
         return mTeaServletEngine.getTemplateSource()
             .getTimeOfLastReload();
+    }
+    
+    public TemplateCompilationStatus getCompilationStatus() {
+        return mStatusListener;
     }
 
     public Class<?> getTeaServletClass() {
@@ -649,4 +665,5 @@ public class TeaServletAdmin implements Restartable {
         }
 
     }
+
 }

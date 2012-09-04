@@ -31,8 +31,8 @@ import java.util.ArrayList;
  */
 public class FileByteBuffer implements ByteBuffer {
     private RandomAccessFile mFile;
-    private List mSurrogates;
-    private List mCaptureBuffers;
+    private List<Surrogate> mSurrogates;
+    private List<ByteBuffer> mCaptureBuffers;
 
     /**
      * Creates a FileByteBuffer on a RandomAccessFile. If the file is opened
@@ -57,7 +57,7 @@ public class FileByteBuffer implements ByteBuffer {
         
         int size = mSurrogates.size();
         for (int i=0; i<size; i++) {
-            count += ((Surrogate)mSurrogates.get(i)).mByteData.getByteCount();
+            count += mSurrogates.get(i).mByteData.getByteCount();
         }
 
         return count;
@@ -82,7 +82,7 @@ public class FileByteBuffer implements ByteBuffer {
             
             int size = mSurrogates.size();
             for (int i=0; i<size; i++) {
-                Surrogate s = (Surrogate)mSurrogates.get(i);
+                Surrogate s = mSurrogates.get(i);
                 currentPos = writeTo(inputBuffer, out, currentPos, s.mPos);
                 s.mByteData.writeTo(out);
             }
@@ -131,11 +131,11 @@ public class FileByteBuffer implements ByteBuffer {
     }
 
     public void append(byte b) throws IOException {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).append(b);
+                captureBuffers.get(i).append(b);
             }
         }
 
@@ -149,12 +149,11 @@ public class FileByteBuffer implements ByteBuffer {
     public void append(byte[] bytes, int offset, int length) 
         throws IOException 
     {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).append
-                    (bytes, offset, length);
+                captureBuffers.get(i).append(bytes, offset, length);
             }
         }
 
@@ -166,55 +165,71 @@ public class FileByteBuffer implements ByteBuffer {
             return;
         }
 
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).appendSurrogate(s);
+                captureBuffers.get(i).appendSurrogate(s);
             }
         }
 
         if (mSurrogates == null) {
-            mSurrogates = new ArrayList();
+            mSurrogates = new ArrayList<Surrogate>();
         }
 
         mSurrogates.add(new Surrogate(s));
     }
 
     public void addCaptureBuffer(ByteBuffer buffer) {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) == null) {
-            captureBuffers = mCaptureBuffers = new ArrayList();
+            captureBuffers = mCaptureBuffers = new ArrayList<ByteBuffer>();
         }
         captureBuffers.add(buffer);
     }
 
     public void removeCaptureBuffer(ByteBuffer buffer) {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             captureBuffers.remove(buffer);
         }
     }
 
     public void reset() throws IOException {
-        List byteDatas;
         int i, size;
 
-        if ((byteDatas = mSurrogates) != null) {
-            size = byteDatas.size();
+        List<Surrogate> surrogates;
+        if ((surrogates = mSurrogates) != null) {
+            size = surrogates.size();
             for (i=0; i<size; i++) {
-                ((ByteData)byteDatas.get(i)).reset();
+                surrogates.get(i).mByteData.reset();
             }
         }
 
+        List<ByteBuffer> byteDatas;
         if ((byteDatas = mCaptureBuffers) != null) {
             size = byteDatas.size();
             for (i=0; i<size; i++) {
-                ((ByteData)byteDatas.get(i)).reset();
+                byteDatas.get(i).reset();
             }
         }
     }
 
+    public void clear() throws IOException {
+        // nothing to do as we do not want to clear the entire file as doing
+        // so may be harmful as the file could have been opened for read and
+        // write and the clear would overwrite the previously written data
+        
+        int i, size;
+        List<ByteBuffer> byteDatas;
+        if ((byteDatas = mCaptureBuffers) != null) {
+            size = byteDatas.size();
+            for (i=0; i<size; i++) {
+                byteDatas.get(i).reset();
+            }
+        }
+    }
+    
     private class Surrogate {
         public final ByteData mByteData;
         public final long mPos;

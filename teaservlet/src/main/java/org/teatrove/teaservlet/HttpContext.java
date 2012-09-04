@@ -134,6 +134,14 @@ public interface HttpContext extends Context {
     public void setHeader(String name, Date value);
 
     /**
+     * Flush the current contents of the response stream to the connection.
+     * 
+     * @throws IOException if an error occurs flushing the output
+     */
+    public void flushBuffer()
+        throws IOException;
+    
+    /**
      * Encodes the given string so that it can be safely used in a URL. For
      * example, '?' is encoded to '%3f'.
      *

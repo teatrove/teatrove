@@ -6,8 +6,9 @@ Trove contains a rich cache of useful utilities used by both Tea and the TeaServ
 
 Change History
 
-4.1.2 to 4.1.3
+4.1.2 to 4.2.0
 ===============================
+- Adding ability to clear ByteBuffers and cleaning up JDK warnings to JDK 5
 - Fix #157 adding ability to provide merged context with additional interfaces
 - Fix #152 fixing signature calculation for wildcard types using 'super'
 - Fix #96 adding @Deprecated to merged classs methods

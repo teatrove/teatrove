@@ -34,7 +34,7 @@ public class SpilloverByteBuffer implements ByteBuffer {
     private ByteBuffer mLocalBuffer;
     private ByteBuffer mSpillover;
 
-    private List mCaptureBuffers;
+    private List<ByteBuffer> mCaptureBuffers;
 
     /**
      * Create a SpilloverByteBuffer against a Group that sets the threshold
@@ -76,11 +76,11 @@ public class SpilloverByteBuffer implements ByteBuffer {
     }
 
     public void append(byte b) throws IOException {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).append(b);
+                captureBuffers.get(i).append(b);
             }
         }
 
@@ -102,12 +102,11 @@ public class SpilloverByteBuffer implements ByteBuffer {
     public void append(byte[] bytes, int offset, int length)
         throws IOException
     {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).append
-                    (bytes, offset, length);
+                captureBuffers.get(i).append(bytes, offset, length);
             }
         }
 
@@ -127,11 +126,11 @@ public class SpilloverByteBuffer implements ByteBuffer {
             return;
         }
 
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).appendSurrogate(s);
+                captureBuffers.get(i).appendSurrogate(s);
             }
         }
 
@@ -144,15 +143,15 @@ public class SpilloverByteBuffer implements ByteBuffer {
     }
 
     public void addCaptureBuffer(ByteBuffer buffer) {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) == null) {
-            captureBuffers = mCaptureBuffers = new ArrayList();
+            captureBuffers = mCaptureBuffers = new ArrayList<ByteBuffer>();
         }
         captureBuffers.add(buffer);
     }
 
     public void removeCaptureBuffer(ByteBuffer buffer) {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             captureBuffers.remove(buffer);
         }
@@ -164,11 +163,26 @@ public class SpilloverByteBuffer implements ByteBuffer {
             mSpillover.reset();
         }
         
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteData)captureBuffers.get(i)).reset();
+                captureBuffers.get(i).reset();
+            }
+        }
+    }
+    
+    public void clear() throws IOException {
+        mLocalBuffer.clear();
+        if (mSpillover != null) {
+            mSpillover.clear();
+        }
+        
+        List<ByteBuffer> captureBuffers;
+        if ((captureBuffers = mCaptureBuffers) != null) {
+            int size = captureBuffers.size();
+            for (int i=0; i<size; i++) {
+                captureBuffers.get(i).clear();
             }
         }
     }

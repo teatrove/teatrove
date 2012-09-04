@@ -13,8 +13,9 @@ properties file with configuration information and initialization parameters.
 
 Change History
 
-4.1.2 to 4.1.3
+4.1.2 to 4.2.0
 ===============================
+- Add flushBuffer and getTemplateCompilationStatus for #186
 - Fix #66 and #174 adding startup screen
 - Fix #158 fixing paths for assets in certain cases
 - Fix #96 adding deprecated support to application and function info

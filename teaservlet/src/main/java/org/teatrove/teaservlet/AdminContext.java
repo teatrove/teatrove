@@ -23,6 +23,7 @@ import javax.servlet.ServletException;
 
 import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.engine.TemplateCompilationResults;
+import org.teatrove.tea.engine.TemplateCompilationStatus;
 import org.teatrove.tea.engine.TemplateExecutionResult;
 import org.teatrove.teaservlet.stats.AggregateInterval;
 import org.teatrove.teaservlet.stats.AggregateSummary;
@@ -62,6 +63,15 @@ public interface AdminContext extends TeaToolsContext {
      */
     public TemplateCompilationResults getCompilationResults();
 
+    /**
+     * Get the status of the currently executing compilation.  This will return
+     * the number of templates being compiled and the current progress.  If no
+     * active compilation is happening, <code>null</code> is returned.
+     * 
+     * @return The current template compilation status or <code>null</code>
+     */
+    public TemplateCompilationStatus getCompilationStatus();
+    
     /**
      * Returns a Class object for a given name.
      * it basically lets templates perform Class.forName(classname);

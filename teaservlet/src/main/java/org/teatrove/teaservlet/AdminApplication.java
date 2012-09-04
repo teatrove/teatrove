@@ -46,6 +46,7 @@ import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
+import org.teatrove.tea.engine.TemplateCompilationStatus;
 import org.teatrove.tea.engine.TemplateIssue;
 import org.teatrove.tea.engine.TemplateExecutionResult;
 import org.teatrove.tea.runtime.Context;
@@ -386,6 +387,11 @@ public class AdminApplication implements AdminApp {
 
         public TemplateCompilationResults getCompilationResults() {
             return mCompilationResults;
+        }
+        
+        @Override
+        public TemplateCompilationStatus getCompilationStatus() {
+            return mTSAdmin.getCompilationStatus();
         }
 
         public FunctionInfo getFunction(String methodName) {

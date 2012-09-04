@@ -25,6 +25,8 @@ package org.teatrove.teaservlet.io;
 public class ArrayByteData extends org.teatrove.trove.io.ArrayByteData
     implements ByteData
 {
+    private static final long serialVersionUID = 1L;
+
     public ArrayByteData(byte[] data) {
         super(data);
     }

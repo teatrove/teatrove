@@ -8,8 +8,9 @@ etc.
 
 Change History
 
-4.1.2 to 4.1.3
+4.1.2 to 4.2.0
 ===============================
+- Fix #186 adding progress bar to compilation page
 - Fix #142 adding ability to save/load JMX settings
 - Fix #96 adding warning message support, including deprecation
 - Fix #96 marking properties, functions, applications, etc as deprecated

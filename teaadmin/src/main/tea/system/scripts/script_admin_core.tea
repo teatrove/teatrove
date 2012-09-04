@@ -17,7 +17,9 @@
         DAYS = (HOURS * 24.0),
         
         KILOBYTE = (1024.0),
-        MEGABYTE = (KILOBYTE * 1024.0);
+        MEGABYTE = (KILOBYTE * 1024.0),
+        
+        TEMPLATE_UPDATE = 5000;
     
     /* ajax setup */
     var ajaxId = null;
@@ -56,11 +58,29 @@
     
     /* model */
     global.Admin = {
-        id: "Admin"
-        ,version: "0.1"
+        id: "Admin",
+        version: "0.1"
     };
-
-    var templateInterval, $loadingIndicator;
+    
+    /* helpers */
+    global.progress = {
+        set : function(value, label) {
+            $('#progress-label').html(label);
+            $('#progress-value').css('width', value + '%');
+        },
+        
+        show : function() {
+            $('#progressBar').fadeIn('fast');
+        },
+        
+        hide : function() {
+            $('#progressBar').fadeOut('fast');
+        }
+    };
+        
+    var templateInterval, 
+        templateIntervalTimeout = TEMPLATE_UPDATE,
+        $loadingIndicator;
     
     /* loading indicator */
     function getLoadingIndicator() {
@@ -665,8 +685,8 @@
                 }
                 
                 $("#switch-autocompile").removeClass('state-off').addClass('state-on');
-                clearInterval(templateInterval);
-                templateInterval = setInterval(autocompileTemplates, 5000);
+                clearTimeout(templateInterval);
+                templateInterval = setTimeout(autocompileTemplates, templateIntervalTimeout);
             },
             function() {
                 $('#label-validate').fadeIn('fast');
@@ -677,10 +697,10 @@
 
                 $("#switch-autocompile").removeClass('state-on').addClass('state-off');
                 
-                clearInterval(templateInterval);
+                clearTimeout(templateInterval);
                 var state = $("#switch-autorefresh").hasClass('state-on');
                 if (state) {
-                    templateInterval = setInterval(getTemplateUpdates, 10000);
+                    templateInterval = setTimeout(getTemplateUpdates, templateIntervalTimeout);
                 }
 			}
 		);
@@ -689,18 +709,18 @@
             function() {
                 $("#switch-autorefresh").removeClass('state-on').addClass('state-off');
                 
-                clearInterval(templateInterval);
+                clearTimeout(templateInterval);
                 var state = $("#switch-autocompile").hasClass('state-on');
                 if (state) {
-                    templateInterval = setInterval(autocompileTemplates, 5000);
+                    templateInterval = setTimeout(autocompileTemplates, templateIntervalTimeout);
                 }
                 else {
-                    templateInterval = setInterval(getTemplateUpdates, 10000);
+                    templateInterval = setTimeout(getTemplateUpdates, templateIntervalTimeout);
                 }                
             },
             function() {
                 $("#switch-autorefresh").removeClass('state-off').addClass('state-on');
-                clearInterval(templateInterval);
+                clearTimeout(templateInterval);
             }
         );
         $("#buttonset-validate .ui-button").click( function (evt) {
@@ -750,15 +770,50 @@
             } else if ( buttonText == "Cluster" ) {
                 url += '?reloadTemplates=changes&cluster=true';
             }
-
-            reloadTemplates(isReady, url);
+            
+            templateIntervalTimeout = 2000;
+            clearTimeout(templateInterval);
+            
+            var status = null;
+            if (window.EventSource) {
+                status = new EventSource('remote/status');  
+                status.onmessage = function(event) {
+                    var data = $.parseJSON(event.data);
+                    if (data && data.active) {
+                        var percent = data.percent,
+                            label = data.current + ' of ' + data.total;
+                            
+                        global.progress.show();
+                        global.progress.set(percent, label);
+                    }
+                    else {
+                        global.progress.hide();
+                    }
+                };
+            }
+            else {
+                getTemplateUpdates()
+            }
+    
+            reloadTemplates(isReady, url, false, function() {
+                templateIntervalTimeout = TEMPLATE_UPDATE;
+                
+                if (status) { 
+                    status.close();
+                    getTemplateUpdates() 
+                }
+            });
         });
 
-        function autocompileTemplates () {
-            reloadTemplates(true, "remote/reload?reloadTemplates=changes", true);
+        function autocompileTemplates (disableTimer) {
+            reloadTemplates(true, "remote/reload?reloadTemplates=changes", true, function() {
+                if (!disableTimer) {
+                    templateInterval = setTimeout(autocompileTemplates, templateIntervalTimeout);
+                }
+            });
         };
-    
-        function reloadTemplates(isReady, url, auto) {
+
+        function reloadTemplates(isReady, url, auto, callback) {
             var $status = $("#status-container");
             
             getLoadingIndicator().show();
@@ -787,7 +842,7 @@
                                     else { $status.slideUp(); }
                                 }
                                 else {
-                                    getTemplateUpdates();
+                                    getTemplateUpdates(true);
                                     $status.data('timer', setTimeout(function() {
                                         $status.slideUp();
                                     }, 5000));
@@ -803,6 +858,8 @@
                             getLoadingIndicator().hide();
                             SyntaxHighlighter.highlight();
                             prettyLinks();
+                            
+                            if (callback) { callback(); }
                         }
                     });
                 };
@@ -816,6 +873,8 @@
             } else {
                 $status.html('Feature is not ready yet.').show();
                 getLoadingIndicator().hide();
+                
+                if (callback) { callback(); }
             }        
         };
         
@@ -875,7 +934,7 @@
 		
 		initTemplateOptionLinks();
     };
-    function getTemplateUpdates () {
+    function getTemplateUpdates (disableTimer) {
         getLoadingIndicator().show();
         $.ajax({
             url: "remote/reload?findUpdates=true",
@@ -884,6 +943,7 @@
                 $("#reload-container").html(result);
 
                 updateCompileHistory();
+                updateCompileStatus();
 
                 // cookie test
                 if ( $.cookies.test() ) {
@@ -906,6 +966,10 @@
                 getLoadingIndicator().hide();
                 SyntaxHighlighter.highlight();
                 prettyLinks();
+                
+                if (!disableTimer) {
+                    templateInterval = setTimeout(getTemplateUpdates, templateIntervalTimeout);
+                }
             }
         });
     };
@@ -961,6 +1025,19 @@
                 $('#reload-container-history-label').show();
                 $('#reload-container-history').show();
             }
+        }
+    };
+    function updateCompileStatus() {
+        var $progress = $('#reload-container').find('div.compile-status');
+        if ($progress.length) {
+            var percent = $progress.data('status'),
+                label = $progress.html();
+
+            global.progress.show();
+            global.progress.set(percent, label);
+        }
+        else {
+            global.progress.hide();
         }
     };
     function initConsole() {
@@ -3100,8 +3177,8 @@
         if ( $("#reload-container").length ) {
             SyntaxHighlighter.all();
             initCompileOptions();
-            getTemplateUpdates();
-            templateInterval = setInterval(getTemplateUpdates, 10000);
+            getTemplateUpdates(true);
+            templateInterval = setTimeout(getTemplateUpdates, templateIntervalTimeout);
         }
         /* Console */
         if ( $("#console-container").length ) {

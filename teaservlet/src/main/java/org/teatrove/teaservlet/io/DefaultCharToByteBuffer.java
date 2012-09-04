@@ -24,10 +24,13 @@ import java.io.IOException;
  * @author Brian S O'Neill
  * deprecated Moved to org.teatrove.trove.io package.
  */
+@Deprecated
 public class DefaultCharToByteBuffer
     extends org.teatrove.trove.io.DefaultCharToByteBuffer
     implements CharToByteBuffer
 {
+    private static final long serialVersionUID = 1L;
+
     public DefaultCharToByteBuffer(org.teatrove.trove.io.ByteBuffer buffer) {
         super(buffer);
     }

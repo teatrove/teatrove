@@ -165,40 +165,52 @@
 
         <aside>
             <section>
-                <ul class="breadcrumbs">
+                <div class="left-float">
+                    <ul class="breadcrumbs">
 <%
-                    '<li>'
-                        '<span class="serverName">'
-                            request.serverName
-                        '</span>'
-                        clusteredServers = getTeaServletAdmin().clusteredServers;
-                        if ( clusteredServers != null ) {
-                            '<ul>'
-                            foreach ( server in clusteredServers ) {
-                                link = server;
-                                if ( request.serverPort != null and request.serverPort != 80 ) {
-                                    link = link & ':' & request.serverPort;
-                                }
-                                link = link & request.requestURI;
-                                if ( request.queryString != null ) {
-                                    link = link & '?' & request.queryString;
-                                }
-                                '<li><a href="' & link & '">' server '</a></li>'
-                            }
-                            '</ul>\n'
-                        }
-                    '</li>\n'
-
-                    if ( servletName != '' ) {
                         '<li>'
-                            '<span>' servletName '</span>'
+                            '<span class="serverName">'
+                                request.serverName
+                            '</span>'
+                            clusteredServers = getTeaServletAdmin().clusteredServers;
+                            if ( clusteredServers != null ) {
+                                '<ul>'
+                                foreach ( server in clusteredServers ) {
+                                    link = server;
+                                    if ( request.serverPort != null and request.serverPort != 80 ) {
+                                        link = link & ':' & request.serverPort;
+                                    }
+                                    link = link & request.requestURI;
+                                    if ( request.queryString != null ) {
+                                        link = link & '?' & request.queryString;
+                                    }
+                                    '<li><a href="' & link & '">' server '</a></li>'
+                                }
+                                '</ul>\n'
+                            }
                         '</li>\n'
-                    }
-
-                    '<li>' toLowerCase(pageTitle) '</li>\n'
-
+    
+                        if ( servletName != '' ) {
+                            '<li>'
+                                '<span>' servletName '</span>'
+                            '</li>\n'
+                        }
+    
+                        '<li>' toLowerCase(pageTitle) '</li>\n'
 %>
-                </ul>
+                    </ul>
+                </div>
+                <div class="right-float">
+                    <div id="loadingIndicator" class="left-float"></div>
+                    <div id="progressBar" class="progress left-float hide">            
+                        <div class="ui-progress-bar ui-container transition" id="progress_bar">
+                            <div id="progress-value" class="ui-progress" style="width: 0%;">
+                                <span id="progress-label" class="ui-label"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="clear"></div>
             </section>
         </aside>
 		<%
