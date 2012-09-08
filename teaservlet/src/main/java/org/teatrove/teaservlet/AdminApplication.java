@@ -1212,6 +1212,7 @@ public class AdminApplication implements AdminApp {
                                                    "template reload already in progress");
                     }
                     else {
+                        mResults.appendTemplates(res.getReloadedTemplateNames());
                         mResults.appendTemplates(res.getReloadedTemplates());
                         mResults.appendIssues(res.getTemplateIssues());
                     }

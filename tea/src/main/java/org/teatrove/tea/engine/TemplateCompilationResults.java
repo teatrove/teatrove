@@ -18,6 +18,7 @@ package org.teatrove.tea.engine;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -27,7 +28,9 @@ import java.util.Set;
 import org.teatrove.tea.compiler.CompilationUnit;
 
 /**
- *
+ * This contains the results of compiling templates including the templates that
+ * were compiled and any errors/warnings for those that failed compilation.
+ * 
  * @author Jonathan Colwell
  */
 public class TemplateCompilationResults implements java.io.Serializable {
@@ -38,44 +41,90 @@ public class TemplateCompilationResults implements java.io.Serializable {
     boolean mReloadInProgress;
 
     /** The set of successfully reloaded template names */
-    Map<String, CompilationUnit> mReloaded;
+    Set<String> mReloaded;
+    
+    /** 
+     * The set of reloaded template units.
+     * Note that this is transient so we do not transfer across the wire to
+     * remote peers in the cluster.
+     */
+    transient Map<String, CompilationUnit> mReloadedUnits;
 
     /** Error map, where the key is the failed template name, and the
         value is a list of TemplateIssue objects for that template */
     Map<String, List<TemplateIssue>> mIssues;
 
-    public TemplateCompilationResults(Map<String, CompilationUnit> reloaded,
+    public TemplateCompilationResults(Set<String> reloaded,
                                       Map<String, List<TemplateIssue>> issues) {
         mIssues = issues;
         mReloaded = reloaded;
+    }
+    
+    public TemplateCompilationResults(Map<String, CompilationUnit> reloaded,
+                                      Map<String, List<TemplateIssue>> issues) {
+        mIssues = issues;
+        mReloadedUnits = reloaded;
+        mReloaded = new HashSet<String>(reloaded.keySet());
     }
 
     public TemplateCompilationResults() {
         mReloadInProgress = true;
     }
 
+    public boolean appendTemplate(String name) {
+        if (name == null) {
+            return false;
+        }
+        
+        mReloaded.add(name);
+        return true;
+    }
+    
     public boolean appendTemplate(String name, CompilationUnit unit) {
         if (name == null) {
             return false;
         }
-        mReloaded.put(name, unit);
+        
+        mReloaded.add(name);
+        
+        if (mReloadedUnits != null) {
+            mReloadedUnits.put(name, unit);
+        }
+        
         return true;
     }
 
+    public boolean appendTemplates(Set<String> names) {
+        if (names == null) {
+            return false;
+        }
+
+        mReloaded.addAll(names);
+        return true;
+    }
+    
     public boolean appendTemplates(Map<String, CompilationUnit> names) {
         if (names == null) {
             return false;
         }
-        mReloaded.putAll(names);
+        
+        mReloaded.addAll(names.keySet());
+        
+        if (mReloadedUnits != null) {
+            mReloadedUnits.putAll(names);
+        }
+        
         return true;
     }
 
     public boolean appendIssues(Map<String, List<TemplateIssue>> issues) {
-        if (issues == null || issues.isEmpty())
+        if (issues == null || issues.isEmpty()) {
             return false;
+        }
 
-        if (mIssues == null)
+        if (mIssues == null) {
             mIssues = new Hashtable<String, List<TemplateIssue>>();
+        }
 
         Iterator<String> keyIterator = issues.keySet().iterator();
         while (keyIterator.hasNext()) {
@@ -112,8 +161,9 @@ public class TemplateCompilationResults implements java.io.Serializable {
 
     public boolean appendIssues(String templateName,
                                 List<TemplateIssue> issues) {
-        if (templateName == null || issues == null || issues.isEmpty())
+        if (templateName == null || issues == null || issues.isEmpty()) {
             return false;
+        }
 
         List<TemplateIssue> templateIssues = mIssues.get(templateName);
         if (templateIssues == null) {
@@ -125,15 +175,19 @@ public class TemplateCompilationResults implements java.io.Serializable {
     }
 
     public Set<String> getReloadedTemplateNames() {
-        return mReloaded.keySet();
-    }
-    
-    public Map<String, CompilationUnit> getReloadedTemplates() {
         return mReloaded;
     }
     
+    public Map<String, CompilationUnit> getReloadedTemplates() {
+        return mReloadedUnits;
+    }
+    
     public CompilationUnit getReloadedTemplate(String templateName) {
-        return mReloaded.get(templateName);
+        if (mReloadedUnits == null) {
+            return null;
+        }
+        
+        return mReloadedUnits.get(templateName);
     }
 
     public Map<String, List<TemplateIssue>> getTemplateIssues() {

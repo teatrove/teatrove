@@ -43,6 +43,7 @@ import org.teatrove.trove.util.ClassInjector;
  * @author Brian S O'Neill
  */
 public class CompilationUnit implements CompileListener {
+
     private String mName;
     private Compiler mCompiler;
     private Template mTree;

@@ -324,6 +324,7 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 else {
                     TemplateCompilationResults transients =
                         results.getTransientResults();
+                    transients.appendTemplates(delegateResults.getReloadedTemplateNames());
                     transients.appendTemplates(delegateResults.getReloadedTemplates());
                     transients.appendIssues(delegateResults.getTemplateErrors());
                 }
