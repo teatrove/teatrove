@@ -19,7 +19,9 @@
         KILOBYTE = (1024.0),
         MEGABYTE = (KILOBYTE * 1024.0),
         
-        TEMPLATE_UPDATE = 5000;
+        TEMPLATE_UPDATE = 5000,
+        
+        USE_SSE = false;
     
     /* ajax setup */
     var ajaxId = null;
@@ -772,10 +774,10 @@
             }
             
             templateIntervalTimeout = 2000;
-            clearTimeout(templateInterval);
+            //clearTimeout(templateInterval);
             
             var status = null;
-            if (window.EventSource) {
+            if (USE_SSE && window.EventSource) {
                 status = new EventSource('remote/status');  
                 status.onmessage = function(event) {
                     var data = $.parseJSON(event.data);
@@ -792,13 +794,13 @@
                 };
             }
             else {
-                getTemplateUpdates()
+                // getTemplateUpdates()
             }
     
             reloadTemplates(isReady, url, false, function() {
                 templateIntervalTimeout = TEMPLATE_UPDATE;
                 
-                if (status) { 
+                if (USE_SSE && status) { 
                     status.close();
                     getTemplateUpdates() 
                 }
