@@ -21,7 +21,7 @@
     tstats = getStatistics(templateName, null);
     templateStats = getTemplateStats(templateName);
 
-    totalTime = 0.0;
+     totalTime = 0.0;
     topLevelInvokes = 0;
     if ( tstats != null ) {
         totalTime = tstats.averageServiceDuration;
@@ -90,7 +90,7 @@
         rawData = null;
 
         numberFormat("0.00");
-        averageStressLevel = (random() * 100) & "%";
+        averageStressLevel = 0.0 & "%";
         averageTime = 0;
         averageTimeString = "0.00";
         averageThroughput = "0";

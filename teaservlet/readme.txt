@@ -15,6 +15,7 @@ Change History
 
 4.1.2 to 4.2.0
 ===============================
+- Fix #164 adding instrumentation.enabled flag to enable/disable instrumentation
 - Add flushBuffer and getTemplateCompilationStatus for #186
 - Fix #66 and #174 adding startup screen
 - Fix #158 fixing paths for assets in certain cases

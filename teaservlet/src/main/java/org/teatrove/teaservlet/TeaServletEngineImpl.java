@@ -65,14 +65,15 @@ public class TeaServletEngineImpl implements TeaServletEngine {
     private ApplicationDepot mApplicationDepot;
     private TeaServletTemplateSource mTemplateSource;
     private List mLogEvents;
+    private boolean mProfilingEnabled;
 
     private PluginContext mPluginContext;
     
     private StatusListener mTemplateListener;
     private StatusListener mApplicationListener;
 
-    private boolean initialized;
-    private Exception initializationException;
+    private boolean mInitialized;
+    private Exception mInitializationException;
 
     protected void compileTemplates() {
         compileTemplates(null);
@@ -91,10 +92,10 @@ public class TeaServletEngineImpl implements TeaServletEngine {
         }
         catch (Exception e) {
             mLog.error(e);
-            initializationException = e;
+            mInitializationException = e;
         }
         finally {
-            initialized = true;
+            mInitialized = true;
         }
         
         if (listener != null) {
@@ -103,7 +104,11 @@ public class TeaServletEngineImpl implements TeaServletEngine {
     }
     
     protected boolean isInitialized() {
-        return initialized;
+        return mInitialized;
+    }
+    
+    protected Exception getInitializationException() {
+        return mInitializationException;
     }
     
     public void startEngine(PropertyMap properties,
@@ -122,6 +127,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
             setLogEvents(memLog);
             setPluginContext(plug);
             setAssetEngine(servletContext, properties);
+            setProfilingEnabled(properties);
             mApplicationDepot = new ApplicationDepot(this);
             
             // Initialize the HttpContext JMX angent
@@ -210,6 +216,14 @@ public class TeaServletEngineImpl implements TeaServletEngine {
         mProperties = properties;
     }
 
+    public boolean isProfilingEnabled() {
+        return mProfilingEnabled;
+    }
+
+    private void setProfilingEnabled(PropertyMap properties) {
+        mProfilingEnabled = properties.getBoolean("profiling.enabled", true);
+    }
+    
     public StatusListener getTemplateListener() {
         return mTemplateListener;
     }
@@ -371,7 +385,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
                 true,
                 mProperties.getBoolean("management.httpcontext", false),
                 mProperties.getInt("management.httpcontext.readUrlCacheSize", 500),
-                mProperties.getBoolean("profiling.enabled", true));
+                isProfilingEnabled());
 
         // Create a new template source using the newly loaded context
         // source from the new application depot

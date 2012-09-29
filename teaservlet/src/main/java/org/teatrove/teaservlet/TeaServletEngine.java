@@ -87,6 +87,8 @@ public interface TeaServletEngine extends ApplicationConfig {
 
     public PropertyMap getProperties();
 
+    public boolean isProfilingEnabled();
+    
     public LogEvent[] getLogEvents();
 
     public void destroy();

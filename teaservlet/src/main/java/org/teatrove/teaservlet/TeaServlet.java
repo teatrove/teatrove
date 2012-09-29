@@ -131,6 +131,7 @@ public class TeaServlet extends HttpServlet {
     private ServletContext mServletContext;
     private String mServletName;
     private ResourceFactory mResourceFactory;
+    private boolean mInstrumentationEnabled;
 
     private String mQuerySeparator;
     private String mParameterSeparator;
@@ -192,6 +193,9 @@ public class TeaServlet extends HttpServlet {
         createLog(mServletContext);
         mLog.applyProperties(mProperties.subMap("log"));
         createMemoryLog(mLog);
+        
+        mInstrumentationEnabled = 
+            mProperties.getBoolean("instrumentation.enabled", true);
         
         Initializer initializer = new Initializer();
         if (mProperties.getBoolean("startup.background", false)) {
@@ -931,14 +935,19 @@ public class TeaServlet extends HttpServlet {
         long startTime = 0L;
         long contentLength = 0;
 
-        TemplateStats templateStats = 
-            mTeaServletRequestStats.getStats(template.getName());
+        TemplateStats templateStats = null; 
+        if (mInstrumentationEnabled) {
+            templateStats = mTeaServletRequestStats.getStats(template.getName());
+        }
         
         try {
 	        Object[] params = null;
 	        try {    
+	            if (templateStats != null) {
+	                templateStats.incrementServicing();
+	            }
+
 	            // Fill in the parameters to pass to the template.
-	        	templateStats.incrementServicing();
 	            Class<?>[] paramTypes = template.getParameterTypes();
 	            if (paramTypes.length == 0) {
 	                params = NO_PARAMS;
@@ -984,9 +993,6 @@ public class TeaServlet extends HttpServlet {
 	                }
 	            }
 	
-	            if (DEBUG) {
-	                mLog.debug("Executing template");
-	            }
 	            startTime = System.currentTimeMillis();
 	            try {
 	                try {
@@ -1001,6 +1007,7 @@ public class TeaServlet extends HttpServlet {
 	            catch (AbortTemplateException e) {
 	                if (DEBUG) {
 	                    mLog.debug("Template execution aborted!");
+	                    mLog.debug(e);
 	                }
 	            }
 	            catch (RuntimeException e) {
@@ -1081,10 +1088,14 @@ public class TeaServlet extends HttpServlet {
 	        }
 	        contentLength = appResponse.getResponseBuffer().getByteCount();
 	        appResponse.finish();
-	        templateStats.decrementServicing();
-	        templateStats.log(startTime, endTime, contentLength, params);
+	        if (templateStats != null) {
+    	        templateStats.decrementServicing();
+    	        templateStats.log(startTime, endTime, contentLength, params);
+	        }
         } catch (Exception e) {
-        	 templateStats.decrementServicing();
+            if (templateStats != null) {
+                templateStats.decrementServicing();
+            }
         }
 		return true;
     }
