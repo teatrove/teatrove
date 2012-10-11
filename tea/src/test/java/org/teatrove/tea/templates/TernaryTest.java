@@ -264,7 +264,7 @@ public class TernaryTest extends AbstractTemplateTest {
         { "m = 5; m = 'test'; (m isa String ? m.length : 0)", "4" },
         { "f = null; f?.toString()?.length() == 0", "true" },
         { "f = ''; if (not f) { f = null; }; f?.toString()?.length() ?: 5", "5" },
-        
+
         // multiple expressions
         { "a = 5; a = 10; b = null; b = 'test'; if (a and b) { 'valid' }", "valid" },
         { "a = 5; a = 0; b = null; b = ''; ; if (a and b) { 'valid' }", "" },
