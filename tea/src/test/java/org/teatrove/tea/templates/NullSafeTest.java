@@ -9,10 +9,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class NullSafeTest extends AbstractTemplateTest {
 
+    @Before
+    public void setup() {
+        addContext("DateContext", new DateContext());
+    }
+    
     @Test
     @SuppressWarnings("deprecation")
     public void testNullSafe() throws Exception {
@@ -71,4 +77,8 @@ public class NullSafeTest extends AbstractTemplateTest {
 
     protected static String TEST_SOURCE_10 =
         "(c == 'blah' ? null : 'valid')?.length";
+    
+    public static class DateContext {
+        public Date currentDate() { return new Date(); }
+    }
 }

@@ -25,10 +25,11 @@ import java.util.Set;
 
 import org.jdom.Document;
 import org.jdom.Element;
-
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.PropertyMap;
 import org.teatrove.trove.util.PropertyParser;
+import org.teatrove.trove.util.StatusEvent;
+import org.teatrove.trove.util.StatusListener;
 import org.teatrove.trove.util.XMLMapFactory;
 
 /**
@@ -139,8 +140,17 @@ public class PluginFactory {
     }
 
     public static final Plugin[] createPlugins(PluginFactoryConfig config)
+        throws PluginFactoryException 
+    {
+        return createPlugins(config, null);
+    }
+    
+    public static final Plugin[] createPlugins(PluginFactoryConfig config,
+                                               StatusListener listener)
         throws PluginFactoryException
     {
+        PluginContext context = config.getPluginContext();
+        
         Plugin[] result;
         Map plugins;
         PropertyMap properties = config.getProperties().subMap(cPluginsKey);
@@ -150,13 +160,18 @@ public class PluginFactory {
         }
 
         Set keySet = properties.subMapKeySet();
+        int index = 0, count = keySet.size();
+        if (listener != null) {
+            listener.statusStarted(new StatusEvent(context, index, count, null));
+        }
+        
         plugins = new HashMap(keySet.size());
         Iterator iterator = keySet.iterator();
-        for (int i=0; iterator.hasNext(); i++) {
+        while (iterator.hasNext()) {
             String name = (String) iterator.next();
             PropertyMap initProps = properties.subMap(name);
             PluginFactoryConfig conf = new PluginFactoryConfigSupport
-                (initProps, config.getLog(), config.getPluginContext());
+                (initProps, config.getLog(), context);
             try {
 	            plugins.put(name, createPlugin(name, conf));
 			} catch (Exception e) {
@@ -164,6 +179,11 @@ public class PluginFactory {
 				config.getLog().error("Error loading plugin: " + name);
 				config.getLog().error(e);
 			}
+            
+            index++;
+            if (listener != null) {
+                listener.statusUpdate(new StatusEvent(context, index, count, name));
+            }
         }
         Map registeredPlugins = config.getPluginContext().getPlugins();
         keySet = registeredPlugins.keySet();
@@ -176,6 +196,11 @@ public class PluginFactory {
         }
         result = new Plugin[plugins.size()];
         result = (Plugin[])plugins.values().toArray(result);
+        
+        if (listener != null) {
+            listener.statusCompleted(new StatusEvent(context, index, count, null));
+        }
+        
         return result;
     }
 

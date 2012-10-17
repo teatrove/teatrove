@@ -1,0 +1,248 @@
+<% template viewer (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+
+    call system.util.handleRequest(request);
+
+    pathPrefix = call system.util.getPathPrefix();
+    path = request.requestURI;
+    servletName = call system.util.getServletName();
+    root = "";
+    extension = "";
+
+    if ( servletName != "" ) {
+        pathTokens = tokenize(path, '/');
+        if ( pathTokens.length > 0 ) {
+            root = pathTokens[0];
+            info("root: "&root);
+        }
+    }
+    
+    parameters = request.parameters;
+    parent = parameters["parent"]
+    name = parameters["name"]
+    view = getTemplateView(parent, name)
+    if (view == null or view.sourceCode == null) {
+%>
+
+<article>
+    <section id="template-viewer">
+        <em>No source code or template available for <% name %></em>
+    </section>
+</article>
+
+<%
+    }
+    else {
+        templatePath = '/'; 
+        templateFile = name; 
+        templateFile = replace(templateFile, '.', '/');
+        index = templateFile.lastIndexOf('/')
+        if (index > 0) {
+            templatePath = templateFile.substring(0, index + 1)
+            templateFile = templateFile.substring(index + 1)
+        }
+%>
+
+<article>
+    <section id="template-viewer">
+        <div class="controls" style="float: right;">
+            <div class="controls-wrapper">
+                <div role="label">Reset:</div>
+                <div id="button-reset" class="button">
+                    <a href="<% pathPrefix %>system/viewer/reset?reset=true&name=<% name %>&parent=<% parent %>">Source</a>
+                </div>
+            </div>
+        </div>
+        <div id="template-source-container">
+            <div>
+                <div class="label left-align" style="color:#AAAAAA;"><% templatePath %></div>
+                <div class="value left-align">
+                    <a href="<% pathPrefix %><% templatePath %><% templateFile %>" target="_blank"><% templateFile %></a>
+                </div>
+            </div>
+            <div class="source-panes">
+                <div class="source-pane table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th>Source Outline</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div id="callees" class="tree">
+                                        <% if (view.callees.length == 0) { %>
+                                            <div class="message">no outline available</div>
+                                        <% } else { %>&nbsp;<% } %>
+                                    </div>
+                                    <% if (view.callees.length > 0) { %>
+                                        <script type="text/javascript">
+                                        $(function() {
+                                            $('#callees').jstree({
+                                                "core": { "html_titles" : true, "animation" : 0 },
+                                                "plugins" : [ "themes", "json_data", "ui", "types" ],
+                                                "themes" : {
+                                                    "theme" : "default",
+                                                    "url" : "styles/style_jstree",
+                                                    "dots" : true,
+                                                    "icons" : true
+                                                },
+                                                json_data : {
+                                                    data : [
+                                                        <% foreach (callee in view.callees) { %>
+                                                        {
+                                                            data : {
+                                                                title : '<span class="line">line <% callee.line %></span> <span class="template"><% replace(replace(replace(replace(callee.statement, '\'', '"'), "&nbsp;", " "), "&amp;", "&"), "\n", " ") %></span>',
+                                                                <% if (callee.isTemplate) { %>
+                                                                    attr : { href : '<% pathPrefix %>/system/console?page=viewer&parent=<% name %>&name=<% callee.name %>' },
+                                                                <% } %>
+                                                                meta : { }
+                                                            },
+                                                            attr : { 
+                                                                rel : '<% (callee.isTemplate ? 'template' : 'function') %>', 
+                                                                id : 'callee-<% callee.name %>-<% callee.line %>' ,
+                                                            },
+                                                            state : 'closed',
+                                                            metadata : {
+                                                                line : <% callee.line %>,
+                                                                name : '<% callee.name %>'
+                                                            }
+                                                        },
+                                                        <% } %>
+                                                    ],
+                                                    'ajax' : {
+                                                        'url' : '<% pathPrefix %>/system/viewer/callees',
+                                                        'data' : function(node) {
+                                                            return {
+                                                                'method' : 'children',
+                                                                'id' : node.attr('id'),
+                                                                'line' : node.data('line')
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        });
+                                        </script>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="source-pane table-container">
+                    <table cellspacing="1" cellpadding="3" class="tablehead">
+                        <thead>
+                            <tr class="stathead">
+                                <th>Call Hiearchy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div id="caller-lines" class="list">
+                                        <div class="message">click template below to view calls</div>
+                                    </div>
+                                    <div id="callers" class="tree">
+                                        <% if (view.callers.length == 0) { %>
+                                            <div class="message">no templates call this template</div>
+                                        <% } else { %>&nbsp;<% } %>
+                                    </div>
+                                    <% if (view.callers.length > 0) { %>
+                                    <script type="text/javascript">
+                                    $(function() {
+                                        $('#callers').jstree({
+                                            "core": { "html_titles" : 0, "animation" : 0 },
+                                            "plugins" : [ "themes", "json_data", "ui", "types" ],
+                                            "themes" : {
+                                                "theme" : "default",
+                                                "url" : "styles/style_jstree",
+                                                "dots" : true,
+                                                "icons" : true
+                                            },
+                                            json_data : {
+                                                data : [
+                                                    <%
+                                                        map = createHashMap()
+                                                        foreach (caller in view.callers)
+                                                        {
+                                                            if (containsKey(map, caller.name)) { continue; }
+                                                            put(map, caller.name, 1)
+                                                    %>
+                                                            {
+                                                                data : {
+                                                                    title : '<% caller.name %>',
+                                                                    attr : { class : 'caller-link', href : '?page=viewer&parent=<% name %>&name=<% caller.name %>' }
+                                                                },
+                                                                attr : { rel : 'template', id : 'caller-<% caller.name %>' },
+                                                                state : 'closed',
+                                                                metadata : {
+                                                                    line : <% caller.line %>,
+                                                                    name : '<% caller.name %>'
+                                                                }
+                                                            },
+                                                    <%
+                                                        }
+                                                    %>
+                                                ],
+                                                'ajax' : {
+                                                    'url' : '<% pathPrefix %>system/viewer/callers',
+                                                    'data' : function(node) {
+                                                        return {
+                                                            'method' : 'children',
+                                                            'id' : node.attr('id')
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    });
+                                    </script>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="source-code table-container">
+                <table cellspacing="1" cellpadding="3" class="tablehead">
+                    <thead>
+                        <tr class="stathead">
+                            <th>
+                                <span style="line-height: 21px;" title="<% view.location %>">
+                                    Source for <% name %>
+                                </span>
+                                <div class="template-options" style="margin-top: 2px;">
+                                    <a class="compile" target="_top" href="remote/reload?reloadTemplates=selected&amp;selectedTemplates=<% name %>" title="Compile template"></a>
+                                    <a class="code" target="_top" href="?page=viewer&amp;name=<% name %>" title="View template source code"></a>
+                                    <a class="web" target="_blank" href="<% pathPrefix %><% templatePath %><% templateFile %>" title="Follow template url"></a>
+                                    <a class="info" target="_top" href="?page=template_info&amp;name=<% name %>" title="View template stats"></a>
+                                    <a class="reset" target="_top" href="remote/reset?name=<% name %>" title="Reset template stats"></a>
+                                </div>
+                            </th>
+                        </tr>
+                        <tr class="colhead">
+                            <th style="font-weight: normal;"><% view.location %></th>
+                        </tr>
+                    </thead>
+                </table>
+                <div>
+                    <pre class="prettyprint linenums">
+                        <ol class="linenums">
+<% view.sourceCode %>
+                        </ol>
+                    </pre>
+                </div>
+            </div>
+            <br class="clear" />
+        </div>
+    </section>
+</article>
+
+<%
+    }
+%>

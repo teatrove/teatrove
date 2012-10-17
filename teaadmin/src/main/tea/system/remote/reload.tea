@@ -1,7 +1,7 @@
-<% template reload (String reloadTemplates, String testCompile, String findUpdates, Boolean cluster, String[] selectedTemplates)
+<% template reload (String reloadTemplates, String testCompile, String findUpdates, Boolean cluster, String[] selectedTemplates, Boolean eventSource)
 
     /* nomenclature: reloadTemplates == compile, testCompile == verify, findUpdates == choose */
-
+    
     admin = getTeaServletAdmin();
     request = getRequest();
     parameters = request.parameters;
@@ -22,10 +22,12 @@
         if ( reloadResult != null ) {
             alreadyLoading = reloadResult.alreadyReloading;
             errors = reloadResult.allTemplateErrors;
+            warnings = reloadResult.allTemplateWarnings;
             compiled = reloadResult.reloadedTemplateNames;
         } else {
             alreadyLoading = false;
             errors = null;
+            warnings = null;
             compiled = null;
         }
 
@@ -68,50 +70,8 @@
                 }
             }
 
-            if ( errors != null and errors.length > 0 ) {
-                '<div class="sml-s sml-e">\n'
-                    '<div class="sm-imc sml-imc">\n'
-                        '<ul class="sml-cnt">\n'
-                            previousTemplatePath = null;
-                            foreach ( e in errors ) {
-                                if ( e isa org.teatrove.tea.engine.TemplateError ) {
-                                    errorString = "";
-                                    errorString = errorString & call system.util.cleanString(trimLeading(e.lineStart));
-                                    errorString = errorString & call system.util.cleanString(e.errorStart);
-                                    errorString = errorString & call system.util.cleanString(e.detail);
-                                    errorString = errorString & call system.util.cleanString(e.errorEnd);
-                                    errorString = errorString & call system.util.cleanString(e.lineEnd);
-
-                                    templateName = e.sourcePath;
-                                    templateName = substring(templateName, findLast(templateName, '/')+1);
-                                    //templateName = replace(templateName, '.tea', '');
-
-                                    templatePath = call system.util.getTemplatePathFromSourcePath(admin, e.sourcePath);
-
-                                    if ( previousTemplatePath != null and templatePath != previousTemplatePath ) {
-                                        // close previous
-                                        '</li>\n'
-                                    }
-
-                                    if ( templatePath != previousTemplatePath ) {
-                                        '<li class="arial13">\n'
-                                            '<div class="template-path">'
-                                                '<a target="_blank" href="' templatePath '">' templatePath '</a>'
-                                            '</div>\n'
-                                    }
-                                    '<div class="error-detail">'
-                                        e.errorMessage
-                                    '</div>\n'
-                                    '<pre class="brush: java; first-line: ' e.lineNumber '">' errorString '</pre>'
-                                    
-                                    previousTemplatePath = templatePath;
-                                }
-                            }
-                            '</li>\n'
-                        '</ul>\n'
-                    '</div>\n'
-                '</div>\n'
-            }
+            call system.util.printIssues('e', errors);
+            call system.util.printIssues('w', warnings);
         }
 
     } else if ( findUpdates != null ) {
@@ -121,6 +81,7 @@
             '<div class="sml-s sml-w">\n'
                 '<div class="sm-imc sml-imc">\n'
                     '<ul class="sml-cnt">\n'
+                        sort(reloadableTemplates, 'name', false)
                         foreach ( t in reloadableTemplates ) {
                             '<li class="arial13bold">\n'
                                 underscorePath = replace(t.name, '/', '_');
@@ -142,6 +103,13 @@
                     '</ul>\n'
                 '</div>\n'
             '</div>\n'
+        }
+        
+        status = getCompilationStatus()
+        if (status) {
+            '<div class="compile-status hide" data-status="' status.percent '">'
+                status.current ' of ' status.total
+            '</div>'
         }
     }
 

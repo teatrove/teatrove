@@ -10,8 +10,19 @@ compiler. A much smaller amount of code supports Tea in a runtime environment.
 
 Change History
 
-4.1.2 to 4.1.3
+4.1.2 to 4.2.0
 =============================
+- Fix #188 fixing cluster/peers and compilation exceptions
+- Adding BeanInfo plugin to generate bean info properties
+- Fix #157 adding back UtilityContext for backwards compatibility
+- Fix #154 fixng ambiguous edge cases when using varargs
+- Fix #96 adding deprecated and warning message support
+- Fix #120 adding 'dump' method to the default context
+- Fix #118 throwing error if invoking non-static method statically
+- Fix #113 adding support for Type.class expressions
+- Fix #107 adding template source path to generated source
+- Fix #110 removing UtilityContext to separate contexts
+- Fix #98 to enable support for comparisons and addition with runtime analysis of Numbers
 - Fix #79 to add missing messages in type checker properties
 - Fix #78 for handling bridge methods and covariant returns in BeanAnalyzer
 - Fix #41 rewriting the compilation system so that compilation providers can now reference each other through single compiler

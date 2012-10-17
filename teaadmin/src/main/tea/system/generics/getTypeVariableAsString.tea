@@ -1,0 +1,32 @@
+<% template getTypeVariableAsString(java.lang.reflect.TypeVariable type, StringBuilder result, Boolean showLink, Boolean showVariables, Boolean resolveVariables)
+
+handled = false
+if (showVariables == true or resolveVariables != true) {
+    append(result, type.name)
+
+    if (resolveVariables == true) {
+        if (type.bounds != null and type.bounds.length == 1) {
+            bounds = type.bounds[0]
+            if (bounds isa Class) {
+                if (bounds.name == 'java.lang.Object') {
+                    handled = true
+                }
+            }
+        }
+
+        if (not handled) {
+            append(result, ' extends ')
+        }
+    }
+}
+
+if (resolveVariables == true and not handled) {
+    first = true
+    foreach (bounds in type.bounds)
+    {
+        if (not first) { append(result, ', ') }
+        call system.generics.getGenericTypeAsString(bounds, result, showLink, showVariables, resolveVariables)
+    }
+}
+
+%>

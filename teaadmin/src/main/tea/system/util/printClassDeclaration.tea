@@ -1,0 +1,92 @@
+<% template printClassDeclaration(org.teatrove.teaservlet.TeaToolsContext$HandyClassInfo info)
+
+if (info.package) { 
+    '<div class="package">' info.package '</div>'
+}
+
+'<div class="class">' 
+
+    info.name
+
+    typeParams = info.type.typeParameters
+    if (typeParams) {
+        '<span class="generics">&lt;'
+
+        first = true
+        foreach (typeParam in typeParams) {
+            if (not first) { ', ' }
+            first = false
+    
+            call system.generics.getTypeAsString(typeParam, true, true, true)
+        }
+
+        '&gt;</span>'
+    }
+    
+'</div>'
+
+superclass = info.type.genericSuperclass
+if (superclass) {
+    '<div class="superclass">'
+        'extends &nbsp; '
+        call system.generics.getTypeAsString(superclass, true, true, true)
+    '</div>'
+}
+
+interfaces = info.type.genericInterfaces
+if (interfaces) {
+    '<div class="interfaces">'
+        'implements &nbsp; '
+        
+        idx = -1
+        foreach (interface in interfaces) {
+            idx = idx + 1
+            if (idx > 0) { ', &nbsp; ' }
+            call system.generics.getTypeAsString(interface, true, true, true)
+        }
+    '</div>'
+}
+
+
+subclasses = getSubclassesForName(info.type.name)
+if (subclasses != null and subclasses.length > 0) {
+    '<div class="subclasses">'
+        '<a href="#" class="title">Known Subclasses</a>'
+        '<ul class="hide">'
+        foreach (subclass in subclasses) {
+            '<li>'
+                call system.generics.getTypeAsString(getClassForName(subclass), true, true, true)
+            '</li>'
+        }
+        '</ul>'
+    '</div>'
+}
+
+'<div class="hiearchy">'
+    '<a href="#" class="title">Class Hiearchy</a>'
+    '<ul class="hide">'
+        parents = createArrayList() as List<java.lang.reflect.Type>
+        parent = info.type.superclass
+        gparent = info.type.genericSuperclass
+        foreach (i in 1..10) {
+            if (parent == null) { break; }
+            
+            add(parents, 0, gparent)
+            gparent = parent.genericSuperclass
+            parent = parent.superclass
+        }
+        
+        foreach (parent in parents) {
+            '<li>'
+                call system.generics.getTypeAsString(parent, true, true, true)
+                '<ul>'
+        }
+        
+        call system.util.printSubclasses(info.type.name)
+        
+        foreach (parent in parents) {
+                '</ul>'
+            '</li>'
+        }
+    '</ul>'
+'</div>'

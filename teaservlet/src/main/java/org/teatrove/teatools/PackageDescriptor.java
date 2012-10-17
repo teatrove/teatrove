@@ -58,7 +58,7 @@ public class PackageDescriptor {
         packageInfoClassName = packageInfoClassName + "PackageInfo";
 
 
-        Class packageInfoClass = null;
+        Class<?> packageInfoClass = null;
         
         try {
             if (classLoader != null) {
@@ -105,13 +105,13 @@ public class PackageDescriptor {
 
     // Initialize the PackageDescriptor from the PackageInfo class
     private static void initFromPackageInfo(PackageDescriptor pd,
-                                            Class packageInfoClass) 
+                                            Class<?> packageInfoClass) 
     throws Exception {
 
 
         pd.setExists(true);
 
-        Class[] ca = new Class[0];
+        Class<?>[] ca = new Class[0];
         Object[] oa = new Object[0];
 
         pd.setSpecificationTitle(

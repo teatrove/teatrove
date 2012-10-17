@@ -28,22 +28,24 @@ import java.util.ArrayList;
  * @author Brian S O'Neill
  */
 public class DefaultByteBuffer implements ByteBuffer, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final int BUFFER_SIZE = 512;
 
     // A List of ByteData instances.
-    private List mChunks;
+    private List<ByteData> mChunks;
 
     private byte[] mBuffer;
     private int mCursor;
 
     private int mBaseCount;
 
-    private List mCaptureBuffers;
+    private List<ByteBuffer> mCaptureBuffers;
 
     public DefaultByteBuffer() {
-        mChunks = new ArrayList(100);
+        init();
     }
-
+    
     public long getBaseByteCount() {
         if (mBuffer != null) {
             return mBaseCount + mCursor;
@@ -64,7 +66,7 @@ public class DefaultByteBuffer implements ByteBuffer, Serializable {
 
         int size = mChunks.size();
         for (int i=0; i<size; i++) {
-            count += ((ByteData)mChunks.get(i)).getByteCount();
+            count += mChunks.get(i).getByteCount();
         }
 
         return count;
@@ -73,7 +75,7 @@ public class DefaultByteBuffer implements ByteBuffer, Serializable {
     public void writeTo(OutputStream out) throws IOException {
         int size = mChunks.size();
         for (int i=0; i<size; i++) {
-            ((ByteData)mChunks.get(i)).writeTo(out);
+            mChunks.get(i).writeTo(out);
         }
 
         if (mBuffer != null && mCursor != 0) {
@@ -82,11 +84,11 @@ public class DefaultByteBuffer implements ByteBuffer, Serializable {
     }
 
     public void append(byte b) throws IOException {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).append(b);
+                captureBuffers.get(i).append(b);
             }
         }
 
@@ -111,12 +113,11 @@ public class DefaultByteBuffer implements ByteBuffer, Serializable {
     public void append(byte[] bytes, int offset, int length)
         throws IOException
     {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).append
-                    (bytes, offset, length);
+                captureBuffers.get(i).append(bytes, offset, length);
             }
         }
 
@@ -156,11 +157,11 @@ public class DefaultByteBuffer implements ByteBuffer, Serializable {
             return;
         }
 
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             int size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteBuffer)captureBuffers.get(i)).appendSurrogate(s);
+                captureBuffers.get(i).appendSurrogate(s);
             }
         }
 
@@ -173,15 +174,15 @@ public class DefaultByteBuffer implements ByteBuffer, Serializable {
     }
 
     public void addCaptureBuffer(ByteBuffer buffer) {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) == null) {
-            captureBuffers = mCaptureBuffers = new ArrayList();
+            captureBuffers = mCaptureBuffers = new ArrayList<ByteBuffer>();
         }
         captureBuffers.add(buffer);
     }
 
     public void removeCaptureBuffer(ByteBuffer buffer) {
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             captureBuffers.remove(buffer);
         }
@@ -190,15 +191,35 @@ public class DefaultByteBuffer implements ByteBuffer, Serializable {
     public void reset() throws IOException {
         int size = mChunks.size();
         for (int i=0; i<size; i++) {
-            ((ByteData)mChunks.get(i)).reset();
+            mChunks.get(i).reset();
         }
 
-        List captureBuffers;
+        List<ByteBuffer> captureBuffers;
         if ((captureBuffers = mCaptureBuffers) != null) {
             size = captureBuffers.size();
             for (int i=0; i<size; i++) {
-                ((ByteData)captureBuffers.get(i)).reset();
+                captureBuffers.get(i).reset();
             }
         }
+    }
+    
+    public void clear() throws IOException {
+        init();
+        
+        int size;
+        List<ByteBuffer> captureBuffers;
+        if ((captureBuffers = mCaptureBuffers) != null) {
+            size = captureBuffers.size();
+            for (int i=0; i<size; i++) {
+                captureBuffers.get(i).clear();
+            }
+        }
+    }
+    
+    private void init() {
+        mCursor = 0;
+        mBaseCount = 0;
+        mBuffer = null;
+        mChunks = new ArrayList<ByteData>(100);
     }
 }

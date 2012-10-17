@@ -16,6 +16,7 @@
 
 package org.teatrove.tea.engine;
 
+import org.teatrove.tea.runtime.UtilityContext;
 import org.teatrove.trove.util.ClassInjector;
 import org.teatrove.trove.util.DelegateClassLoader;
 import org.teatrove.trove.util.MergedClass;
@@ -82,9 +83,13 @@ public class MergedContextSource implements ContextSource {
 
         int observerMode = profilingEnabled ? MergedClass.OBSERVER_ENABLED | MergedClass.OBSERVER_EXTERNAL : MergedClass.OBSERVER_ENABLED;
 
+        // temporarily include interface for UtilityContext for backwards
+        // compatibility with old code relying on it.
+        Class<?>[] interfaces = { UtilityContext.class };
         mConstr = MergedClass.getConstructor2(mInjector,
                                               mContextsInOrder,
                                               prefixes,
+                                              interfaces,
                                               observerMode);
     }
 

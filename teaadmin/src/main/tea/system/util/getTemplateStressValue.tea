@@ -6,16 +6,20 @@
     // 20 minutes
     //aggregateIntervalForRawData = getAggregateIntervalForRawData(stats, cdt.millis-1200000, cdt.millis);
     // 1 minute
-    aggregateIntervalForRawData = getAggregateIntervalForRawData(stats, cdt.millis-60000, cdt.millis);
+    aggregateIntervalForRawData = stats.latestAggregateIntervalForRawData
 
-    if ( stats != null and stats.aggregateIntervalForRawData != null ) {
+    info('TESTING!!! ' & (stats ? 'valid' : 'invalid'))
+    if ( stats != null and aggregateIntervalForRawData != null ) {
 
         durationStressMeasure = aggregateIntervalForRawData.durationStressMeasure;
+        info('MEASURE: ' & durationStressMeasure & ' : ' & aggregateIntervalForRawData.class.name)
         if ( durationStressMeasure + 0.0 == durationStressMeasure ) {
             stressValue = durationStressMeasure;
         }
     }
 
+    info('STRESS: ' & stressValue)
+    
     // return stress value
     stressValue
 

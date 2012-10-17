@@ -27,6 +27,7 @@ import org.teatrove.tea.parsetree.CompareExpression;
 import org.teatrove.tea.parsetree.ConcatenateExpression;
 import org.teatrove.tea.parsetree.ContinueStatement;
 import org.teatrove.tea.parsetree.Expression;
+import org.teatrove.tea.parsetree.Expression.Conversion;
 import org.teatrove.tea.parsetree.ForeachStatement;
 import org.teatrove.tea.parsetree.IfStatement;
 import org.teatrove.tea.parsetree.Literal;
@@ -251,20 +252,30 @@ public class BasicOptimizer {
                 Object value = expr.getValue();
 
                 if (value instanceof Number) {
+                    Expression result = null;
                     Number number = (Number)value;
-
+                    
                     if (value instanceof Integer) {
-                        return new NumberLiteral(info, -number.intValue());
+                        result = new NumberLiteral(info, -number.intValue());
                     }
                     else if (value instanceof Long) {
-                        return new NumberLiteral(info, -number.longValue());
+                        result = new NumberLiteral(info, -number.longValue());
                     }
                     else if (value instanceof Float) {
-                        return new NumberLiteral(info, -number.floatValue());
+                        result = new NumberLiteral(info, -number.floatValue());
                     }
                     else if (value instanceof Double) {
-                        return new NumberLiteral(info, -number.doubleValue());
+                        result = new NumberLiteral(info, -number.doubleValue());
                     }
+
+                    if (result != null) {
+                        // ensure any prior conversion is maintained
+                        for (Conversion conversion : node.getConversionChain()) {
+                            result.convertTo(conversion.getToType());
+                        }
+                    }
+                    
+                    return result;
                 }
             }
             else if (expr instanceof NegateExpression) {

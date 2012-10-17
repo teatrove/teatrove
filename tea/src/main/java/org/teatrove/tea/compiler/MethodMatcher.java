@@ -63,15 +63,17 @@ public class MethodMatcher {
                     int j = 0;
                     int total = 0;
                     for (; j < paramCount; j++) {
-                        Type methodParam = getMethodParam(m, j, params[j]);
-                        int cost = methodParam.convertableFrom(params[j]);
-                        
+                        MethodParam result = getMethodParameter(m, j, params[j]);
+                        Type methodParam = result.type;
+                        int cost = methodParam.convertableFrom(params[j], result.vararg);
                         if (cost < 0) { break; }
-                        else { total += cost; }
+                        
+                        // update total cost
+                        total += cost;
                     }
 
                     if (j == paramCount) {
-                        // discount non-use of var args
+                        // increase cost for non-use of var args
                         if (m.isVarArgs() && j < methodParams.length) {
                             total++;
                         }
@@ -104,6 +106,31 @@ public class MethodMatcher {
             return matchCount;
         }
 
+        // If one match is non-varargs and remaining are varargs, always choose
+        // the non-varargs.
+        Method last = null;
+        for (int i = 0; i < matchCount; i++) {
+            m = methods[i];
+            if (!m.isVarArgs()) {
+                if (last == null) {
+                    last = m;
+                }
+                else {
+                    // multiple non-vararg methods found, so still ambiguous
+                    last = null;
+                    break;
+                }
+            }
+        }
+        
+        if (last != null) {
+            // ensure first result is set to match
+            methods[0] = last;
+            
+            // return single result
+            return 1;
+        }
+        
         // Filter further by matching parameters with the shortest distance
         // in the hierarchy. This matches each parameter to each matching method
         // to either find the best possible match where the method parameter is
@@ -138,11 +165,12 @@ public class MethodMatcher {
             // the current match, then it is considered ambiguous and the best
             // fit is reset.
             
-            for (int i=0; i < length; i++) {
+            for (int i = 0; i < length; i++) {
                 m = methods[i];
                 if (m.isBridge()) { continue; }
                 
-                Type methodType = getMethodParam(m, j, params[j]);
+                MethodParam result = getMethodParameter(m, j, params[j]);
+                Type methodType = result.type;
                 Class<?> methodParam = methodType.getNaturalClass();
                 
                 // TODO: match against generics?
@@ -184,7 +212,6 @@ public class MethodMatcher {
         // check if multiple matching methods (ambiguous) or if all params are
         // ambiguous
         
-        Method last = null;
         for (int i = 0; i < paramCount; i++) {
         	// update last match if not yet determined
         	if (last == null) {
@@ -211,7 +238,13 @@ public class MethodMatcher {
     }
 
     public static Type getMethodParam(Method method, int index, Type type) {
+        MethodParam param = getMethodParameter(method, index, type);
+        return (param == null ? null : param.type);
+    }
+    
+    private static MethodParam getMethodParameter(Method method, int index, Type type) {
         Type result = null;
+        boolean vararg = false;
         Class<?>[] methodParams = method.getParameterTypes();
         java.lang.reflect.Type[] methodTypes = method.getGenericParameterTypes();
         
@@ -225,19 +258,29 @@ public class MethodMatcher {
             }
             
             if (result == null) {
-                try { result = varArg.getArrayElementType(); }
+                try { 
+                    result = varArg.getArrayElementType(); 
+                    vararg = true;
+                }
                 catch (IntrospectionException ie) {
                     throw new RuntimeException(ie);
                 }
-            }
-            else {
-                
             }
         }
         else if (index < methodParams.length) {
             result = new Type(methodParams[index], methodTypes[index]);
         }
         
-        return result;
+        return new MethodParam(result, vararg);
+    }
+    
+    private static class MethodParam {
+        private Type type;
+        private boolean vararg;
+        
+        private MethodParam(Type type, boolean vararg) {
+            this.type = type;
+            this.vararg = vararg;
+        }
     }
 }

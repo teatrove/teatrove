@@ -10,6 +10,20 @@
     </template>
 
     <!-- 
+    define startup behaviour
+    -->
+    
+    <startup>
+        <file>/org/teatrove/teaservlet/startup.html</file>
+        <path>^/system/.*$</path>
+        <background>false</background>
+        <codes>
+            <initializing>510</initializing>
+            <error>511</error>
+        </codes>
+    </startup>
+    
+    <!-- 
     define the default mime types
     -->
     

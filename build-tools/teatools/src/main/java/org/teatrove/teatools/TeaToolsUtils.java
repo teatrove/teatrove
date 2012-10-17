@@ -52,22 +52,16 @@ implements TeaToolsConstants {
     
     /** Finite set of primative Class objects.  Mapping of primitive
         name to Class (i.e. "int" -> int.class) */
-    private final static Hashtable cPrimativeClasses = new Hashtable();
+    private final static Hashtable<String, Class<?>> cPrimativeClasses = 
+        new Hashtable<String, Class<?>>();
 
     /** The DescriptorComparator used to sort FeatureDescriptors */
     private final static DescriptorComparator DESCRIPTOR_COMPARATOR = 
         new DescriptorComparator();       
 
-    /**
-     * Test program
-     */
-    public static void main(String[] args) throws Exception {
-        new Tester(args);
-    }
-
     static {
         
-        Class[] primativeClasses = 
+        Class<?>[] primativeClasses = 
             new Class[] {
                 void.class,
                 boolean.class,
@@ -100,7 +94,7 @@ implements TeaToolsConstants {
      * Returns a TypeDescription object to wrap and describe the
      * specified type.
      */
-    public TypeDescription createTypeDescription(Class type) {
+    public TypeDescription createTypeDescription(Class<?> type) {
         return new TypeDescription(type, this);
     }
 
@@ -156,7 +150,7 @@ implements TeaToolsConstants {
         }
 
         Method method = md.getMethod();
-        Class[] paramClasses = method.getParameterTypes();        
+        Class<?>[] paramClasses = method.getParameterTypes();        
         int descriptionCount = paramClasses.length;
         if (acceptsSubstitution(md)) {
             descriptionCount--;
@@ -217,7 +211,7 @@ implements TeaToolsConstants {
      *
      * @param className the name of the Class
      */
-    public Class getClassForName(String className) {
+    public Class<?> getClassForName(String className) {
         return getClassForName(className, null);
     }
 
@@ -233,7 +227,7 @@ implements TeaToolsConstants {
      * @param className the name of the Class
      * @param classLoader the ClassLoader to use
      */
-    public Class getClassForName(String className, ClassLoader classLoader) {
+    public Class<?> getClassForName(String className, ClassLoader classLoader) {
 
         if (className == null) {
             return null;
@@ -251,7 +245,7 @@ implements TeaToolsConstants {
             return null;
         }
         
-        Class clazz = (Class) cPrimativeClasses.get(className);
+        Class<?> clazz = cPrimativeClasses.get(className);
         if (clazz != null) {
             // Return the primitive class (i.e. int.class for "int")
             return clazz;
@@ -290,10 +284,89 @@ implements TeaToolsConstants {
     }
     
     /**
+     * Returns whether the given class or any super class or interface is
+     * deprecated.
+     * 
+     * @see Deprecated
+     */
+    public boolean isDeprecated(Class<?> clazz) {
+
+        // check if class is marked as deprecated
+        if (clazz.getAnnotation(Deprecated.class) != null) { 
+            return true; 
+        }
+        
+        // check if super class is deprecated
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+            return isDeprecated(superClass);
+        }
+        
+        // check if interfaces are deprecated
+        for (Class<?> iface : clazz.getInterfaces()) {
+            return isDeprecated(iface);
+        }
+        
+        // not deprecated
+        return false;
+    }
+    
+    /**
+     * Returns whether the given method or any super method or interface
+     * declaration is deprecated.
+     * 
+     * @see Deprecated
+     */
+    public boolean isDeprecated(Method method) {
+        return isDeprecated(method.getDeclaringClass(), method.getName(), 
+                            method.getParameterTypes());
+    }
+   
+    /**
+     * Returns whether the given method or any super method or interface
+     * declaration is deprecated.
+     * 
+     * @see Deprecated
+     */
+    protected boolean isDeprecated(Class<?> clazz, 
+        String methodName, Class<?>... paramTypes) {
+        
+        // check if type is annotated
+        if (isDeprecated(clazz)) { return true; }
+        
+        // check if method is annotated
+        try {
+            Method method = 
+                clazz.getDeclaredMethod(methodName, paramTypes);
+            
+            if (method.getAnnotation(Deprecated.class) != null) {
+                return true;
+            }
+        }
+        catch (NoSuchMethodException nsme) {
+            // ignore and continue
+        }
+        
+        // check superclass
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+            return isDeprecated(superClass, methodName, paramTypes);
+        }
+        
+        // check interfaces
+        for (Class<?> iface : clazz.getInterfaces()) {
+            return isDeprecated(iface, methodName, paramTypes);
+        }
+        
+        // none found
+        return false;
+    }
+    
+    /**
      * Returns the full class name of the specified class.  This method 
      * provides special formatting for array and inner classes.
      */
-    public String getFullClassName(Class clazz) {
+    public String getFullClassName(Class<?> clazz) {
         return getFullClassName(getArrayClassName(clazz));
     }
 
@@ -321,7 +394,7 @@ implements TeaToolsConstants {
      * does not include the package. This method provides special formatting 
      * for array and inner classes.
      */
-    public String getClassName(Class clazz) {
+    public String getClassName(Class<?> clazz) {
         return getClassName(getArrayClassName(clazz));
     }
 
@@ -338,7 +411,7 @@ implements TeaToolsConstants {
      * Returns the package name of the specified class.  Returns "" if the
      * class has no package.
      */
-    public String getClassPackage(Class clazz) {
+    public String getClassPackage(Class<?> clazz) {
         return getClassPackage(getArrayClassName(clazz));
     }
 
@@ -360,18 +433,15 @@ implements TeaToolsConstants {
      * <LI>A primitive returns null
      * </UL>
      */
-    public String getClassTypeName(Class clazz) {
+    public String getClassTypeName(Class<?> clazz) {
         
         String type = null;
 
         if (clazz.isInterface()) {
             type = "interface";
         }
-        else if (clazz.isPrimitive()) {
-            type = null;
-        }
-        else if (clazz.isArray()) {
-            type = null;
+        else if (clazz.isPrimitive() || clazz.isArray()) {
+            // type already null
         }
         else {
             type = "class";
@@ -398,7 +468,7 @@ implements TeaToolsConstants {
         
         String className = packageName + "PackageInfo";
 
-        Class packageInfoClass = getClassForName(className);
+        Class<?> packageInfoClass = getClassForName(className);
         if (packageInfoClass == null) {
             return null;
         }
@@ -462,7 +532,7 @@ implements TeaToolsConstants {
     /**
      * Formats the class name with trailing square brackets.
      */
-    public String getArrayClassName(Class clazz) {
+    public String getArrayClassName(Class<?> clazz) {
 
         if (clazz.isArray()) {
             return getArrayClassName(clazz.getComponentType()) + "[]";
@@ -475,7 +545,7 @@ implements TeaToolsConstants {
      * Returns the array type.  Returns the specified class if it is not an 
      * array.  
      */
-    public Class getArrayType(Class clazz) {
+    public Class<?> getArrayType(Class<?> clazz) {
 
         if (clazz.isArray()) {
             return getArrayType(clazz.getComponentType());
@@ -488,7 +558,7 @@ implements TeaToolsConstants {
      * Returns the array dimensions.  
      * Returns 0 if the specified class is not an array.  
      */
-    public int getArrayDimensions(Class clazz) {
+    public int getArrayDimensions(Class<?> clazz) {
 
         if (clazz.isArray()) {
             return getArrayDimensions(clazz.getComponentType()) + 1;
@@ -501,7 +571,7 @@ implements TeaToolsConstants {
      * Returns the array dimensions String (i.e. "[][][]").  
      * Returns "" (empty string) if the specified class is not an array.  
      */
-    public String getArrayDimensionsString(Class clazz) {
+    public String getArrayDimensionsString(Class<?> clazz) {
         return createPatternString("[]", getArrayDimensions(clazz));
     }
 
@@ -535,7 +605,7 @@ implements TeaToolsConstants {
         String arrayType = className.substring(0, bracketIndex).trim();
         char prefixChar = 'L';
 
-        Class clazz = (Class) cPrimativeClasses.get(arrayType);
+        Class<?> clazz = cPrimativeClasses.get(arrayType);
         if (clazz != null) {
 
             arrayType = "";
@@ -589,7 +659,7 @@ implements TeaToolsConstants {
      *
      * @param beanClass the bean class to be analyzed
      */
-    public BeanInfo getBeanInfo(Class beanClass) 
+    public BeanInfo getBeanInfo(Class<?> beanClass) 
     throws IntrospectionException {
         return Introspector.getBeanInfo(beanClass);
     }
@@ -603,7 +673,7 @@ implements TeaToolsConstants {
      * Any methods/properties/events in the stopClass or in its baseclasses 
      * will be ignored in the analysis
      */
-    public BeanInfo getBeanInfo(Class beanClass, Class stopClass)
+    public BeanInfo getBeanInfo(Class<?> beanClass, Class<?> stopClass)
     throws IntrospectionException {
         return Introspector.getBeanInfo(beanClass, stopClass);
     }
@@ -734,7 +804,7 @@ implements TeaToolsConstants {
          * the variable dolly is used here in reference to the sheep cloned
          * a few years back by Scottish scientists. - Jonathan
          */
-        FeatureDescriptor[] dolly = (FeatureDescriptor[])fds.clone();
+        FeatureDescriptor[] dolly = fds.clone();
         Arrays.sort(dolly, DESCRIPTOR_COMPARATOR);
         return dolly;
     }
@@ -770,12 +840,12 @@ implements TeaToolsConstants {
      * <p>
      * This method uses org.teatrove.trove.util.MergedClass
      */
-    public Class createContextClass(ClassLoader loader, 
-                                    ContextClassEntry[] contextClasses) 
-    throws Exception {
+    public Class<?> createContextClass(ClassLoader loader, 
+                                       ContextClassEntry[] contextClasses) 
+        throws Exception {
 
         Object[] ret = loadContextClasses(loader, contextClasses);
-        Class[] classes = (Class[]) ret[0];
+        Class<?>[] classes = (Class[]) ret[0];
         String[] prefixNames = (String[]) ret[1];
 
         return createContextClass(loader, classes, prefixNames);
@@ -791,22 +861,22 @@ implements TeaToolsConstants {
      * <p>
      * This method uses org.teatrove.trove.util.MergedClass
      */
-    public Class createContextClass(ClassLoader loader,
-                                    Class[] classes,
-                                    String[] prefixNames) 
+    public Class<?> createContextClass(ClassLoader loader,
+                                       Class<?>[] classes,
+                                       String[] prefixNames) 
     throws Exception {
                            
 
         ClassInjector classInjector = 
             new ClassInjector(loader, (java.io.File) null, null);
         
-        Constructor constructor = null;
+        Constructor<?> constructor = null;
         
         constructor = MergedClass.getConstructor(classInjector, 
                                                  classes, 
                                                  prefixNames);
 
-        Class mergedContextClass = constructor.getDeclaringClass();
+        Class<?> mergedContextClass = constructor.getDeclaringClass();
 
         return mergedContextClass;                        
     }    
@@ -832,13 +902,14 @@ implements TeaToolsConstants {
             throw new IllegalArgumentException("No Context Classes");
         }
                         
-        Vector classVector = new Vector(contextClasses.length);
+        Vector<Class<?>> classVector = 
+            new Vector<Class<?>>(contextClasses.length);
         String[] prefixNames = new String[contextClasses.length];
         
         String className = null;
         for (int i = 0; i < contextClasses.length; i++) {
             className = contextClasses[i].getContextClassName();    
-            Class contextClass = loader.loadClass(className);
+            Class<?> contextClass = loader.loadClass(className);
             
             classVector.addElement(contextClass);
             String prefixName = contextClasses[i].getPrefixName();
@@ -850,7 +921,7 @@ implements TeaToolsConstants {
             }                                
         }
         
-        Class[] classes = new Class[classVector.size()];
+        Class<?>[] classes = new Class<?>[classVector.size()];
         classVector.copyInto(classes);
         
         return new Object[] {classes, prefixNames};
@@ -861,7 +932,7 @@ implements TeaToolsConstants {
      * Returns true if it is likely that the specified class serves as 
      * a Tea runtime context class.
      */
-    public boolean isLikelyContextClass(Class clazz) {     
+    public boolean isLikelyContextClass(Class<?> clazz) {     
         return (OutputReceiver.class.isAssignableFrom(clazz) ||
                 getClassName(clazz).toLowerCase().endsWith("context"));
     }
@@ -875,8 +946,8 @@ implements TeaToolsConstants {
      * @param contextClass the Tea context Class to introspect (any class will
      * work fine)
      */
-    public MethodDescriptor[] getTeaContextMethodDescriptors(
-                                                         Class contextClass) {
+    public MethodDescriptor[] 
+    getTeaContextMethodDescriptors(Class<?> contextClass) {
 
         return getTeaContextMethodDescriptors(contextClass, false);
     }
@@ -890,10 +961,10 @@ implements TeaToolsConstants {
      * only return MethodDescriptors declared by the specified Class.  
      */
     public MethodDescriptor[] getTeaContextMethodDescriptors(
-                                                 Class contextClass,
+                                                 Class<?> contextClass,
                                                  boolean specifiedClassOnly) {
 
-        Vector v = new Vector();
+        Vector<MethodDescriptor> v = new Vector<MethodDescriptor>();
 
         MethodDescriptor[] methodDescriptors = null;
         try {                
@@ -914,7 +985,7 @@ implements TeaToolsConstants {
             for (int i = 0; i < methodDescriptors.length; i++) {
             
                 MethodDescriptor md = methodDescriptors[i];
-                Class declaringClass = md.getMethod().getDeclaringClass();
+                Class<?> declaringClass = md.getMethod().getDeclaringClass();
 
                 if (declaringClass != Object.class &&
                     !md.isHidden() && 
@@ -939,18 +1010,18 @@ implements TeaToolsConstants {
      *
      * @param contextClasses the Tea context classes to introspect
      */
-    public MethodDescriptor[] getTeaContextMethodDescriptors(
-                                                 Class[] contextClasses) {
+    public MethodDescriptor[] 
+    getTeaContextMethodDescriptors(Class<?>[] contextClasses) {
 
-        Vector v = new Vector();
-        Hashtable methods = new Hashtable();
+        Vector<MethodDescriptor> v = new Vector<MethodDescriptor>();
+        Hashtable<Method, Method> methods = new Hashtable<Method, Method>();
 
         if (contextClasses != null) {
 
             // Combine all of the MethodDescriptors
 
             for (int i = 0; i < contextClasses.length; i++) {
-                Class c = contextClasses[i];
+                Class<?> c = contextClasses[i];
                 if (c == null) {
                     continue;
                 }
@@ -990,7 +1061,8 @@ implements TeaToolsConstants {
      *
      * @return an array of all the available properties on the specified class.
      */
-    public PropertyDescriptor[] getTeaBeanPropertyDescriptors(Class beanClass) {
+    public PropertyDescriptor[] 
+    getTeaBeanPropertyDescriptors(Class<?> beanClass) {
 
         // Code taken from KettleUtilities.getPropertyDescriptors(Class)
         
@@ -1000,7 +1072,7 @@ implements TeaToolsConstants {
 
         PropertyDescriptor[] properties = null;
 
-        Map allProps = null;
+        Map<String, PropertyDescriptor> allProps = null;
         try {
             allProps = BeanAnalyzer.getAllProperties(new GenericType(beanClass));
         }
@@ -1008,14 +1080,17 @@ implements TeaToolsConstants {
             return NO_PROPERTIES;           
         }
 
-        Collection cleanProps = new ArrayList(allProps.size());
+        Collection<PropertyDescriptor> cleanProps = 
+            new ArrayList<PropertyDescriptor>(allProps.size());
 
-        Iterator it = allProps.entrySet().iterator();
+        Iterator<Map.Entry<String, PropertyDescriptor>> it = 
+            allProps.entrySet().iterator();
+        
         while (it.hasNext()) {
 
-            Map.Entry entry = (Map.Entry) it.next();
-            String name = (String) entry.getKey();
-            PropertyDescriptor desc = (PropertyDescriptor) entry.getValue();
+            Map.Entry<String, PropertyDescriptor> entry = it.next();
+            String name = entry.getKey();
+            PropertyDescriptor desc = entry.getValue();
             
             // Discard properties that have no name or should be hidden.
             if (name == null || name.length() == 0 || "class".equals(name)) {
@@ -1025,7 +1100,7 @@ implements TeaToolsConstants {
             if (desc instanceof KeyedPropertyDescriptor) {
 
                 KeyedPropertyDescriptor keyed = (KeyedPropertyDescriptor) desc;
-                Class type = keyed.getKeyedPropertyType().getRawType().getType();
+                Class<?> type = keyed.getKeyedPropertyType().getRawType().getType();
 
                 try {
                     // Convert the KeyedPropertyDescriptor to a 
@@ -1043,8 +1118,7 @@ implements TeaToolsConstants {
             cleanProps.add(desc);
         }
 
-        properties = (PropertyDescriptor[]) cleanProps.toArray
-            (new PropertyDescriptor[cleanProps.size()]);
+        properties = cleanProps.toArray(new PropertyDescriptor[cleanProps.size()]);
         
         // Sort 'em!
         sortPropertyDescriptors(properties);
@@ -1059,7 +1133,7 @@ implements TeaToolsConstants {
      * specified class is implicitly imported by Tea, then its package is
      * omitted in the returned name.
      */
-    public String getTeaFullClassName(Class clazz) {
+    public String getTeaFullClassName(Class<?> clazz) {
 
         if (isImplicitTeaImport(clazz)) {
             return getClassName(clazz);
@@ -1076,7 +1150,7 @@ implements TeaToolsConstants {
      * a class or interface defined in one of the IMPLICIT_TEA_IMPORTS 
      * packages.  This method also works for array types.
      */
-    public boolean isImplicitTeaImport(Class clazz) {
+    public boolean isImplicitTeaImport(Class<?> clazz) {
         if (getArrayType(clazz).isPrimitive()) {
             return true;
         }
@@ -1123,10 +1197,10 @@ implements TeaToolsConstants {
      * <code>Substitution</code> as its last parameter.
      */
     public boolean acceptsSubstitution(Method m) {
-        Class[] paramTypes = m.getParameterTypes();
+        Class<?>[] paramTypes = m.getParameterTypes();
         if (paramTypes.length > 0) {
             // Check if last param is a Substitution
-            Class lastParam = paramTypes[paramTypes.length - 1];
+            Class<?> lastParam = paramTypes[paramTypes.length - 1];
             return Substitution.class.isAssignableFrom(lastParam);
         }
         return false;
@@ -1137,7 +1211,7 @@ implements TeaToolsConstants {
      * <code>foreach</code> statement.  Compatibility implies that the
      * class can be iterated on by the <code>foreach</code>.
      */
-    public boolean isForeachCompatible(Class clazz) {
+    public boolean isForeachCompatible(Class<?> clazz) {
         if (clazz == null) {
             return false;
         }
@@ -1150,7 +1224,7 @@ implements TeaToolsConstants {
      * Returns true if the specifed class is compatible with Tea's <code>if
      * </code> statement.  Only Boolean.class and boolean.class qualify.
      */    
-    public boolean isIfCompatible(Class clazz) {    
+    public boolean isIfCompatible(Class<?> clazz) {    
 
         if (clazz == null) {
             return false;
@@ -1213,8 +1287,8 @@ implements TeaToolsConstants {
     protected MethodDescriptor[] addMissingContextMethodDescriptors(
         Method[] methods, MethodDescriptor[] methodDescriptors) {
 
-        List methodNames = new ArrayList(methodDescriptors.length);
-        Vector mds = new Vector(methods.length);
+        List<Method> methodNames = new ArrayList<Method>(methodDescriptors.length);
+        Vector<MethodDescriptor> mds = new Vector<MethodDescriptor>(methods.length);
 
         for (int i=0; i<methodDescriptors.length; i++) {
             methodNames.add(methodDescriptors[i].getMethod());
@@ -1248,7 +1322,8 @@ implements TeaToolsConstants {
      * @version
 
      */
-    private static class DescriptorComparator implements Comparator {
+    private static class DescriptorComparator 
+        implements Comparator<FeatureDescriptor> {
 
         /**
          * The compare method determines whether x is less than, greater
@@ -1257,7 +1332,7 @@ implements TeaToolsConstants {
          * @return less than zero if x < y; zero if x = y; greater than zero
          * if x > y.
          */
-        public int compare(Object x, Object y) {
+        public int compare(FeatureDescriptor x, FeatureDescriptor y) {
             int nameResult = compareNames(x,y);
             
             if (nameResult == 0 && x != null && y != null &&
@@ -1275,16 +1350,10 @@ implements TeaToolsConstants {
             return nameResult;
         }
         
-        private int compareNames(Object x, Object y) {
+        private int compareNames(FeatureDescriptor x, FeatureDescriptor y) {
         
-            if (x != null && y != null &&
-                x instanceof FeatureDescriptor && 
-                y instanceof FeatureDescriptor) {
-
-                FeatureDescriptor fdX = (FeatureDescriptor) x;
-                FeatureDescriptor fdY = (FeatureDescriptor) y;
-
-                return fdX.getName().compareToIgnoreCase(fdY.getName());
+            if (x != null && y != null) {
+                return x.getName().compareToIgnoreCase(y.getName());
             }
 
             return 0;
@@ -1294,7 +1363,7 @@ implements TeaToolsConstants {
 
             int paramCount = 0;
 
-            Class[] paramClasses = method.getParameterTypes();
+            Class<?>[] paramClasses = method.getParameterTypes();
             if (paramClasses != null) {
                 paramCount = paramClasses.length;
             }
@@ -1314,10 +1383,10 @@ implements TeaToolsConstants {
     private class ArrayIndexPropertyDescriptor 
     extends PropertyDescriptor {
         
-        private Class mPropertyType;
+        private Class<?> mPropertyType;
 
-        public ArrayIndexPropertyDescriptor(Class beanClass,
-                                            Class propertyType) 
+        public ArrayIndexPropertyDescriptor(Class<?> beanClass,
+                                            Class<?> propertyType) 
         throws IntrospectionException {
             
             super(BeanAnalyzer.KEYED_PROPERTY_NAME, beanClass, null, null);
@@ -1331,176 +1400,8 @@ implements TeaToolsConstants {
             
         }
 
-        public Class getPropertyType() {
+        public Class<?> getPropertyType() {
             return mPropertyType;
         }                
-    }
-    
-
-
-    /**
-     * TeaToolsUtils test class
-     *
-     * @author Mark Masse
-     * @version
-
-     */
-    private static class Tester {
-        
-        Tester(String[] args) throws Exception {
-
-            TeaToolsUtils utils = new TeaToolsUtils();
-            
-            if (args == null || args.length == 0) {
-                System.err.println("No classes specified, using defaults");
-                args = 
-                    new String[] { 
-                        int.class.getName(), 
-                        Object.class.getName(),
-                        String[].class.getName(),
-                        int[].class.getName(), 
-                        int[][].class.getName(), 
-                        boolean[].class.getName(), 
-                        Tester.class.getName() };
-            }
-            
-            for (int i = 0; i < args.length; i++) {
-                
-                String className = args[i];
-                System.out.println("\nTesting with class: " + className);
-
-                System.out.println("Class getClassForName(String)");
-
-                Class clazz = utils.getClassForName(className);
-                if (clazz == null) {
-                    System.err.println("Failed to load class!");
-                    continue;
-                }
-
-                System.out.println("BeanInfo getBeanInfo(Class)");
-                BeanInfo info = utils.getBeanInfo(clazz);
-                
-                System.out.println("String getDescriptionFirstSentence(FeatureDescriptor)");
-                System.out.println(utils.getDescriptionFirstSentence(info.getBeanDescriptor()));
-
-                System.out.println("String getFirstSentence(String)");
-
-                System.out.println(utils.getFirstSentence("Hello World. Hi!"));
-                
-
-                System.out.println("String getFullClassName(Class)");
-
-                System.out.println(utils.getFullClassName(clazz));
-
-                System.out.println("String getFullClassName(String)");
-                System.out.println(utils.getFullClassName(className));
-
-                System.out.println("String getClassName(Class)");
-
-                System.out.println(utils.getClassName(clazz));
-
-                System.out.println("String getClassName(String)");
-                System.out.println(utils.getClassName(className));
-
-                System.out.println("String getClassPackage(Class)");
-                System.out.println(utils.getClassPackage(clazz));
-
-                System.out.println("String getClassPackage(String)");
-                System.out.println(utils.getClassPackage(className));
-
-                System.out.println("String getTeaFullClassName(Class)");
-                System.out.println(utils.getTeaFullClassName(clazz));
-
-                System.out.println("boolean isImplicitTeaImport(Class)");
-
-                System.out.println(utils.isImplicitTeaImport(clazz));
-
-                System.out.println("MethodDescriptor[] getTeaContextMethodDescriptors(Class)");
-
-                MethodDescriptor[] mds = 
-                    utils.getTeaContextMethodDescriptors(clazz);
-                
-                printMethodDescriptors(mds, utils);
-
-                System.out.println("MethodDescriptor[] getTeaContextMethodDescriptors(Class, boolean)");
-
-
-                mds = utils.getTeaContextMethodDescriptors(clazz, true);
-                printMethodDescriptors(mds, utils);
-
-                System.out.println("MethodDescriptor[] getTeaBeanPropertyDescriptors(Class)");
-
-                PropertyDescriptor[] pds = 
-                    utils.getTeaBeanPropertyDescriptors(clazz);
-                
-                printPropertyDescriptors(pds, utils);
-
-            }
-
-            if (args.length > 1) {
-                System.out.println("");
-                System.out.println("");
-                System.out.println("MethodDescriptor[] getTeaContextMethodDescriptors(Class[])");
-                
-                Class[] classes = new Class[args.length];
-                for (int i = 0; i < classes.length; i++) {
-                    classes[i] = utils.getClassForName(args[i]);               
-                }
-                
-                MethodDescriptor[] mds = 
-                    utils.getTeaContextMethodDescriptors(classes);
-                printMethodDescriptors(mds, utils);
-            }
-        }
-
-
-        private void printMethodDescriptors(MethodDescriptor[] mds, 
-                                            TeaToolsUtils utils) {
-
-            for (int i = 0; i < mds.length; i++) {
-                printMethodDescriptor(mds[i], utils);
-            }            
-        }
-
-        private void printMethodDescriptor(MethodDescriptor md,
-                                           TeaToolsUtils utils) {
-
-            printlnIndented("Method: " + md.getName(), 2);
-            String desc = utils.getDescriptionFirstSentence(md);
-            if (desc.length() > 0) {
-                printlnIndented(desc, 8);
-            }           
-        }
-
-
-        private void printPropertyDescriptors(PropertyDescriptor[] pds, 
-                                              TeaToolsUtils utils) {
-
-            for (int i = 0; i < pds.length; i++) {
-                printPropertyDescriptor(pds[i], utils);
-            }            
-        }
-
-        private void printPropertyDescriptor(PropertyDescriptor pd,
-                                             TeaToolsUtils utils) {
-
-            printlnIndented("Property: " + pd.getName(), 2);
-            String desc = utils.getDescriptionFirstSentence(pd);
-            if (desc.length() > 0) {
-                printlnIndented(desc, 8);
-            }           
-        }
-
-
-
-        private void printlnIndented(Object o, int indent) {
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < indent; i++) {
-                sb.append(' ');
-            }
-            
-            System.out.println(sb.toString() + o);
-        }
-        
     }
 }

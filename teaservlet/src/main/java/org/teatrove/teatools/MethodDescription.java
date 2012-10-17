@@ -64,6 +64,18 @@ public class MethodDescription extends FeatureDescription {
     }
     
     /**
+     * Returns whether the given method or any of its super method or interface
+     * declarations, recursively, are deprecated.
+     * 
+     * @return <code>true</code> if the method is deprecated
+     * 
+     * @see Deprecated
+     */
+    public boolean isDeprecated() {
+        return getTeaToolsUtils().isDeprecated(getMethod());
+    }
+    
+    /**
      * Returns the method's return type
      */
     public TypeDescription getReturnType() {

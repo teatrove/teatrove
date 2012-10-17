@@ -20,6 +20,8 @@ import java.util.*;
 import javax.servlet.*;
 import org.teatrove.trove.log.*;
 import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.StatusEvent;
+import org.teatrove.trove.util.StatusListener;
 
 import org.teatrove.tea.engine.*;
 
@@ -158,6 +160,7 @@ public class ApplicationDepot {
 
     private void loadApplications() throws ServletException {
 
+        StatusListener listener = mEngine.getApplicationListener();
         PropertyMap props = mEngine.getProperties().subMap("applications");
         Set appSet = props.subMapKeySet();
 
@@ -166,10 +169,14 @@ public class ApplicationDepot {
         List lApplications = new ArrayList();
         List lAppNames = new ArrayList();
 
-
         Log log = mEngine.getLog();
-
         log.info("Loading Applications");
+        
+        int index = 0, count = appSet.size();
+        if (listener != null) {
+            listener.statusStarted(new StatusEvent(this, index, count, null));
+        }
+        
         for (Iterator appIt = appSet.iterator(); appIt.hasNext(); ) {
             String appName = (String)appIt.next();
 
@@ -184,7 +191,6 @@ public class ApplicationDepot {
 				log.warn("No class specified.  Skipping application.");
 				continue;
 			}
-
 
             ApplicationConfig ac =
                 new InternalApplicationConfig(mEngine, appProps,
@@ -218,6 +224,11 @@ public class ApplicationDepot {
 						 + " does not implement Application.");
 				log.error(cce);
 			}
+
+			index++;
+			if (listener != null) {
+			    listener.statusUpdate(new StatusEvent(this, index, count, appName));
+			}
         }
 
         // generate arrays
@@ -231,6 +242,10 @@ public class ApplicationDepot {
 			mApplicationNames[x] = (String)lAppNames.get(x);
 			mContextPrefixNames[x] = cleanName(mApplicationNames[x]);
 		}
+        
+        if (listener != null) {
+            listener.statusCompleted(new StatusEvent(this, index, count, null));
+        }
     }
 
     /**

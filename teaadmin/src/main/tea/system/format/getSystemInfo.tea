@@ -1,0 +1,391 @@
+<% template getSystemInfo() 
+
+pathPrefix = call system.util.getPathPrefix()
+
+classLoadingMXBean = getClassLoadingMXBean();
+compilationMXBean = getCompilationMXBean();
+garbageCollectorMXBean = getGarbageCollectorMXBeans();
+memoryManagerMXBean = getMemoryManagerMXBeans();
+memoryMXBean = getMemoryMXBean();
+memoryPoolMXBean = getMemoryPoolMXBeans();
+operatingSystemMXBean = getOperatingSystemMXBean();
+platformMBeanServer = getPlatformMBeanServer();
+runtimeMXBean = getRuntimeMXBean();
+threadMXBean = getThreadMXBean();
+
+pathSeparator = System.getProperty('path.separator', ':')
+
+%>
+
+<section>
+    <div class="controls">
+        <div class="controls-wrapper">
+            <div id="button-refresh" class="button">
+                <a href="<% pathPrefix %>/system/format/getSystemInfo">Refresh</a>
+            </div>
+        </div>
+    </div>
+    <br class="clear" /><br />
+    
+    <div id="system-info-snapshot">
+        <div class="table-container">
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="2">Class Loading MX Bean</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th width="25%">Item</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="oddrow">
+                        <td>Loaded Class Count</td>
+                        <td><% classLoadingMXBean.loadedClassCount %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Total Loaded Class Count</td>
+                        <td><% classLoadingMXBean.totalLoadedClassCount %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Unloaded Class Count</td>
+                        <td><% classLoadingMXBean.unloadedClassCount %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Verbose</td>
+                        <td><% classLoadingMXBean.verbose %></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container">
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="2">Compilation MX Bean</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th width="25%">Item</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="oddrow">
+                        <td>Compilation Time Monitoring Supported</td>
+                        <td><% compilationMXBean.compilationTimeMonitoringSupported %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Name</td>
+                        <td><% compilationMXBean.name %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Total Compilation Time</td>
+                        <td><% compilationMXBean.totalCompilationTime %></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container">
+            <%
+                // megabytes
+                unitLabel = "MB";
+                unitFormat = "#,###,###";
+                unitDividend = 1024;
+                
+                numberFormat(unitFormat);
+            %>
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="2">Memory MX Bean</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th width="25%">Item</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="oddrow">
+                        <td>Heap Memory Usage (<% unitLabel %>)</td>
+                        <td><div class="table-container no-margin no-padding"><table cellspacing="1" cellpadding="3" class="tablehead">
+                                    <thead>
+                                        <tr class="stathead">
+                                            <th width="25%">Committed</th>
+                                            <th width="25%">Init</th>
+                                            <th width="25%">Max</th>
+                                            <th width="25%">Used</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><% memoryMXBean.heapMemoryUsage.committed / unitDividend %></td>
+                                            <td><% memoryMXBean.heapMemoryUsage.init / unitDividend %></td>
+                                            <td><% memoryMXBean.heapMemoryUsage.max / unitDividend %></td>
+                                            <td><% memoryMXBean.heapMemoryUsage.used / unitDividend %></td>
+                                        </tr>
+                                    </tbody>
+                            </table></div></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Non Heap Memory Usage (<% unitLabel %>)</td>
+                        <td><div class="table-container no-margin no-padding"><table cellspacing="1" cellpadding="3" class="tablehead">
+                                    <thead>
+                                        <tr class="stathead">
+                                            <th width="25%">Committed</th>
+                                            <th width="25%">Init</th>
+                                            <th width="25%">Max</th>
+                                            <th width="25%">Used</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><% memoryMXBean.nonHeapMemoryUsage.committed / unitDividend %></td>
+                                            <td><% memoryMXBean.nonHeapMemoryUsage.init / unitDividend %></td>
+                                            <td><% memoryMXBean.nonHeapMemoryUsage.max / unitDividend %></td>
+                                            <td><% memoryMXBean.nonHeapMemoryUsage.used / unitDividend %></td>
+                                        </tr>
+                                    </tbody>
+                                </table></div></td>
+                    </tr>
+                    <%
+                        numberFormat(null);
+                    %>
+                    <tr class="oddrow">
+                        <td>Object Pending Finalization Count</td>
+                        <td><% memoryMXBean.objectPendingFinalizationCount %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Verbose</td>
+                        <td><% memoryMXBean.verbose %></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container">
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="2">Operating System MX Bean</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th width="25%">Item</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="oddrow">
+                        <td>Architecture</td>
+                        <td><% operatingSystemMXBean.arch %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Available Processors</td>
+                        <td><% operatingSystemMXBean.availableProcessors %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Name</td>
+                        <td><% operatingSystemMXBean.name %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>System Load Average</td>
+                        <td><% operatingSystemMXBean.systemLoadAverage %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Version</td>
+                        <td><% operatingSystemMXBean.version %></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container">
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="2">Platform MBean Server</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th width="25%">Item</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="oddrow">
+                        <td>Class Loader Repository</td>
+                        <td><% platformMBeanServer.classLoaderRepository %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Default Domain</td>
+                        <td><% platformMBeanServer.defaultDomain %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Domains</td>
+                        <td><% Arrays.toString(platformMBeanServer.domains) %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>MBean Count</td>
+                        <td><% platformMBeanServer.MBeanCount %></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container">
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="2">Runtime MX Bean</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th width="25%">Item</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="oddrow">
+                        <td>Boot Class Path</td>
+                        <td><% replace(runtimeMXBean.bootClassPath, pathSeparator, '<br />') %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Boot Class Path Supported</td>
+                        <td><% runtimeMXBean.bootClassPathSupported %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Class Path</td>
+                        <td><% replace(runtimeMXBean.classPath, pathSeparator, '<br />') %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Input Arguments</td>
+                        <td><% join(runtimeMXBean.inputArguments, '<br />') %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Library Path</td>
+                        <td><% replace(runtimeMXBean.libraryPath, pathSeparator, '<br />') %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Management Spec Version</td>
+                        <td><% runtimeMXBean.managementSpecVersion %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Name</td>
+                        <td><% runtimeMXBean.name %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Spec Name</td>
+                        <td><% runtimeMXBean.specName %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Spec Vendor</td>
+                        <td><% runtimeMXBean.specVendor %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Spec Version</td>
+                        <td><% runtimeMXBean.specVersion %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Start Time</td>
+                        <td><% createDate(runtimeMXBean.startTime) %> (<% runtimeMXBean.startTime %> ms)</td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>System Properties</td>
+                        <td><%
+                            first = true;
+                            foreach ( key in runtimeMXBean.systemProperties ) {
+                                if ( not first ) {
+                                    '<br />'
+                                }
+                                key ': ' replace(runtimeMXBean.systemProperties[key], ##(':', ', ', "http://", '', "\n", ''));
+                                first = false;
+                            }
+                        %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Uptime</td>
+                        <td><% call system.util.getFormattedDuration(runtimeMXBean.uptime, 'text') %> (<% runtimeMXBean.uptime %> ms)</td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>VM Name</td>
+                        <td><% runtimeMXBean.vmName %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>VM Vendor</td>
+                        <td><% runtimeMXBean.vmVendor %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>VM Version</td>
+                        <td><% runtimeMXBean.vmVersion %></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-container">
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="2">Thread MX Bean</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th width="25%">Item</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="oddrow">
+                        <td>All Thread Ids</td>
+                        <td><% join(threadMXBean.allThreadIds, ', ') %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Current Thread CPU Time</td>
+                        <td><% threadMXBean.currentThreadCpuTime %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Current Thread CPU Time Supported</td>
+                        <td><% threadMXBean.currentThreadCpuTimeSupported %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Current Thread User Time</td>
+                        <td><% threadMXBean.currentThreadUserTime %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Daemon Thread Count</td>
+                        <td><% threadMXBean.daemonThreadCount %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Object Monitor Usage Supported</td>
+                        <td><% threadMXBean.objectMonitorUsageSupported %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Peak Thread Count</td>
+                        <td><% threadMXBean.peakThreadCount %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Synchronizer Usage Supported</td>
+                        <td><% threadMXBean.synchronizerUsageSupported %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Thread Contention Monitoring Enabled</td>
+                        <td><% threadMXBean.threadContentionMonitoringEnabled %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Thread Contention Monitoring Supported</td>
+                        <td><% threadMXBean.threadContentionMonitoringSupported %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Thread Count</td>
+                        <td><% threadMXBean.threadCount %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Thread CPU Time Enabled</td>
+                        <td><% threadMXBean.threadCpuTimeEnabled %></td>
+                    </tr>
+                    <tr class="oddrow">
+                        <td>Thread CPU Time Supported</td>
+                        <td><% threadMXBean.threadCpuTimeSupported %></td>
+                    </tr>
+                    <tr class="evenrow">
+                        <td>Total Started Thread Count</td>
+                        <td><% threadMXBean.totalStartedThreadCount %></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

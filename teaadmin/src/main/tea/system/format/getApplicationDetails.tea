@@ -7,15 +7,30 @@
     if ( info == null ) {
         'Context not found: ' context;
     } else {
-        descriptions = info.teaContextMethodDescriptors;
+        descriptions = info.teaContextMethodDescriptions;
 
         '<div class="table-container">'
             '<div class="stathead" style="padding: 3px 7px;">'
-                '<div class="template-title" title="Summary for ' context '">Summary for ' context '</div>'
+                '<div title="Summary for ' context '">'
+                    'Summary for ' 
+                    '<span class="' (info.deprecated ? 'deprecated' : '') '">'
+                        context
+                    '</span>' 
+                '</div>'
             '</div>'
             '<div class="scroll">'
             '<table class="tablehead" cellpadding="3" cellspacing="1">'
                 '<tbody>'
+                '<tr class="colhead">'
+                    '<td colspan="3" class="left-align">'
+                        'Information'
+                    '</td>'
+                '</tr>'
+                '<tr>'
+                    '<td colspan="3" class="left-align" style="white-space: normal;">'
+                        call system.util.printClassDeclaration(info)
+                    '</td>'
+                '</tr>'
                 if ( info.description != "" ) {
                     '<tr class="colhead">'
                         '<td colspan="3" class="left-align">'
@@ -23,7 +38,7 @@
                         '</td>'
                     '</tr>'
                     '<tr>'
-                        '<td colspan="3" class="left-align">'
+                        '<td colspan="3" class="left-align" style="white-space: normal;">'
                             info.description
                         '</td>'
                     '</tr>'
@@ -35,68 +50,19 @@
                         '</td>'
                     '</tr>'
 
-                    rowClass = 'oddrow';
+                    rowClass = 'evenrow';
                     foreach ( metDesc in descriptions ) {
-                        if ( metDesc isa java.beans.MethodDescriptor ) {
-
-                            if ( rowClass == 'oddrow' ) {
-                                rowClass = 'evenrow';
-                            } else {
-                                rowClass = 'oddrow';
-                            }
-                            
-                            '<tr class="' rowClass '">'
-                                '<td>'
-                                    '<div>'
-                                        call system.util.printMethodLink(metDesc, 1)
-                                        '&nbsp;'
-                                        '('
-                                        parameterTypes = metDesc.method.parameterTypes;
-                                        parameterDescriptors = metDesc.parameterDescriptors;
-                                        link = true;
-                                        if ( parameterTypes == null or parameterTypes.length == 0 ) {
-                                            if ( parameterDescriptors != null ) {
-                                                foreach ( index in 0..parameterDescriptors.length-1 ) {
-                                                    if ( index > 0 ) {
-                                                        ', '
-                                                    }
-                                                    name = parameterDescriptors[index]
-                                                    if ( name != null ) {
-                                                        call system.util.printClassLink(getClassForName(name.displayName), link)
-
-                                                        '&nbsp;' name.name
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            foreach ( index in 0..parameterTypes.length - 1 ) {
-                                                if ( index > 0 ) {
-                                                    ', '
-                                                }
-                                                call system.util.printClassLink(parameterTypes[index], link)
-                                                if ( parameterDescriptors != null ) {
-                                                    name = parameterDescriptors[index]
-                                                    if ( name != null ) {
-                                                        '&nbsp;' name.name
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        ')'
-                                    '</div>'
-                                    if ( metDesc.shortDescription != null and metDesc.shortDescription != '' and metDesc.shortDescription != metDesc.method.name ) {
-                                        '<div class="italic left-margin-20 top-margin-10">'
-                                            getFirstSentence(metDesc.shortDescription);
-                                        '</div>'
-                                    }
-                                    if ( metDesc.method.returnType.name != 'void' ) {
-                                        '<div class="left-margin-20 top-margin-10">'
-                                            'Returns: ' call system.util.printClassLink(metDesc.method.returnType, true)
-                                        '</div>'
-                                    }
-                                '</td>'
-                            '</tr>'
+                        if ( rowClass == 'oddrow' ) {
+                            rowClass = 'evenrow';
+                        } else {
+                            rowClass = 'oddrow';
                         }
+                        
+                        '<tr class="' rowClass '">'
+                            '<td>'
+                                call system.util.printFunctionDetails(info, metDesc) 
+                            '</td>'
+                        '</tr>'
                     }
                 }
                 '</tbody>'

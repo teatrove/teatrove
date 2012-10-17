@@ -84,7 +84,7 @@ public class WildcardTypeDesc
             }
         }
 
-        if (this.upperBounds != null) {
+        else if (this.upperBounds != null) {
             found = true;
             if (this.upperBounds instanceof ClassTypeDesc) {
                 ClassTypeDesc clazz = (ClassTypeDesc) this.upperBounds;
@@ -135,7 +135,7 @@ public class WildcardTypeDesc
             buffer.append(" super ").append(this.lowerBounds.toString());
         }
 
-        if (this.upperBounds != null) {
+        else if (this.upperBounds != null) {
             buffer.append(" extends ").append(this.upperBounds.toString());
         }
 

@@ -16,20 +16,15 @@
 
 package org.teatrove.trove.classfile;
 
-import java.io.Serializable;
 import java.io.Externalizable;
-import java.io.ObjectOutput;
-import java.io.ObjectInput;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.ObjectStreamException;
-import java.util.Map;
+import java.io.Serializable;
 import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
+import java.util.Map;
 
 import org.teatrove.trove.classfile.generics.GenericArrayTypeDesc;
 import org.teatrove.trove.classfile.generics.GenericTypeDesc;
@@ -89,7 +84,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
     final static FlyweightSet cInstances;
 
     // Cache that maps Classes to TypeDescs.
-    final static Map cClassesToInstances;
+    final static Map<Object, TypeDesc> cClassesToInstances;
 
     static {
         cInstances = new FlyweightSet();
@@ -113,7 +108,8 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         return (TypeDesc)cInstances.put(type);
     }
 
-    public synchronized static TypeDesc forClass(Class clazz, Type genericType) {
+    public synchronized static TypeDesc forClass(Class<?> clazz, 
+                                                 Type genericType) {
         if (clazz == null) {
             return null;
         } else if (genericType == null || genericType == clazz) {
@@ -124,10 +120,10 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
     }
 
     protected static class ClassKey {
-        private Class clazz;
+        private Class<?> clazz;
         private GenericTypeDesc genericType;
         
-        public ClassKey(Class clazz, GenericTypeDesc genericType) {
+        public ClassKey(Class<?> clazz, GenericTypeDesc genericType) {
             this.clazz = clazz;
             this.genericType = genericType;
         }
@@ -158,7 +154,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         }
     }
     
-    public synchronized static TypeDesc forClass(Class clazz,
+    public synchronized static TypeDesc forClass(Class<?> clazz,
                                                  GenericTypeDesc genericType) {
         if (clazz == null) {
             return null;
@@ -167,7 +163,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         }
 
         ClassKey key = new ClassKey(clazz, genericType);
-        TypeDesc type = (TypeDesc)cClassesToInstances.get(key);
+        TypeDesc type = cClassesToInstances.get(key);
         if (type != null) {
             return type;
         }
@@ -226,12 +222,12 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
     /**
      * Acquire a TypeDesc from any class, including primitives and arrays.
      */
-    public synchronized static TypeDesc forClass(Class clazz) {
+    public synchronized static TypeDesc forClass(Class<?> clazz) {
         if (clazz == null) {
             return null;
         }
 
-        TypeDesc type = (TypeDesc)cClassesToInstances.get(clazz);
+        TypeDesc type = cClassesToInstances.get(clazz);
         if (type != null) {
             return type;
         }
@@ -609,6 +605,13 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
     }
 
     /**
+     * Returns a type descriptor string, excluding generics.
+     */
+    public final String getDescriptor() {
+        return mDescriptor;
+    }
+    
+    /**
      * Returns the class name for this descriptor. If the type is primitive,
      * then the Java primitive type name is returned. If the type is an array,
      * only the root component type name is returned.
@@ -685,14 +688,14 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
      * Returns this type as a class. If the class isn't found, null is
      * returned.
      */
-    public abstract Class toClass();
+    public abstract Class<?> toClass();
 
     /**
      * Returns this type as a class. If the class isn't found, null is
      * returned.
      * @param loader optional ClassLoader to load class from
      */
-    public abstract Class toClass(ClassLoader loader);
+    public abstract Class<?> toClass(ClassLoader loader);
 
     /**
      * Returns this in type descriptor syntax.
@@ -839,7 +842,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             return this;
         }
 
-        public Class toClass() {
+        public Class<?> toClass() {
             switch (mCode) {
             default:
             case VOID_CODE:
@@ -863,7 +866,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             }
         }
 
-        public Class toClass(ClassLoader loader) {
+        public Class<?> toClass(ClassLoader loader) {
             return toClass();
         }
     }
@@ -877,9 +880,11 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             mGenericDesc = genericDesc;
         }
 
+        /*
         public GenericTypeDesc getGenericDesc() {
             return mGenericDesc;
         }
+        */
 
         public TypeDesc toArrayType() {
             if (mArrayType == null) {
@@ -921,7 +926,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
         private transient final String mName;
         private transient TypeDesc mArrayType;
         private transient TypeDesc mPrimitiveType;
-        private transient Class mClass;
+        private transient Class<?> mClass;
 
         ObjectType(String desc, String name) {
             super(desc);
@@ -1034,14 +1039,14 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             return mPrimitiveType;
         }
 
-        public final Class toClass() {
+        public final Class<?> toClass() {
             if (mClass == null) {
                 mClass = toClass(null);
             }
             return mClass;
         }
 
-        public Class toClass(ClassLoader loader) {
+        public Class<?> toClass(ClassLoader loader) {
             TypeDesc type = toPrimitiveType();
             if (type != null) {
                 switch (type.getTypeCode()) {
@@ -1091,9 +1096,11 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             mGenericDesc = genericDesc;
         }
 
+        /*
         public GenericTypeDesc getGenericDesc() {
             return mGenericDesc;
         }
+        */
 
         public TypeDesc toArrayType() {
             if (mArrayType == null) {
@@ -1169,7 +1176,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             return null;
         }
 
-        public Class toClass(ClassLoader loader) {
+        public Class<?> toClass(ClassLoader loader) {
             if (loader == null) {
                 return arrayClass(getRootComponentType().toClass());
             }
@@ -1178,7 +1185,7 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
             }
         }
 
-        private Class arrayClass(Class clazz) {
+        private Class<?> arrayClass(Class<?> clazz) {
             if (clazz == null) {
                 return null;
             }
@@ -1199,9 +1206,6 @@ public abstract class TypeDesc extends Descriptor implements Serializable {
 
     private static class External implements Externalizable {
         private String mDescriptor;
-
-        public External() {
-        }
 
         public External(String desc) {
             mDescriptor = desc;

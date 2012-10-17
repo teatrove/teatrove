@@ -26,6 +26,8 @@ import java.io.Serializable;
  * @author Brian S O'Neill
  */
 public class ArrayByteData implements ByteData, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private byte[] mData;
     private int mOffset;
     private int mLength;

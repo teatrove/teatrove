@@ -1,0 +1,280 @@
+<% template timelapse (Map config)
+
+    admin = getTeaServletAdmin();
+    request = getRequest();
+ 
+    call system.util.handleRequest(request);
+
+    stats = getTemplateStats()
+    
+    sort = request.parameters['sort'] ?: 'name'
+    direction = request.parameters['direction'] ?: 'asc'
+    if (sort == 'name') {
+        sort(stats, 'templateName', direction != 'asc')
+    }
+    else if (sort == 'path') {
+        sort(stats, 'fullTemplateName', direction != 'asc')
+    }
+    else if (sort == 'duration') {
+        sort(stats, 'aggregateIntervalForRawData.durationStats.arithmeticMean', direction != 'asc')
+    }
+    else if (sort == 'recent') {
+        sort(stats, 'latestServiceTime', direction != 'asc')
+    }
+    
+    currentTime = currentDateTime().millis
+
+    pxps = convertStringToInteger(request.parameters['pxps'] ?: '-1')
+    zoom = convertStringToInteger(request.parameters['zoom'] ?: '1')
+    if (pxps <= 0) {
+        pxps = zoom == 0 ? 25 : (zoom * 100)
+    }
+
+    timeframe = convertStringToInteger(request.parameters['timeframe'] ?: '1')
+    timeframeSEC = timeframe * 60
+    timeframeMSEC = timeframeSEC * 1000
+    
+    endTime = currentTime - timeframeMSEC
+
+    MEDIUM_THRESHOLD = 500
+    HIGH_THRESHOLD = 1000
+
+    PX_PER_SEC = pxps ?: 100
+    PX_PER_MSEC = PX_PER_SEC / 1000.0
+%>
+
+    <article>
+        <section>
+            <div class="controls">
+                <div class="controls-wrapper">
+                    <div role="label">Show Last</div>
+                    <div id="buttonset-timeframe" class="buttonset">
+                        <% foreach (idx in #(1, 5, 15, 30)) { %>
+                            <a href="?page=timelapse&timeframe=<% idx %>&zoom=<% zoom %>" class="button <% timeframe == idx ? 'ui-state-active' : '' %>"><% idx %> min<% idx > 1 ? 's' : '' %></a>
+                        <% } %>
+                    </div>
+                    
+                    <div role="label">Zoom</div>
+                    <div id="buttonset-zoom" class="buttonset">
+                        <% if (zoom <= 0) { %>
+                            <a href="#" class="button disabled">Zoom Out</a>
+                        <% } else { %>
+                            <a href="?page=timelapse&timeframe=<% timeframe %>&zoom=<% zoom - 1 %>" class="button">Zoom Out</a>
+                        <% } %>
+                        
+                        <% if (zoom >= 10) { %>
+                            <a href="#" class="button disabled">Zoom In</a>
+                        <% } else { %>
+                            <a href="?page=timelapse&timeframe=<% timeframe %>&zoom=<% zoom + 1 %>" class="button">Zoom In</a>
+                        <% } %>
+                    </div>
+                    
+                    <div role="label">Order By</div>
+                    <div id="buttonset-orderby" class="buttonset">
+                        <a href="?page=timelapse&sort=path&direction=<% sort == 'path' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'path' ? 'ui-state-active' : '' %>">Path</a>
+                        <a href="?page=timelapse&sort=name&direction=<% sort == 'name' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'name' ? 'ui-state-active' : '' %>">Name</a>
+                        <a href="?page=timelapse&sort=recent&direction=<% sort == 'recent' and direction == 'desc' ? 'asc' : 'desc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'recent' ? 'ui-state-active' : '' %>">Recent</a>
+                        <a href="?page=timelapse&sort=duration&direction=<% sort == 'duration' and direction == 'asc' ? 'desc' : 'asc' %>&timeframe=<% timeframe %>&zoom=<% zoom %>" class="button <% sort == 'duration' ? 'ui-state-active' : '' %>">Duration</a>
+                    </div>
+                </div>
+            </div>
+            <br class="clear" />
+
+            <div class="gridlapse gridlapse-absolute">
+            <div id="timelapse-container" class="grid-container">
+                <div class="grid-lhn">
+                <% 
+                    row = -1; 
+                    foreach (stat in stats) 
+                    {
+                        rawData = stat.rawData
+                        if (rawData == null or 
+                            rawData.length == 0 or 
+                            rawData[rawData.length - 1].endTime < endTime) 
+                        { 
+                            continue; 
+                        }
+                        
+                        row = row + 1;
+                        if (row % 10 == 0) 
+                        {
+                %>
+                            <div class="header stathead">
+                                <div class="template">&nbsp;</div>
+                            </div>
+                <%
+                        }
+
+                        top = 0; maxtop = 1
+                        lend = -1; lstart = -1
+                        foreach (data in stat.rawData reverse) 
+                        {
+                            end = data.endTime
+                            start = data.startTime
+                            if (end < endTime) { continue }
+
+                            if ((start > lstart and start < lend) or 
+                                (end > lstart and end < lend)) 
+                            {
+                                top = top + 1;
+                                maxtop = Math.max(maxtop, top)
+                                
+                                lend = Math.max(end, lend)
+                                lstart = Math.min(start, lstart)
+                            }
+                            else 
+                            {
+                                top = 0;
+                                lend = end
+                                lstart = start
+                            }
+                        }
+                %>
+                        <div class="row stathead" style="height: <% (24 * (maxtop + 1)) %>px;">
+                            <div class="template" title="<% stat.templatePath %>.<% stat.templateName %>, avg <% stat.aggregateIntervalForRawData.durationStats.arithmeticMean %> ms">
+                                <div class="template-options">
+                                    <a class="compile" href="remote/reload?reloadTemplates=selected&selectedTemplates=<% stat.fullTemplateName %>" title="Compile template"></a>
+                                    <a class="code" href="?page=viewer&name=<% stat.fullTemplateName %>" title="View template source code"></a>
+                                    <a class="web" target="_blank" href="<% replace(stat.fullTemplateName, '.', '/') %>" title="Follow template url"></a>
+                                    <a class="info" href="?page=template_info&name=<% stat.fullTemplateName %>" title="View template stats"></a>
+                                    <a class="reset" href="remote/reset?name=<% stat.fullTemplateName %>" title="Reset template stats"></a>
+                                </div> 
+                                <a href="?page=template_info&name=<% stat.fullTemplateName %>">
+                                    <span class="path"><% stat.templatePath %></span>
+                                    <span class="name"><% stat.templateName %></span>
+                                </a>
+                            </div>
+                        </div>
+                <% 
+                    }
+                %>
+
+                    <div class="placeholder stathead">&nbsp;</div>
+                </div>
+                
+                <div class="grid">
+                <% 
+                    row = -1; header = 0;
+                    foreach (stat in stats) {
+                        rawData = stat.rawData
+                        if (rawData == null or 
+                            rawData.length == 0 or 
+                            rawData[rawData.length - 1].endTime < endTime) 
+                        { 
+                            continue; 
+                        }
+                        
+                        row = row + 1;
+                        if (row % 10 == 0) 
+                        {
+                            header = header + 1
+                %>
+                            <div id="header-<% header %>" class="header stathead" style="width:<% timeframeSEC * PX_PER_SEC %>px;">
+                                <div class="timer">&nbsp;</div>
+                                <% foreach (i in 1..(timeframeSEC - 1)) { %>
+                                    <div class="metric" style="left: <% i * PX_PER_SEC %>px; width: <% PX_PER_SEC %>px;">
+                                        <% i %>s
+                                    </div>
+                                <% } %>
+                            </div>
+                            <div class="scrollbar" style="width: <% timeframeSEC * PX_PER_SEC %>px;">
+                                <div class="scroller">|||</div>
+                            </div>
+                <% 
+                        } 
+
+                        top = 0; maxtop = 1; 
+                        lend = -1; lstart = -1; 
+                        foreach (data in rawData reverse) 
+                        {
+                            start = data.startTime
+                            end = data.endTime
+                            if (end < endTime) { continue }
+
+                            if ((start > lstart and start < lend) or 
+                                (end > lstart and end < lend)) 
+                            {
+                                top = top + 1
+                                maxtop = Math.max(maxtop, top)
+                                
+                                lend = Math.max(end, lend)
+                                lstart = Math.min(start, lstart)
+                            }
+                            else 
+                            {
+                                top = 0
+                                lend = end
+                                lstart = start
+                            }
+                        }
+                %>
+                        <div class="row" style="height: <% (24 * (maxtop + 1)) %>px; width: <% timeframeSEC * PX_PER_SEC %>px;">
+                <% 
+                        top = 0; 
+                        lend = -1; lstart = -1;
+                        foreach (data in rawData reverse) 
+                        {
+                            end = data.endTime
+                            start = data.startTime
+                            duration = data.duration
+                            if (end < endTime) { continue }
+
+                            startDate = createDate(start)
+                            endDate = createDate(end)
+                            
+                            if ((start > lstart and start < lend) or
+                                (end > lstart and end < lend)) 
+                            {
+                                top = top + 1;
+                                lend = Math.max(end, lend)
+                                lstart = Math.min(start, lstart)
+                            }
+                            else {
+                                top = 0;
+                                lend = end
+                                lstart = start
+                            }
+                            
+                            clazz = ''
+                            if (duration > HIGH_THRESHOLD) { clazz = 'red' }
+                            else if (duration > MEDIUM_THRESHOLD) { clazz = 'yellow' }
+                            else { clazz = 'green' }
+
+                            numberFormat('#.#')
+                            dateFormat('h:mm:ss')
+                            left = ((currentTime - end) * PX_PER_MSEC);
+                            width = ((end - start) * PX_PER_MSEC);
+                %>
+                            <div title="<% (currentTime - end) / 1000.0 %>s ago, <% end - start %> ms, <% data.contentLength %> bytes<% '\n\n' %>started <% startDate %>, ended <% endDate %>"
+                                 class="metric process <% clazz %>" style="left: <% left %>px; width: <% width %>px; top: <% 2 + (24 * top) %>px;">
+                                <span class="value">&nbsp;</span>
+                            </div>
+                <% 
+                        } 
+                %>
+                    
+                        </div>
+
+                <%
+                    }
+                %>
+                
+                    <div class="scrollbar" style="width: <% timeframeSEC * PX_PER_SEC %>px;">
+                        <div class="scroller">|||</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <br class="clear" />
+            
+            <div class="grid-tracker"></div>
+            </div>
+            
+            <script type="text/javascript">PX_PER_SEC = <% PX_PER_SEC %>;</script>
+            
+            </div>
+
+        </section>
+    </article>
+    

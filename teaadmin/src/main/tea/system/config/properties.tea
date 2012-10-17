@@ -13,6 +13,11 @@
         pageTitle = 'Compile';
         pageSection = 'Compile';
 
+    } else if ( page == 'console' ) {
+
+        pageTitle = 'Console';
+        pageSection = 'Console';
+
     } else if ( page == 'templates' ) {
 
         pageTitle = 'Templates';
@@ -63,6 +68,16 @@
         pageTitle = 'System Information';
         pageSection = 'Analyze';
 
+    } else if ( page == 'viewer' ) {
+
+        pageTitle = 'Template Viewer';
+        pageSection = 'Explore';
+        
+    } else if ( page == 'timelapse' ) {
+    
+        pageTitle = 'Timelapse';
+        pageSection = 'Analyze';
+        
     } else {
 
         pageTokens = tokenize(page, '.');

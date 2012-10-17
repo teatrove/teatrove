@@ -64,9 +64,12 @@ public class NumberLiteral extends Literal {
             if (type.isPrimitive()) {
                 super.setType(type);
             }
-            else {
+            else if (type.hasPrimitivePeer()) {
                 super.setType(type.toPrimitive());
                 super.convertTo(type.toNonNull(), preferCast);
+            }
+            else {
+                super.convertTo(type, preferCast);
             }
         }
         else {

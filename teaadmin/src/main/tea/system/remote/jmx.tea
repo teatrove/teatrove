@@ -1,0 +1,227 @@
+<% template jmx() 
+
+    classLoadingMXBean = getClassLoadingMXBean();
+    compilationMXBean = getCompilationMXBean();
+    memoryMXBean = getMemoryMXBean();
+    operatingSystemMXBean = getOperatingSystemMXBean();
+    edenMemoryPoolMXBean = getEdenMemoryPoolMXBean();
+    survivorMemoryPoolMXBean = getSurvivorMemoryPoolMXBean()
+    permGenMemoryPoolMXBean = getPermGenMemoryPoolMXBean()
+    tenuredMemoryPoolMXBean = getTenuredMemoryPoolMXBean()
+    youngCollectorMXBean = getYoungCollectorMXBean()
+    tenuredCollectorMXBean = getTenuredCollectorMXBean()
+    runtimeMXBean = getRuntimeMXBean();
+    threadMXBean = getThreadMXBean();
+    threadInfos = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds())
+
+    setContentType("application/json");
+    
+    date = currentDate()
+    time = date.time - (date.timezoneOffset * 60 * 1000)
+%>
+
+{
+    "timestamp" : <% time %>,
+    "time" : "<% dateToString(date, "hh:mm:ss") %>",
+    "memory" : {
+        "heap" : {
+            "init" : <% memoryMXBean.heapMemoryUsage.init %>,
+            "used" : <% memoryMXBean.heapMemoryUsage.used %>,
+            "committed" : <% memoryMXBean.heapMemoryUsage.committed %>,
+            "max" : <% memoryMXBean.heapMemoryUsage.max %>
+        },
+        "nonheap" : {
+            "init" : <% memoryMXBean.nonHeapMemoryUsage.init %>,
+            "used" : <% memoryMXBean.nonHeapMemoryUsage.used %>,
+            "committed" : <% memoryMXBean.nonHeapMemoryUsage.committed %>,
+            "max" : <% memoryMXBean.nonHeapMemoryUsage.max %>
+        }
+    },
+    "pools" : {
+        <% if (edenMemoryPoolMXBean) { %>
+        "eden" : { 
+            "name" : "<% edenMemoryPoolMXBean.name %>", 
+            "peak" : {
+                "init" : <% edenMemoryPoolMXBean.peakUsage.init %>,
+                "used" : <% edenMemoryPoolMXBean.peakUsage.used %>,
+                "committed" : <% edenMemoryPoolMXBean.peakUsage.committed %>,
+                "max" : <% edenMemoryPoolMXBean.peakUsage.max %>
+            },
+            "usage" : {
+                "init" : <% edenMemoryPoolMXBean.usage.init %>,
+                "used" : <% edenMemoryPoolMXBean.usage.used %>,
+                "committed" : <% edenMemoryPoolMXBean.usage.committed %>,
+                "max" : <% edenMemoryPoolMXBean.usage.max %>
+            }
+        },
+        <% } %>
+        <% if (survivorMemoryPoolMXBean) { %>
+        "survivor" : { 
+            "name" : "<% survivorMemoryPoolMXBean.name %>", 
+            "peak" : {
+                "init" : <% survivorMemoryPoolMXBean.peakUsage.init %>,
+                "used" : <% survivorMemoryPoolMXBean.peakUsage.used %>,
+                "committed" : <% survivorMemoryPoolMXBean.peakUsage.committed %>,
+                "max" : <% survivorMemoryPoolMXBean.peakUsage.max %>
+            },
+            "usage" : {
+                "init" : <% survivorMemoryPoolMXBean.usage.init %>,
+                "used" : <% survivorMemoryPoolMXBean.usage.used %>,
+                "committed" : <% survivorMemoryPoolMXBean.usage.committed %>,
+                "max" : <% survivorMemoryPoolMXBean.usage.max %>
+            }        
+        },
+        <% } %>
+        <% if (tenuredMemoryPoolMXBean) { %>
+        "tenured" : { 
+            "name" : "<% tenuredMemoryPoolMXBean.name %>", 
+            "peak" : {
+                "init" : <% tenuredMemoryPoolMXBean.peakUsage.init %>,
+                "used" : <% tenuredMemoryPoolMXBean.peakUsage.used %>,
+                "committed" : <% tenuredMemoryPoolMXBean.peakUsage.committed %>,
+                "max" : <% tenuredMemoryPoolMXBean.peakUsage.max %>
+            },
+            "usage" : {
+                "init" : <% tenuredMemoryPoolMXBean.usage.init %>,
+                "used" : <% tenuredMemoryPoolMXBean.usage.used %>,
+                "committed" : <% tenuredMemoryPoolMXBean.usage.committed %>,
+                "max" : <% tenuredMemoryPoolMXBean.usage.max %>
+            }
+        },
+        <% } %>
+        <% if (permGenMemoryPoolMXBean) { %>
+        "perm" : { 
+            "name" : "<% permGenMemoryPoolMXBean.name %>", 
+            "peak" : {
+                "init" : <% permGenMemoryPoolMXBean.peakUsage.init %>,
+                "used" : <% permGenMemoryPoolMXBean.peakUsage.used %>,
+                "committed" : <% permGenMemoryPoolMXBean.peakUsage.committed %>,
+                "max" : <% permGenMemoryPoolMXBean.peakUsage.max %>
+            },
+            "usage" : {
+                "init" : <% permGenMemoryPoolMXBean.usage.init %>,
+                "used" : <% permGenMemoryPoolMXBean.usage.used %>,
+                "committed" : <% permGenMemoryPoolMXBean.usage.committed %>,
+                "max" : <% permGenMemoryPoolMXBean.usage.max %>
+            }
+        },
+        <% } %>
+        "ignore" : null
+    },
+    "collectors" : {
+        <% if (youngCollectorMXBean) { %>
+        "young" : { 
+            "name" : "<% youngCollectorMXBean.name %>",
+            <% if (youngCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
+                "lastGC" : {
+                    "start" : <% youngCollectorMXBean.lastGcInfo?.startTime ?: -1L %>,
+                    "end" : <% youngCollectorMXBean.lastGcInfo?.endTime ?: -1L %>,
+                    "duration" : <% youngCollectorMXBean.lastGcInfo?.duration ?: 0L %>,
+                    "memory" : {
+                        <% total = 0 %>
+                        <% foreach (pool in youngCollectorMXBean.memoryPoolNames) { %>
+                        <% if (youngCollectorMXBean.lastGcInfo?.memoryUsageBeforeGc?[pool]) { %>
+                            <% count = youngCollectorMXBean.lastGcInfo?.memoryUsageBeforeGc?[pool].used - youngCollectorMXBean.lastGcInfo?.memoryUsageAfterGc?[pool].used %>
+                            <% total = total + count %>
+                            "<% pool %>" : <% count %>,
+                        <% } %>
+                        <% } %>
+                        "total" : <% total %>
+                    }
+                },
+            <% } %>
+            "count" : <% youngCollectorMXBean.collectionCount %>, 
+            "time" : <% youngCollectorMXBean.collectionTime %>
+        },
+        <% } %>
+        <% if (tenuredCollectorMXBean) { %>
+        "tenured" : { 
+            "name" : "<% tenuredCollectorMXBean.name %>",
+            <% if (tenuredCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
+                "lastGC" : {
+                    "start" : <% tenuredCollectorMXBean.lastGcInfo?.startTime ?: -1L %>,
+                    "end" : <% tenuredCollectorMXBean.lastGcInfo?.endTime ?: -1L %>,
+                    "duration" : <% tenuredCollectorMXBean.lastGcInfo?.duration ?: 0L %>,
+                    "memory" : {
+                        <% total = 0 %>
+                        <% foreach (pool in tenuredCollectorMXBean.memoryPoolNames) { %>
+                        <% if (tenuredCollectorMXBean.lastGcInfo?.memoryUsageBeforeGc?[pool]) { %>
+                            <% count = tenuredCollectorMXBean.lastGcInfo?.memoryUsageBeforeGc?[pool].used - tenuredCollectorMXBean.lastGcInfo?.memoryUsageAfterGc?[pool].used %>
+                            <% total = total + count %>
+                            "<% pool %>" : <% count %>,
+                        <% } %>
+                        <% } %>
+                        "total" : <% total %>
+                    }
+                },
+            <% } %>
+            "count" : <% tenuredCollectorMXBean.collectionCount %>, 
+            "time" : <% tenuredCollectorMXBean.collectionTime %>
+        },
+        <% } %>
+        "ignore" : null
+    },
+    "classes" : {
+        "loaded" : <% classLoadingMXBean.loadedClassCount %>,
+        "unloaded" : <% classLoadingMXBean.unloadedClassCount %>,
+        "total" : <% classLoadingMXBean.totalLoadedClassCount %>
+    },
+    "threads" : {
+        "count" : <% threadMXBean.threadCount %>,
+        "peak" : <% threadMXBean.peakThreadCount %>,
+        "total" : <% threadMXBean.totalStartedThreadCount %>,
+        "daemon" : <% threadMXBean.daemonThreadCount %>,
+        "threads" : [
+            <% 
+                numberFormat('0')
+                cpuTimes = 0L; userTimes = 0L;
+                foreach (thread in threadInfos) {
+                    cpuTime = threadMXBean.getThreadCpuTime(thread.threadId) / 1000000.0
+                    userTime = threadMXBean.getThreadUserTime(thread.threadId) / 1000000.0
+                    
+                    cpuTimes = cpuTimes + cpuTime
+                    userTimes = userTimes + userTime
+            %>
+                {
+                    "id" : <% thread.threadId %>,
+                    "name" : "<% thread.threadName %>",
+                    "state" : <% thread.threadState.ordinal() %>,
+                    "blocked" : {
+                        "time" : <% thread.blockedTime %>,
+                        "count" : <% thread.blockedCount %>
+                    },
+                    "waited" : {
+                        "time" : <% thread.waitedTime %>,
+                        "count" : <% thread.waitedCount %>
+                    },
+                    "time" : {
+                        "cpu" : <% cpuTime %>,
+                        "user" : <% userTime %>
+                    }
+                },
+            <% } %>
+            null
+        ],
+        "aggregate" : {
+            "time" : {
+                "cpu" : <% cpuTimes %>,
+                "user" : <% userTimes %>
+            }
+        }
+    },
+    "compiler" : {
+        "name" : "<% compilationMXBean.name %>",
+        "time" : <% compilationMXBean.totalCompilationTime %>
+    },
+    "runtime" : {
+        "start" : <% runtimeMXBean.startTime - (date.timezoneOffset * 60 * 1000) %>,
+        "uptime" : <% runtimeMXBean.uptime %>
+    },
+    "os" : {
+        "processors" : <% operatingSystemMXBean.availableProcessors %>,
+        <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
+            <% numberFormat('0.000') %>
+            "processtime" : <% operatingSystemMXBean.processCpuTime / 1000000.0 %>
+        <% } %>
+    }
+}

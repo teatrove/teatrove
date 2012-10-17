@@ -39,9 +39,9 @@ import org.teatrove.maven.plugins.teacompiler.contextclassbuilder.TeaCompilerExp
 import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilder;
 import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilderException;
 import org.teatrove.maven.teacompiler.contextclassbuilder.api.ContextClassBuilderHelper;
+import org.teatrove.tea.compiler.CompileEvent;
+import org.teatrove.tea.compiler.CompileListener;
 import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.tea.compiler.ErrorEvent;
-import org.teatrove.tea.compiler.ErrorListener;
 import org.teatrove.tea.util.FileCompilationProvider;
 
 /**
@@ -150,6 +150,10 @@ public class TeaCompilerMojo extends AbstractMojo implements Contextualizable {
      */
     private boolean failOnError;
 
+    /**
+     * @parameter default-value="false"
+     */
+    private boolean failOnWarning;
 
     // set by the contextualize method. Only way to get the
     // plugin's container in 2.0.x
@@ -221,9 +225,13 @@ public class TeaCompilerMojo extends AbstractMojo implements Contextualizable {
         compiler.setClassLoader(contextClass.getClassLoader());
         compiler.setRuntimeContext(contextClass);
         compiler.setForceCompile(force);
-        compiler.addErrorListener(new ErrorListener() {
-            public void compileError(ErrorEvent e) {
-                logger.error(e.getDetailedErrorMessage());
+        compiler.addCompileListener(new CompileListener() {
+            public void compileError(CompileEvent e) {
+                logger.error(e.getDetailedMessage());
+            }
+            
+            public void compileWarning(CompileEvent e) {
+                logger.warn(e.getDetailedMessage());
             }
         });
         compiler.setExceptionGuardianEnabled(guardian);
@@ -240,10 +248,19 @@ public class TeaCompilerMojo extends AbstractMojo implements Contextualizable {
         }
 
         final int errorCount = compiler.getErrorCount();
-
         if (errorCount > 0) {
             String msg = errorCount + " error" + (errorCount != 1 ? "s" : "");
             if(failOnError) {
+                throw new MojoFailureException(msg);
+            } else if(logger.isWarnEnabled()){
+                logger.warn(msg);
+            }
+        }
+        
+        final int warningCount = compiler.getWarningCount();
+        if (warningCount > 0) {
+            String msg = warningCount + " warning" + (warningCount != 1 ? "s" : "");
+            if(failOnWarning) {
                 throw new MojoFailureException(msg);
             } else if(logger.isWarnEnabled()){
                 logger.warn(msg);

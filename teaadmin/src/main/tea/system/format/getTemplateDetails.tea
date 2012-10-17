@@ -2,7 +2,9 @@
 
     admin = getTeaServletAdmin();
 
+    tmpl = null
     info = getTemplateInfo(name);
+    
     templateStats = getTemplateStats(name);
 
     pathPrefix = call system.util.getPathPrefix();
@@ -10,6 +12,13 @@
     if ( info == null ) {
         'Template not found: ' name;
     } else {
+        tmpl = null
+        foreach (known in admin.knownTemplates) {
+            if (known.name == name) {
+                tmpl = known
+            }
+        }
+    
         currentTime = currentDate().time;
         if ( templateStats != null ) {
             overallStart = call system.util.getRelativeTimeText(currentTime, currentTime-templateStats.cumulativeServiceTime, false, null);
@@ -45,19 +54,24 @@
         
         '<div class="table-container">'
             '<div class="stathead" style="padding: 3px 7px;">'
-                '<div class="template-title" title="Details for ' name '">Details for ' name '</div>'
-                '<div class="template-options white" style="margin-top: 0;">'
+                '<div class="template-options" style="margin-top: 0; ">'
                     '<a class="compile" target="_top" href="remote/reload?reloadTemplates=selected&selectedTemplates='  name '" title="Compile template"></a>'
+                    '<a class="code" target="_top" href="?page=viewer&name=' name '" title="View template source code"></a>'
                     '<a class="web" target="_blank" href="' pathPrefix replace(name, '.', '/') '" title="Follow template url"></a>'
                     '<a class="info" target="_top" href="?page=template_info&name='  name '" title="View template stats"></a>'
                     '<a class="reset" target="_top" href="remote/reset?name='  name '" title="Reset template stats"></a>'
                 '</div>'
+                '<div title="Details for ' name '">Details for ' name '</div>'
             '</div>'
             '<div class="scroll">'
             '<table class="tablehead" cellpadding="3" cellspacing="1">'
                 '<tbody>'
                     '<tr class="colhead">'
                         '<td colspan="2">General</td>'
+                    '</tr>'
+                    '<tr class="oddrow">'
+                        '<td>Source</td>'
+                        '<td style="word-break: break-all;">' info.sourceFile ?: '<em>Not Available</em>' '</td>'
                     '</tr>'
                     '<tr class="evenrow">'
                         '<td>Last Successful Compile</td>'
@@ -66,7 +80,15 @@
                     '<tr class="oddrow">'
                         '<td>Parameters</td>'
                         '<td>'
-                            if ( info.parameterTypes.length > 1 ) {
+                            paramNames = tmpl?.loadedTemplate?.parameterNames
+                            genericParamTypes = tmpl?.loadedTemplate?.genericParameterTypes
+                            if (paramNames and genericParamTypes) {
+                                foreach ( t in 0..paramNames.length - 1 ) {
+                                    call system.util.printClassLink(genericParamTypes[t], true)
+                                    ' ' paramNames[t] '<br />'
+                                }
+                            }
+                            else if (info.parameterTypes.length > 1) {
                                 foreach ( t in 1..info.parameterTypes.length - 1 ) {
                                     if ( t != 1 ) {
                                         ', '
@@ -80,21 +102,27 @@
                     '</tr>'
                     '<tr class="evenrow">'
                         '<td>Return Type</td>'
-                        '<td>' formatTypeDesc(info.returnType) '</td>'
+                        '<td>' 
+                            genericType = tmpl?.loadedTemplate?.genericReturnType
+                            if (genericType) {
+                                call system.util.printClassLink(genericType, true)
+                            }
+                            else { formatTypeDesc(info.returnType) } 
+                        '</td>'
                     '</tr>'
 
                     '<tr class="colhead">'
                         '<td colspan="2">Tracking</td>'
                     '</tr>'
-                    '<tr class="evenrow">'
+                    '<tr class="oddrow">'
                         '<td>Start</td>'
                         '<td>' overallStart '</td>'
                     '</tr>'
-                    '<tr class="oddrow">'
+                    '<tr class="evenrow">'
                         '<td>Duration</td>'
                         '<td>' overallDuration '</td>'
                     '</tr>'
-                    '<tr class="evenrow">'
+                    '<tr class="oddrow">'
                         '<td>Invokes</td>'
                         '<td>' topLevelInvokesString '</td>'
                     '</tr>'
@@ -113,7 +141,7 @@
 
                             templateTokens = tokenize(dependent, '/');
                             templateFile = templateTokens[templateTokens.length-1];
-                            templatePath = pathPrefix & replaceLast(dependent, templateFile, '');
+                            templatePath = '/' & replaceLast(dependent, templateFile, '');
 
                             rowClass = 'oddrow';
                             if ( j % 2 == 1 ) {
@@ -196,7 +224,7 @@
                             callerTemplateInfo = getTemplateInfo(callerNamePath);
                             callerTokens = tokenize(callerName, '/');
                             callerFile = callerTokens[callerTokens.length-1];
-                            callerPath = pathPrefix & replaceLast(callerName, callerFile, '');
+                            callerPath = '/' & replaceLast(callerName, callerFile, '');
 
                             rowClass = 'oddrow';
                             if ( j % 2 == 1 ) {

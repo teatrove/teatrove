@@ -16,8 +16,10 @@
 
 package org.teatrove.teaservlet;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.Collections;
@@ -27,6 +29,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -51,6 +56,8 @@ import org.teatrove.trove.log.LogEvent;
 import org.teatrove.trove.log.LogListener;
 import org.teatrove.trove.util.PropertyMap;
 import org.teatrove.trove.util.PropertyMapFactory;
+import org.teatrove.trove.util.StatusEvent;
+import org.teatrove.trove.util.StatusListener;
 import org.teatrove.trove.util.SubstitutionFactory;
 import org.teatrove.trove.util.plugin.PluginContext;
 import org.teatrove.trove.util.plugin.PluginFactory;
@@ -120,9 +127,11 @@ public class TeaServlet extends HttpServlet {
 
     private PropertyMap mProperties;
     private PropertyMap mSubstitutions;
+    private ServletConfig mServletConfig;
     private ServletContext mServletContext;
     private String mServletName;
     private ResourceFactory mResourceFactory;
+    private boolean mInstrumentationEnabled;
 
     private String mQuerySeparator;
     private String mParameterSeparator;
@@ -131,15 +140,22 @@ public class TeaServlet extends HttpServlet {
     
     private TeaServletRequestStats mTeaServletRequestStats;
 
+    private TeaServletStatusListener mPluginListener;
+    private TeaServletStatusListener mApplicationListener;
+    private TeaServletStatusListener mTemplateListener;
+    
+    private Future<Boolean> mInitializer;
+    
     /**
      * Initializes the TeaServlet. Creates the logger and loads the user's
      * application.
      * @param config  the servlet config
      */
     public void init(ServletConfig config) throws ServletException {
-        config.getServletContext().log("Starting TeaServlet...");
-
         super.init(config);
+        mServletConfig = config;
+        
+        config.getServletContext().log("Initializing TeaServlet...");
         
         String ver = System.getProperty("java.version");
         if (ver.startsWith("0.") || ver.startsWith("1.2") ||
@@ -173,62 +189,89 @@ public class TeaServlet extends HttpServlet {
 
         loadDefaults();
         discoverProperties();
+        createListeners();
         createLog(mServletContext);
         mLog.applyProperties(mProperties.subMap("log"));
         createMemoryLog(mLog);
-
-        mTeaServletRequestStats = TeaServletRequestStats.getInstance();
         
-        mTeaServletRequestStats.applyProperties(mProperties.subMap("stats"));
-
-        //
-        // simple hack to determine if the admin applications have even 
-        // been mentioned in the file.
-        //
-        if (!mProperties.containsValue("org.teatrove.teaservlet.AdminApplication")) {
-            mLog.warn("org.teatrove.teaservlet.AdminApplication: not properly configured");
+        mInstrumentationEnabled = 
+            mProperties.getBoolean("instrumentation.enabled", true);
+        
+        Initializer initializer = new Initializer();
+        if (mProperties.getBoolean("startup.background", false)) {
+            mInitializer = 
+                Executors.newSingleThreadExecutor().submit(initializer);
         }
-
-
-        PluginContext pluginContext = loadPlugins(mProperties, mLog);
-
-        mEngine = createTeaServletEngine();
-
-        // Check to see if tea templates are being deployed within a WAR bundle.  
-        // If so, append this path to the existing template path.  For Tomcat.
-        Set<?> rp = mServletContext.getResourcePaths(WAR_TEMPLATE_SOURCE_PATH);
-        if (rp != null && rp.size() > 0) {
-            String warPath = mServletContext.getRealPath("/") + WAR_TEMPLATE_SOURCE_PATH;
-            String newPath = mProperties.getString("template.path");
-            newPath = newPath != null && newPath.length() > 0 ? newPath : warPath;
-            mProperties.put("template.path", newPath);
+        else {
+            initializer.call();
         }
-
-        if (mProperties.getString("template.classes") == null) {
-            Set<?> crp = mServletContext.getResourcePaths("/WEB-INF");
-            if (crp != null && crp.size() > 0)
-                mProperties.put("template.classes", mServletContext.getRealPath("/") + WAR_TEMPLATE_CLASS_PATH);
+    }
+    
+    protected boolean isInitialized() {
+        return mInitializer == null || mInitializer.isDone();
+    }
+    
+    protected boolean isRunning() {
+        if (mInitializer == null) { return true; }
+        
+        try { return isInitialized() && mInitializer.get().booleanValue(); }
+        catch (Exception exception) { return false; }
+    }
+    
+    protected class Initializer implements Callable<Boolean> {
+        public Boolean call() {
+            try { init(mServletConfig); return Boolean.TRUE; }
+            catch (ServletException exception) {
+                
+                mServletConfig.getServletContext().log("Unable to initialize", exception);
+                return Boolean.FALSE;
+            }
         }
+        
+        protected void init(ServletConfig config) throws ServletException {
+            config.getServletContext().log("Starting TeaServlet...");
+        
+            mTeaServletRequestStats = TeaServletRequestStats.getInstance();
+            mTeaServletRequestStats.applyProperties(mProperties.subMap("stats"));
 
-        ((TeaServletEngineImpl)getEngine()).startEngine(mProperties,
-                                                        mServletContext, 
-                                                        mServletName,
-                                                        mLog, 
-                                                        mLogEvents,
-                                                        pluginContext);
-
-        mQuerySeparator = mProperties.getString("separator.query", "?");
-        mParameterSeparator = mProperties
-            .getString("separator.parameter", "&");
-        mValueSeparator = mProperties.getString("separator.value", "=");
-
-        mUseSpiderableRequest =
-            (!"?".equals(mQuerySeparator)) ||
-            (!"&".equals(mParameterSeparator)) ||
-            (!"=".equals(mValueSeparator));
-
-        config.getServletContext().log("TeaServlet complete...");
-
+            PluginContext pluginContext = loadPlugins(mProperties, mLog);
+    
+            mEngine = createTeaServletEngine();
+    
+            // Check to see if tea templates are being deployed within a WAR bundle.  
+            // If so, append this path to the existing template path.  For Tomcat.
+            Set<?> rp = mServletContext.getResourcePaths(WAR_TEMPLATE_SOURCE_PATH);
+            if (rp != null && rp.size() > 0) {
+                String warPath = mServletContext.getRealPath("/") + WAR_TEMPLATE_SOURCE_PATH;
+                String newPath = mProperties.getString("template.path");
+                newPath = newPath != null && newPath.length() > 0 ? newPath : warPath;
+                mProperties.put("template.path", newPath);
+            }
+    
+            if (mProperties.getString("template.classes") == null) {
+                Set<?> crp = mServletContext.getResourcePaths("/WEB-INF");
+                if (crp != null && crp.size() > 0)
+                    mProperties.put("template.classes", mServletContext.getRealPath("/") + WAR_TEMPLATE_CLASS_PATH);
+            }
+    
+            TeaServletEngineImpl engine = ((TeaServletEngineImpl)getEngine());
+            engine.setApplicationListener(mApplicationListener);
+            engine.setTemplateListener(mTemplateListener);
+            engine.startEngine(mProperties, mServletContext, mServletName, 
+                               mLog, mLogEvents, pluginContext);
+    
+            mQuerySeparator = mProperties.getString("separator.query", "?");
+            mParameterSeparator = mProperties
+                .getString("separator.parameter", "&");
+            mValueSeparator = mProperties.getString("separator.value", "=");
+    
+            mUseSpiderableRequest =
+                (!"?".equals(mQuerySeparator)) ||
+                (!"&".equals(mParameterSeparator)) ||
+                (!"=".equals(mValueSeparator));
+    
+            config.getServletContext().log("TeaServlet complete...");
+        }
     }
 
     public PropertyMap getProperties() { return mProperties; }
@@ -274,6 +317,138 @@ public class TeaServlet extends HttpServlet {
         doGet(request, response);
     }
 
+    protected void printStatus(PrintWriter writer, 
+                               TeaServletStatusListener status) {
+        
+        String state = "waiting";
+        if (status.isComplete()) { state = "valid"; }
+        else if (status.isActive()) { state = "active"; }
+        
+        writer.print("\"id\":" + status.getId() + ",");
+        writer.print("\"state\":\"" + state + "\",");
+        writer.print("\"progress\":" + "active".equals(state) + ",");
+        writer.print("\"text\":\"Loading " + status.getType() + "...\",");
+        writer.print("\"name\":\"" + status.getType() + "\",");
+        writer.print("\"status\":{");
+            writer.print("\"count\":" + status.getTotal() + ",");
+            writer.print("\"index\":" + status.getCurrent() + ",");
+            writer.print("\"percent\":" + status.getPercent());
+            if (status.getCurrentName() != null) {
+                writer.print(",\"current\":{ \"name\":\"" + status.getCurrentName() + "\" }");
+            }
+            // current : { name:x, state:x, text:x }
+            // items : [ { name:x, state:x, text:x } ]
+        writer.print("}");
+    }
+    
+    protected void printStatus(HttpServletResponse response) 
+        throws IOException {
+        
+        String contextPath = mServletContext.getContextPath();
+        
+        // send json-encoded status response
+        response.setContentType("application/json");
+        
+        // write the json status
+        PrintWriter writer = response.getWriter();
+        writer.print("{");
+            writer.print("\"timestamp\":" + System.currentTimeMillis() + ",");
+            writer.print("\"initialized\":" + isInitialized() + ",");
+            writer.print("\"running\":" + isRunning() + ",");
+            writer.print("\"contextPath\":\"" + contextPath + "\",");
+            writer.print("\"statuses\":[");
+                writer.print("{");
+                    writer.print("\"id\":1,");
+                    writer.print("\"state\":\"valid\",");
+                    writer.print("\"progress\":false,");
+                    writer.print("\"text\":\"Loading configuration...\",");
+                    writer.print("\"name\":\"configuration\"");
+                writer.print("},");
+                
+                writer.print("{");
+                    printStatus(writer, mPluginListener);
+                writer.print("},");
+
+                writer.print("{");
+                    printStatus(writer, mApplicationListener);
+                writer.print("},");
+
+                writer.print("{");
+                    printStatus(writer, mTemplateListener);
+                writer.print("}");
+            
+            writer.print("]");
+        writer.print("}");
+        
+        // flush the buffer
+        response.flushBuffer();
+    }
+    
+    protected boolean processStatus(HttpServletRequest request,
+                                    HttpServletResponse response) 
+        throws IOException {
+        
+        String path = request.getPathInfo();
+            
+        // check password
+        String adminKey = mProperties.getString("admin.key");
+        String adminValue = mProperties.getString("admin.value");
+        if (AdminApplication.adminCheck(adminKey, adminValue, 
+                                        request, response)) {
+
+            // check if status request
+            if ("/system/status.json".equals(path)) {
+                printStatus(response);
+                return true;
+            }
+            
+            // once we have initialized, no need to further process
+            if (isRunning()) { return false; }
+            
+            // verify our path matches the expected path
+            String pattern = mProperties.getString("startup.path");
+            if (pattern != null && path.matches(pattern)) {
+                    
+                // verify the startup file that was provided
+                String resource = mProperties.getString("startup.file");
+                if (resource != null) {
+                    InputStream input = 
+                        TeaServlet.class.getResourceAsStream(resource);
+                    
+                    // copy the data to the response if valid
+                    if (input != null) {
+                        int read = 0;
+                        byte[] data = new byte[512];
+                
+                        input = new BufferedInputStream(input);
+                        ServletOutputStream output = 
+                            response.getOutputStream();
+
+                        while ((read = input.read(data)) >= 0) {
+                            output.write(data, 0, read);
+                        }
+                
+                        input.close();
+                
+                        response.flushBuffer();
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // handle error code if not yet initialized
+        if (!isInitialized()) {
+            // request not processed so send uninitialized error code
+            int errorCode = mProperties.getInt("startup.codes.initializing", 503);
+            response.sendError(errorCode);
+            return true;
+        }
+        
+        // nothing to process
+        return false;
+    }
+    
     /**
      * Process the user's http get request. Process the template that maps to
      * the URI that was hit.
@@ -284,6 +459,16 @@ public class TeaServlet extends HttpServlet {
                          HttpServletResponse response)
         throws ServletException, IOException
     {
+        if (processStatus(request, response)) {
+            return;
+        }
+        
+        if (!isRunning()) {
+            int errorCode = mProperties.getInt("startup.codes.error", 503);
+            response.sendError(errorCode);
+            return;
+        }
+        
         if (mUseSpiderableRequest) {
             request = new SpiderableRequest(request,
                                             mQuerySeparator,
@@ -306,9 +491,6 @@ public class TeaServlet extends HttpServlet {
         // flush the output
         response.flushBuffer();
     }
-
-    //private initialization methods
-
 
     private TeaServletEngine createTeaServletEngine()
         throws ServletException {
@@ -458,6 +640,12 @@ public class TeaServlet extends HttpServlet {
         }
     }
 
+    private void createListeners() {
+        mPluginListener = new TeaServletStatusListener(2, "plugins");
+        mApplicationListener = new TeaServletStatusListener(3, "applications");
+        mTemplateListener = new TeaServletStatusListener(4, "templates");
+    }
+    
     private void discoverProperties() throws ServletException {
         // load our class loader to resolve resources
         ClassLoader cloader = TeaServlet.class.getClassLoader();
@@ -649,15 +837,15 @@ public class TeaServlet extends HttpServlet {
             (properties, log, plug);
         
         try {
-            PluginFactory.createPlugins(config);
+            PluginFactory.createPlugins(config, mPluginListener);
         } 
         catch (PluginFactoryException e) {
             log.warn("Error loading plugins.");
             log.warn(e);
         }
+
         return plug;        
     }
-    
 
     /**
      * Inserts a plugin to expose parts of the teaservlet via the 
@@ -676,10 +864,14 @@ public class TeaServlet extends HttpServlet {
         throws IOException {
         
         // get the associated system path
-        String context = appRequest.getContextPath();
-        String requestURI = appRequest.getRequestURI();
-        if (requestURI.startsWith(context)) {
-            requestURI = requestURI.substring(context.length());
+        String requestURI = null;
+        if ((requestURI = appRequest.getPathInfo()) == null) {
+            String context = appRequest.getContextPath();
+            
+            requestURI = appRequest.getRequestURI();
+            if (requestURI.startsWith(context)) {
+                requestURI = requestURI.substring(context.length());
+            }
         }
 
         // check for valid asset
@@ -743,14 +935,19 @@ public class TeaServlet extends HttpServlet {
         long startTime = 0L;
         long contentLength = 0;
 
-        TemplateStats templateStats = 
-            mTeaServletRequestStats.getStats(template.getName());
+        TemplateStats templateStats = null; 
+        if (mInstrumentationEnabled) {
+            templateStats = mTeaServletRequestStats.getStats(template.getName());
+        }
         
         try {
 	        Object[] params = null;
 	        try {    
+	            if (templateStats != null) {
+	                templateStats.incrementServicing();
+	            }
+
 	            // Fill in the parameters to pass to the template.
-	        	templateStats.incrementServicing();
 	            Class<?>[] paramTypes = template.getParameterTypes();
 	            if (paramTypes.length == 0) {
 	                params = NO_PARAMS;
@@ -796,9 +993,6 @@ public class TeaServlet extends HttpServlet {
 	                }
 	            }
 	
-	            if (DEBUG) {
-	                mLog.debug("Executing template");
-	            }
 	            startTime = System.currentTimeMillis();
 	            try {
 	                try {
@@ -813,6 +1007,7 @@ public class TeaServlet extends HttpServlet {
 	            catch (AbortTemplateException e) {
 	                if (DEBUG) {
 	                    mLog.debug("Template execution aborted!");
+	                    mLog.debug(e);
 	                }
 	            }
 	            catch (RuntimeException e) {
@@ -893,10 +1088,14 @@ public class TeaServlet extends HttpServlet {
 	        }
 	        contentLength = appResponse.getResponseBuffer().getByteCount();
 	        appResponse.finish();
-	        templateStats.decrementServicing();
-	        templateStats.log(startTime, endTime, contentLength, params);
+	        if (templateStats != null) {
+    	        templateStats.decrementServicing();
+    	        templateStats.log(startTime, endTime, contentLength, params);
+	        }
         } catch (Exception e) {
-        	 templateStats.decrementServicing();
+            if (templateStats != null) {
+                templateStats.decrementServicing();
+            }
         }
 		return true;
     }
@@ -1021,11 +1220,59 @@ public class TeaServlet extends HttpServlet {
             return null;
         }
     }
+    
+    private class TeaServletStatusListener implements StatusListener {
+
+        private int id;
+        private String type;
+        
+        private int current;
+        private int total;
+        private boolean active;
+        private boolean complete;
+        private String currentName;
+        
+        public TeaServletStatusListener(int id, String type) {
+            this.id = id;
+            this.type = type;
+        }
+
+        public int getId() { return this.id; }
+        public String getType() { return this.type; }
+        
+        public int getCurrent() { return current; }
+        public int getTotal() { return total; }
+        public String getCurrentName() { return currentName; }
+        public boolean isActive() { return active; }
+        public boolean isComplete() { return complete; }
+        
+        public double getPercent() {
+            if (total == 0) { return 0.0; }
+            else { return (100.0 * current / total); }
+        }
+        
+        @Override
+        public void statusStarted(StatusEvent event) {
+            update(event);
+            this.active = true;
+        }
+        
+        @Override
+        public void statusUpdate(StatusEvent event) {
+            update(event);
+        }
+        
+        @Override
+        public void statusCompleted(StatusEvent event) {
+            update(event);
+            this.active = false;
+            this.complete = true;
+        }
+        
+        protected void update(StatusEvent event) {
+            this.current = event.getCurrent();
+            this.total = event.getTotal();
+            this.currentName = event.getCurrentName();
+        }
+    }
 }
-
-
-
-
-
-
-

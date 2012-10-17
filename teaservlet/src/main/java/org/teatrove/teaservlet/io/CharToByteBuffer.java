@@ -22,6 +22,7 @@ package org.teatrove.teaservlet.io;
  * @author Brian S O'Neill
  * deprecated Moved to org.teatrove.trove.io package.
  */
+@Deprecated
 public interface CharToByteBuffer
     extends org.teatrove.trove.io.CharToByteBuffer, ByteBuffer
 {

@@ -16,14 +16,19 @@
 
 package org.teatrove.teaservlet;
 
-import java.beans.*;
+import java.beans.MethodDescriptor;
+import java.lang.reflect.Method;
+
 import org.teatrove.teaservlet.util.NameValuePair;
+import org.teatrove.trove.util.ClassUtils;
 
 /**
  * 
  * @author Brian S O'Neill
  */
-public class FunctionInfo extends NameValuePair {
+public class FunctionInfo extends NameValuePair<MethodDescriptor> {
+    private static final long serialVersionUID = 1L;
+    
     private ApplicationInfo mApp;
     
     public FunctionInfo(MethodDescriptor method, ApplicationInfo provider) {
@@ -31,17 +36,29 @@ public class FunctionInfo extends NameValuePair {
         mApp = provider;
     }
 
+    public Method getMethod() {
+        return getDescriptor().getMethod();
+    }
+    
     public MethodDescriptor getDescriptor() {
-        return (MethodDescriptor)getValue();
+        return getValue();
     }
 
     public ApplicationInfo getProvider() {
         return mApp;
     }
 
-    public int compareTo(Object other) {
+    public boolean isDeprecated() {
+        if (mApp != null && mApp.isDeprecated()) { 
+            return true; 
+        }
+        
+        return ClassUtils.isDeprecated(getValue().getMethod());
+    }
+    
+    public int compareTo(FunctionInfo other) {
         String thisName = getName();
-        String otherName = ((FunctionInfo)other).getName();
+        String otherName = other.getName();
 
         if (thisName == null) {
             return otherName == null ? 0 : 1;
@@ -83,9 +100,9 @@ public class FunctionInfo extends NameValuePair {
         }
 
         // Third order compare: parameter count.
-        Class[] thisParams = getDescriptor().getMethod().getParameterTypes();
-        Class[] otherParams = 
-            ((FunctionInfo)other).getDescriptor().getMethod().getParameterTypes();
+        Class<?>[] thisParams = getDescriptor().getMethod().getParameterTypes();
+        Class<?>[] otherParams = 
+            other.getDescriptor().getMethod().getParameterTypes();
         
         if (thisParams.length < otherParams.length) {
             return -1;

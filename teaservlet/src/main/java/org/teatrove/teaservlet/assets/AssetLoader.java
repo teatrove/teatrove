@@ -76,8 +76,8 @@ public class AssetLoader {
         // validate mime type
         String mimeType = mimeTypes.get(extension);
         if (mimeType == null) {
-            Syslog.warn("unauthorized access to restricted mime type: " + 
-                        this.name + ":" + path);
+            Syslog.debug("unauthorized access to restricted mime type: " + 
+                         this.name + ":" + path);
             
             return null;
         }

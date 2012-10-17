@@ -43,6 +43,42 @@ public class ArrayContext {
     }
     
     /**
+     * Merge the two arrays by creating a new array that contains all items from
+     * array1 followed by all items from array2.  Note that the arrays are
+     * purely concatenated and any duplicates will remain.  If either array is
+     * <code>null</code> or empty, then <code>null</code> is returned.  If the
+     * class types of the arrays are not equal, then <code>null</code> is
+     * returned.
+     * 
+     * @param array1 The first array
+     * @param array2 The second array
+     * 
+     * @return The concatenation of array1 and array2 together
+     */
+    public Object[] mergeArrays(Object[] array1, Object[] array2) {
+        Object[] retval = null;
+
+        if (array1 == null || array1.length == 0 ||
+            array2 == null || array2.length == 0) {
+            return retval;
+        }
+
+        Class<?> cls1 = array1[0].getClass();
+        Class<?> cls2 = array2[0].getClass();
+
+        if (!cls1.equals(cls2)) {
+            return retval;
+        }
+
+        retval = (Object[]) Array.newInstance(cls1, array1.length + array2.length);
+
+        System.arraycopy(array1, 0, retval, 0, array1.length); 
+        System.arraycopy(array2, 0, retval, array1.length, array2.length);
+
+        return retval;
+    }
+    
+    /**
      * Determine whether the provided object is an array or not. This returns
      * <code>true</code> if the object is non-<code>null</code> and the class
      * is an array (see {@link Class#isArray()}). Otherwise, it returns
@@ -309,5 +345,93 @@ public class ArrayContext {
      */
     public void setIntInArray(int[] intArray, int value, int index) {
         intArray[index] = value;
+    }
+    
+    /**
+     * Join the contents of the given array separated by the given separator.
+     * For example, the array [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param array  The array to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(int[] array, String separator) {
+        int size = array.length;
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            int item = array[i];
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item);
+        }
+        
+        return buffer.toString();
+    }
+    
+    /**
+     * Join the contents of the given array separated by the given separator.
+     * For example, the array [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param array  The array to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(long[] array, String separator) {
+        int size = array.length;
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            long item = array[i];
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item);
+        }
+        
+        return buffer.toString();
+    }
+    
+    /**
+     * Join the contents of the given array separated by the given separator.
+     * For example, the array [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param array  The array to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(double[] array, String separator) {
+        int size = array.length;
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            double item = array[i];
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item);
+        }
+        
+        return buffer.toString();
+    }
+    
+    /**
+     * Join the contents of the given array separated by the given separator.
+     * For example, the array [a, b, c] with separator ' ' would result in:
+     * <code>a b c</code>.
+     * 
+     * @param array  The array to join
+     * @param separator The separator between values
+     * 
+     * @return The resulting string
+     */
+    public String join(Object[] array, String separator) {
+        int size = array.length;
+        StringBuilder buffer = new StringBuilder(512);
+        for (int i = 0; i < size; i++) {
+            Object item = array[i];
+            if (i > 0) { buffer.append(separator); }
+            buffer.append(item.toString());
+        }
+        
+        return buffer.toString();
     }
 }

@@ -23,7 +23,7 @@ import org.teatrove.trove.io.SourceReader;
 
 /**
  * A Scanner breaks up a source file into its basic elements, called
- * {@link Token Tokens}. Add an {@link ErrorListener} to capture any syntax
+ * {@link Token Tokens}. Add an {@link CompileListener} to capture any syntax
  * errors detected by the Scanner.
  *
  * @author Brian S O'Neill
@@ -42,7 +42,7 @@ public class Scanner {
     
     private Token mEOFToken;
 
-    private Vector<ErrorListener> mListeners = new Vector<ErrorListener>(1);
+    private Vector<CompileListener> mListeners = new Vector<CompileListener>(1);
     private int mErrorCount = 0;
 
     private MessageFormatter mFormatter;
@@ -57,15 +57,15 @@ public class Scanner {
         mFormatter = MessageFormatter.lookup(this);
     }
 
-    public void addErrorListener(ErrorListener listener) {
+    public void addCompileListener(CompileListener listener) {
         mListeners.addElement(listener);
     }
 
-    public void removeErrorListener(ErrorListener listener) {
+    public void removeCompileListener(CompileListener listener) {
         mListeners.removeElement(listener);
     }
 
-    private void dispatchParseError(ErrorEvent e) {
+    private void dispatchParseError(CompileEvent e) {
         mErrorCount++;
 
         synchronized (mListeners) {
@@ -77,7 +77,8 @@ public class Scanner {
 
     private void error(String str, SourceInfo info) {
         dispatchParseError
-            (new ErrorEvent(this, mFormatter.format(str), info, mUnit));
+            (new CompileEvent(this, CompileEvent.Type.ERROR,
+                              mFormatter.format(str), info, mUnit));
     }
 
     private void error(String str) {
@@ -426,7 +427,7 @@ public class Scanner {
             }
 
             c = mSource.read();
-        };
+        }
 
         if (c == -1) {
             // If the last token in the source file is text, trim all trailing

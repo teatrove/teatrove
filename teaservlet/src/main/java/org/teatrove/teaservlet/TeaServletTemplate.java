@@ -16,6 +16,8 @@
 
 package org.teatrove.teaservlet;
 
+import java.lang.reflect.Type;
+
 import org.teatrove.tea.runtime.Context;
 import org.teatrove.tea.runtime.TemplateLoader;
 import org.teatrove.tea.engine.TemplateSource;
@@ -47,20 +49,32 @@ public class TeaServletTemplate implements TemplateLoader.Template {
         return mTemplate.getName();
     }
 
-    public Class getTemplateClass() {
+    public Class<?> getTemplateClass() {
         return mTemplate.getTemplateClass();
     }
 
-    public Class getContextType() {
+    public Class<?> getContextType() {
         return mTemplate.getContextType();
+    }
+    
+    public Class<?> getReturnType() {
+        return mTemplate.getReturnType();
+    }
+    
+    public Type getGenericReturnType() {
+        return mTemplate.getGenericReturnType();
     }
 
     public String[] getParameterNames() {
         return mTemplate.getParameterNames();
     }
         
-    public Class[] getParameterTypes() {
+    public Class<?>[] getParameterTypes() {
         return mTemplate.getParameterTypes();
+    }
+    
+    public Type[] getGenericParameterTypes() {
+        return mTemplate.getGenericParameterTypes();
     }
 
     public void execute(Context context, Object[] parameters) 

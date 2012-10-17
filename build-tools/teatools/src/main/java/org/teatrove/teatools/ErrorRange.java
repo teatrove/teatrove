@@ -16,7 +16,7 @@
 
 package org.teatrove.teatools;
 
-import org.teatrove.tea.compiler.ErrorEvent;
+import org.teatrove.tea.compiler.CompileEvent;
 import org.teatrove.tea.compiler.SourceInfo;
 
 /**
@@ -28,9 +28,9 @@ public class ErrorRange extends Range {
 
     public String errorMessage;
 
-    public ErrorRange(ErrorEvent error) {
+    public ErrorRange(CompileEvent error) {
 
-        String message = error.getErrorMessage();       
+        String message = error.getMessage();       
         setErrorMessage(message);      
 
         SourceInfo sourceInfo = error.getSourceInfo();

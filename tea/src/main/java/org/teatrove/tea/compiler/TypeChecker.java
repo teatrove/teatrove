@@ -83,13 +83,14 @@ import org.teatrove.tea.parsetree.VariableRef;
 import org.teatrove.tea.util.BeanAnalyzer;
 import org.teatrove.tea.util.GenericPropertyDescriptor;
 import org.teatrove.trove.classfile.Modifiers;
+import org.teatrove.trove.util.ClassUtils;
 
 /**
  * A TypeChecker operates on a template's parse tree, created by a
  * {@link Parser}, filling in type information while it checks the validity of
  * the whole template. After a template has been type-checked and there are no
  * errors, the template is ready for code generation. Add an
- * {@link ErrorListener} to capture any semantic errors detected by the
+ * {@link CompileListener} to capture any semantic errors detected by the
  * TypeChecker.
  *
  * @author Brian S O'Neill
@@ -99,8 +100,9 @@ public class TypeChecker {
     private String[] mImports;
     private boolean mHasImports = false;
 
-    private Vector<ErrorListener> mListeners = new Vector<ErrorListener>(1);
+    private Vector<CompileListener> mListeners = new Vector<CompileListener>(1);
     private int mErrorCount = 0;
+    private int mWarningCount = 0;
 
     private ClassLoader mClassLoader;
     private boolean mExceptionGuardian;
@@ -114,63 +116,119 @@ public class TypeChecker {
         mFormatter = MessageFormatter.lookup(this);
     }
 
-    public void addErrorListener(ErrorListener listener) {
+    public void addCompileListener(CompileListener listener) {
         mListeners.addElement(listener);
     }
 
-    public void removeErrorListener(ErrorListener listener) {
+    public void removeCompileListener(CompileListener listener) {
         mListeners.removeElement(listener);
     }
 
-    private void dispatchParseError(ErrorEvent e) {
+    private void dispatchParseError(CompileEvent e) {
         mErrorCount++;
 
         synchronized (mListeners) {
             for (int i = 0; i < mListeners.size(); i++) {
-                ((ErrorListener)mListeners.elementAt(i)).compileError(e);
+                mListeners.elementAt(i).compileError(e);
+            }
+        }
+    }
+    
+    private void dispatchParseWarning(CompileEvent e) {
+        mWarningCount++;
+
+        synchronized (mListeners) {
+            for (int i = 0; i < mListeners.size(); i++) {
+                mListeners.elementAt(i).compileWarning(e);
             }
         }
     }
 
     private void error(String str, Node culprit) {
         str = mFormatter.format(str);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
     private void error(String str, String arg, Node culprit) {
         str = mFormatter.format(str, arg);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
     private void error(String str, String arg1, String arg2, Node culprit) {
         str = mFormatter.format(str, arg1, arg2);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
     private void error(String str, String arg1, String arg2, String arg3,
                        Node culprit) {
         str = mFormatter.format(str, arg1, arg2, arg3);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
     private void error(String str, String arg, Token culprit) {
         str = mFormatter.format(str, arg);
-        dispatchParseError(new ErrorEvent(this, str,
-                                          culprit.getSourceInfo(), mUnit));
+        error(str, culprit.getSourceInfo());
     }
 
+    private void error(String str, SourceInfo info) {
+        dispatchParseError(new CompileEvent(this, CompileEvent.Type.ERROR,
+                                            str, info, mUnit));
+    }
+    
     private void error(String str, String arg, SourceInfo info) {
         str = mFormatter.format(str, arg);
-        dispatchParseError(new ErrorEvent(this, str, info, mUnit));
+        error(str, info);
     }
 
     private void error(String str, String arg1, String arg2, SourceInfo info) {
         str = mFormatter.format(str, arg1, arg2);
-        dispatchParseError(new ErrorEvent(this, str, info, mUnit));
+        error(str, info);
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, Node culprit) {
+        str = mFormatter.format(str);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, String arg, Node culprit) {
+        str = mFormatter.format(str, arg);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, String arg1, String arg2, Node culprit) {
+        str = mFormatter.format(str, arg1, arg2);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg1, String arg2, String arg3,
+                      Node culprit) {
+        str = mFormatter.format(str, arg1, arg2, arg3);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, Token culprit) {
+        str = mFormatter.format(str, arg);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, SourceInfo info) {
+        dispatchParseWarning(new CompileEvent(this, CompileEvent.Type.WARNING,
+                                              str, info, mUnit));
+    }
+    
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, SourceInfo info) {
+        str = mFormatter.format(str, arg);
+        warn(str, info);
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg1, String arg2, SourceInfo info) {
+        str = mFormatter.format(str, arg1, arg2);
+        warn(str, info);
     }
 
     /**
@@ -275,6 +333,10 @@ public class TypeChecker {
 
     public int getErrorCount() {
         return mErrorCount;
+    }
+    
+    public int getWarningCount() {
+        return mWarningCount;
     }
 
     protected class Visitor extends TreeWalker {
@@ -398,6 +460,10 @@ public class TypeChecker {
                         clazz = Long.TYPE;
                     else if (checkName.equals("short"))
                         clazz = Short.TYPE;
+                    else if (checkName.equals("float"))
+                        clazz = Float.TYPE;
+                    else if (checkName.equals("byte"))
+                        clazz = Byte.TYPE;
                     else
                         clazz = loadClass(checkName);
                     checkAccess(clazz, node);
@@ -1246,17 +1312,26 @@ public class TypeChecker {
 
                 int cnt = MethodMatcher.match(methods, name, actualTypes);
                 if (cnt == MethodMatcher.AMBIGUOUS) {
-                    error("functioncallexpression.ambiguous", node);
+                    error("functioncallexpression.ambiguous", name, node);
                     return null;
                 }
                 else if (cnt <= 0) {
-                    error("functioncallexpression.not.found", node);
+                    error("functioncallexpression.not.found", name, node);
                     return null;
                 }
 
                 m = methods[0];
             }
 
+            if (expr instanceof TypeExpression && 
+                !Modifier.isStatic(m.getModifiers())) {
+                error("functioncallexpression.not.static", name, node);
+            }
+            
+            if (ClassUtils.isDeprecated(m)) {
+                warn("functioncallexpression.deprecated", name, node);
+            }
+            
             node.setCalledMethod(m);
             for (int i=0; i<length; i++) {
                 Type converted =
@@ -1652,24 +1727,32 @@ public class TypeChecker {
                 if (expr instanceof TypeExpression) {
                     String property = node.getLookupName().getName();
 
+                    // check if constant class
+                    if ("class".equals(property)) {
+                        node.setReadProperty(null);
+                        node.setType(new Type(expr.getType().getNaturalClass().getClass()));
+                    }
+
                     // lookup field and error out if invalid
-                    Field field = null;
-                    try { field = clazz.getField(property); }
-                    catch (Exception exception) {
-                        error("property.not.found", node);
-                        return true;
+                    else {
+                        Field field = null;
+                        try { field = clazz.getField(property); }
+                        catch (Exception exception) {
+                            error("property.not.found", node);
+                            return null;
+                        }
+    
+                        // ensure field is static
+                        if (!Modifiers.isStatic(field.getModifiers())) {
+                            error("field.not.static", node);
+                            return null;
+                        }
+    
+                        // save static field and type
+                        node.setReadProperty(field);
+                        node.setType(new Type(field.getType(),
+                                              field.getGenericType()));
                     }
-
-                    // ensure field is static
-                    if (!Modifiers.isStatic(field.getModifiers())) {
-                        error("field.not.static", node);
-                        return true;
-                    }
-
-                    // save static field and type
-                    node.setReadProperty(field);
-                    node.setType(new Type(field.getType(),
-                                          field.getGenericType()));
 
                     // return success
                     return null;
@@ -1782,6 +1865,10 @@ public class TypeChecker {
                     node.convertTo(Type.STRING_TYPE);
                 }
 
+                if (ClassUtils.isDeprecated(rmethod)) {
+                    warn("functioncallexpression.deprecated", lookupName, node);
+                }
+                
                 node.setReadMethod(rmethod);
             }
 
@@ -1868,7 +1955,6 @@ public class TypeChecker {
                             node.convertTo(elementType);
                         }
 
-                        node.setReadMethod(m);
                         lookupIndex.convertTo(lookupType);
                         node.setReadMethod(m);
                         node.setType(new Type(m.getReturnType()));
@@ -1920,13 +2006,9 @@ public class TypeChecker {
             if (type == null) {
                 node.setType(Type.BOOLEAN_TYPE);
             }
-            else if (type.getObjectClass() == Boolean.class) {
-                type = type.toPrimitive();
+            else {
                 expr.convertTo(type);
                 node.setType(type);
-            }
-            else {
-                error("notexpression.type", node);
             }
 
             return null;
@@ -1957,12 +2039,33 @@ public class TypeChecker {
             Type rightType = right.getType();
 
             if (binaryTypeCheck(node, Number.class)) {
-                Type type =
-                    leftType.getCompatibleType(rightType).toPrimitive();
+                Type type = leftType.getCompatibleType(rightType);
+                if (type.hasPrimitivePeer()) { 
+                    type = type.toPrimitive();
 
-                left.convertTo(type);
-                right.convertTo(type);
-                node.setType(type);
+                    left.convertTo(type);
+                    right.convertTo(type);
+                    node.setType(type);
+                }
+                
+                // one of the wrappers is not a known primitive, so maintain
+                // types and let generators determine type at runtime and
+                // perform operation then.  If either side is a primitive, we
+                // convert to the most compatible number that can perform
+                // arithmetic operations (int, long, float, double)
+                else {
+                    if (leftType.isPrimitive()) {
+                        leftType = leftType.getCompatibleType(Type.INT_TYPE);
+                        left.convertTo(leftType);
+                    }
+                    
+                    if (rightType.isPrimitive()) {
+                        rightType = rightType.getCompatibleType(Type.INT_TYPE);
+                        right.convertTo(rightType);
+                    }
+                    
+                    node.setType(type);
+                }
             }
 
             return null;
@@ -2053,7 +2156,9 @@ public class TypeChecker {
                     (leftType.isPrimitive() || leftType.hasPrimitivePeer()) &&
                     (rightType.isPrimitive() || rightType.hasPrimitivePeer()))
                 {
-                    leftType = rightType = type.toPrimitive();
+                    // ensure primitive type is at least an int
+                    leftType = rightType = 
+                        type.toPrimitive().getCompatibleType(Type.INT_TYPE);
                 }
                 else {
                     if (leftType.isNonNull()) {
@@ -2076,11 +2181,29 @@ public class TypeChecker {
                     }
                 }
 
-                if (ID == Token.EQ || ID == Token.NE ||
-                    Comparable.class.isAssignableFrom(clazz) ||
-                    String.class.isAssignableFrom(clazz) ||
-                    Number.class.isAssignableFrom(clazz)) {
-
+                if (Number.class.equals(clazz)) {
+                    // ensure primitive types are converted to at least an int
+                    // otherwise, leave untouched to allow runtime checks
+                    leftType = left.getType();
+                    if (leftType.isPrimitive()) {
+                        Type ctype = leftType.getCompatibleType(Type.INT_TYPE);
+                        if (!leftType.equals(ctype)) {
+                            left.convertTo(ctype);
+                        }
+                    }
+                    
+                    rightType = right.getType();
+                    if (rightType.isPrimitive()) {
+                        Type ctype = rightType.getCompatibleType(Type.INT_TYPE);
+                        if (!rightType.equals(ctype)) {
+                            right.convertTo(ctype);
+                        }
+                    }
+                }
+                else if (ID == Token.EQ || ID == Token.NE ||
+                         Comparable.class.isAssignableFrom(clazz) ||
+                         Number.class.isAssignableFrom(clazz)) {
+                    
                     // Don't prefer cast; possibly perform string conversion.
                     left.convertTo(leftType, false);
                     right.convertTo(rightType, false);
@@ -2151,14 +2274,9 @@ public class TypeChecker {
             check(left);
             check(right);
 
-            Type type = Type.BOOLEAN_TYPE;
-
-            if (binaryTypeCheck(node, Boolean.class)) {
-                left.convertTo(type);
-                right.convertTo(type);
-            }
-
-            node.setType(type);
+            // NOTE: no need to check left and right types as the Truthful
+            // detector in the generator will ensure they match
+            node.setType(Type.BOOLEAN_TYPE);
 
             return null;
         }
@@ -2170,14 +2288,9 @@ public class TypeChecker {
             check(left);
             check(right);
 
-            Type type = Type.BOOLEAN_TYPE;
-
-            if (binaryTypeCheck(node, Boolean.class)) {
-                left.convertTo(type);
-                right.convertTo(type);
-            }
-
-            node.setType(type);
+            // NOTE: no need to check left and right types as the Truthful
+            // detector in the generator will ensure they match
+            node.setType(Type.BOOLEAN_TYPE);
 
             return null;
         }
@@ -2230,25 +2343,43 @@ public class TypeChecker {
             // determine compatibility
             Type ltype = left.getType();
             Type rtype = right.getType();
-            if (ltype != null && rtype != null &&
-                ltype.convertableFrom(rtype) == -1) {
-                error("compare.not.convertible", node);
-                return null;
-            }
 
-            // TODO: this will return object if either is object
-            // however, we can optimize by moving to primitive if object is
-            // non-null.  Even if non-null, we can branch logic and if not
-            // null, convert to primitive, then evalutae rather than going to
-            // object which is more expensive
-
-            Type compatible = null;
+            // convert to a compatible type
             if (ltype != null && rtype != null) {
-                compatible = ltype.getCompatibleType(rtype);
-                left.convertTo(compatible);
-                right.convertTo(compatible);
+                
+                // if both are primitive, compare directly to each other
+                // otherwise, maintain types to do better analysis when
+                // generating code...note that we do not do conversion of
+                // primitive and wrappers to same compatible type here since
+                // the generator must do branching for null checks
+                if (ltype.isPrimitive() && rtype.isPrimitive()) {
+                    Type compatible = ltype.getCompatibleType(rtype)
+                        .getCompatibleType(Type.INT_TYPE);
+                    
+                    left.convertTo(compatible);
+                    right.convertTo(compatible);
+                }
+                
+                // otherwise, ensure primitives are in their most valid state
+                else {
+                    if (ltype.isPrimitive()) {
+                        Type ctype = ltype.getCompatibleType(Type.INT_TYPE);
+                        if (!ltype.equals(ctype)) {
+                            left.convertTo(ctype);
+                        }
+                    }
+                    
+                    if (rtype.isPrimitive()) {
+                        Type ctype = rtype.getCompatibleType(Type.INT_TYPE);
+                        if (!rtype.equals(ctype)) {
+                            right.convertTo(ctype);
+                        }
+                    }
+                }
+                
             }
 
+            // result is -1, 0, or 1 (int)
             node.setType(Type.INT_TYPE);
             return null;
         }

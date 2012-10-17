@@ -24,9 +24,12 @@ import java.io.IOException;
  *
  * @author Brian S O'Neill
  */
+@Deprecated
 class FastCharToByteBuffer extends org.teatrove.trove.io.FastCharToByteBuffer
     implements org.teatrove.teaservlet.io.CharToByteBuffer
 {
+    private static final long serialVersionUID = 1L;
+
     public FastCharToByteBuffer(org.teatrove.trove.io.ByteBuffer buffer) {
         super(buffer);
     }

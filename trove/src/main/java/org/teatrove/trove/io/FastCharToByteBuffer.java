@@ -28,11 +28,13 @@ import java.util.HashSet;
  * @author Brian S O'Neill
  */
 public class FastCharToByteBuffer implements CharToByteBuffer, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final int TEMP_BUF_LEN = 512;
-    private static final Set SUPPORTED_ENCODINGS;
+    private static final Set<String> SUPPORTED_ENCODINGS;
 
     static {
-        SUPPORTED_ENCODINGS = new HashSet();
+        SUPPORTED_ENCODINGS = new HashSet<String>();
         SUPPORTED_ENCODINGS.add("8859-1");
         SUPPORTED_ENCODINGS.add("8859_1");
         SUPPORTED_ENCODINGS.add("iso-8859-1");
@@ -193,6 +195,13 @@ public class FastCharToByteBuffer implements CharToByteBuffer, Serializable {
         mBuffer.reset();
     }
 
+    public void clear() throws IOException {
+        mBuffer.clear();
+        if (mSlowConvertor != null) {
+            mSlowConvertor.clear();
+        }
+    }
+    
     public void drain() throws IOException {
         if (mSlowConvertor != null) {
             mSlowConvertor.drain();

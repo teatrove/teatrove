@@ -21,24 +21,24 @@ import java.io.PrintStream;
 import java.io.BufferedReader;
 import org.teatrove.tea.compiler.SourceInfo;
 import org.teatrove.tea.compiler.CompilationUnit;
-import org.teatrove.tea.compiler.ErrorEvent;
-import org.teatrove.tea.compiler.ErrorListener;
+import org.teatrove.tea.compiler.CompileEvent;
+import org.teatrove.tea.compiler.CompileListener;
 import org.teatrove.trove.io.LinePositionReader;
 
 /**
- * ConsoleErrorReporter takes ErrorEvents and prints
+ * ConsoleReporter takes CompileEvents and prints
  * detailed messages to a PrintStream. When no longer needed, close the
- * ConsoleErrorReporter to ensure all open resources (except the PrintStream)
+ * ConsoleReporter to ensure all open resources (except the PrintStream)
  * are closed. 
  *
  * @author Brian S O'Neill
  */
-public class ConsoleErrorReporter implements ErrorListener {
+public class ConsoleReporter implements CompileListener {
     private PrintStream mOut;
     private LinePositionReader mPositionReader;
     private CompilationUnit mPositionReaderUnit;
 
-    public ConsoleErrorReporter(PrintStream out) {
+    public ConsoleReporter(PrintStream out) {
         mOut = out;
     }
 
@@ -54,8 +54,16 @@ public class ConsoleErrorReporter implements ErrorListener {
         mPositionReaderUnit = null;
     }
 
-    public void compileError(ErrorEvent e) {
-        mOut.println(e.getDetailedErrorMessage());
+    public void compileError(CompileEvent e) {
+        compileIssue(e);
+    }
+    
+    public void compileWarning(CompileEvent e) {
+        compileIssue(e);
+    }
+    
+    public void compileIssue(CompileEvent e) {
+        mOut.println(e.getType().toString() + ": " + e.getDetailedMessage());
 
         SourceInfo info = e.getSourceInfo();
         CompilationUnit unit = e.getCompilationUnit();

@@ -1,0 +1,15 @@
+<% template printSubclasses(String clazz)
+
+if (clazz != null) {
+    '<li>'
+        call system.generics.getTypeAsString(getClassForName(clazz), true, true, true)
+        '<ul>'
+            subclasses = getSubclassesForName(clazz)
+            if (subclasses) {
+                foreach (subclass in subclasses) {
+                    call printSubclasses(subclass)
+                }
+            }
+        '</ul>'
+    '</li>'
+}

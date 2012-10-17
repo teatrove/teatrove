@@ -22,8 +22,11 @@ import java.util.Date;
  * 
  * @author Reece Wilton
  */
-public class TemplateError implements java.io.Serializable {
+public class TemplateIssue implements java.io.Serializable {
 
+    public static final int ERROR = 0;
+    public static final int WARNING = 1;
+    
     private static final long serialVersionUID = 1L;
 
     //
@@ -35,13 +38,15 @@ public class TemplateError implements java.io.Serializable {
 
     /** Last modified date of the template file */
     private Date mLastModifiedDate;
+    
+    private int mState;
 
     /** Short description of the compilation error */
-    private String mErrorMessage;
+    private String mMessage;
 
     /** Description of the compilation error that includes template name
         and line number */
-    private String mDetailedErrorMessage;
+    private String mDetailedMessage;
 
     /** Description of the compilation error that includes template source
         file information and line number */
@@ -58,94 +63,102 @@ public class TemplateError implements java.io.Serializable {
     private String mUnderline;
 
     /** The character position on the error line where the error starts */
-    private int mErrorStartPos;
+    private int mStartPosition;
 
     /** The character position on the error line where the error ends */
-    private int mErrorEndPos;
+    private int mEndPosition;
 
     /** The character position on the error line where the detail starts */
     private int mDetailPos;
 
     /** The character position in the template file where the error starts */
-    private int mErrorFileStartPos;
+    private int mFileStartPosition;
 
     /** The character position in the template file where the error ends */
-    private int mErrorFileEndPos;
+    private int mFileEndPosition;
 
-    public TemplateError() {
+    public TemplateIssue() {
         mSourcePath = null;
         mLastModifiedDate = null;
-
-        mErrorMessage = "";
-        mDetailedErrorMessage = "";
+        mState = ERROR;
+        
+        mMessage = "";
+        mDetailedMessage = "";
         mSourceInfoMessage = "";
 
         mSourceLine = "";
         mUnderline = "";
         mLineNumber = 0;
 
-        mErrorFileStartPos = 0;
-        mErrorFileEndPos = 0;
-        mErrorStartPos = 0;
-        mErrorEndPos = 0;
+        mFileStartPosition = 0;
+        mFileEndPosition = 0;
+        mStartPosition = 0;
+        mEndPosition = 0;
         mDetailPos = 0;
     }
 
-    public TemplateError(String sourcePath,
+    public TemplateIssue(String sourcePath,
                          Date lastModifiedDate,
-                         String errorMessage,
-                         String detailedErrorMessage,
+                         int state,
+                         String message,
+                         String detailedMessage,
                          String sourceInfoMessage,
                          String sourceLine,
                          String underline,
                          int lineNumber,
-                         int errorFileStartPos,
-                         int errorFileEndPos,
-                         int errorStartPos,
-                         int errorEndPos,
+                         int fileStartPos,
+                         int fileEndPos,
+                         int startPos,
+                         int endPos,
                          int detailPos) {
         mSourcePath = sourcePath;
         mLastModifiedDate = lastModifiedDate;
-
-        mErrorMessage = errorMessage;
-        mDetailedErrorMessage = detailedErrorMessage;
+        mState = state;
+        
+        mMessage = message;
+        mDetailedMessage = detailedMessage;
         mSourceInfoMessage = sourceInfoMessage;
 
         mSourceLine = sourceLine;
         mUnderline = underline;
         mLineNumber = lineNumber;
 
-        mErrorFileStartPos = errorFileStartPos;
-        mErrorFileEndPos = errorFileEndPos;
+        mFileStartPosition = fileStartPos;
+        mFileEndPosition = fileEndPos;
 
         int length = sourceLine.length();
-        if ((mErrorStartPos = errorStartPos) > length)
-            mErrorStartPos = length - 1;
-        if ((mErrorEndPos = errorEndPos) > length)
-            mErrorEndPos = length - 1;
+        if ((mStartPosition = startPos) > length)
+            mStartPosition = length - 1;
+        if ((mEndPosition = endPos) > length)
+            mEndPosition = length - 1;
         if ((mDetailPos = detailPos) > length)
             mDetailPos = length - 1;
     }
 
-    public TemplateError(String message) {
+    public TemplateIssue(int state, String message) {
         mSourcePath = null;
         mLastModifiedDate = null;
+        mState = state;
 
-        mErrorMessage = message;
-        mDetailedErrorMessage = message;
+        mMessage = message;
+        mDetailedMessage = message;
         mSourceInfoMessage = "custom error: no source involved";
 
         mSourceLine = "";
         mUnderline = "";
         mLineNumber = 0;
 
-        mErrorFileStartPos = 0;
-        mErrorFileEndPos = 0;
-        mErrorStartPos = 0;
-        mErrorEndPos = 0;
+        mFileStartPosition = 0;
+        mFileEndPosition = 0;
+        mStartPosition = 0;
+        mEndPosition = 0;
         mDetailPos = 0;
     }
 
+    public int getState() { return mState; }
+    public boolean isError() { return mState == ERROR; }
+    public boolean isWarning() { return mState == WARNING; }
+    
     public String getSourcePath() {
         return mSourcePath;
     }
@@ -154,12 +167,12 @@ public class TemplateError implements java.io.Serializable {
         return mLastModifiedDate;
     }
 
-    public String getErrorMessage() {
-        return mErrorMessage;
+    public String getMessage() {
+        return mMessage;
     }
 
-    public String getDetailedErrorMessage() {
-        return mDetailedErrorMessage;
+    public String getDetailedMessage() {
+        return mDetailedMessage;
     }
 
     public String getSourceInfoMessage() {
@@ -178,34 +191,34 @@ public class TemplateError implements java.io.Serializable {
         return mLineNumber;
     }
 
-    public int getErrorStartPos() {
-        return mErrorStartPos;
+    public int getStartPosition() {
+        return mStartPosition;
     }
 
-    public int getErrorEndPos() {
-        return mErrorEndPos;
+    public int getEndPosition() {
+        return mEndPosition;
     }
 
-    public int getErrorFileStartPos() {
-        return mErrorFileStartPos;
+    public int getFileStartPosition() {
+        return mFileStartPosition;
     }
 
-    public int getErrorFileEndPos() {
-        return mErrorFileEndPos;
+    public int getFileEndPosition() {
+        return mFileEndPosition;
     }
 
-    public String getLineStart() {
+    public String getStartOfLine() {
         try {
-            return mSourceLine.substring(0, mErrorStartPos);
+            return mSourceLine.substring(0, mStartPosition);
         }
         catch (IndexOutOfBoundsException e) {
             return "";
         }
     }
 
-    public String getErrorStart() {
+    public String getStartOfIssue() {
         try {
-            return mSourceLine.substring(mErrorStartPos, mDetailPos);
+            return mSourceLine.substring(mStartPosition, mDetailPos);
         }
         catch (IndexOutOfBoundsException e) {
             return "";
@@ -221,19 +234,19 @@ public class TemplateError implements java.io.Serializable {
         }
     }
 
-    public String getErrorEnd() {
+    public String getEndOfIssue() {
         try {
-            return mSourceLine.substring(mDetailPos + 1, mErrorEndPos + 1);
+            return mSourceLine.substring(mDetailPos + 1, mEndPosition + 1);
         }
         catch (IndexOutOfBoundsException e) {
             return "";
         }
     }
 
-    public String getLineEnd() {
+    public String getEndOfLine() {
         try {
             return mSourceLine.substring
-                (mErrorEndPos + 1, mSourceLine.length());
+                (mEndPosition + 1, mSourceLine.length());
         }
         catch (IndexOutOfBoundsException e) {
             return "";

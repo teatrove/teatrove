@@ -17,14 +17,422 @@ package org.teatrove.teaapps.contexts;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
+
+import org.teatrove.trove.util.StringReplacer;
 
 /**
  * Custom Tea context that provides helper methods when dealing with strings.
  */
 public class StringContext {
 
+    /**
+     * Tests if the given string starts with the given prefix.
+     * Returns true if the given string starts with the given prefix.
+     *
+     * @param str the source string
+     * @param prefix the prefix to test for
+     *
+     * @return true if the given string starts with the given prefix
+     */
+    public boolean startsWith(String str, String prefix) {
+        return (str == null || prefix == null) ? (str == prefix) :
+            str.startsWith(prefix);
+    }
+
+    /**
+     * Tests if the given string ends with the given suffix.
+     * Returns true if the given string ends with the given suffix.
+     *
+     * @param str the source string
+     * @param suffix the suffix to test for
+     *
+     * @return true if the given string ends with the given suffix
+     */
+    public boolean endsWith(String str, String suffix) {
+        return (str == null || suffix == null) ? (str == suffix) :
+            str.endsWith(suffix);
+    }
+
+    /**
+     * Finds the indices for each occurrence of the given search string in the
+     * source string.  Returns an array of indices, which is empty if the
+     * search string wasn't found
+     *
+     * @param str the source string
+     * @param search the string to search for
+     *
+     * @return an array of indices, which is empty if the search string
+     * wasn't found
+     */
+    public int[] find(String str, String search) {
+        return find(str, search, 0);
+    }
+
+    /**
+     * Finds the indices for each occurrence of the given search string in the
+     * source string, starting from the given index.
+     *
+     * @param str the source string
+     * @param search the string to search for
+     * @param fromIndex index to start the find
+     *
+     * @return an array of indices, which is empty if the search string
+     * wasn't found
+     */
+    public int[] find(String str, String search, int fromIndex) {
+        if (str == null || search == null) {
+            return new int[0];
+        }
+
+        int[] indices = new int[10];
+        int size = 0;
+
+        int index = fromIndex;
+        while ((index = str.indexOf(search, index)) >= 0) {
+            if (size >= indices.length) {
+                // Expand capacity.
+                int[] newArray = new int[indices.length * 2];
+                System.arraycopy(indices, 0, newArray, 0, indices.length);
+                indices = newArray;
+            }
+            indices[size++] = index;
+            index += search.length();
+        }
+
+        if (size < indices.length) {
+            // Trim capacity.
+            int[] newArray = new int[size];
+            System.arraycopy(indices, 0, newArray, 0, size);
+            indices = newArray;
+        }
+
+        return indices;
+    }
+
+    /**
+     * Finds the index of the first occurrence of the given search string in
+     * the source string, or -1 if not found.
+     *
+     * @param str the source string
+     * @param search the string to search for
+     *
+     * @return the start index of the found string or -1 if not found
+     */
+    public int findFirst(String str, String search) {
+        return (str == null || search == null) ? -1 :
+            str.indexOf(search);
+    }
+
+    /**
+     * Finds the index of the first occurrence of the given search string in
+     * the source string, starting from the given index, or -1 if not found.
+     *
+     * @param str the source string
+     * @param search the string to search for
+     * @param fromIndex index to start the find
+     *
+     * @return the start index of the found string or -1 if not found
+     */
+    public int findFirst(String str, String search, int fromIndex) {
+        return (str == null || search == null) ? -1 :
+            str.indexOf(search, fromIndex);
+    }
+
+    /**
+     * Finds the index of the last occurrence of the given search string in the
+     * source string, or -1 if not found.
+     *
+     * @param str the source string
+     * @param search the string to search for
+     *
+     * @return the start index of the found string or -1 if not found
+     */
+    public int findLast(String str, String search) {
+        return (str == null || search == null) ? -1 :
+            str.lastIndexOf(search);
+    }
+
+    /**
+     * Finds the index of the last occurrence of the given search string in the
+     * source string, starting from the given index, or -1 if not found.
+     *
+     * @param str the source string
+     * @param search the string to search for
+     * @param fromIndex optional index to start the find
+     *
+     * @return the start index of the found string or -1 if not found
+     */
+    public int findLast(String str, String search, int fromIndex) {
+        return (str == null || search == null) ? -1 :
+            str.lastIndexOf(search, fromIndex);
+    }
+
+    /**
+     * Returns the trailing end of the given string, starting from the given
+     * index.
+     *
+     * @param str the source string
+     * @param startIndex the start index, inclusive
+     *
+     * @return the specified substring.
+     */
+    public String substring(String str, int startIndex) {
+        return (str == null) ? null : str.substring(startIndex);
+    }
+
+    /**
+     * Returns a sub-portion of the given string for the characters that are at
+     * or after the starting index, and are before the end index.
+     *
+     * @param str the source string
+     * @param startIndex the start index, inclusive
+     * @param endIndex the ending index, exclusive
+     *
+     * @return the specified substring.
+     */
+    public String substring(String str, int startIndex, int endIndex) {
+        return (str == null) ? null : str.substring(startIndex, endIndex);
+    }
+
+    /**
+     * Converts all the characters in the given string to lowercase.
+     *
+     * @param str the string to convert
+     *
+     * @return the string converted to lowercase
+     */
+    public String toLowerCase(String str) {
+        return (str == null) ? null : str.toLowerCase();
+    }
+
+    /**
+     * Converts all the characters in the given string to uppercase.
+     *
+     * @param str the string to convert
+     *
+     * @return the string converted to uppercase
+     */
+    public String toUpperCase(String str) {
+        return (str == null) ? null : str.toUpperCase();
+    }
+
+    /**
+     * Trims all leading and trailing whitespace characters from the given
+     * string.
+     *
+     * @param str the string to trim
+     *
+     * @return the trimmed string
+     */
+    public String trim(String str) {
+        return (str == null) ? null : str.trim();
+    }
+
+    /**
+     * Trims all leading whitespace characters from the given string.
+     *
+     * @param str the string to trim
+     *
+     * @return the trimmed string
+     */
+    public String trimLeading(String str) {
+        if (str == null) {
+            return null;
+        }
+
+        int length = str.length();
+        for (int i=0; i<length; i++) {
+            if (str.charAt(i) > ' ') {
+                return str.substring(i);
+            }
+        }
+
+        return "";
+    }
+
+    /**
+     * Trims all trailing whitespace characters from the given string.
+     *
+     * @param str the string to trim
+     *
+     * @return the trimmed string
+     */
+    public String trimTrailing(String str) {
+        if (str == null) {
+            return null;
+        }
+
+        int length = str.length();
+        for (int i=length-1; i>=0; i--) {
+            if (str.charAt(i) > ' ') {
+                return str.substring(0, i + 1);
+            }
+        }
+
+        return "";
+    }
+    
+    /**
+     * Replaces all exact matches of the given pattern in the source string
+     * with the provided replacement.
+     *
+     * @param source the source string
+     * @param pattern the simple string pattern to search for
+     * @param replacement the string to use for replacing matched patterns.
+     *
+     * @return the string with any replacements applied.
+     */
+    public String replace(String source, String pattern, String replacement) {
+        return replace(source, pattern, replacement, 0);
+    }
+
+    /**
+     * Replaces all exact matches of the given pattern in the source string
+     * with the provided replacement, starting from the given index.
+     *
+     * @param source the source string
+     * @param pattern the simple string pattern to search for
+     * @param replacement the string to use for replacing matched patterns.
+     * @param fromIndex index to start the replace
+     *
+     * @return the string with any replacements applied.
+     */
+    public String replace(String source, String pattern,
+                          String replacement, int fromIndex) {
+        return StringReplacer.replace(source, pattern, replacement, fromIndex);
+    }
+
+    /**
+     * Applies string replacements using the pattern-replacement pairs provided
+     * by the given map (associative array). The longest matching pattern is
+     * used for selecting an appropriate replacement.
+     *
+     * @param source the source string
+     * @param patternReplacements pattern-replacement pairs
+     */
+    public <K, V> String replace(String source,
+                                 Map<K, V> patternReplacements) {
+        if (source == null) {
+            return null;
+        }
+
+        int mapSize = patternReplacements.size();
+        String[] patterns = new String[mapSize];
+        String[] replacements = new String[mapSize];
+
+        Iterator<Map.Entry<K, V>> it =
+            patternReplacements.entrySet().iterator();
+
+        for (int i=0; it.hasNext(); i++) {
+            Map.Entry<?, ?> entry = it.next();
+            
+            Object key = entry.getKey(), value = entry.getValue();
+            patterns[i] = (key == null ? null : key.toString());
+            replacements[i] = (value == null ? null : value.toString());
+        }
+
+        return StringReplacer.replace(source, patterns, replacements);
+    }
+
+    /**
+     * Replaces the first exact match of the given pattern in the source
+     * string with the provided replacement.
+     *
+     * @param source the source string
+     * @param pattern the simple string pattern to search for
+     * @param replacement the string to use for replacing matched patterns
+     *
+     * @return the string with any replacements applied
+     */
+    public String replaceFirst(String source, String pattern,
+                               String replacement) {
+        return StringReplacer.replaceFirst(source, pattern, replacement);
+    }
+
+    /**
+     * Replaces the first exact match of the given pattern in the source
+     * string with the provided replacement, starting from the given index.
+     *
+     * @param source the source string
+     * @param pattern the simple string pattern to search for
+     * @param replacement the string to use for replacing matched patterns
+     * @param fromIndex index to start the replace
+     *
+     * @return the string with any replacements applied
+     */
+    public String replaceFirst(String source, String pattern,
+                               String replacement, int fromIndex) {
+        return StringReplacer.replaceFirst(source, pattern, replacement,
+                                           fromIndex);
+    }
+
+    /**
+     * Replaces the last exact match of the given pattern in the source
+     * string with the provided replacement.
+     *
+     * @param source the source string
+     * @param pattern the simple string pattern to search for
+     * @param replacement the string to use for replacing matched patterns
+     *
+     * @return the string with any replacements applied
+     */
+    public String replaceLast(String source, String pattern,
+                              String replacement) {
+        return StringReplacer.replaceLast(source, pattern, replacement);
+    }
+
+    /**
+     * Replaces the last exact match of the given pattern in the source
+     * string with the provided replacement, starting from the given index.
+     *
+     * @param source the source string
+     * @param pattern the simple string pattern to search for
+     * @param replacement the string to use for replacing matched patterns
+     * @param fromIndex index to start the replace
+     *
+     * @return the string with any replacements applied
+     */
+    public String replaceLast(String source, String pattern,
+                              String replacement, int fromIndex) {
+        return StringReplacer.replaceLast(source, pattern, replacement, 
+                                          fromIndex);
+    }
+
+    /**
+     * Split the given string with the given regular expression returning the
+     * array of strings after splitting.
+     * 
+     * @param str  The string to split
+     * @param regex  The regular expression to split on
+     * 
+     * @return The array of split strings
+     * 
+     * @see String#split(String)
+     */
+    public String[] split(String str, String regex) {
+        return str.split(regex);
+    }
+
+    /**
+     * Split the given string with the given regular expression returning the
+     * array of strings after splitting.
+     * 
+     * @param str  The string to split
+     * @param regex  The regular expression to split on
+     * @param limit  The maximum number of split values
+     * 
+     * @return The array of split strings
+     * 
+     * @see String#split(String)
+     */
+    public String[] split(String str, String regex, int limit) {
+        return str.split(regex, limit);
+    }
+    
     /**
      * Capitalize each word within the given value. This assumes the words are
      * separated by whitespace (<code>\n\r\t</code> and spaces).
@@ -100,30 +508,6 @@ public class StringContext {
         }
         list.add(restOfText);
         return list.toArray(new String[list.size()]);
-    }
-
-    /**
-     * Replace each occurrence of the given pattern with the given replacement
-     * value.
-     * 
-     * @param str The string to match and replace
-     * @param pattern The pattern to match against
-     * @param replace The replacement value to replace matches with
-     * 
-     * @return The resulting string after replacing the matching strings
-     */
-    public String replace(String str, String pattern, String replace) {
-        int s = 0;
-        int e = 0;
-        StringBuilder result = new StringBuilder();
-
-        while ((e = str.indexOf(pattern, s)) >= 0) {
-            result.append(str.substring(s, e));
-            result.append(replace);
-            s = e + pattern.length();
-        }
-        result.append(str.substring(s));
-        return result.toString();
     }
 
     /**
@@ -383,7 +767,88 @@ public class StringContext {
      * 
      * @see String#replaceAll(String, String)
      */
-    public String replaceAllRegex(String subject, String regex, String replacement) {
+    public String replaceAllRegex(String subject, String regex, 
+                                  String replacement) {
         return subject.replaceAll(regex, replacement);
+    }
+    
+    /**
+     * A function that creates a string builder to allow programs to perform
+     * concatenation and pass around strings.
+     *
+     * @return the created string builder
+     */
+    public StringBuilder createStringBuilder() {
+        return new StringBuilder();
+    }
+
+    /**
+     * A function that creates a string builder to allow programs to perform
+     * concatenation and pass around strings.
+     *
+     * @param size the initial size of the buffer
+     *
+     * @return the created string builder
+     */
+    public StringBuilder createStringBuilder(int size) {
+        return new StringBuilder(size);
+    }
+
+    /**
+     * A function to append a value to an existing buffer.
+     *
+     * @param buffer  the buffer to append to
+     * @param value  the value to append
+     */
+    public void append(StringBuilder buffer, Object value) {
+        if (buffer == null) {
+            throw new NullPointerException("buffer");
+        }
+
+        buffer.append(value);
+    }
+
+    /**
+     * A function to prepend a value to an existing buffer.
+     *
+     * @param buffer  the buffer to prepend to
+     * @param value  the value to prepend
+     */
+    public void prepend(StringBuilder buffer, Object value) {
+        if (buffer == null) {
+            throw new NullPointerException("buffer");
+        }
+
+        buffer.insert(0, value);
+    }
+
+    /**
+     * A function to insert a value into an existing buffer.
+     *
+     * @param buffer  the buffer to insert into
+     * @param value  the value to insert
+     * @param index  the index of the position to insert at
+     */
+    public void insert(StringBuilder buffer, Object value, int index) {
+        if (buffer == null) {
+            throw new NullPointerException("buffer");
+        }
+
+        buffer.insert(index, value);
+    }
+    
+    /**
+     * A function to convert the buffer into a standard string.
+     *
+     * @param buffer  the buffer to convert
+     *
+     * @return  the converted buffer as a string
+     */
+    public String toString(StringBuilder buffer) {
+        if (buffer == null) {
+            throw new NullPointerException("buffer");
+        }
+
+        return buffer.toString();
     }
 }

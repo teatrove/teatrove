@@ -1,0 +1,195 @@
+<% template getSystemInfoMemory() 
+
+pathPrefix = call system.util.getPathPrefix();
+
+youngCollectorMXBean = getYoungCollectorMXBean()
+tenuredCollectorMXBean = getTenuredCollectorMXBean()
+edenMemoryMXBean = getEdenMemoryPoolMXBean()
+survivorMemoryMXBean = getSurvivorMemoryPoolMXBean()
+permGenMemoryMXBean = getPermGenMemoryPoolMXBean()
+tenuredMemoryMXBean = getTenuredMemoryPoolMXBean()
+
+configure = getRequest().parameters['configure']
+configured = validateJMX()
+if (configure == 'true' or not configured) { 
+    pools = getMemoryPoolMXBeans();
+    collectors = getGarbageCollectorMXBeans();
+%>
+
+<section id="system-info-memory-configure">
+    <div class="sml-s sml-e">
+        <div class="sm-imc sml-imc">
+            <ul class="sml-cnt arial13">
+                <li class="default">
+                    Unable to configure the default memory pool and collectors. 
+                    Please select the proper settings below to continue.
+                </li> 
+        </div>
+    </div>
+    
+    <form action="<% pathPrefix %>system/remote/configure" method="post">
+        <div class="memory-pools">
+            <label for="eden-space">Eden Memory: </label>
+            <select id="eden-space" name="eden-space" size="1">
+                <option value="">-- memory pool --</option>
+                <% foreach (pool in pools) { %>
+                    <option value="<% pool.name %>" <% (pool == edenMemoryMXBean ? 'selected="selected"' : '') %>><% pool.name %></option>
+                <% } %>
+            </select>
+            
+            <label for="survivor-space">Survivor Space: </label>
+            <select id="survivor-space" name="survivor-space" size="1">
+                <option value="">-- memory pool --</option>
+                <% foreach (pool in pools) { %>
+                    <option value="<% pool.name %>" <% (pool == survivorMemoryMXBean ? 'selected="selected"' : '') %>><% pool.name %></option>
+                <% } %>
+            </select>
+            
+            <label for="tenured-gen">Tenured Generation: </label>
+            <select id="tenured-gen" name="tenured-gen" size="1">
+                <option value="">-- memory pool --</option>
+                <% foreach (pool in pools) { %>
+                    <option value="<% pool.name %>" <% (pool == tenuredMemoryMXBean ? 'selected="selected"' : '') %>><% pool.name %></option>
+                <% } %>
+            </select>
+            
+            <label for="perm-gen">Perm Generation: </label>
+            <select id="perm-gen" name="perm-gen" size="1">
+                <option value="">-- memory pool --</option>
+                <% foreach (pool in pools) { %>
+                    <option value="<% pool.name %>" <% (pool == permGenMemoryMXBean ? 'selected="selected"' : '') %>><% pool.name %></option>
+                <% } %>
+            </select>
+            
+            <br class="clear" />
+        </div>
+        <div class="collectors">
+            <label for="young-collector">Young Collector: </label>
+            <select id="young-collector" name="young-collector" size="1">
+                <option value="">-- collector --</option>
+                <% foreach (collector in collectors) { %>
+                    <option value="<% collector.name %>" <% (collector == youngCollectorMXBean ? 'selected="selected"' : '') %>><% collector.name %></option>
+                <% } %>
+            </select>
+            
+            <label for="tenured-collector">Tenured Collector: </label>
+            <select id="tenured-collector" name="tenured-collector" size="1">
+                <option value="">-- collector --</option>
+                <% foreach (collector in collectors) { %>
+                    <option value="<% collector.name %>" <% (collector == tenuredCollectorMXBean ? 'selected="selected"' : '') %>><% collector.name %></option>
+                <% } %>
+            </select>
+            
+            <br class="clear" />
+        </div>
+        <br class="clear" />
+        <br />
+        
+        <input id="save" type="submit" value="Save" />
+        
+        <script type="text/javascript">
+            $('#save').click(function(event) {
+                var errors = 0;
+                $(this).parent('form').find('select').each(function() {
+                    var $select = $(this);
+                    $select.css('border', 'inherit');
+                    
+                    if ($select.val() == '') {
+                        errors++;
+                        $select.css('border', '2px solid red');
+                    }
+                });
+
+                if (errors > 0) {
+                    event.preventDefault();
+                    return false;
+                }
+            });
+        </script>
+    </form>
+</section>
+
+<% 
+
+} else { 
+
+%>
+
+<section id="system-info-memory-section">
+    <div class="system-memory-graph">
+        <div>
+            <div>
+                <div class="title">Memory</div>
+                <div class="info">&nbsp;</div>
+                <br class="clear" />
+            </div>
+            <div id="memory-spaces" class="graph"></div>
+        </div>
+    </div>
+    <div class="system-memory-graph">
+        <% if (youngCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>        
+            <div>
+                <div>
+                    <div class="title">Young Collector</div>
+                    <div class="info">
+                        <span id="young-collector-count"><% youngCollectorMXBean.collectionCount %></span> collections, 
+                        <span id="young-collector-time"><% call system.util.getFormattedDuration(youngCollectorMXBean.collectionTime, 'text') %></span>, 
+                        last GC: <span id="young-collector-lastgc">N/A</span>
+                    </div>
+                    <br class="clear" />
+                </div>
+                <div id="young-collector" class="graph"></div>
+            </div>
+        <% } %>
+        
+        <% if (tenuredCollectorMXBean isa com.sun.management.GarbageCollectorMXBean) { %>
+            <div>
+                <div>
+                    <div class="title">Tenured Collector</div>
+                    <div class="info">
+                        <span id="tenured-collector-count"><% tenuredCollectorMXBean.collectionCount %></span> collections, 
+                        <span id="tenured-collector-time"><% call system.util.getFormattedDuration(tenuredCollectorMXBean.collectionTime, 'text') %></span>, 
+                        last GC: <span id="tenured-collector-lastgc">N/A</span>
+                    </div>
+                    <br class="clear" />
+                </div>
+                <div id="tenured-collector" class="graph"></div>
+            </div>
+        <% } %>
+        
+        <div>
+            <div>
+                <div class="title">Eden</div>
+                <div class="info">
+                    <% numberFormat('0.0') %>
+                    <span id="eden-memory-used"><% edenMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="eden-memory-committed"><% edenMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
+                    max: <span id="eden-memory-max"><% edenMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
+                    peak: <span id="eden-memory-peak"><% edenMemoryMXBean.peakUsage.used / 1024.0 / 1024.0 %></span> MB
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="eden-usage" class="graph"></div>
+        </div>
+        <div>
+            <div>
+                <div class="title">Old Gen</div>
+                <div class="info">
+                    <% numberFormat('0.0') %>
+                    <span id="oldgen-memory-used"><% tenuredMemoryMXBean.usage.used / 1024.0 / 1024.0 %></span> MB of <span id="oldgen-memory-committed"><% tenuredMemoryMXBean.usage.committed / 1024.0 / 1024.0 %></span> MB, 
+                    max: <span id="oldgen-memory-max"><% tenuredMemoryMXBean.usage.max / 1024.0 / 1024.0 %></span> MB,
+                    peak: <span id="oldgen-memory-peak"><% tenuredMemoryMXBean.peakUsage.used / 1024.0 / 1024.0 %></span> MB
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="oldgen-usage" class="graph"></div>
+        </div>
+    </div>
+    
+    <br class="clear" />
+</section>
+
+<% 
+
+}
+ 
+%>

@@ -63,7 +63,8 @@ public class DefaultApplication implements Application {
                 Context castContext = (Context) context;
                 ContextConfig contextConfig = new ContextConfig(
                     config.getProperties(), config.getLog(), 
-                    config.getName(), config.getPlugins()
+                    config.getName(), config.getPlugins(),
+                    config.getServletContext()
                 );
                 
                 castContext.init(contextConfig);

@@ -1,0 +1,149 @@
+<% template getSystemInfoOverview() 
+
+pathPrefix = call system.util.getPathPrefix();
+
+threadMXBean = getThreadMXBean();
+memoryMXBean = getMemoryMXBean();
+runtimeMXBean = getRuntimeMXBean();
+classLoadingMXBean = getClassLoadingMXBean();
+operatingSystemMXBean = getOperatingSystemMXBean();
+
+%>
+
+<section>
+    <div class="system-overview-graph">
+        <div>
+            <div>
+                <div class="title">CPU Usage</div>
+                <div class="info">
+                    <% numberFormat('0') %>
+                    <span id="cpu-used">N/A</span>, 
+                    <% operatingSystemMXBean.availableProcessors %> processors
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="cpu-usage" class="graph"></div>
+        </div>
+    </div>
+    
+    <div class="system-overview-graph">
+        <div>
+            <div>
+                <div class="title">Heap Usage</div>
+                <div class="info">
+                    <% numberFormat('0.0') %>
+                    <span id="heap-memory-used"><% memoryMXBean.heapMemoryUsage.used / 1024.0 / 1024.0 %></span> MB of <span id="heap-memory-committed"><% memoryMXBean.heapMemoryUsage.committed / 1024.0 / 1024.0 %></span> MB, 
+                    max: <span id="heap-memory-max"><% memoryMXBean.heapMemoryUsage.max / 1024.0 / 1024.0 %></span> MB
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="heap-usage" class="graph"></div>
+        </div>
+    </div>
+    
+    <div class="system-overview-graph">
+        <div>
+            <div>
+                <div class="title">Classes</div>
+                <div class="info">
+                    <% numberFormat('0') %>
+                    <span id="classes-loaded"><% classLoadingMXBean.loadedClassCount %></span> classes loaded,
+                    <span id="classes-unloaded"><% classLoadingMXBean.unloadedClassCount %></span> classes unloaded
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="class-usage" class="graph"></div>
+        </div>
+    </div>
+    
+    <div class="system-overview-graph">
+        <div>
+            <div>
+                <div class="title">Threads</div>
+                <div class="info">
+                    <span id="threads-live"><% threadMXBean.threadCount %></span> live threads (<span id="threads-peak"><% threadMXBean.peakThreadCount %></span> peak), 
+                    <span id="threads-daemon"><% threadMXBean.daemonThreadCount %></span> daemon threads, 
+                    <span id="threads-started"><% threadMXBean.totalStartedThreadCount %></span> total started
+                </div>
+                <br class="clear" />
+            </div>
+            <div id="thread-usage" class="graph"></div>
+        </div>
+    </div>
+    
+    <br class="clear" />
+</section>
+
+<section>
+    <div class="table-container" style="float: left; width: 49%;">
+        <table cellspacing="1" cellpadding="3" class="tablehead">
+            <thead>
+                <tr class="stathead">
+                    <th colspan="2">Program Information</th>
+                </tr>
+                <tr class="colhead">
+                    <th width="25%">Item</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="oddrow">
+                    <td>Name</td>
+                    <td><% runtimeMXBean.name %></td>
+                </tr>
+                <tr class="evenrow">
+                    <td>Arguments</td>
+                    <td><% join(runtimeMXBean.inputArguments, '<br /><br />') %></td>
+                </tr>
+                <tr class="oddrow">
+                    <td>Class Path</td>
+                    <td><% runtimeMXBean.classPath %></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="float: left; width: 2%;">&nbsp;</div>
+    <div class="table-container" style="float: left; width: 49%;">
+        <table cellspacing="1" cellpadding="3" class="tablehead">
+            <thead>
+                <tr class="stathead">
+                    <th colspan="2">System Information</th>
+                </tr>
+                <tr class="colhead">
+                    <th width="25%">Item</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="oddrow">
+                    <td>Started</td>
+                    <td><% createDate(runtimeMXBean.startTime) %></td>
+                </tr>
+                <tr class="evenrow">
+                    <td>Uptime</td>
+                    <td><span id="uptime"><% call system.util.getFormattedDuration(runtimeMXBean.uptime, 'text') %></span></td>
+                </tr>
+                <tr class="oddrow">
+                    <td>Virtual Machine</td>
+                    <td><% runtimeMXBean.vmName %> by <% runtimeMXBean.vmVendor %></td>
+                </tr>
+                <tr class="evenrow">
+                    <td>Java Version</td>
+                    <td><% runtimeMXBean.systemProperties['java.version'] %></td>
+                </tr>
+                <tr class="oddrow">
+                    <td>Operating System</td>
+                    <td><% runtimeMXBean.systemProperties['os.name'] %> (version <% runtimeMXBean.systemProperties['os.version'] %>)</td>
+                </tr>
+                <% if (operatingSystemMXBean isa com.sun.management.OperatingSystemMXBean) { %>
+                    <tr class="evenrow">
+                        <td>Process Time</td>
+                        <td><span id="processtime"><% call system.util.getFormattedDuration(operatingSystemMXBean.processCpuTime / 1000000.0, 'text') %></span></td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+    
+    <br class="clear" />
+</section>

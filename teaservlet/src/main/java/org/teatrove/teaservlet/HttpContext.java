@@ -18,17 +18,15 @@ package org.teatrove.teaservlet;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Iterator;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpSession;
 
-import org.teatrove.tea.runtime.Substitution;
+import org.teatrove.tea.runtime.Context;
 import org.teatrove.tea.runtime.OutputReceiver;
+import org.teatrove.tea.runtime.Substitution;
 
 /**
  * The context that is used by the template to return its data. This class 
@@ -36,7 +34,7 @@ import org.teatrove.tea.runtime.OutputReceiver;
  *
  * @author Reece Wilton, Brian S O'Neill
  */
-public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
+public interface HttpContext extends Context {
 
     /**
      * Gets an object that contains all the request information from the
@@ -135,6 +133,14 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      */
     public void setHeader(String name, Date value);
 
+    /**
+     * Flush the current contents of the response stream to the connection.
+     * 
+     * @throws IOException if an error occurs flushing the output
+     */
+    public void flushBuffer()
+        throws IOException;
+    
     /**
      * Encodes the given string so that it can be safely used in a URL. For
      * example, '?' is encoded to '%3f'.
@@ -560,10 +566,10 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      * @version
 
      */
-    public interface ParameterValues extends List {
+    public interface ParameterValues extends List<Parameter> {
 
         /** The element type for this List is Parameter.class */
-        public static final Class ELEMENT_TYPE = Parameter.class;
+        public static final Class<Parameter> ELEMENT_TYPE = Parameter.class;
 
         /**
          * Returns the parameter value as an Integer.
@@ -707,10 +713,12 @@ public interface HttpContext extends org.teatrove.tea.runtime.UtilityContext {
      * @version
 
      */
-    public static class StringArrayList extends ArrayList {
+    public static class StringArrayList extends ArrayList<String> {
 
+        private static final long serialVersionUID = 1L;
+        
         /** The element type is String */
-        public static final Class ELEMENT_TYPE = String.class;
+        public static final Class<String> ELEMENT_TYPE = String.class;
         
         StringArrayList() {
         }

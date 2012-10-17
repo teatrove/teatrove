@@ -1,0 +1,131 @@
+<% template getSystemInfoThreads()
+
+pathPrefix = call system.util.getPathPrefix()
+
+request = getRequest();
+threading = request.parameters['threading'] ?: 'status'
+    
+threadMXBean = getThreadMXBean();
+threads = threadMXBean.getThreadInfo(threadMXBean.allThreadIds, true, true)
+sort(threads, 'threadName', false)
+
+%>
+
+<section>
+    <div class="controls">
+        <div class="controls-wrapper">
+            <div id="buttonset-threads" class="buttonset">
+                <input type="radio" id="thread-status" name="threading" value="status" <% threading == 'status' ? 'checked="checked"' : '' %> /><label for="thread-status">Status</label>
+                <input type="radio" id="thread-perf" name="threading" value="perf" <% threading == 'perf' ? 'checked="checked"' : '' %> /><label for="thread-perf">Performance</label>
+            </div>
+        </div>
+    </div>
+    <br class="clear" /><br />
+        
+    <div id="thread-container-perf" class="thread-container <% (threading == 'perf' ? 'ui-active' : '') %>;" style="display: <% (threading == 'perf' ? 'block' : 'none') %>;">
+        <div class="table-container">
+            <table cellspacing="1" cellpadding="3" class="tablehead">
+                <thead>
+                    <tr class="stathead">
+                        <th colspan="5">Thread Performance</th>
+                    </tr>
+                    <tr class="colhead">
+                        <th class="sort-option">Thread</th>
+                        <th class="sort-option">Running</th>
+                        <th class="sort-option">Blocked</th>
+                        <th class="sort-option">Waiting</th>
+                        <th class="sort-option">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <% 
+                    idx = 0
+                    numberFormat('0')
+                    foreach (thread in threads) { 
+                        idx = idx + 1
+                        cpuTime = threadMXBean.getThreadCpuTime(thread.threadId) / 1000000.0
+                        userTime = threadMXBean.getThreadUserTime(thread.threadId) / 1000000.0
+                        totalTime = cpuTime + thread.blockedTime + thread.waitedTime
+                %>
+                        <tr id="thread-perf-<% thread.threadId %>" class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                            <td data-value="<% thread.threadName %>"><a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=<% thread.threadId %>" title="<% thread.threadName %>"><% thread.threadName %></a></td>
+                            <td class="cpu-time" title="<% call system.util.getFormattedDuration(userTime, 'time') %> in user mode" data-value="<% cpuTime %>"><% call system.util.getFormattedDuration(cpuTime, 'time') %></td>
+                            <td class="blocked-time" title="Blocked <% thread.blockedCount %> time(s)" data-value="<% thread.blockedTime %>"><% call system.util.getFormattedDuration(thread.blockedTime, 'time') %></td>
+                            <td class="waited-time" title="Waited <% thread.waitedCount %> time(s)" data-value="<% thread.waitedTime %>"><% call system.util.getFormattedDuration(thread.waitedTime, 'time') %></td>
+                            <td class="total-time" data-value="<% totalTime %>"><% call system.util.getFormattedDuration(totalTime, 'time') %></td>
+                        </tr>
+                <% 
+                    }
+                %>
+                </tbody>
+            </table>
+        </div>        
+    </div>
+    
+    <div id="thread-container-status" class="gridlapse gridlapse-relative thread-container <% (threading == 'status' ? 'ui-active' : '') %>" style="display: <% (threading == 'status' ? 'block' : 'none') %>;">
+    <div class="grid-container">
+        <div class="grid-lhn">
+        <%
+            numberFormat('0');
+            foreach (idx in 0..threads.length - 1) { 
+                thread = threads[idx];
+                state = thread.threadState.ordinal()
+                
+                if (idx % 10 == 0) 
+                {
+        %>
+                    <div class="header stathead">
+                        <div class="template">Thread</div>
+                    </div>
+        <%
+                }
+        %>
+                <div id="row-<% threads[idx].threadId %>-label" class="row stathead <% idx % 2 == 0 ? 'oddrow' : 'evenrow' %>">
+                    <div class="template" title="">
+                        <a class="thread-details-link" href="<% pathPrefix %>/system/format/getThreadDetails?id=<% thread.threadId %>" title="<% thread.threadName %>">
+                            <% thread.threadName %>
+                        </a>
+                    </div>
+                </div>        
+        <% 
+            } 
+        %>
+            <div class="placeholder stathead">&nbsp;</div>
+        </div>
+        
+        <div class="grid">
+        <%
+            header = 0;
+            foreach (idx in 0..threads.length - 1) {
+                if (idx % 10 == 0) 
+                {
+                    header = header + 1
+        %>
+                    <div class="header stathead"></div>
+                    <div class="scrollbar">
+                        <div class="scroller">|||</div>
+                    </div>
+        <% 
+                }
+        %>
+                 
+            <div id="row-<% threads[idx].threadId %>" title="<% threads[idx].threadName %>" class="row <% idx % 2 == 0 ? 'oddrow' : 'evenrow' %>">
+            </div>
+        
+        <%
+            }
+        %>
+            
+            <div class="scrollbar last">
+                <div class="scroller">|||</div>
+            </div>
+                    
+        </div>
+    </div>
+    
+    <br class="clear" />
+            
+    </div>
+    
+    <div id="thread-details-dialog" title=""></div>
+</section>

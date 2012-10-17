@@ -37,7 +37,7 @@ public interface TeaToolsContext {
     /**
      * Returns a bean full of handy information about the specified class.
      */
-    public HandyClassInfo getHandyClassInfo(Class clazz);
+    public HandyClassInfo getHandyClassInfo(Class<?> clazz);
 
     /**
      * Returns a bean full of handy information about the specified class.
@@ -90,7 +90,7 @@ public interface TeaToolsContext {
         /**
          * Returns the type.
          */
-        public Class getType();
+        public Class<?> getType();
         
         /**
          * Returns the name of the type of the Class described by this 
@@ -104,7 +104,17 @@ public interface TeaToolsContext {
          * </UL>
          */
         public String getTypeName();
-   
+
+        /**
+         * Returns whether the given class or any of its super classe or interfaces,
+         * recursively, are deprecated.
+         * 
+         * @return <code>true</code> if the type is deprecated
+         * 
+         * @see Deprecated
+         */
+        public boolean isDeprecated();
+        
         /**
          * Returns the array type.  Returns the specified class if it is 
          * not an array.  
@@ -175,7 +185,20 @@ public interface TeaToolsContext {
          * @return an array of all the available properties on the specified class.
          */
         public PropertyDescriptor[] getTeaBeanPropertyDescriptors();
-                                                        
+        
+        /**
+         * A function that returns an array of all the available properties on
+         * a given class.
+         * <p>
+         * <b>NOTE:</b> If possible, the results of this method should be cached
+         * by the caller.
+         *
+         * @param beanClass the bean class to introspect
+         *
+         * @return an array of all the available properties on the specified class.
+         */
+        public PropertyDescription[] getTeaBeanPropertyDescriptions();
+        
         /**
          * Gets the MethodDescriptors of the specified context class including
          * all of the MethodDescriptors for methods declared in the class's 
@@ -186,5 +209,14 @@ public interface TeaToolsContext {
          */
         public MethodDescriptor[] getTeaContextMethodDescriptors();
 
+        /**
+         * Gets the MethodDescriptions of the specified context class including
+         * all of the MethodDescriptors for methods declared in the class's 
+         * superclass and interfaces
+         *
+         * @param contextClass the Tea context Class to introspect (any class will
+         * work fine)
+         */
+        public MethodDescription[] getTeaContextMethodDescriptions();
     }
 }

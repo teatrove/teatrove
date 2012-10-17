@@ -87,12 +87,16 @@ public class TemplateRepository {
      * @param rootPackage The root package name (org.teatrove.teaservlet.template).
      */
     public static synchronized void init(File rootClassesDir, String rootPackage) {
+        if (mInstance == null) {
+            _init(rootClassesDir, rootPackage);
+        }
+    }
+    
+    private static void _init(File rootClassesDir, String rootPackage) {
         if (rootClassesDir == null || rootPackage == null)
             return;
         if (! rootClassesDir.isDirectory())
             throw new IllegalArgumentException("Root classes parameter not a directory.");
-        if (mInstance != null)
-            throw new RuntimeException("Repository already initialized.");
         mInstance = new TemplateRepository(rootClassesDir, rootPackage);
         try {
             long start = System.currentTimeMillis();
@@ -152,6 +156,7 @@ public class TemplateRepository {
      */
     public class TemplateInfo {
         String mName;
+        String mSourceFile;
         long mLastModified;
         TypeDesc mReturnType;
         TypeDesc[] mParameterTypes;
@@ -169,7 +174,8 @@ public class TemplateRepository {
          */
         TemplateInfo(MethodInfo mi, long lastModified, File rootClassesDir, boolean precompiled) {
             mLastModified = lastModified;
-            mName = mi.getClassFile().getClassName().replace('.', '/');;
+            mName = mi.getClassFile().getClassName().replace('.', '/');
+            mSourceFile = mi.getClassFile().getSourceFile();
             mReturnType = mi.getMethodDescriptor().getReturnType();
             mParameterTypes = mi.getMethodDescriptor().getParameterTypes();
             mDependents = TemplateCallExtractor.getTemplatesCalled(
@@ -205,9 +211,9 @@ public class TemplateRepository {
                     (String) p.get("parameterTypes"), ",", false);
                 while(params.hasMoreTokens())
                     paramList.add(TypeDesc.forDescriptor(
-                        ((String) params.nextToken()).trim()));
+                        (params.nextToken()).trim()));
             }
-            mParameterTypes = (TypeDesc[]) paramList.toArray(
+            mParameterTypes = paramList.toArray(
                 new TypeDesc[paramList.size()]);
             ArrayList<String> depList = new ArrayList<String>();
             if (p.get("dependents") != null) {
@@ -216,8 +222,7 @@ public class TemplateRepository {
                 while(deps.hasMoreTokens())
                     depList.add(deps.nextToken().trim());
             }
-            mDependents = (String[]) depList.toArray(
-                new String[depList.size()]);
+            mDependents = depList.toArray(new String[depList.size()]);
             ArrayList<TemplateCallExtractor.AppMethodInfo> methodList =
                 new ArrayList<TemplateCallExtractor.AppMethodInfo>();
             if (p.get("methodsCalled") != null) {
@@ -226,7 +231,7 @@ public class TemplateRepository {
                 while(meths.hasMoreTokens())
                     methodList.add(new TemplateCallExtractor.AppMethodInfo(meths.nextToken().trim()));
             }
-            mMethodsCalled = (TemplateCallExtractor.AppMethodInfo[])
+            mMethodsCalled = 
                 methodList.toArray(new TemplateCallExtractor.AppMethodInfo[methodList.size()]);
             mPrecompiled = "true".equals(p.get("precompiled"));
         }
@@ -263,6 +268,8 @@ public class TemplateRepository {
         }
 
         public String getName() { return mName; }
+        
+        public String getSourceFile() { return mSourceFile; }
 
         public TypeDesc getReturnType() { return mReturnType; }
 
@@ -378,7 +385,7 @@ public class TemplateRepository {
         StringTokenizer paths = new StringTokenizer(
             System.getProperty("java.class.path"), File.pathSeparator, false);
         while(paths.hasMoreTokens()) {
-            String name = (String) paths.nextToken();
+            String name = paths.nextToken();
             if (!name.endsWith(".jar"))
                 continue;
             try {
@@ -426,8 +433,7 @@ public class TemplateRepository {
             mDateFmt.format(new Date(lastModified))).append("\n");
         buf.append("templates {\n");
         for (Iterator<String> i = mTemplateInfoMap.keySet().iterator(); i.hasNext(); )
-            buf.append(((TemplateInfo) mTemplateInfoMap.get(
-                i.next())).toString());
+            buf.append((mTemplateInfoMap.get(i.next())).toString());
         buf.append("}\n");
         File repositoryFile = new File(mRootClassesDir,
             REPOSITORY_FILENAME);
@@ -558,7 +564,7 @@ public class TemplateRepository {
     public TemplateInfo getTemplateInfo(String templateName) {
         templateName = !templateName.startsWith(mRootPackage) ?
             getFullyQualifiedTemplateName(templateName) : templateName;
-        return (TemplateInfo) mTemplateInfoMap.get(templateName);
+        return mTemplateInfoMap.get(templateName);
     }
 
     /**
@@ -566,10 +572,10 @@ public class TemplateRepository {
      * @return TemplateInfo[] The metadata.
      */
     public TemplateInfo[] getTemplateInfos() {
-    	Collection collection = mTemplateInfoMap.values();
+    	Collection<TemplateInfo> collection = mTemplateInfoMap.values();
     	TemplateInfo[] result = null;
         if (collection.size() > 0) {
-        	result = (TemplateInfo[]) collection.toArray(new TemplateInfo[collection.size()]);
+        	result = collection.toArray(new TemplateInfo[collection.size()]);
         }
         return result;
     }
@@ -594,7 +600,7 @@ public class TemplateRepository {
             TemplateInfo tNew = getTemplateInfoForClassFile(getClassFileForName(templateName));
             if (tNew == null || !mTemplateInfoMap.containsKey(templateName))
                 continue;
-            TemplateInfo tOld = (TemplateInfo) mTemplateInfoMap.get(templateName);
+            TemplateInfo tOld = mTemplateInfoMap.get(templateName);
             // Don't bother if template signature hasn't changed.
             if (tNew.equals(tOld))
                 continue;

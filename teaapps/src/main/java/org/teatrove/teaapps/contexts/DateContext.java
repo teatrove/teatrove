@@ -15,12 +15,13 @@
  */
 package org.teatrove.teaapps.contexts;
 
-import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
+import org.teatrove.trove.log.Syslog;
 import org.teatrove.trove.util.FastDateFormat;
 
 /**
@@ -43,6 +44,20 @@ public class DateContext {
     public static final String YEAR = "y";
     
     /**
+     * Returns a standard Java Date object with the current date and time.
+     */
+    public java.util.Date currentDate() {
+        return new Date();
+    }
+
+    /**
+     * Returns a Joda DateTime object with the current date and time.
+     */
+    public org.joda.time.DateTime currentDateTime() {
+        return new org.joda.time.DateTime();
+    }
+
+    /**
      * Create a {@link Date} instance from the given string using the default 
      * input format <code>yyyyMMdd</code>.
      * 
@@ -58,6 +73,28 @@ public class DateContext {
             result = cFormatter.parse(dateString);
         }
         return result;
+    }
+
+    /**
+     * Create a {@link Date} instance from the given string using the default 
+     * input format <code>yyyyMMdd</code>.  Exceptions are NOT thrown by this
+     * method and instead <code>null</code> is returned to indicate errors.
+     * 
+     * @param dateString The string from which to create a date
+     * 
+     * @return The {@link Date} instance representing date string
+     * 
+     * @see #createDate(String)
+     */
+    public Date createDateWithValidation(String dateString) {
+        try { return createDate(dateString); } 
+        catch (Exception exception) {
+            Syslog.debug("DateContext.createDateWithValidation:  Error " +
+            		     "creating date with " + dateString + "; Exception: " + 
+            		     exception.getMessage());
+        }
+        
+        return null;
     }
 
     /**
@@ -156,6 +193,29 @@ public class DateContext {
         
         SimpleDateFormat sdf = new SimpleDateFormat(inputFormat);
         return sdf.parse(dateString);
+    }
+    
+    /**
+     * Creates a date object based on the format passed in.  Exceptions are NOT 
+     * thrown by this method and instead <code>null</code> is returned.  
+     * Otherwise, this is identical to {@link #createDate(String, String)}.
+
+     * @param dateString The string from which to create a date
+     * @param inputFormat The format of the date string
+     * 
+     * @return The {@link Date} instance representing the date
+     * 
+     * @see #createDate(String, String)
+     */
+    public Date createDateWithValidation(String dateString, String inputFormat) {
+        try { return createDate(dateString, inputFormat); } 
+        catch (Exception exception) {
+            Syslog.debug("DateContextImpl.createDateWithValidation:  Error " +
+            		     "creating date with " + dateString + "/" + 
+            		     inputFormat + "; Exception: " + exception.getMessage());
+        }
+        
+        return null;
     }
 
     /**
@@ -312,7 +372,15 @@ public class DateContext {
         return valid;
     }
 
-    private boolean isLeapYear(int year) {
+    /**
+     * Determine if the given year is a leap year or not.
+     * 
+     * @param year The year to check
+     * 
+     * @return <code>true</code> if the year is a leap year, <code>false</code>
+     *         otherwise
+     */
+    public boolean isLeapYear(int year) {
         return (year % 400 == 0) || ((year % 4 == 0) && (year % 100 != 0));
     }
     

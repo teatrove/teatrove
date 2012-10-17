@@ -19,6 +19,7 @@ import org.teatrove.trove.util.PropertyMap;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -98,6 +99,16 @@ public class MapContext {
      */
     public PropertyMap createPropertyMap() {
         return new PropertyMap();
+    }
+    
+    /**
+     * Create a new empty {@link LinkedHashMap} that implements the standard
+     * {@link Map} interface but supported insertion-order iteration.
+     * 
+     * @return The new empty linked hash map
+     */
+    public LinkedHashMap<?, ?> createLinkedHashMap() {
+        return new LinkedHashMap<Object, Object>();
     }
 
     /**

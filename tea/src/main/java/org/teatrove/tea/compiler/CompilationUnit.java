@@ -42,13 +42,15 @@ import org.teatrove.trove.util.ClassInjector;
  * 
  * @author Brian S O'Neill
  */
-public class CompilationUnit implements ErrorListener {
+public class CompilationUnit implements CompileListener {
+
     private String mName;
     private Compiler mCompiler;
     private Template mTree;
     private CompilationSource mSource;
 
     private int mErrorCount;
+    private int mWarningCount;
     private File mDestDir;
     private File mDestFile;
 
@@ -126,10 +128,17 @@ public class CompilationUnit implements ErrorListener {
     /**
      * Called when there is an error when compiling this CompilationUnit.
      */
-    public void compileError(ErrorEvent e) {
+    public void compileError(CompileEvent e) {
         mErrorCount++;
     }
 
+    /**
+     * Called when there is a warning when compiling this CompilationUnit.
+     */
+    public void compileWarning(CompileEvent e) {
+        mWarningCount++;
+    }
+    
     /**
      * Returns the number of errors generated while compiling this
      * CompilationUnit.
@@ -138,6 +147,14 @@ public class CompilationUnit implements ErrorListener {
         return mErrorCount;
     }
 
+    /**
+     * Returns the number of warnings generated while compiling this
+     * CompilationUnit.
+     */
+    public int getWarningCount() {
+        return mWarningCount;
+    }
+    
     public Template getParseTree() {
         if (mTree == null && mCompiler != null) {
             return mCompiler.getParseTree(this);
@@ -187,7 +204,8 @@ public class CompilationUnit implements ErrorListener {
     }
     
     public boolean shouldCompile() {
-        return shouldCompile(getDestinationLastModified());
+        return getCompiler().isForceCompile() ||
+               shouldCompile(getDestinationLastModified());
     }
 
     protected boolean shouldCompile(long timestamp) {
@@ -338,9 +356,9 @@ public class CompilationUnit implements ErrorListener {
         Template tree = null;
         try {
             Scanner s = new Scanner(srcReader, this);
-            s.addErrorListener(this);
+            s.addCompileListener(this);
             Parser p = new Parser(s, this);
-            p.addErrorListener(this);
+            p.addCompileListener(this);
             tree = p.parse();
             s.close();
 
