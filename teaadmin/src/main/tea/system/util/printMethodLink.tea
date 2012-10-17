@@ -4,17 +4,13 @@
     pathPrefix = call system.util.getPathPrefix();
 
     value = encodeParameter(md.method.name);
-    foreach ( param in md.parameterDescriptors ) {
-        //value = value & "-" & param.displayName;
-    }
+
     link = link & '<a ';
     if ( target == 0 ) {
         text = "<!-- -->";
         link = link & 'name="#' & value & '" id="' & value & '" ';
     } else if ( target == 1 ){
         text = replace(md.name,"$",".");
-        //link = link & 'href=' & pathPrefix & 'system/teaservlet/Admin?subTemplate=system.teaservlet.ContextDetail&context=' & md.method.declaringClass.name;
-        //link = link & '#' & value;
         link = link & 'href=' & pathPrefix & 'system/format/getContextFunctionDetails?context=' & md.method.declaringClass.name & '&function=' & value;
     } else if ( target == 2 ){
         text = replace(md.name,"$",".");

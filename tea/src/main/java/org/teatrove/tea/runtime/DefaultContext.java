@@ -16,28 +16,34 @@
 
 package org.teatrove.tea.runtime;
 
-import org.teatrove.trove.util.BeanComparator;
-import org.teatrove.trove.util.DecimalFormat;
-import org.teatrove.trove.util.Pair;
-import org.teatrove.trove.util.StringReplacer;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.io.IOException;
+import java.io.Writer;
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.ReadableInstant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimeZone;
+import org.teatrove.tea.util.BeanAnalyzer;
+import org.teatrove.trove.generics.GenericType;
+import org.teatrove.trove.util.DecimalFormat;
+import org.teatrove.trove.util.Pair;
 
 /**
  * The default runtime context class that Tea templates get compiled to use.
@@ -47,7 +53,7 @@ import java.util.TimeZone;
  * @author Brian S O'Neill
  */
 public abstract class DefaultContext extends Writer
-    implements UtilityContext
+    implements Context
 {
     private static final String DEFAULT_NULL_FORMAT = "null";
 
@@ -312,16 +318,22 @@ public abstract class DefaultContext extends Writer
             }
         }
         else {
-            if (n instanceof Integer) {
+            if (n instanceof Integer ||
+                n instanceof AtomicInteger ||
+                n instanceof Short ||
+                n instanceof Byte) {
                 return mDecimalFormat.format(n.intValue());
             }
-            if (n instanceof Double) {
+            if (n instanceof Double ||
+                n instanceof BigDecimal) {
                 return mDecimalFormat.format(n.doubleValue());
             }
             if (n instanceof Float) {
                 return mDecimalFormat.format(n.floatValue());
             }
-            if (n instanceof Long) {
+            if (n instanceof Long ||
+                n instanceof BigInteger ||
+                n instanceof AtomicLong) {
                 return mDecimalFormat.format(n.longValue());
             }
             return mDecimalFormat.format(n.doubleValue());
@@ -378,6 +390,223 @@ public abstract class DefaultContext extends Writer
             mDecimalFormat.format(n);
     }
 
+    /**
+     * @hidden
+     */
+    public String dump(Object object) {
+        return dump(object, true, true);
+    }
+    
+    /**
+     * @hidden
+     */
+    public String dump(Object object, boolean recursive) {
+        return dump(object, recursive, true);
+    }
+    
+    /**
+     * @hidden
+     */
+    public String dump(Object object, boolean recursive, boolean format) {
+        StringBuilder buffer = new StringBuilder(1024);
+        try { 
+            dump0(buffer, object, 1, recursive, format, new HashSet<Object>()); 
+        }
+        catch (IntrospectionException ie) {
+            buffer.setLength(0);
+            buffer.append(object.getClass().getName())
+                  .append("(")
+                      .append(ie.getClass().getName())
+                      .append("(\"").append(ie.getMessage()).append("\")")
+                  .append(")");
+        }
+        
+        return buffer.toString();
+    }
+
+    @SuppressWarnings("rawtypes")
+    protected void dump0(StringBuilder buffer, Object object, int level,
+                         boolean recursive, boolean format, Set<Object> objects) 
+        throws IntrospectionException {
+
+        // handle null values
+        if (object == null) { 
+            buffer.append(toString((Object) null));
+            return;
+        }
+    
+        // append type information
+        String hash = Integer.toHexString(System.identityHashCode(object));
+        buffer.append(object.getClass().getName()).append("@").append(hash);
+        
+        // handle known types
+        if (object instanceof String) {
+            buffer.append("(\"").append(toString((String) object)).append("\")");
+            return;
+        }
+        else if (object instanceof Number || object instanceof Boolean ||
+                 object instanceof Date || object instanceof ReadableInstant) {
+            buffer.append('(').append(toString(object)).append(')');
+            return;
+        }
+        else if (object instanceof Class) {
+            buffer.append("('").append(((Class) object).getName()).append("')");
+            return;
+        }
+        
+        // handle non-recursive states
+        if (level > 1 && !recursive) {
+            buffer.append("('");
+            if (object instanceof Collection) {
+                buffer.append("size=").append(((Collection) object).size());
+            }
+            else if (object instanceof Map) {
+                buffer.append("size=").append(((Map) object).size());
+            }
+            else if (object.getClass().isArray()) {
+                buffer.append("length=").append(Array.getLength(object));
+            }
+            else { buffer.append(toString(object)); }
+            buffer.append("')");
+            return;
+        }
+
+        // handle already visited types
+        if (objects.contains(object)) {
+            buffer.append("()");
+            return;
+        }
+        
+        // add object as processed
+        objects.add(object);
+
+        // handle collection classes
+        if (object instanceof Collection) {
+            int index = 0;
+            buffer.append("([");
+            for (Object item : ((Collection) object)) {
+                
+                // format and append separators as necessary
+                if (index > 0) {
+                    buffer.append(", ");
+                }
+                if (format) {
+                    buffer.append('\n');
+                    for (int j = 0; j < level; j++) { buffer.append("    "); }
+                }
+                
+                buffer.append(index).append('=');
+                dump0(buffer, item, level + 1, recursive, format, objects);
+                
+                index++;
+            }
+            
+            if (format && index > 0) {
+                buffer.append('\n');
+                for (int j = 0; j < level - 1; j++) { buffer.append("    "); }
+            }
+            
+            buffer.append("])");
+            return;
+        }
+        else if (object instanceof Map) {
+            int index = 0;
+            buffer.append("({");
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) object).entrySet()) {
+                
+                // format and append separators as necessary
+                if (index > 0) {
+                    buffer.append(", ");
+                }
+                if (format) {
+                    buffer.append('\n');
+                    for (int j = 0; j < level; j++) { buffer.append("    "); }
+                }
+                
+                Object value = entry.getValue();
+                buffer.append(toString(entry.getKey())).append('=');
+                dump0(buffer, value, level + 1, recursive, format, objects);
+                
+                index++;
+            }
+            
+            if (format && index > 0) {
+                buffer.append('\n');
+                for (int j = 0; j < level - 1; j++) { buffer.append("    "); }
+            }
+            
+            buffer.append("})");
+            return;
+        }
+        else if (object.getClass().isArray()) {
+            buffer.append("([");
+            int length = Array.getLength(object);
+            for (int i = 0; i < length; i++) {
+                // format and append separators as necessary
+                if (i > 0) {
+                    buffer.append(", ");
+                }
+                if (format) {
+                    buffer.append('\n');
+                    for (int j = 0; j < level; j++) { buffer.append("    "); }
+                }
+                
+                buffer.append(i).append('=');
+                Object value = Array.get(object, i);
+                dump0(buffer, value, level + 1, recursive, format, objects);
+            }
+            
+            if (format && length > 0) {
+                buffer.append('\n');
+                for (int j = 0; j < level - 1; j++) { buffer.append("    "); }
+            }
+            
+            buffer.append("])");
+            return;
+        }
+        
+        // handle custom objects by listing bean properties
+        Map<String, PropertyDescriptor> properties =
+            BeanAnalyzer.getAllProperties(new GenericType(object.getClass()));
+        
+        int index = 0;
+        buffer.append('(');
+        for (String name : properties.keySet()) {
+            if ("class".equals(name)) { continue; }
+            PropertyDescriptor property = properties.get(name);
+            
+            // get and verify read method
+            Method method = property.getReadMethod();
+            if (method == null) { continue; }
+            
+            // get and verify actual value
+            Object result = null;
+            try { result = method.invoke(object); }
+            catch (Exception exception) { result = exception; }
+            
+            // format and append separators as necessary
+            if (index > 0) {
+                buffer.append(", ");
+            }
+            if (format) {
+                buffer.append('\n');
+                for (int j = 0; j < level; j++) { buffer.append("    "); }
+            }
+            
+            buffer.append(name).append('=');
+            dump0(buffer, result, level + 1, recursive, format, objects);
+            
+            index++;
+        }
+        
+        if (format && index > 0) {
+            buffer.append('\n');
+            for (int j = 0; j < level - 1; j++) { buffer.append("    "); }
+        }
+        
+        buffer.append(')');
+    }
+    
     public void setLocale(Locale locale) {
         if (locale == null) {
             mLocale = null;
@@ -386,7 +615,7 @@ public abstract class DefaultContext extends Writer
         }
         else {
             synchronized (cLocaleCache) {
-                Locale cached = (Locale)cLocaleCache.get(locale);
+                Locale cached = cLocaleCache.get(locale);
                 if (cached == null) {
                     cLocaleCache.put(locale, locale);
                 }
@@ -515,8 +744,7 @@ public abstract class DefaultContext extends Writer
             key = new Pair(key, NaN);
         }
 
-        if ((mDecimalFormat =
-             (DecimalFormat)cDecimalFormatCache.get(key)) == null) {
+        if ((mDecimalFormat = cDecimalFormatCache.get(key)) == null) {
 
             mDecimalFormat = DecimalFormat.getInstance(format, mLocale);
 
@@ -542,717 +770,5 @@ public abstract class DefaultContext extends Writer
     public String getNumberFormatNaN() {
         return mDecimalFormat == null ? null : mDecimalFormat.getNaN();
     }
-
-    public Date currentDate() {
-        return new Date();
-    }
-
-    public DateTime currentDateTime() {
-        /*
-        DateTimeZone zone = mDateTimeZone;
-        if (zone == null) {
-            return new DateTime();
-        }
-        else {
-            return new DateTime(zone);
-        }
-        */
-        // TODO
-        return new DateTime();
-    }
-
-    public boolean startsWith(String str, String prefix) {
-        return (str == null || prefix == null) ? (str == prefix) :
-            str.startsWith(prefix);
-    }
-
-    public boolean endsWith(String str, String suffix) {
-        return (str == null || suffix == null) ? (str == suffix) :
-            str.endsWith(suffix);
-    }
-
-    public int[] find(String str, String search) {
-        return find(str, search, 0);
-    }
-
-    public int[] find(String str, String search, int fromIndex) {
-        if (str == null || search == null) {
-            return new int[0];
-        }
-
-        int[] indices = new int[10];
-        int size = 0;
-
-        int index = fromIndex;
-        while ((index = str.indexOf(search, index)) >= 0) {
-            if (size >= indices.length) {
-                // Expand capacity.
-                int[] newArray = new int[indices.length * 2];
-                System.arraycopy(indices, 0, newArray, 0, indices.length);
-                indices = newArray;
-            }
-            indices[size++] = index;
-            index += search.length();
-        }
-
-        if (size < indices.length) {
-            // Trim capacity.
-            int[] newArray = new int[size];
-            System.arraycopy(indices, 0, newArray, 0, size);
-            indices = newArray;
-        }
-
-        return indices;
-    }
-
-    public int findFirst(String str, String search) {
-        return (str == null || search == null) ? -1 :
-            str.indexOf(search);
-    }
-
-    public int findFirst(String str, String search, int fromIndex) {
-        return (str == null || search == null) ? -1 :
-            str.indexOf(search, fromIndex);
-    }
-
-    public int findLast(String str, String search) {
-        return (str == null || search == null) ? -1 :
-            str.lastIndexOf(search);
-    }
-
-    public int findLast(String str, String search, int fromIndex) {
-        return (str == null || search == null) ? -1 :
-            str.lastIndexOf(search, fromIndex);
-    }
-
-    public String substring(String str, int startIndex) {
-        return (str == null) ? null : str.substring(startIndex);
-    }
-
-    public String substring(String str, int startIndex, int endIndex) {
-        return (str == null) ? null : str.substring(startIndex, endIndex);
-    }
-
-    public String toLowerCase(String str) {
-        return (str == null) ? null : str.toLowerCase();
-    }
-
-    public String toUpperCase(String str) {
-        return (str == null) ? null : str.toUpperCase();
-    }
-
-    public String trim(String str) {
-        return (str == null) ? null : str.trim();
-    }
-
-    public String trimLeading(String str) {
-        if (str == null) {
-            return null;
-        }
-
-        int length = str.length();
-        for (int i=0; i<length; i++) {
-            if (str.charAt(i) > ' ') {
-                return str.substring(i);
-            }
-        }
-
-        return "";
-    }
-
-    public String trimTrailing(String str) {
-        if (str == null) {
-            return null;
-        }
-
-        int length = str.length();
-        for (int i=length-1; i>=0; i--) {
-            if (str.charAt(i) > ' ') {
-                return str.substring(0, i + 1);
-            }
-        }
-
-        return "";
-    }
-
-    public String shortOrdinal(Long n) {
-        return (n == null) ? null : shortOrdinal(n.longValue());
-    }
-
-    /**
-     * @hidden
-     */
-    public String shortOrdinal(long n) {
-        String str = Long.toString(n);
-
-        if (n < 0) {
-            n = -n;
-        }
-
-        n %= 100;
-
-        if (n >= 10 && n <= 20) {
-            str += "th";
-        }
-        else {
-            if (n > 20) n %= 10;
-
-            switch ((int)n) {
-            case 1:
-                str += "st"; break;
-            case 2:
-                str += "nd"; break;
-            case 3:
-                str += "rd"; break;
-            default:
-                str += "th"; break;
-            }
-        }
-
-        return str;
-    }
-
-    public String ordinal(Long n) {
-        return (n == null) ? null : ordinal(n.longValue());
-    }
-
-    /**
-     * @hidden
-     */
-    public String ordinal(long n) {
-        if (n == 0) {
-            return "zeroth";
-        }
-
-        StringBuffer buf = new StringBuffer(20);
-
-        if (n < 0) {
-            buf.append("negative ");
-            n = -n;
-        }
-
-        n = cardinalGroup(buf, n, 1000000000000000000L, "quintillion");
-        n = cardinalGroup(buf, n, 1000000000000000L, "quadrillion");
-        n = cardinalGroup(buf, n, 1000000000000L, "trillion");
-        n = cardinalGroup(buf, n, 1000000000L, "billion");
-        n = cardinalGroup(buf, n, 1000000L, "million");
-        n = cardinalGroup(buf, n, 1000L, "thousand");
-
-        if (n == 0) {
-            buf.append("th");
-        }
-        else {
-            cardinal999(buf, n, true);
-        }
-
-        return buf.toString();
-    }
-
-    public String cardinal(Long n) {
-        return (n == null) ? null : cardinal(n.longValue());
-    }
-
-    /**
-     * @hidden
-     */
-    public String cardinal(long n) {
-        if (n == 0) {
-            return "zero";
-        }
-
-        StringBuffer buf = new StringBuffer(20);
-
-        if (n < 0) {
-            buf.append("negative ");
-            n = -n;
-        }
-
-        n = cardinalGroup(buf, n, 1000000000000000000L, "quintillion");
-        n = cardinalGroup(buf, n, 1000000000000000L, "quadrillion");
-        n = cardinalGroup(buf, n, 1000000000000L, "trillion");
-        n = cardinalGroup(buf, n, 1000000000L, "billion");
-        n = cardinalGroup(buf, n, 1000000L, "million");
-        n = cardinalGroup(buf, n, 1000L, "thousand");
-
-        cardinal999(buf, n, false);
-
-        return buf.toString();
-    }
-
-    private static long cardinalGroup(StringBuffer buf, long n,
-                                      long threshold, String groupName) {
-        if (n >= threshold) {
-            cardinal999(buf, n / threshold, false);
-            buf.append(' ');
-            buf.append(groupName);
-            n %= threshold;
-            if (n >= 100) {
-                buf.append(", ");
-            }
-            else if (n != 0) {
-                buf.append(" and ");
-            }
-        }
-
-        return n;
-    }
-
-    private static void cardinal999(StringBuffer buf, long n,
-                                    boolean ordinal) {
-        n = cardinalGroup(buf, n, 100L, "hundred");
-
-        if (n == 0) {
-            if (ordinal) {
-                buf.append("th");
-            }
-            return;
-        }
-
-        if (n >= 20) {
-            switch ((int)n / 10) {
-            case 2:
-                buf.append("twen");
-                break;
-            case 3:
-                buf.append("thir");
-                break;
-            case 4:
-                buf.append("for");
-                break;
-            case 5:
-                buf.append("fif");
-                break;
-            case 6:
-                buf.append("six");
-                break;
-            case 7:
-                buf.append("seven");
-                break;
-            case 8:
-                buf.append("eigh");
-                break;
-            case 9:
-                buf.append("nine");
-                break;
-            }
-
-            n %= 10;
-            if (n != 0) {
-                buf.append("ty-");
-            }
-            else {
-                if (!ordinal) {
-                    buf.append("ty");
-                }
-                else {
-                    buf.append("tieth");
-                }
-            }
-        }
-
-        switch ((int)n) {
-        case 1:
-            if (!ordinal) {
-                buf.append("one");
-            }
-            else {
-                buf.append("first");
-            }
-            break;
-        case 2:
-            if (!ordinal) {
-                buf.append("two");
-            }
-            else {
-                buf.append("second");
-            }
-            break;
-        case 3:
-            if (!ordinal) {
-                buf.append("three");
-            }
-            else {
-                buf.append("third");
-            }
-            break;
-        case 4:
-            if (!ordinal) {
-                buf.append("four");
-            }
-            else {
-                buf.append("fourth");
-            }
-            break;
-        case 5:
-            if (!ordinal) {
-                buf.append("five");
-            }
-            else {
-                buf.append("fifth");
-            }
-            break;
-        case 6:
-            if (!ordinal) {
-                buf.append("six");
-            }
-            else {
-                buf.append("sixth");
-            }
-            break;
-        case 7:
-            if (!ordinal) {
-                buf.append("seven");
-            }
-            else {
-                buf.append("seventh");
-            }
-            break;
-        case 8:
-            if (!ordinal) {
-                buf.append("eight");
-            }
-            else {
-                buf.append("eighth");
-            }
-            break;
-        case 9:
-            if (!ordinal) {
-                buf.append("nine");
-            }
-            else {
-                buf.append("ninth");
-            }
-            break;
-        case 10:
-            if (!ordinal) {
-                buf.append("ten");
-            }
-            else {
-                buf.append("tenth");
-            }
-            break;
-        case 11:
-            if (!ordinal) {
-                buf.append("eleven");
-            }
-            else {
-                buf.append("eleventh");
-            }
-            break;
-        case 12:
-            if (!ordinal) {
-                buf.append("twelve");
-            }
-            else {
-                buf.append("twelfth");
-            }
-            break;
-        case 13:
-            buf.append("thirteen");
-            if (ordinal) buf.append("th");
-            break;
-        case 14:
-            buf.append("fourteen");
-            if (ordinal) buf.append("th");
-            break;
-        case 15:
-            buf.append("fifteen");
-            if (ordinal) buf.append("th");
-            break;
-        case 16:
-            buf.append("sixteen");
-            if (ordinal) buf.append("th");
-            break;
-        case 17:
-            buf.append("seventeen");
-            if (ordinal) buf.append("th");
-            break;
-        case 18:
-            buf.append("eighteen");
-            if (ordinal) buf.append("th");
-            break;
-        case 19:
-            buf.append("nineteen");
-            if (ordinal) buf.append("th");
-            break;
-        }
-    }
-
-    public String replace(String source, String pattern, String replacement) {
-        return replace(source, pattern, replacement, 0);
-    }
-
-    public String replace(String source, String pattern,
-                          String replacement, int fromIndex) {
-        if (replacement == null) {
-            replacement = toString(replacement);
-        }
-        return StringReplacer.replace(source, pattern, replacement, fromIndex);
-    }
-
-    public <K, V> String replace(String source,
-                                 Map<K, V> patternReplacements) {
-        if (source == null) {
-            return null;
-        }
-
-        int mapSize = patternReplacements.size();
-        String[] patterns = new String[mapSize];
-        String[] replacements = new String[mapSize];
-
-        Iterator<Map.Entry<K, V>> it =
-            patternReplacements.entrySet().iterator();
-
-        for (int i=0; it.hasNext(); i++) {
-            Map.Entry<?, ?> entry = it.next();
-            patterns[i] = toString(entry.getKey());
-            replacements[i] = toString(entry.getValue());
-        }
-
-        return StringReplacer.replace(source, patterns, replacements);
-    }
-
-    public String replaceFirst(String source, String pattern,
-                               String replacement) {
-        if (replacement == null) {
-            replacement = toString(replacement);
-        }
-        return StringReplacer.replaceFirst(source, pattern, replacement);
-    }
-
-    public String replaceFirst(String source, String pattern,
-                               String replacement, int fromIndex) {
-        if (replacement == null) {
-            replacement = toString(replacement);
-        }
-        return StringReplacer.replaceFirst(source, pattern, replacement, fromIndex);
-    }
-
-    public String replaceLast(String source, String pattern,
-                              String replacement) {
-        if (replacement == null) {
-            replacement = toString(replacement);
-        }
-        return StringReplacer.replaceLast(source, pattern, replacement);
-    }
-
-    public String replaceLast(String source, String pattern,
-                              String replacement, int fromIndex) {
-        if (replacement == null) {
-            replacement = toString(replacement);
-        }
-        return StringReplacer.replaceLast(source, pattern, replacement, fromIndex);
-    }
-
-    public boolean isArray(Object o) {
-        return o!=null && o.getClass().isArray();
-    }
     
-    public void sort(Object[] array, String onColumn, boolean reverse) {
-        Class objClass = getObjectClass(array);
-        if (objClass != null) {
-            sort(array, objClass, onColumn, reverse);
-        }
-    }
-    
-    public void sort(Object[] array, String[] onColumns,  boolean[] reverse) {
-        Class arrayType = getObjectClass(array);
-        if (arrayType != null) {
-            sort(array, arrayType, onColumns, reverse);
-        }       
-    }
-    
-    public void sort(String[] array, boolean reverse, boolean ignoreCase) {
-    	StringComparator comparator = new StringComparator(reverse, ignoreCase);
-    	Arrays.sort(array, comparator);
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-	public void sort(Object[] array, boolean sortAscending) {
-    	Class<?> arrayType = getObjectClass(array);
-        if (arrayType != null) {
-        	Comparator comparator = null;
-        	if (arrayType == String.class) {
-        		comparator = new StringComparator(sortAscending, false);
-        	} else if (Comparable.class.isAssignableFrom(arrayType)) {
-        		comparator = new GenericComparator(sortAscending);
-        	}
-        	if (comparator != null) {
-        		Arrays.sort(array, comparator);
-        	} else {
-        		System.err.println("Sorting arrays of type " + arrayType.getName() + " is not supported, " + 
-        				"must implement Comparable.");
-        	}
-        } else {
-       		System.err.println("Could not determine type of array to sort.");
-        }
-    }
-    
-    public void sortAscending(Object[] array) {
-    	Arrays.sort(array);
-    }
-    
-    public void sortAscending(int[] array) {
-    	Arrays.sort(array);
-    }
-    
-    public void sortAscending(double[] array) {
-    	Arrays.sort(array);
-    }
-    
-    public void sortAscending(float[] array) {
-    	Arrays.sort(array);
-    }
-    
-    public void sortAscending(byte[] array) {
-    	Arrays.sort(array);
-    }
-    
-    public void sortAscending(short[] array) {
-    	Arrays.sort(array);
-    }
-    
-    public void sortAscending(long[] array) {
-    	Arrays.sort(array);
-    }
-    
-    private static void sort(Object[] array, Class arrayType, String onColumn, boolean reverse) {
-        BeanComparator comparator = BeanComparator.forClass(arrayType);
-        if (onColumn != null && !onColumn.equals("")) {
-            comparator = comparator.orderBy(onColumn);
-        }       
-        if (reverse) {            
-            comparator = comparator.reverse();
-        }
-        Arrays.sort(array, comparator);
-    }   
-    
-    private static void sort(Object[] array, Class arrayType, String[] onColumns, boolean[] reverse) {
-        BeanComparator comparator = BeanComparator.forClass(arrayType);
-        for (int i = 0; i < onColumns.length; i++) {
-            comparator = comparator.orderBy(onColumns[i]);
-            if (reverse[i] == true) {
-                comparator = comparator.reverse();
-            }
-        }
-        Arrays.sort(array, comparator);
-    }
-    
-    public String[] split(String str, String regex) {
-    	return str.split(regex);
-    }
-
-    public StringBuilder createStringBuilder() {
-        return new StringBuilder();
-    }
-
-    public StringBuilder createStringBuilder(int size) {
-        return new StringBuilder(size);
-    }
-
-    public void append(StringBuilder buffer, Object value) {
-        if (buffer == null) {
-            throw new NullPointerException("buffer");
-        }
-
-        buffer.append(value);
-    }
-
-    public void prepend(StringBuilder buffer, Object value) {
-        if (buffer == null) {
-            throw new NullPointerException("buffer");
-        }
-
-        buffer.insert(0, value);
-    }
-
-    public void insert(StringBuilder buffer, Object value, int index) {
-        if (buffer == null) {
-            throw new NullPointerException("buffer");
-        }
-
-        buffer.insert(index, value);
-    }
-
-    public String toString(StringBuilder buffer) {
-        if (buffer == null) {
-            throw new NullPointerException("buffer");
-        }
-
-        return buffer.toString();
-    }
-
-
-    private static Class getObjectClass(Object[] array) {
-        Class result = null;
-        if (array != null) {
-            for (int i = 0; i < array.length; i++) {
-                if (array[i] != null) {
-                    result = array[i].getClass();
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-    
-    @SuppressWarnings("rawtypes")
-	public static class GenericComparator implements Comparator<Comparable> {
-    	
-    	protected boolean sortAscending = true;
-    	
-    	public GenericComparator(boolean sortAscending) {
-    		this.sortAscending = sortAscending;
-    	}
-    	
-	    @SuppressWarnings("unchecked")
-		public int compare(Comparable k1, Comparable k2) {
-	    	if (k1 != null) {
-				if (k2 != null) {
-					int result = k1.compareTo(k2);
-					return (sortAscending) ? result: -result;
-				} else {
-					return (sortAscending) ? 1: -1;
-				}
-	    	} else if (k2 != null) {
-				return (sortAscending) ? -1: 1;		
-			}
-			return 0;
-	    }
-    }
-    
-    public static class StringComparator implements Comparator<String> {
-    	
-    	protected boolean sortAscending = true;
-    	protected boolean ignoreCase = true;
-    	
-    	public StringComparator(boolean sortAscending, boolean ignoreCase) {
-    		this.sortAscending = sortAscending;
-    		this.ignoreCase = ignoreCase;
-    	}
-    	
-	    public int compare(String s1, String s2) {
-			if (s1 != null) {
-				if (s2 != null) {
-					int flag = 0;
-					if (ignoreCase) {
-						flag = s1.compareToIgnoreCase(s2);
-					} else {
-						flag = s1.compareTo(s2);
-					}
-					if (flag > 0) {
-					    return (sortAscending) ? 1: -1;
-					}
-					if (flag < 0) {
-					    return (sortAscending) ? -1: 1;
-					}
-				} else {
-					return (sortAscending) ? 1: -1;
-				}
-			} else if (s2 != null) {
-				return (sortAscending) ? -1: 1;		
-			}
-			return 0;
-	    }
-    }
 }

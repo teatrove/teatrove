@@ -1,0 +1,14 @@
+<% template reset(String name, String parent)
+
+    pathPrefix = call system.util.getPathPrefix()
+    
+    resetTemplateView(name)
+    
+    url = pathPrefix & 'system/console?page=viewer&name=' & name
+    if (parent != null) {
+        url = url & '&parent=' & parent
+    }
+    
+    sendRedirect(url)
+
+ %>

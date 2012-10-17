@@ -72,17 +72,18 @@ public class ClassFile {
     private ConstantClassInfo mSuperClass;
 
     // Holds ConstantInfo objects.
-    private List mInterfaces = new ArrayList(2);
-    private Set mInterfaceSet = new HashSet(7);
+    private List<ConstantClassInfo> mInterfaces = 
+        new ArrayList<ConstantClassInfo>(2);
+    private Set<String> mInterfaceSet = new HashSet<String>(7);
 
     // Holds objects.
-    private List mFields = new ArrayList();
-    private List mMethods = new ArrayList();
-    private List mAttributes = new ArrayList();
+    private List<FieldInfo> mFields = new ArrayList<FieldInfo>();
+    private List<MethodInfo> mMethods = new ArrayList<MethodInfo>();
+    private List<Attribute> mAttributes = new ArrayList<Attribute>();
 
     private SourceFileAttr mSource;
 
-    private List mInnerClasses;
+    private List<ClassFile> mInnerClasses;
     private int mAnonymousInnerClassCount = 0;
     private InnerClassesAttr mInnerClassesAttr;
 
@@ -115,7 +116,7 @@ public class ClassFile {
      * @param className Full class name of the form ex: "java.lang.String".
      * @param superClass Super class.
      */
-    public ClassFile(String className, Class superClass) {
+    public ClassFile(String className, Class<?> superClass) {
         this(className, superClass.getName());
         this.mParentClasses.add(superClass);
     }
@@ -204,7 +205,7 @@ public class ClassFile {
         String[] names = new String[size];
 
         for (int i=0; i<size; i++) {
-            names[i] = ((ConstantClassInfo)mInterfaces.get(i))
+            names[i] = mInterfaces.get(i)
                 .getType().getRootName();
         }
 
@@ -216,7 +217,7 @@ public class ClassFile {
      */
     public FieldInfo[] getFields() {
         FieldInfo[] fields = new FieldInfo[mFields.size()];
-        return (FieldInfo[])mFields.toArray(fields);
+        return mFields.toArray(fields);
     }
 
     /**
@@ -225,10 +226,10 @@ public class ClassFile {
      */
     public MethodInfo[] getMethods() {
         int size = mMethods.size();
-        List methodsOnly = new ArrayList(size);
+        List<MethodInfo> methodsOnly = new ArrayList<MethodInfo>(size);
 
         for (int i=0; i<size; i++) {
-            MethodInfo method = (MethodInfo)mMethods.get(i);
+            MethodInfo method = mMethods.get(i);
             String name = method.getName();
             if (!"<init>".equals(name) && !"<clinit>".equals(name)) {
                 methodsOnly.add(method);
@@ -236,7 +237,7 @@ public class ClassFile {
         }
 
         MethodInfo[] methodsArray = new MethodInfo[methodsOnly.size()];
-        return (MethodInfo[])methodsOnly.toArray(methodsArray);
+        return methodsOnly.toArray(methodsArray);
     }
 
     /**
@@ -244,17 +245,17 @@ public class ClassFile {
      */
     public MethodInfo[] getConstructors() {
         int size = mMethods.size();
-        List ctorsOnly = new ArrayList(size);
+        List<MethodInfo> ctorsOnly = new ArrayList<MethodInfo>(size);
 
         for (int i=0; i<size; i++) {
-            MethodInfo method = (MethodInfo)mMethods.get(i);
+            MethodInfo method = mMethods.get(i);
             if ("<init>".equals(method.getName())) {
                 ctorsOnly.add(method);
             }
         }
 
         MethodInfo[] ctorsArray = new MethodInfo[ctorsOnly.size()];
-        return (MethodInfo[])ctorsOnly.toArray(ctorsArray);
+        return ctorsOnly.toArray(ctorsArray);
     }
 
     /**
@@ -265,7 +266,7 @@ public class ClassFile {
         int size = mMethods.size();
 
         for (int i=0; i<size; i++) {
-            MethodInfo method = (MethodInfo)mMethods.get(i);
+            MethodInfo method = mMethods.get(i);
             if ("<clinit>".equals(method.getName())) {
                 return method;
             }
@@ -284,7 +285,7 @@ public class ClassFile {
         }
 
         ClassFile[] innerClasses = new ClassFile[mInnerClasses.size()];
-        return (ClassFile[])mInnerClasses.toArray(innerClasses);
+        return mInnerClasses.toArray(innerClasses);
     }
 
     /**
@@ -384,9 +385,9 @@ public class ClassFile {
     /**
      * Add an interface that this class implements.
      */
-    public void addInterface(Class i) {
-        addInterface(i.getName());
-        this.mParentClasses.add(i);
+    public void addInterface(Class<?> iface) {
+        addInterface(iface.getName());
+        this.mParentClasses.add(iface);
     }
 
     /**
@@ -474,7 +475,7 @@ public class ClassFile {
 
         MethodDescriptor methodDescriptor = lookupMethodDescriptor(method);
 
-        Class[] paramClasses = method.getParameterTypes();
+        Class<?>[] paramClasses = method.getParameterTypes();
         Type[] paramTypes = method.getGenericParameterTypes();
         TypeDesc[] params = new TypeDesc[paramClasses.length];
         String[] paramNames = new String[paramClasses.length];
@@ -493,7 +494,7 @@ public class ClassFile {
 
         // exception stuff...
         // TODO: generic exceptions
-        Class[] exceptions = method.getExceptionTypes();
+        Class<?>[] exceptions = method.getExceptionTypes();
         for (int i=0; i<exceptions.length; i++) {
             mi.addException(exceptions[i].getName());
         }
@@ -535,7 +536,7 @@ public class ClassFile {
 
         // exception stuff...
         // TODO: generic exceptions
-        Class[] exceptions = method.getExceptionTypes();
+        Class<?>[] exceptions = method.getExceptionTypes();
         for (int i=0; i<exceptions.length; i++) {
             mi.addException(exceptions[i].getName());
         }
@@ -690,7 +691,7 @@ public class ClassFile {
      * @param innerClassName Optional short inner class name.
      * @param superClass Super class.
      */
-    public ClassFile addInnerClass(String innerClassName, Class superClass) {
+    public ClassFile addInnerClass(String innerClassName, Class<?> superClass) {
         return addInnerClass(innerClassName, superClass.getName());
     }
 
@@ -720,7 +721,7 @@ public class ClassFile {
         inner.mOuterClass = this;
 
         if (mInnerClasses == null) {
-            mInnerClasses = new ArrayList();
+            mInnerClasses = new ArrayList<ClassFile>();
         }
 
         mInnerClasses.add(inner);
@@ -793,7 +794,7 @@ public class ClassFile {
 
     public Attribute[] getAttributes() {
         Attribute[] attrs = new Attribute[mAttributes.size()];
-        return (Attribute[])mAttributes.toArray(attrs);
+        return mAttributes.toArray(attrs);
     }
 
     /**
@@ -814,6 +815,77 @@ public class ClassFile {
 
         mMajorVersion = major;
         mMinorVersion = minor;
+    }
+
+
+    /**
+     * Returns all the runtime invisible annotations defined for this class
+     * file, or an empty array if none.
+     */
+    public Annotation[] getRuntimeInvisibleAnnotations() {
+        for (int i = mAttributes.size(); --i >= 0; ) {
+            Attribute attr = mAttributes.get(i);
+            if (attr instanceof RuntimeInvisibleAnnotationsAttr) {
+                return ((AnnotationsAttr) attr).getAnnotations();
+            }
+        }
+        return new Annotation[0];
+    }
+
+    /**
+     * Returns all the runtime visible annotations defined for this class file,
+     * or an empty array if none.
+     */
+    public Annotation[] getRuntimeVisibleAnnotations() {
+        for (int i = mAttributes.size(); --i >= 0; ) {
+            Attribute attr = mAttributes.get(i);
+            if (attr instanceof RuntimeVisibleAnnotationsAttr) {
+                return ((AnnotationsAttr) attr).getAnnotations();
+            }
+        }
+        return new Annotation[0];
+    }
+
+    /**
+     * Add a runtime invisible annotation.
+     */
+    public Annotation addRuntimeInvisibleAnnotation(TypeDesc type) {
+        AnnotationsAttr attr = null;
+        for (int i = mAttributes.size(); --i >= 0; ) {
+            Attribute a = mAttributes.get(i);
+            if (a instanceof RuntimeInvisibleAnnotationsAttr) {
+                attr = (AnnotationsAttr) a;
+            }
+        }
+        if (attr == null) {
+            attr = new RuntimeInvisibleAnnotationsAttr(mCp);
+            addAttribute(attr);
+        }
+        Annotation ann = new Annotation(mCp);
+        ann.setType(type);
+        attr.addAnnotation(ann);
+        return ann;
+    }
+
+    /**
+     * Add a runtime visible annotation.
+     */
+    public Annotation addRuntimeVisibleAnnotation(TypeDesc type) {
+        AnnotationsAttr attr = null;
+        for (int i = mAttributes.size(); --i >= 0; ) {
+            Attribute a = mAttributes.get(i);
+            if (a instanceof RuntimeVisibleAnnotationsAttr) {
+                attr = (AnnotationsAttr) a;
+            }
+        }
+        if (attr == null) {
+            attr = new RuntimeVisibleAnnotationsAttr(mCp);
+            addAttribute(attr);
+        }
+        Annotation ann = new Annotation(mCp);
+        ann.setType(type);
+        attr.addAnnotation(ann);
+        return ann;
     }
 
     /**
@@ -866,7 +938,7 @@ public class ClassFile {
         }
         dout.writeShort(size);
         for (int i=0; i<size; i++) {
-            int index = ((ConstantInfo)mInterfaces.get(i)).getIndex();
+            int index = mInterfaces.get(i).getIndex();
             dout.writeShort(index);
         }
 
@@ -877,7 +949,7 @@ public class ClassFile {
         }
         dout.writeShort(size);
         for (int i=0; i<size; i++) {
-            FieldInfo field = (FieldInfo)mFields.get(i);
+            FieldInfo field = mFields.get(i);
             field.writeTo(dout);
         }
 
@@ -888,7 +960,7 @@ public class ClassFile {
         }
         dout.writeShort(size);
         for (int i=0; i<size; i++) {
-            MethodInfo method = (MethodInfo)mMethods.get(i);
+            MethodInfo method = mMethods.get(i);
             method.writeTo(dout);
         }
 
@@ -899,7 +971,7 @@ public class ClassFile {
         }
         dout.writeShort(size);
         for (int i=0; i<size; i++) {
-            Attribute attr = (Attribute)mAttributes.get(i);
+            Attribute attr = mAttributes.get(i);
             attr.writeTo(dout);
         }
     }
@@ -982,7 +1054,7 @@ public class ClassFile {
                                      AttributeFactory attrFactory)
         throws IOException
     {
-        return readFrom(din, loader, attrFactory, new HashMap(11), null);
+        return readFrom(din, loader, attrFactory, new HashMap<String, ClassFile>(11), null);
     }
 
     /**
@@ -992,7 +1064,7 @@ public class ClassFile {
     private static ClassFile readFrom(DataInput din,
                                       ClassFileDataLoader loader,
                                       AttributeFactory attrFactory,
-                                      Map loadedClassFiles,
+                                      Map<String, ClassFile> loadedClassFiles,
                                       ClassFile outerClass)
         throws IOException
     {
@@ -1103,7 +1175,7 @@ public class ClassFile {
                                     info.getInnerClassName();
                             }
                             if (cf.mInnerClasses == null) {
-                                cf.mInnerClasses = new ArrayList();
+                                cf.mInnerClasses = new ArrayList<ClassFile>();
                             }
                             cf.mInnerClasses.add(innerClass);
                         }
@@ -1118,12 +1190,12 @@ public class ClassFile {
     private static ClassFile readOuterClass(ConstantClassInfo outer,
                                             ClassFileDataLoader loader,
                                             AttributeFactory attrFactory,
-                                            Map loadedClassFiles)
+                                            Map<String, ClassFile> loadedClassFiles)
         throws IOException
     {
         String name = outer.getType().getRootName();
 
-        ClassFile outerClass = (ClassFile)loadedClassFiles.get(name);
+        ClassFile outerClass = loadedClassFiles.get(name);
         if (outerClass != null) {
             return outerClass;
         }
@@ -1144,13 +1216,13 @@ public class ClassFile {
     private static ClassFile readInnerClass(ConstantClassInfo inner,
                                             ClassFileDataLoader loader,
                                             AttributeFactory attrFactory,
-                                            Map loadedClassFiles,
+                                            Map<String, ClassFile> loadedClassFiles,
                                             ClassFile outerClass)
         throws IOException
     {
         String name = inner.getType().getRootName();
 
-        ClassFile innerClass = (ClassFile)loadedClassFiles.get(name);
+        ClassFile innerClass = loadedClassFiles.get(name);
         if (innerClass != null) {
             return innerClass;
         }

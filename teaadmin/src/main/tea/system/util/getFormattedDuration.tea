@@ -1,0 +1,47 @@
+<% template getFormattedDuration(long time, String type)
+
+numberFormat('0')
+result = createStringBuilder()
+
+days = (1000.0 * 60.0 * 60.0 * 24.0)
+value = round(floor(time / days))
+time = time % days
+if (value > 0) {
+    if (type == 'time') { result = result.append(value).append(':') }
+    else if (type == 'text') { result = result.append(value).append('d ') }
+}
+/*
+hours = (1000.0 * 60.0 * 60.0)
+value = round(floor(time / hours))
+time = time % hours
+if (value > 0) {
+    if (type == 'time') { result = result.append(value).append(':') }
+    else if (type == 'text') { result = result.append(value).append('h ') }
+}    
+
+minutes = (1000.0 * 60.0)
+value = round(floor(time / minutes))
+time = time % minutes
+if (value > 0) {
+    if (type == 'time') { result = result.append(value).append(':') }
+    else if (type == 'text') { result = result.append(value).append('m ') }
+}
+
+seconds = (1000.0)
+value = round(floor(time / seconds))
+time = time % seconds
+if (value > 0) {
+    if (type == 'time') { result = result.append(value).append('.') }
+    else if (type == 'text') { result = result.append(value).append('s ') }
+}
+
+if (type == 'time') {
+    result = result.append(time)
+}
+
+retval = result.toString()
+if (retval.length == 0) {
+    retval = time & ' ms'
+}
+*/
+//retval

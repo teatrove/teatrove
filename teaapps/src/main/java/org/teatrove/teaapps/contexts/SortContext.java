@@ -494,7 +494,7 @@ public class SortContext {
 	        else { return s1.compareTo(s2); }
 	    }
     }
-    
+
     /**
      * Special comparator used to allow non-Comparable properties to be
      * converted to strings and sorted accordingly.
@@ -519,7 +519,6 @@ public class SortContext {
             else if (object1 == null) { return 1; }
             else { return -1; }
         }
-        
     }
     
     /**
@@ -527,7 +526,7 @@ public class SortContext {
      * 
      * @see #sort(Object[], String, boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortArray(Object[] array, String property, String reverse) {
         sort(array, property, Boolean.parseBoolean(reverse));
     }
@@ -537,7 +536,7 @@ public class SortContext {
      * 
      * @see #sort(Object[], String, boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortArray(Object[] array, String property, boolean reverse) {
         sort(array, property, reverse);
     }
@@ -547,7 +546,7 @@ public class SortContext {
      * 
      * @see #sort(Object[], Class, String, boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortArray(Object[] array, Class<?> arrayType, String property,
                           boolean reverse) {
         sort(array, arrayType, property, reverse);
@@ -558,7 +557,7 @@ public class SortContext {
      * 
      * @see #sort(Object[], Class, String[], boolean[])
      */
-    @Deprecated
+    //@Deprecated
     public void sortArray(Object[] array, 
                           String[] properties, boolean[] reverse) {
         sort(array, properties, reverse);
@@ -569,7 +568,7 @@ public class SortContext {
      * 
      * @see #sort(Object[], Class, String[], boolean[])
      */
-    @Deprecated
+    //@Deprecated
     public void sortArray(Object[] array, Class<?> arrayType,
                           String[] properties, boolean[] reverse) {
         sort(array, arrayType, properties, reverse);
@@ -580,7 +579,7 @@ public class SortContext {
      * 
      * @see #sort(String[], boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortArray(String[] array, boolean reverse) {
         sort(array, reverse);
     }
@@ -590,7 +589,7 @@ public class SortContext {
      * 
      * @see #sort(Integer[], boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortArray(Integer[] array, boolean reverse) {
         sort(array, reverse);
     }
@@ -600,7 +599,7 @@ public class SortContext {
      * 
      * @see #sort(int[], boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortArray(int[] array, boolean reverse) {
         sortAscending(array);
     }
@@ -610,7 +609,7 @@ public class SortContext {
      * 
      * @see #sort(List, boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortList(List<?> list, boolean reverse) {
         sort(list, reverse);
     }
@@ -620,7 +619,7 @@ public class SortContext {
      * 
      * @see #sort(List, String, boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortList(List<?> list, String property, boolean reverse) {
         sort(list, property, reverse);
     }
@@ -630,7 +629,7 @@ public class SortContext {
      * 
      * @see #sort(List, String, boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortList(List<?> list, String property, String reverse) {
         sort(list, property, Boolean.parseBoolean(reverse));
     }
@@ -640,7 +639,7 @@ public class SortContext {
      * 
      * @see #sort(List, String[], boolean[])
      */
-    @Deprecated
+    //@Deprecated
     public void sortList(List<?> list, String[] properties, boolean[] reverse) {
         sort(list, properties, reverse);
     }
@@ -650,10 +649,10 @@ public class SortContext {
      * 
      * @see #sort(List, Class, String, boolean)
      */
-    @Deprecated
+    //@Deprecated
     public void sortList(List<?> list, Class<?> type,
                          String property, boolean reverse) {
-        sortList(list, type, property, reverse);
+        sort(list, type, property, reverse);
     }
     
     /**
@@ -661,9 +660,9 @@ public class SortContext {
      * 
      * @see #sort(List, Class, String[], boolean[])
      */
-    @Deprecated
+    //@Deprecated
     public void sortList(List<?> list, Class<?> type, 
                          String[] properties, boolean[] reverse) {
-        sortList(list, type, properties, reverse);
+        sort(list, type, properties, reverse);
     }
 }

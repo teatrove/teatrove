@@ -1,0 +1,103 @@
+<% template console(Map config)
+
+admin = getTeaServletAdmin()
+
+request = getRequest();
+call system.util.handleRequest(request);
+    
+pathPrefix = call system.util.getPathPrefix()
+
+%>
+
+<article>
+    <section id="console">
+        <div id="errors"></div>
+
+        <div class="controls">
+            <div class="controls-wrapper left-float">
+                <div id="buttonset-execute" class="buttonset">
+                    <a id="execute" href="#" class="button">Execute</a>
+                </div>
+            </div>
+            
+            <div class="controls-wrapper console-rhn">
+                <div id="buttonset-nav" class="buttonset left-float">
+                    <a href="#" id="nav_back">&lt;</a>
+                    <a href="#" id="nav_fwd">&gt;</a>
+                </div>
+                
+                <div id="buttonset-show" class="buttonset right-float">
+                    <input type="radio" id="show_none" name="radio" /><label for="show_none">None</label>
+                    <input type="radio" id="show_templates" name="radio" /><label for="show_templates">Templates</label>
+                    <input type="radio" id="show_functions" name="radio" /><label for="show_functions">Functions</label>
+                    <input type="radio" id="show_applications" name="radio" checked="checked" /><label for="show_applications">Applications</label>
+                </div>
+            </div>
+        </div>
+        <br class="clear" />
+        <div id="console-container">
+            <div id="details" class="right-float console-rhn">
+                <div id="details-content">
+                    <div id="details-applications" class="stack">
+                        <div class="stathead">
+                            <div class="stack-links">
+                                <a href="#" class="expand">Expand All</a> &nbsp; | &nbsp; 
+                                <a href="#" class="collapse">Collapse All</a> &nbsp; | &nbsp; 
+                                <a href="#" class="toggle">Toggle All</a>
+                            </div>
+                            Applications
+                        </div>
+                        <div class="scroll">
+                            <table class="tablehead" cellpadding="3" cellspacing="1">
+                            <%
+                                call system.util.printApplicationTable()
+                            %>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="details-templates" class="stack" style="display: none;">
+                    <div class="stathead">
+                        <div class="stack-links">
+                            <a href="#" class="expand">Expand All</a> &nbsp; | &nbsp; 
+                            <a href="#" class="collapse">Collapse All</a> &nbsp; | &nbsp; 
+                            <a href="#" class="toggle">Toggle All</a>
+                        </div>
+                        Templates
+                    </div>
+                    <div class="scroll">
+                        <table class="tablehead" cellpadding="3" cellspacing="1">
+                        <%
+                            templateMap = call system.util.getTemplateMap()
+                            call system.util.printTemplateTable('', templateMap);
+                        %>
+                        </table>
+                    </div>
+                </div>
+                <div id="details-functions" class="stack" style="display: none;">
+                    <div class="stathead">
+                        <div class="stack-links">
+                            <a href="#" class="expand">Expand All</a> &nbsp; | &nbsp; 
+                            <a href="#" class="collapse">Collapse All</a> &nbsp; | &nbsp; 
+                            <a href="#" class="toggle">Toggle All</a>
+                        </div>
+                        Functions
+                    </div>
+                    <div class="scroll">
+                        <table class="tablehead" cellpadding="3" cellspacing="1">
+                        <%
+                            functionMap = call system.util.getFunctionMap()
+                            call system.util.printFunctionTable(functionMap)
+                        %>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="source">
+                <textarea name="source"></textarea>
+            </div>
+        </div>
+    </section>
+    
+    <section id="result" style="display: none;"></section>
+</article>

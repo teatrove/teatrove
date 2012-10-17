@@ -1,0 +1,34 @@
+<% template callees(String id, String method)
+
+pathPrefix = call system.util.getPathPrefix();
+
+parts = tokenize(id, '-')
+if (parts.length != 3) { error('invalid: ' & id); }
+
+name = parts[1]
+line = convertStringToInteger(parts[2])
+view = getTemplateView(null, name)
+
+%>
+
+[
+    <% first = true; foreach (callee in view.callees) { %>
+        <% if (not first) { ',' } %>
+
+        {
+            "data" : {
+                "title" : "<span class=\"line\">line <% callee.line %></span> <span class=\"template\"><% replace(replace(replace(replace(callee.statement, '"', '\\"'), "&nbsp;", " "), "&amp;", "&"), "\n", " ") %></span>"
+                <% if (callee.isTemplate) { %>
+                    "attr" : { "href" : "<% pathPrefix %>/system/console?page=viewer&parent=<% name %>&name=<% callee.name %>" },
+                <% } %>
+                "meta" : { } 
+            },
+            "attr" : { 
+                "rel" : "<% (callee.isTemplate ? 'template' : 'function') %>", 
+                "id" : "callee-<% callee.name %>-<% callee.line %>"
+            },
+            "state" : "closed",
+            "metadata" : { "line" : <% callee.line %>, "name" : "<% callee.name %>" }
+        }
+    <% first = false; } %>
+]

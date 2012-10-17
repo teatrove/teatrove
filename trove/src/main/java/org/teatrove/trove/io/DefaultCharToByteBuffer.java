@@ -26,6 +26,8 @@ import java.io.*;
 public class DefaultCharToByteBuffer
     implements CharToByteBuffer, Serializable
 {
+    private static final long serialVersionUID = 1L;
+
     private ByteBuffer mBuffer;
     private transient OutputStreamWriter mConvertor;
 
@@ -200,6 +202,11 @@ public class DefaultCharToByteBuffer
 
     public void drain() throws IOException {
         drain(true);
+    }
+    
+    public void clear() throws IOException {
+        mCursor = 0;
+        mBuffer.clear();
     }
 
     private OutputStreamWriter getConvertor()

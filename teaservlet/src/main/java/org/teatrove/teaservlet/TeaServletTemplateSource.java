@@ -24,11 +24,10 @@ import java.util.Vector;
 import javax.servlet.ServletContext;
 
 import org.teatrove.tea.compiler.CompilationProvider;
-import org.teatrove.tea.compiler.StatusListener;
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.ReloadLock;
 import org.teatrove.tea.engine.TemplateCompilationResults;
-import org.teatrove.tea.engine.TemplateError;
+import org.teatrove.tea.engine.TemplateIssue;
 import org.teatrove.tea.engine.TemplateSource;
 import org.teatrove.tea.engine.TemplateSourceConfig;
 import org.teatrove.tea.engine.TemplateSourceImpl;
@@ -37,6 +36,7 @@ import org.teatrove.teaservlet.util.ServletContextCompilationProvider;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.util.ClassInjector;
 import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.StatusListener;
 
 /**
  *
@@ -240,12 +240,12 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
 
     @Override
     public TemplateCompilationResults checkTemplates(ClassInjector injector,
-            boolean all, String[] selectedTemplates)
+            boolean force, String... selectedTemplates)
         throws Exception {
         
         // TODO should we synch with reloading?
         TemplateCompilationResults results = 
-            super.checkTemplates(injector, all, selectedTemplates);
+            super.checkTemplates(injector, force, selectedTemplates);
         return results;
     }
 
@@ -324,8 +324,9 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
                 else {
                     TemplateCompilationResults transients =
                         results.getTransientResults();
-                    transients.appendNames(delegateResults.getReloadedTemplateNames());
-                    transients.appendErrors(delegateResults.getTemplateErrors());
+                    transients.appendTemplates(delegateResults.getReloadedTemplateNames());
+                    transients.appendTemplates(delegateResults.getReloadedTemplates());
+                    transients.appendIssues(delegateResults.getTemplateErrors());
                 }
             }
 
@@ -383,13 +384,13 @@ public class TeaServletTemplateSource extends TemplateSourceImpl {
             }
 
             if ( ! templateCompilationResults.isSuccessful()) {
-                List<TemplateError> errors = 
+                List<TemplateIssue> errors = 
                     templateCompilationResults.getAllTemplateErrors();
                 mLog.warn(errors.size() + " errors encountered.");
-                Iterator<TemplateError> errorIt = errors.iterator();
+                Iterator<TemplateIssue> errorIt = errors.iterator();
                 while (errorIt.hasNext()) {
-                    TemplateError error = errorIt.next();
-                    mLog.warn(error.getDetailedErrorMessage() + " : " + 
+                    TemplateIssue error = errorIt.next();
+                    mLog.warn(error.getDetailedMessage() + " : " + 
                               error.getSourceLine());
                 }
             }

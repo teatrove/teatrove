@@ -1,0 +1,9 @@
+<% template getTypeAsString(java.lang.reflect.Type type, Boolean showLink, Boolean showVariables, Boolean resolveVariables)
+
+result = createStringBuilder(128)
+call system.generics.getGenericTypeAsString(type, result, showLink, showVariables, resolveVariables)
+
+value = toString(result)
+value
+
+%>

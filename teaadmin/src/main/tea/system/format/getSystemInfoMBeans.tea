@@ -1,0 +1,27 @@
+<% template getSystemInfoMBeans() %>
+
+<section>
+    <div class="controls" style="float: left !important;">
+        <div class="controls-wrapper">
+            <div id="expandCollapseTree" class="button">Expand All</div>
+        </div>
+    </div>
+    <br class="clear" />
+    <br />
+    <div id="tree-container" expandFirst="false">
+        <ul>
+        <%
+            mbeans = getMBeans()
+            foreach (mbean in mbeans) {
+                call getSystemInfoMBeanTree('root', mbean)
+            }
+        %>
+        </ul>
+    </div>
+    <div id="details-container">
+        <div id="details-content"></div>
+    </div>
+    <br class="clear" />
+    
+</section>
+

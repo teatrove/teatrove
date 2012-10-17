@@ -21,7 +21,7 @@ public class VarargsTest extends AbstractTemplateTest {
         assertEquals("11", executeTest(TEST_SOURCE_3));
         assertEquals("77", executeTest(TEST_SOURCE_4));
         assertEquals("77", executeTest(TEST_SOURCE_5));
-        assertEquals("77", executeTest(TEST_SOURCE_6));
+        assertEquals("66", executeTest(TEST_SOURCE_6));
         assertEquals("66", executeTest(TEST_SOURCE_7));
         assertEquals("11", executeTest(TEST_SOURCE_8));
         assertEquals("22", executeTest(TEST_SOURCE_9));
@@ -29,6 +29,9 @@ public class VarargsTest extends AbstractTemplateTest {
         assertEquals("11", executeTest(TEST_SOURCE_11));
         assertEquals("44", executeTest(TEST_SOURCE_12));
         assertEquals("11", executeTest(TEST_SOURCE_13));
+        assertEquals("99", executeTest(TEST_SOURCE_14));
+        assertEquals("11", executeTest(TEST_SOURCE_15));
+        assertEquals("11", executeTest(TEST_SOURCE_16));
     }
 
     protected String executeTest(String source) throws Exception {
@@ -64,6 +67,30 @@ public class VarargsTest extends AbstractTemplateTest {
         public String doSomethingElse(String... values) {
             return "7";
         }
+        
+        public String doSomethingElse(String a, String b) {
+            return "9";
+        }
+        
+        public String doSomethingMore(String value) {
+            return "1";
+        }
+        
+        public String doSomethingMore(String... value) {
+            return "2";
+        }
+        
+        public String doSomethingMore(Object value) {
+            return "3";
+        }
+        
+        public String doNumbers(Number x, Number y) {
+            return "1";
+        }
+        
+        public String doNumbers(Integer... values) {
+            return "2";
+        }
 
         public VarargsContext getContext() {
             return this;
@@ -95,7 +122,7 @@ public class VarargsTest extends AbstractTemplateTest {
 
     protected static final String TEST_SOURCE_6 =
         "doSomethingElse('test');" +
-        "getContext().doSomethingElse('test');"; // 7
+        "getContext().doSomethingElse('test');"; // 6
 
     protected static final String TEST_SOURCE_7 =
         "doSomethingElse(test1);" +
@@ -124,4 +151,17 @@ public class VarargsTest extends AbstractTemplateTest {
     protected static final String TEST_SOURCE_13 =
         "doSomething('test', 5.2, 2.3, 2.9, 'test');" +
         "getContext()?.doSomething('test', 5.2, 2.3, 2.9, 'test');"; // 1
+    
+    protected static final String TEST_SOURCE_14 =
+        "doSomethingElse('test', 'test2');" +
+        "getContext().doSomethingElse('test', 'test2');"; // 9
+    
+    protected static final String TEST_SOURCE_15 =
+        "doSomethingMore('test');" +
+        "getContext().doSomethingMore('test');"; // 1
+    
+    protected static final String TEST_SOURCE_16 =
+        "doNumbers(5, 6);" +
+        "getContext().doNumbers(5, 6);"; // 1
+
 }

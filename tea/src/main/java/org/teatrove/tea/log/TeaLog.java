@@ -224,7 +224,11 @@ public class TeaLog extends Log {
                     Integer lineNumber = null;
                     if (colonIndex >= 0) {
                         templateName = tempLine.substring(0, colonIndex);
-                        lineNumber = new Integer(tempLine.substring(colonIndex + 1));
+                        try {
+                            lineNumber = 
+                                new Integer(tempLine.substring(colonIndex + 1));
+                        }
+                        catch (NumberFormatException nfe) { lineNumber = null; }
                     }
                     else {
                         templateName = tempLine;

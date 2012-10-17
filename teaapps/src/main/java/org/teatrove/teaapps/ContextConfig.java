@@ -23,16 +23,28 @@ import org.teatrove.trove.util.plugin.Plugin;
 import java.util.Collection;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
+
 public class ContextConfig extends ConfigSupport {
     
     private String mName;
     private Map<String, Plugin> mPlugins;
+    private ServletContext mServletContext;
 
-	public ContextConfig(PropertyMap properties, Log log, String name, Map<String, Plugin> plugins) {
-		super(properties, log);
-		mName = name;
-		mPlugins = plugins;
+	public ContextConfig(PropertyMap properties, Log log, String name, 
+	                     Map<String, Plugin> plugins) {
+		this(properties, log, name, plugins, null);
 	}
+	
+	public ContextConfig(PropertyMap properties, Log log, String name, 
+                         Map<String, Plugin> plugins, 
+                         ServletContext servletContext) {
+        super(properties, log);
+        
+        mName = name;
+        mPlugins = plugins;
+        mServletContext = servletContext;
+    }
     
     public String getName() {
         return mName;
@@ -50,5 +62,9 @@ public class ContextConfig extends ConfigSupport {
         Collection<Plugin> collection = mPlugins.values();        
         return collection.toArray(new Plugin[collection.size()]);
     }    
+    
+    public ServletContext getServletContext() {
+        return mServletContext;
+    }
 }
 

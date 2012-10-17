@@ -1,0 +1,52 @@
+<% template printFunctionTable (SortedMap<String, SortedMap<String, org.teatrove.teaservlet.FunctionInfo>> functionMap)
+
+    pathPrefix = call system.util.getPathPrefix()
+
+    foreach (key in keySet(functionMap)) {
+        map = functionMap[key] as SortedMap<String, org.teatrove.teaservlet.FunctionInfo>
+        functions = map.values() as Collection<org.teatrove.teaservlet.FunctionInfo>
+%>
+
+    <thead>
+    <tr class="colhead">
+        <td style="white-space: normal; cursor: pointer;">
+            <% key %>
+        </td>
+    </tr>
+    </thead>    
+    <tbody>
+
+<%
+        idx = 0
+        foreach (func in functions) {
+            idx = idx + 1
+%>
+            <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                <td style="white-space: nowrap;">
+                    <a href="<% pathPrefix %>/system/format/getContextFunctionDetails?context=<% func.descriptor.method.declaringClass.name %>&function=<% func.name %>">
+                        <% func.descriptor.name %>
+                    </a> ( 
+<%
+                        types = func.descriptor.method.genericParameterTypes
+                        descriptors = func.descriptor.parameterDescriptors
+                        if (types) {
+                            length = types.length
+                            foreach (p in 0..length-1) {
+%>
+                                <% call system.util.printClassLink(types[p], true) %> 
+                                <% descriptors?[p]?.name ?: ''; %><% (p < length-1 ? ', ' : '') %>
+<%
+                            }
+                        }
+%>
+                        ) : <% call system.util.printClassLink(func.descriptor.method.genericReturnType, true) %>
+                    </a>
+                </td>
+            </tr>
+<%
+        }
+%>
+    </tbody>
+<%
+    }
+%>

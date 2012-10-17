@@ -41,7 +41,7 @@
 
     } else if ( sort == "stress" ) {
 
-        sort(allTemplateStats, "aggregateIntervalForRawData.durationStressMeasure", descending);
+        sort(allTemplateStats, "latestAggregateIntervalForRawData.durationStressMeasure", descending);
 
     } else if ( sort == "servicing" ) {
 
@@ -91,126 +91,70 @@
                     <th colspan="12">Instrumentation</th>
                 </tr>
                 <tr class="colhead">
-<%
-                    if ( sort == "resource" ) {
-                        '<th class="' sortClass '" rowspan="2">'
-                            '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Resource</a>'
-                        '</th>\n'
-                    } else {
-                        '<th rowspan="2">'
-                            '<a class="sort-option" href="?page=instrumentation&sort=resource&descending=false&view=' view '">Resource</a>'
-                        '</th>\n'
-                    }
+                    <th class="<% (sort == 'resource' ? sortClass : '') %>" rowspan="2" title="Path and name of the template">
+                        <a class="sort-option" href="?page=instrumentation&sort=resource&descending=<% (sort == 'resource' ? (not descending) : false) %>&view=<% view %>">Resource</a>
+                    </th>
 
-                    if ( sort == "stress" ) {
-                        '<th class="' sortClass '" rowspan="2">'
-                            '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Stress</a>'
-                        '</th>\n'
-                    } else {
-                        '<th rowspan="2">'
-                            '<a class="sort-option" href="?page=instrumentation&sort=stress&descending=true&view=' view '">Stress</a>'
-                        '</th>\n'
-                    }
+                    <th class="<% (sort == 'stress' ? sortClass : '') %>" rowspan="2" title="">
+                        <a class="sort-option" href="?page=instrumentation&sort=stress&descending=<% (sort == 'stress' ? (not descending) : true) %>&view=<% view %>">Stress</a>
+                    </th>
 
-                    if ( sort == "servicing" ) {
-                        '<th class="right-align ' sortClass '" rowspan="2">'
-                            '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Servicing</a>'
-                        '</th>\n'
-                    } else {
-                        '<th class="right-align" rowspan="2">'
-                            '<a class="sort-option" href="?page=instrumentation&sort=servicing&descending=true&view=' view '">Servicing</a>'
-                        '</th>\n'
-                    }
+                    <th class="right-align <% (sort == 'servicing' ? sortClass : '') %>" rowspan="2" title="The number of requests currently being processed or serviced">
+                        <a class="sort-option" href="?page=instrumentation&sort=servicing&descending=<% (sort == 'servicing' ? (not descending) : true) %>&view=<% view %>">Servicing</a>
+                    </th>
                     
-                    '<th rowspan="2" class="center-align">Trend'
-                        '<div class="trend-options" style="display:none">'
-                            '<a class="duration' if ( trend == 'duration' ) { ' active' } '" href="#" title="View duration trend" alt="Duration"></a>'
-                            '<a class="payload' if ( trend == 'payload' ) { ' active' } '" href="#" title="View payload trend" alt="Payload"></a>'
-                        '</div>'
-                    '</th>\n'
+                    <th rowspan="2" class="center-align" title="Graphs of template durations over time where line graphs represent the latest raw data and bar graphs represent the normalized aggregates over time">
+                        Trend
+                        <div class="trend-options" style="display:none;">
+                            <a class="duration <% (trend == 'duration' ? 'active' : '') %>" href="#" title="View duration trend" alt="Duration"></a>
+                            <a class="payload <% (trend == 'payload' ? 'active' : '') %>" href="#" title="View payload trend" alt="Payload"></a>
+                        </div>
+                    </th>
 
-                    if ( view == 'both' or view == 'streaming' ) {
-                        '<th colspan="4" class="center-align">Streaming</th>\n'
-                    }
-                    if ( view == 'both' or view == 'overall' ) {
-                        '<th colspan="4" class="center-align">Overall</th>\n'
-                    }
-%>
+                    <% if (view == 'both' or view == 'streaming') { %>
+                        <th colspan="4" class="center-align" title="The template stats representing an active streaming window of the last number of requests">Streaming</th>
+                    <% } %>
+                    
+                    <% if (view == 'both' or view == 'overall') { %>
+                        <th colspan="4" class="center-align" title="The overall template stats including request data that has been aggregated or since stats were last reset">Overall</th>
+                    <% } %>
                 </tr>
                 <tr class="colhead">
-<%
-                    if ( view == 'both' or view == 'streaming' ) {
+                    <% if (view == 'both' or view == 'streaming') { %>
+                        <th class="<% (sort == 'streaming_first' ? sortClass : '') %>" title="The time (in <% TimeZone.getDefault().displayName %>) of the first request in the active streaming window">
+                            <a class="sort-option" href="?page=instrumentation&sort=streaming_first&descending=<% (sort == 'streaming_first' ? (not descending) : false) %>&view=<% view %>">First</a>
+                        </th>
 
-                        if ( sort == "streaming_first" ) {
-                            '<th class="' sortClass '">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">First</a>'
-                            '</th>\n'
-                        } else {
-                            '<th>'
-                                '<a class="sort-option" href="?page=instrumentation&sort=streaming_first&descending=false&view=' view '">First</a>'
-                            '</th>\n'
-                        }
+                        <th class="right-align <% (sort == 'streaming_duration' ? sortClass : '') %>" title="The total duration of time from the first request in the active streaming window to the last request">
+                            <a class="sort-option" href="?page=instrumentation&sort=streaming_duration&descending=<% (sort == 'streaming_duration' ? (not descending) : true) %>&view=<% view %>">Duration</a>
+                        </th>
 
-                        if ( sort == "streaming_duration" ) {
-                            '<th class="right-align ' sortClass '">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Duration</a>'
-                            '</th>\n'
-                        } else {
-                            '<th class="right-align">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=streaming_duration&descending=true&view=' view '">Duration</a>'
-                            '</th>\n'
-                        }
+                        <th class="right-align <% (sort == 'streaming_process' ? sortClass : '') %>" title="The average time (arithmetic mean) in milliseconds to process this template for requests in the active streaming window">
+                            <a class="sort-option" href="?page=instrumentation&sort=streaming_process&descending=<% (sort == 'streaming_process' ? (not descending) : true) %>&view=<% view %>">Process (ms)</a>
+                        </th>
 
-                        if ( sort == "streaming_process" ) {
-                            '<th class="right-align ' sortClass '">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Process (ms)</a>'
-                            '</th>\n'
-                        } else {
-                            '<th class="right-align">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=streaming_process&descending=true&view=' view '&view=' view '">Process (ms)</a>'
-                            '</th>\n'
-                        }
+                        <th class="right-align <% (sort == 'streaming_payload' ? sortClass : '') %>" title="The average payload size (arithmetic mean) in kilobytes when processing this template for requests in the active streaming window">
+                            <a class="sort-option" href="?page=instrumentation&sort=streaming_payload&descending=<% (sort == 'streaming_payload' ? (not descending) : true) %>&view=<% view %>">Payload (k)</a>
+                        </th>
+                    <% } %>
+                    
+                    <% if (view == 'both' or view == 'overall') { %>
+                        <th title="The time (in <% TimeZone.getDefault().displayName %>) of the first request to this template (or since stats were last reset)">
+                            Start
+                        </th>
 
-                        if ( sort == "streaming_payload" ) {
-                            '<th class="right-align ' sortClass '">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Payload (k)</a>'
-                            '</th>\n'
-                        } else {
-                            '<th class="right-align">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=streaming_payload&descending=true&view=' view '">Payload (k)</a>'
-                            '</th>\n'
-                        }
-                    }
-                    if ( view == 'both' or view == 'overall' ) {
-                        '<th>'
-                            'Start'
-                        '</th>\n'
+                        <th title="The total duration of time from the first request to the last request">
+                            Duration
+                        </th>
 
-                        '<th>'
-                            'Duration'
-                        '</th>\n'
-
-                        if ( sort == "overall_serviced" ) {
-                            '<th class="right-align ' sortClass '">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Serviced</a>'
-                            '</th>\n'
-                        } else {
-                            '<th class="right-align">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=overall_serviced&descending=true&view=' view '">Serviced</a>'
-                            '</th>\n'
-                        }
+                        <th class="right-align <% (sort == 'overall_serviced' ? sortClass : '') %>" title="The total number of requests that have been processed or serviced">
+                            <a class="sort-option" href="?page=instrumentation&sort=overall_serviced&descending=<% (sort == 'overall_serviced' ? (not descending) : true) %>&view=<% view %>">Serviced</a>
+                        </th>
                         
-                        if ( sort == "overall_process" ) {
-                            '<th class="right-align ' sortClass '">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=' sort '&descending=' (not descending) '&view=' view '">Process (ms)</a>'
-                            '</th>\n'
-                        } else {
-                            '<th class="right-align">'
-                                '<a class="sort-option" href="?page=instrumentation&sort=overall_process&descending=true&view=' view '">Process (ms)</a>'
-                            '</th>\n'
-                        }
-                    }
-                    %>
+                        <th class="right-align <% (sort == 'overall_process' ? sortClass : '') %>" title="The average time (arithmetic mean) in milliseconds to process this template overall">
+                            <a class="sort-option" href="?page=instrumentation&sort=overall_process&descending=<% (sort == 'overall_process' ? (not descending) : true) %>&view=<% view %>">Process (ms)</a>
+                        </th>
+                    <% } %>
                 </tr>
             </thead>
             <tbody>
@@ -282,7 +226,7 @@
 
                                 currentTime = currentDate().time;
 
-                                if ( aggregateIntervalForRawData.startTime != null and aggregateIntervalForRawData.startTime > -1 ) {
+                                if ( aggregateIntervalForRawData?.startTime ) {
                                     streamingFirst = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.startTime, false, null);
                                     streamingLast = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.endTime, false, null);
                                     streamingDuration = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.startTime, true, null);
@@ -301,12 +245,12 @@
                                     streamingProcess = '--';
                                     streamingPayload = '--';
                                 }
-                                if ( aggregateIntervalForRawData.endTime != null and aggregateIntervalForRawData.endTime > -1 ) {
+                                if ( aggregateIntervalForRawData?.endTime ) {
                                     streamingLast = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.endTime, false, null);
                                 } else {
                                     streamingLast = '--';
                                 }
-                                if ( aggregateIntervalForRawData.startTime != null and aggregateIntervalForRawData.startTime > -1 ) {
+                                if ( aggregateIntervalForRawData?.startTime ) {
                                     streamingDuration = call system.util.getRelativeTimeText(currentTime, aggregateIntervalForRawData.startTime, true, null);
                                 } else {
                                     streamingDuration = '--';
@@ -357,6 +301,7 @@
                                             } else {
                                                 '<span class="blank"></span>'
                                             }
+                                            '<a class="code" href="?page=viewer&name='  templateNamePath '" title="View template source code"></a>'
                                             '<a class="web" target="_blank" href="' templatePath templateName '" title="Follow template url"></a>'
                                             '<a class="info" href="?page=template_info&name='  templateNamePath '" title="View template stats"></a>'
                                             '<a class="reset" href="remote/reset?name='  templateNamePath '" title="Reset template stats"></a>'
@@ -369,14 +314,14 @@
                                     '<td class="right-align' if ( sort == 'servicing' ) { ' sortcell' } '">' stats.numberServicing '</td>\n'
                                     '<td class="sparkline-cell center-align">' trendChart '</td>\n'
                                     if ( view == 'both' or view == 'streaming' ) {
-                                        '<td' if ( sort == 'streaming_first' ) { ' class="sortcell"' } '>' streamingFirst '</td>\n'
-                                        '<td class="right-align' if ( sort == 'streaming_duration' ) { ' sortcell' } '">' streamingDuration '</td>\n'
-                                        '<td class="right-align' if ( sort == 'streaming_process' ) { ' sortcell' } '">' streamingProcess '</td>\n'
-                                        '<td class="right-align' if ( sort == 'streaming_payload' ) { ' sortcell' } '">' streamingPayload '</td>\n'
+                                        '<td' if ( sort == 'streaming_first' ) { ' class="sortcell"' } ' title="The time of the first request in the active streaming window of ' stats.rawWindowSize ' requests">' streamingFirst '</td>\n'
+                                        '<td class="right-align' if ( sort == 'streaming_duration' ) { ' sortcell' } '"  title="The total time the requests in the active streaming window of ' stats.rawWindowSize ' requests. The last request occurred at ' streamingLast '">' streamingDuration '</td>\n'
+                                        '<td class="right-align' if ( sort == 'streaming_process' ) { ' sortcell' } '" title="The average time in milliseconds to process the requests in the active streaming window of ' stats.rawWindowSize ' requests.">' streamingProcess '</td>\n'
+                                        '<td class="right-align' if ( sort == 'streaming_payload' ) { ' sortcell' } '" title="The average payload size in kilobytes to process the requests in the active streaming window of ' stats.rawWindowSize ' requests.">' streamingPayload '</td>\n'
                                     }
                                     if ( view == 'both' or view == 'overall' ) {
-                                        '<td>' overallStart '</td>\n'
-                                        '<td>' overallDuration '</td>\n'
+                                        '<td title="The time of the first request to this template or since stats were reset">' overallStart '</td>\n'
+                                        '<td title="The total time of all requests to this template or since stats were reset. The last request occurred at ' streamingLast '">' overallDuration '</td>\n'
                                         '<td class="right-align' if ( sort == 'overall_serviced' ) { ' sortcell' } '">' overallServiced '</td>\n'
                                         '<td class="right-align' if ( sort == 'overall_process' ) { ' sortcell' } '">' overallProcess '</td>\n'
                                     }
@@ -396,4 +341,4 @@
 
 %>
             });
-	    </script>
+        </script>

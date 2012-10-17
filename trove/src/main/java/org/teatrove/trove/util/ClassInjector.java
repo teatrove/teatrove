@@ -41,7 +41,10 @@ import java.util.zip.GZIPOutputStream;
  * @author Brian S O'Neill
  */
 public class ClassInjector extends ClassLoader {
-    private static Map cShared = new NullKeyMap(new IdentityMap());
+    
+    @SuppressWarnings("unchecked")
+    private static Map<ClassLoader, Reference<ClassInjector>> cShared = 
+        new NullKeyMap(new IdentityMap());
 
     /**
      * Returns a shared ClassInjector instance.
@@ -57,13 +60,13 @@ public class ClassInjector extends ClassLoader {
         ClassInjector injector = null;
 
         synchronized (cShared) {
-            Reference ref = (Reference)cShared.get(loader);
+            Reference<ClassInjector> ref = cShared.get(loader);
             if (ref != null) {
-                injector = (ClassInjector)ref.get();
+                injector = ref.get();
             }
             if (injector == null) {
                 injector = new ClassInjector(loader);
-                cShared.put(loader, new WeakReference(injector));
+                cShared.put(loader, new WeakReference<ClassInjector>(injector));
             }
             return injector;
         }
@@ -76,10 +79,11 @@ public class ClassInjector extends ClassLoader {
     private String mRootPackage;
 
     // A set of all the classes defined by the ClassInjector.
-    private Map mDefined = Collections.synchronizedMap(new HashMap());
+    private Map<String, String> mDefined = 
+        Collections.synchronizedMap(new HashMap<String, String>());
 
     // A map to store raw bytecode for future use in getResourceAsStream().
-    private Map mGZippedBytecode;
+    private Map<String, byte[]> mGZippedBytecode;
 
     private URLStreamHandler mFaker;
 
@@ -170,7 +174,7 @@ public class ClassInjector extends ClassLoader {
         }
         mSuperLoader = parent;
         if (rootClassDirs != null) {
-            mRootClassDirs = (File[])rootClassDirs.clone();
+            mRootClassDirs = rootClassDirs.clone();
         }
         if (rootPackage != null && !rootPackage.endsWith(".")) {
             rootPackage += '.';
@@ -178,7 +182,8 @@ public class ClassInjector extends ClassLoader {
         mRootPackage = rootPackage;
 
         if (keepRawBytecode) {
-            mGZippedBytecode = Collections.synchronizedMap(new HashMap());
+            mGZippedBytecode = 
+                Collections.synchronizedMap(new HashMap<String, byte[]>());
         }
     }
 
@@ -226,10 +231,10 @@ public class ClassInjector extends ClassLoader {
         return mFaker;
     }
 
-    protected Class loadClass(String name, boolean resolve)
+    protected Class<?> loadClass(String name, boolean resolve)
         throws ClassNotFoundException {
 
-        Class clazz = findLoadedClass(name);
+        Class<?> clazz = findLoadedClass(name);
 
         if (clazz == null) {
             synchronized (this) {
@@ -278,7 +283,7 @@ public class ClassInjector extends ClassLoader {
         }
     }
 
-    private Class loadFromFile(String name) throws ClassNotFoundException {
+    private Class<?> loadFromFile(String name) throws ClassNotFoundException {
         if (mRootClassDirs == null) {
             return null;
         }
@@ -389,7 +394,7 @@ public class ClassInjector extends ClassLoader {
 
                     if (mGZippedBytecode.get(resourceName) != null) {
                         return new GZIPInputStream(new ByteArrayInputStream
-                                ((byte[])mGZippedBytecode.get(resourceName)));
+                                (mGZippedBytecode.get(resourceName)));
                     }
                     else {
                         System.out.println(resourceName + " not found in bytecode map.");

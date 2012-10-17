@@ -1,485 +1,117 @@
 <% template system_information (Map config)
 
-    admin = getTeaServletAdmin();
     request = getRequest();
 
+    admin = getTeaServletAdmin();
+    pathPrefix = call system.util.getPathPrefix();
     call system.util.handleRequest(request);
 
-    nullFormat("None");
-
-    classLoadingMXBean = getClassLoadingMXBean();
-    compilationMXBean = getCompilationMXBean();
-    garbageCollectorMXBean = getGarbageCollectorMXBeans();
-    memoryManagerMXBean = getMemoryManagerMXBeans();
     memoryMXBean = getMemoryMXBean();
-    memoryPoolMXBean = getMemoryPoolMXBeans();
-    operatingSystemMXBean = getOperatingSystemMXBean();
-    platformMBeanServer = getPlatformMBeanServer();
-    runtimeMXBean = getRuntimeMXBean();
-    threadMXBean = getThreadMXBean();
 
+    tab = request.parameters['tab'] ?: 'overview'
+    refresh = convertStringToInteger(request.parameters['refresh'] ?: '3')
 %>
-		<article>
-			<section>
-                    <div id="system-info-snapshot">
-                        <div class="quick-summary">
-                            <table class="tablehead">
-                                <tr>
-                                <%
-                                    // gigabytes
-                                    unitLabel = "GB";
-                                    unitFormat = "0.00";
-                                    unitDividend = 1073741824.0;
-                                    
-                                    numberFormat(unitFormat);
 
-                                    freeMemory = (memoryMXBean.heapMemoryUsage.max - memoryMXBean.heapMemoryUsage.used) / unitDividend;
-                                    usedMemory = memoryMXBean.heapMemoryUsage.used / unitDividend;
-                                    totalMemory = memoryMXBean.heapMemoryUsage.max / unitDividend;
-
-                                    '<td style="width:15%">'
-                                        '<div id="averageStressLevel">'
-                                            '<div class="value">' freeMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Free Heap Memory</div>'
-                                        '</div>'
-                                    '</td>\n'
-                                    '<td style="width:15%">'
-                                        '<div id="averageTime">'
-                                            '<div class="value">' usedMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Used Heap Memory</div>'
-                                        '</div>'
-                                    '</td>'
-                                    '<td style="width:15%">'
-                                        '<div id="averageThroughput">'
-                                            '<div class="value">' totalMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Total Heap Memory</div>'
-                                        '</div>'
-                                    '</td>\n'
-
-
-                                    '<td style="width:9%">&nbsp;</td>\n'
-
-
-                                    freeMemory = (memoryMXBean.nonHeapMemoryUsage.max - memoryMXBean.nonHeapMemoryUsage.used) / unitDividend;
-                                    usedMemory = memoryMXBean.nonHeapMemoryUsage.used / unitDividend;
-                                    totalMemory = memoryMXBean.nonHeapMemoryUsage.max / unitDividend;
-
-                                    '<td style="width:15%">'
-                                        '<div id="averageStressLevel">'
-                                            '<div class="value">' freeMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Free Non-Heap Memory</div>'
-                                        '</div>'
-                                    '</td>\n'
-                                    '<td style="width:15%">'
-                                        '<div id="averageTime">'
-                                            '<div class="value">' usedMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Used Non-Heap Memory</div>'
-                                        '</div>'
-                                    '</td>'
-                                    '<td style="width:15%">'
-                                        '<div id="averageThroughput">'
-                                            '<div class="value">' totalMemory ' ' unitLabel '</div>'
-                                            '<div class="label">Total Non-Heap Memory</div>'
-                                        '</div>'
-                                    '</td>\n'
-                                %>
-                                </tr>
-                            </table>
-                        </div>
+<article>
+    <section id="system-info-container">
+        <div class="controls">
+            <div class="controls-wrapper">
+                <div id="label-refresh" role="label">Auto Refresh:</div>
+                <div id="buttonset-refresh" class="buttonset">
+                    <input type="radio" id="refresh_off" name="refresh" value="0" <% refresh == 0 ? 'checked="checked"' : '' %> /><label for="refresh_off">Off</label>
+                    <input type="radio" id="refresh_1sec" name="refresh" value="1" <% refresh == 1 ? 'checked="checked"' : '' %> /><label for="refresh_1sec">1 sec</label>
+                    <input type="radio" id="refresh_3sec" name="refresh" value="3" <% refresh == 3 ? 'checked="checked"' : '' %> /><label for="refresh_3sec">3 secs</label>
+                    <input type="radio" id="refresh_5sec" name="refresh" value="5" <% refresh == 5 ? 'checked="checked"' : '' %> /><label for="refresh_5sec">5 secs</label>
+                </div>
+                
+                <div id="label-tabs" role="label">Display:</div>        
+                <div id="buttonset-tabs" class="buttonset">
+                    <input type="radio" id="tabs_overview" name="tab" value="overview" <% tab == 'overview' ? 'checked="checked"' : '' %> /><label for="tabs_overview">Overview</label>
+                    <input type="radio" id="tabs_memory" name="tab" value="memory" <% tab == 'memory' ? 'checked="checked"' : '' %> /><label for="tabs_memory">Memory</label>
+                    <input type="radio" id="tabs_threads" name="tab" value="threads" <% tab == 'threads' ? 'checked="checked"' : '' %> /><label for="tabs_threads">Threads</label>
+                    <input type="radio" id="tabs_mbeans" name="tab" value="mbeans" <% tab == 'mbeans' ? 'checked="checked"' : '' %> /><label for="tabs_mbeans">MBeans</label>
+                    <input type="radio" id="tabs_info" name="tab" value="info" <% tab == 'info' ? 'checked="checked"' : '' %> /><label for="tabs_info">Information</label>
+                </div>
+            </div>
+        </div>
+        <br class="clear" /><br />
+        
+        <div id="system-info-summary">
+            <div class="quick-summary">
+                <%
+                    unitLabel = 'MB'
+                    unitDividend = 1024 * 1024;
+                    numberFormat("0");
+                %>
+                
+                <% freeMemory = (memoryMXBean.heapMemoryUsage.max - memoryMXBean.heapMemoryUsage.used) / unitDividend; %>
+                <div class="metric">
+                    <div id="freeHeapMemory">
+                        <div class="value"><span class="number"><% freeMemory %></span> <% unitLabel %></div>
+                        <div class="label">Free Heap Memory</div>
                     </div>
-
-			    <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Class Loading MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Loaded Class Count</td>
-                                <td><% classLoadingMXBean.loadedClassCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Total Loaded Class Count</td>
-                                <td><% classLoadingMXBean.totalLoadedClassCount %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Unloaded Class Count</td>
-                                <td><% classLoadingMXBean.unloadedClassCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Verbose</td>
-                                <td><% classLoadingMXBean.verbose %></td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
-			    <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Compilation MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Compilation Time Monitoring Supported</td>
-                                <td><% compilationMXBean.compilationTimeMonitoringSupported %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Name</td>
-                                <td><% compilationMXBean.name %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Total Compilation Time</td>
-                                <td><% compilationMXBean.totalCompilationTime %></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                
+                <% usedMemory = memoryMXBean.heapMemoryUsage.used / unitDividend; %>
+                <div class="metric">
+                    <div id="usedHeapMemory">
+                        <div class="value"><span class="number"><% usedMemory %></span> <% unitLabel %></div>
+                        <div class="label">Used Heap Memory</div>
+                    </div>
                 </div>
-			    <div class="table-container">
-			        <%
-                        // megabytes
-                        unitLabel = "MB";
-                        unitFormat = "#,###,###";
-                        unitDividend = 1024;
-                        
-			            numberFormat(unitFormat);
-			        %>
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Memory MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Heap Memory Usage (<% unitLabel %>)</td>
-                                <td><div class="table-container no-margin no-padding"><table cellspacing="1" cellpadding="3" class="tablehead">
-                                            <thead>
-                                                <tr class="stathead">
-                                                    <th width="25%">Committed</th>
-                                                    <th width="25%">Init</th>
-                                                    <th width="25%">Max</th>
-                                                    <th width="25%">Used</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td><% memoryMXBean.heapMemoryUsage.committed / unitDividend %></td>
-                                                    <td><% memoryMXBean.heapMemoryUsage.init / unitDividend %></td>
-                                                    <td><% memoryMXBean.heapMemoryUsage.max / unitDividend %></td>
-                                                    <td><% memoryMXBean.heapMemoryUsage.used / unitDividend %></td>
-                                                </tr>
-                                            </tbody>
-                                    </table></div></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Non Heap Memory Usage (<% unitLabel %>)</td>
-                                <td><div class="table-container no-margin no-padding"><table cellspacing="1" cellpadding="3" class="tablehead">
-                                            <thead>
-                                                <tr class="stathead">
-                                                    <th width="25%">Committed</th>
-                                                    <th width="25%">Init</th>
-                                                    <th width="25%">Max</th>
-                                                    <th width="25%">Used</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td><% memoryMXBean.nonHeapMemoryUsage.committed / unitDividend %></td>
-                                                    <td><% memoryMXBean.nonHeapMemoryUsage.init / unitDividend %></td>
-                                                    <td><% memoryMXBean.nonHeapMemoryUsage.max / unitDividend %></td>
-                                                    <td><% memoryMXBean.nonHeapMemoryUsage.used / unitDividend %></td>
-                                                </tr>
-                                            </tbody>
-                                        </table></div></td>
-                            </tr>
-			                <%
-			                    numberFormat(null);
-                            %>
-                            <tr class="oddrow">
-                                <td>Object Pending Finalization Count</td>
-                                <td><% memoryMXBean.objectPendingFinalizationCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Verbose</td>
-                                <td><% memoryMXBean.verbose %></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                
+                <% totalMemory = memoryMXBean.heapMemoryUsage.max / unitDividend; %>
+                <div class="metric">
+                    <div id="totalHeapMemory">
+                        <div class="value"><span class="number"><% totalMemory %></span> <% unitLabel %></div>
+                        <div class="label">Total Heap Memory</div>
+                    </div>
                 </div>
-			    <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Operating System MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Arch</td>
-                                <td><% operatingSystemMXBean.arch %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Available Processors</td>
-                                <td><% operatingSystemMXBean.availableProcessors %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Name</td>
-                                <td><% operatingSystemMXBean.name %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>System Load Average</td>
-                                <td><% operatingSystemMXBean.systemLoadAverage %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Version</td>
-                                <td><% operatingSystemMXBean.version %></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                
+                <div class="separator">&nbsp;</div>
+                
+                <% freeMemory = (memoryMXBean.nonHeapMemoryUsage.max - memoryMXBean.nonHeapMemoryUsage.used) / unitDividend; %>
+                <div class="metric">
+                    <div id="freeNonHeapMemory">
+                        <div class="value"><span class="number"><% freeMemory %></span> <% unitLabel %></div>
+                        <div class="label">Free Non-Heap Memory</div>
+                    </div>
                 </div>
-			    <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Platform MBean Server</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Class Loader Repository</td>
-                                <td><% platformMBeanServer.classLoaderRepository %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Default Domain</td>
-                                <td><% platformMBeanServer.defaultDomain %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Domains</td>
-                                <td><%
-                                    if ( platformMBeanServer.domains != null ) {
-                                        foreach ( p in 0..platformMBeanServer.domains.length-1 ) {
-                                            domain = platformMBeanServer.domains[p];
-
-                                            'Domain ' p+1 ': "' domain '"';
-                                            
-                                            if ( p != platformMBeanServer.domains.length-1 ) {
-                                                ', '
-                                            }
-                                        }
-                                    }
-                                %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>MBean Count</td>
-                                <td><% platformMBeanServer.MBeanCount %></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                
+                <% usedMemory = memoryMXBean.nonHeapMemoryUsage.used / unitDividend; %>
+                <div class="metric">
+                    <div id="usedNonHeapMemory">
+                        <div class="value"><span class="number"><% usedMemory %></span> <% unitLabel %></div>
+                        <div class="label">Used Non-Heap Memory</div>
+                    </div>
                 </div>
-			    <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Runtime MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>Boot Class Path</td>
-                                <td><% replace(runtimeMXBean.bootClassPath, ':', '<br />') %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Boot Class Path Supported</td>
-                                <td><% runtimeMXBean.bootClassPathSupported %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Class Path</td>
-                                <td><% replace(runtimeMXBean.classPath, ':', '<br />') %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Input Arguments</td>
-                                <td><%
-                                    first = true;
-                                    foreach ( arg in runtimeMXBean.inputArguments ) {
-                                        if ( not first ) {
-                                            '<br />'
-                                        }
-                                        arg;
-                                        first = false;
-                                    }
-                                %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Library Path</td>
-                                <td><% replace(runtimeMXBean.libraryPath, ':', '<br />') %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Management Spec Version</td>
-                                <td><% runtimeMXBean.managementSpecVersion %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Name</td>
-                                <td><% runtimeMXBean.name %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Spec Name</td>
-                                <td><% runtimeMXBean.specName %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Spec Vendor</td>
-                                <td><% runtimeMXBean.specVendor %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Spec Version</td>
-                                <td><% runtimeMXBean.specVersion %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Start Time</td>
-                                <td><% runtimeMXBean.startTime %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>System Properties</td>
-                                <td><%
-                                    first = true;
-                                    foreach ( key in runtimeMXBean.systemProperties ) {
-                                        if ( not first ) {
-                                            '<br />'
-                                        }
-                                        key ': ' replace(runtimeMXBean.systemProperties[key], ##(':', ', ', "http://", '', "\n", ''));
-                                        first = false;
-                                    }
-                                %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Uptime</td>
-                                <td><% runtimeMXBean.uptime %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>VM Name</td>
-                                <td><% runtimeMXBean.vmName %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>VM Vendor</td>
-                                <td><% runtimeMXBean.vmVendor %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>VM Version</td>
-                                <td><% runtimeMXBean.vmVersion %></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                
+                <% totalMemory = memoryMXBean.nonHeapMemoryUsage.max / unitDividend; %>
+                <div class="metric">
+                    <div id="totalNonHeapMemory">
+                        <div class="value"><span class="number"><% totalMemory %></span> <% unitLabel %></div>
+                        <div class="label">Total Non-Heap Memory</div>
+                    </div>
                 </div>
-			    <div class="table-container">
-                    <table cellspacing="1" cellpadding="3" class="tablehead">
-                        <thead>
-                            <tr class="stathead">
-                                <th colspan="2">Thread MX Bean</th>
-                            </tr>
-                            <tr class="colhead">
-                                <th width="25%">Item</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="oddrow">
-                                <td>All Thread Ids</td>
-                                <td><%
-                                    if ( threadMXBean.allThreadIds != null ) {
-                                        foreach ( t in 0..threadMXBean.allThreadIds.length-1 ) {
-                                            thread = threadMXBean.allThreadIds[t];
-
-                                            //'Thread ' t+1 ': ' thread;
-                                            thread
-
-                                            if ( t != threadMXBean.allThreadIds.length-1 ) {
-                                                ', '
-                                            }
-                                        }
-                                    }
-                                %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Current Thread CPU Time</td>
-                                <td><% threadMXBean.currentThreadCpuTime %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Current Thread CPU Time Supported</td>
-                                <td><% threadMXBean.currentThreadCpuTimeSupported %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Current Thread User Time</td>
-                                <td><% threadMXBean.currentThreadUserTime %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Daemon Thread Count</td>
-                                <td><% threadMXBean.daemonThreadCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Object Monitor Usage Supported</td>
-                                <td><% threadMXBean.objectMonitorUsageSupported %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Peak Thread Count</td>
-                                <td><% threadMXBean.peakThreadCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Synchronizer Usage Supported</td>
-                                <td><% threadMXBean.synchronizerUsageSupported %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Thread Contention Monitoring Enabled</td>
-                                <td><% threadMXBean.threadContentionMonitoringEnabled %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Thread Contention Monitoring Supported</td>
-                                <td><% threadMXBean.threadContentionMonitoringSupported %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Thread Count</td>
-                                <td><% threadMXBean.threadCount %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Thread CPU Time Enabled</td>
-                                <td><% threadMXBean.threadCpuTimeEnabled %></td>
-                            </tr>
-                            <tr class="oddrow">
-                                <td>Thread CPU Time Supported</td>
-                                <td><% threadMXBean.threadCpuTimeSupported %></td>
-                            </tr>
-                            <tr class="evenrow">
-                                <td>Total Started Thread Count</td>
-                                <td><% threadMXBean.totalStartedThreadCount %></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-			</section>
-		</article>
+                
+                <br class="clear" />
+            </div>
+        </div>
+    </section>
+    
+    <div id="system-info-overview" class="system-info-tab <% tab == 'overview' ? 'ui-active' : '' %>" style="display: <% tab == 'overview' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfoOverview(); %>
+    </div>
+    <div id="system-info-memory" class="system-info-tab <% tab == 'memory' ? 'ui-active' : '' %>" style="display: <% tab == 'memory' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfoMemory(); %>
+    </div>
+    <div id="system-info-threads" class="system-info-tab <% tab == 'threads' ? 'ui-active' : '' %>" style="display: <% tab == 'threads' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfoThreads(); %>
+    </div>
+    <div id="system-info-mbeans" class="system-info-tab <% tab == 'mbeans' ? 'ui-active' : '' %>" style="display: <% tab == 'mbeans' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfoMBeans(); %>
+    </div>
+    <div id="system-info-info" class="system-info-tab <% tab == 'info' ? 'ui-active' : '' %>" style="display: <% tab == 'info' ? 'block' : 'none' %>;">
+        <% call system.format.getSystemInfo(); %>
+    </div>
+</article>

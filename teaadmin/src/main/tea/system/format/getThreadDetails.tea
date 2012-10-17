@@ -1,0 +1,81 @@
+<% template getThreadDetails(Long id)
+
+    threadMXBean = getThreadMXBean();
+    thread = threadMXBean.getThreadInfo(id, Integer.MAX_VALUE)
+    if (thread == null) {
+        '<div style="text-align: center; padding: 10px;">'
+            '<em>Thread information unavailable</em>'
+        '</div>'
+    }
+    else {
+        waitedTime = thread.waitedTime
+        blockedTime = thread.blockedTime
+        
+        cpuTime = threadMXBean.getThreadCpuTime(thread.threadId) / 1000000.0
+        userTime = threadMXBean.getThreadUserTime(thread.threadId) / 1000000.0
+        
+        totalTime = cpuTime + blockedTime + waitedTime
+        
+        waitedPct = waitedTime / totalTime * 100.0
+        blockedPct = blockedTime / totalTime * 100.0
+        cpuPct = cpuTime / totalTime * 100.0
+    
+%>
+
+    <div class="stathead" style="padding: 3px 6px;display:none;">
+        Thread <span id="thread-dialog-name"><% thread.threadName %></span>
+    </div>
+    
+    <div style="padding: 10px;">
+        <div>
+            <div style="width:100%; height:16px;">
+                <div title="Blocked <% thread.blockedCount %> time(s) for <% call system.util.getFormattedDuration(blockedTime, 'text') %>" class="red" style="float:left;width:<% blockedPct %>%;height:16px;border-top-left-radius: 6px;border-bottom-left-radius: 6px;"></div>
+                <div title="Waited <% thread.waitedCount %> time(s) for <% call system.util.getFormattedDuration(waitedTime, 'text') %>" class="yellow" style="float:left;width:<% waitedPct %>%;height:16px;"></div>
+                <div title="Running for <% call system.util.getFormattedDuration(totalTime, 'text') %> (<% call system.util.getFormattedDuration(userTime, 'text') %> user time)" class="green" style="float:left;width:<% cpuPct %>%;height:16px;border-top-right-radius:6px;border-bottom-right-radius:6px;"></div>
+                <br class="clear" />
+            </div>
+        </div>
+        <div>
+            <% numberFormat('0') %>
+            
+            <div style="float: left; width: 33%; padding-top: 10px;">
+                <div class="red" style="border-radius: 3px; float: left; width:16px; height:16px; margin: 16px 10px 0 0;"></div>
+                <div style="float: left; text-align: center; font-size: 12px; font-weight: bold; line-height: 24px; height: 48px;">Blocked (<% blockedPct %>%)<br /><% call system.util.getFormattedDuration(blockedTime, 'time') %></div>
+                <br class="clear" />
+            </div>
+
+            <div style="float: left; width: 33%; padding-top: 10px;">
+                <div class="yellow" style="border-radius: 3px; float: left; width:16px; height:16px; margin: 16px 10px 0 0;"></div>
+                <div style="float: left; text-align: center; font-size: 12px; font-weight: bold; line-height: 24px; height: 48px;">Waited (<% waitedPct %>%)<br /><% call system.util.getFormattedDuration(waitedTime, 'time') %></div>
+                <br class="clear" />
+            </div>
+
+            <div style="float: left; width: 33%; padding-top: 10px;">
+                <div class="green" style="border-radius: 3px; float: left; width:16px; height:16px; margin: 16px 10px 0 0;"></div>
+                <div style="float: left; text-align: center; font-size: 12px; font-weight: bold; line-height: 24px; height: 48px;">Running (<% cpuPct %>%)<br /><% call system.util.getFormattedDuration(cpuTime, 'time') %></div>
+                <br class="clear" />
+            </div>
+            
+            <br class="clear" />
+        </div>
+    </div>
+                    
+    <div class="stathead" style="padding: 3px 6px;">
+        Stacktrace
+    </div>
+
+    <div style="padding: 10px; font-size: 12px;">
+        State: <% thread.threadState.name() %>
+        <% if (thread.threadState.ordinal() >= 2) { %>
+             on <% thread.lockInfo %>
+        <% } %><br />
+        <br />
+        Stack Trace:<br />
+        <% foreach (stack in thread.stackTrace) { %>
+            <% stack %><br />
+        <% } %>
+    </div>
+
+<% 
+    } 
+%>

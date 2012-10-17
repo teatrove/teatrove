@@ -1,0 +1,65 @@
+<% template getMBeanDetails(String name)
+
+    admin = getTeaServletAdmin();
+    mbean = getMBeanInfo(name)
+%>
+
+<div class="table-container">
+    <div class="stathead" style="padding: 3px 7px;">
+        <div title="Summary for <% name %>">Summary for <% name %></div>
+    </div>
+    <div class="scroll">
+    <table class="tablehead" cellpadding="3" cellspacing="1">
+        <tbody>
+            <tr class="colhead">
+                <td colspan="3">Information</td>
+            </tr>
+            <tr class="oddrow">
+                <td>Class Name</td>
+                <td colspan="2"><% mbean.className %></td>
+            </tr>
+            <tr class="evenrow">
+                <td>Description</td>
+                <td colspan="2"><% mbean.description ?: 'Not Available' %></td>
+            </tr>
+            
+            <% if (mbean.attributes) { %>
+                <tr class="colhead">
+                    <td>Attributes</td>
+                    <td>Type</td>
+                    <td>Value</td>
+                </tr>
+
+                <% 
+                    idx = 0 
+                    foreach (attribute in mbean.attributes) { 
+                        if (attribute.readable) {
+                            idx = idx + 1
+                %>
+                    <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                        <td title="<% attribute.description %>"><% attribute.name %></td>
+                        <% call system.format.getMBeanAttribute(attribute.type, getMBeanAttribute(name, attribute.name)) %>
+                    </tr>
+                <%      }
+                    }
+                %>
+                
+            <% } %>
+                        
+            <% if (mbean.operations) { %>
+                <tr class="colhead">
+                    <td>Operations</td>
+                    <td colspan="2">Return Type</td>
+                </tr>
+
+                <% idx = 0; foreach (operation in mbean.operations) { idx = idx + 1; %>
+                    <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                        <td title="<% operation.description %>"><% operation.name %></td>
+                        <td colspan="2"><% call system.util.cleanClassName(operation.returnType) %></td>
+                    </tr>
+                <% } %>
+            <% } %>
+        </tbody>
+    </table>
+    </div>
+</div>

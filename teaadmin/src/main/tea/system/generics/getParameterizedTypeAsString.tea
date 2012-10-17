@@ -1,0 +1,16 @@
+<% template getParameterizedTypeAsString(java.lang.reflect.ParameterizedType type, StringBuilder result, Boolean showLink, Boolean showVariables, Boolean resolveVariables)
+
+call system.generics.getGenericTypeAsString(type.rawType, result, showLink, showVariables, resolveVariables)
+append(result, '&lt;')
+
+first = true
+foreach (argType in type.actualTypeArguments)
+{
+    if (not first) { append(result, ', ') }
+    call system.generics.getGenericTypeAsString(argType, result, showLink, showVariables, resolveVariables)
+    first = false
+}
+
+append(result, '&gt;')
+
+%>

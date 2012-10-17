@@ -26,19 +26,19 @@ if (reloadResult isa org.teatrove.tea.engine.TemplateCompilationResults) {
             '</tr>'
         
             foreach(e in errors) {
-                if (e isa org.teatrove.tea.engine.TemplateError) {
+                if (e isa org.teatrove.tea.engine.TemplateIssue) {
                     '<tr>'
                     '<td><font face="Arial" size="2">'
-                    '<b>' e.sourcePath' ( line ' e.lineNumber ' )</b>: ' e.errorMessage '</font><br><tt>'
-                    call Clean(trimLeading(e.lineStart))
+                    '<b>' e.sourcePath' ( line ' e.lineNumber ' )</b>: ' e.message '</font><br><tt>'
+                    call Clean(trimLeading(e.startOfLine))
                     '<b>'
-                    call Clean(e.errorStart)
+                    call Clean(e.startOfIssue)
                     '<u>'
                     call Clean(e.detail)
                     '</u>'
-                    call Clean(e.errorEnd) 
+                    call Clean(e.endOfIssue) 
                     '</b>'
-                    call Clean(trimTrailing(e.lineEnd))
+                    call Clean(trimTrailing(e.endOfLine))
                     '</tt>'
                     '</td>'
                     '</tr>'

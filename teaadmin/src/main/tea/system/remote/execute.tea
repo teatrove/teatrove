@@ -1,0 +1,48 @@
+<% template execute(String source)
+
+admin = getTeaServletAdmin()
+
+if (source) { 
+    result = executeSource(source)
+    if (result.successful) {
+        result.output
+    }
+    else {
+        setStatus(450)
+        errors = result.templateErrors
+        if ( errors != null and errors.length > 0 ) {
+            '<div class="sml-s sml-e">\n'
+                '<div class="sm-imc sml-imc">\n'
+                    '<ul class="sml-cnt">\n'
+                        '<li class="arial13">'
+                        foreach ( e in errors ) {
+                            if ( e isa org.teatrove.tea.engine.TemplateIssue ) {
+                                errorString = "";
+                                errorString = errorString & call system.util.cleanString(trimLeading(e.startOfLine));
+                                errorString = errorString & call system.util.cleanString(e.startOfIssue);
+                                errorString = errorString & call system.util.cleanString(e.detail);
+                                errorString = errorString & call system.util.cleanString(e.endOfIssue);
+                                errorString = errorString & call system.util.cleanString(e.endOfLine);
+
+                                '<div class="error-detail">'
+                                    e.message
+                                '</div>\n'
+                                '<pre class="brush: java; first-line: ' e.lineNumber '">' errorString '</pre>'
+                            }
+                        }
+                        '</li>\n'
+                    '</ul>\n'
+                '</div>\n'
+            '</div>\n'
+        }
+    }
+}
+else {
+    '<div class="sml-s sml-e">\n'
+        '<div class="sm-imc sml-imc">\n'
+            '<ul class="sml-cnt">\n'
+                '<li class="arial13"><em>No source provided</em></li>'
+            '</ul>'
+        '</div>'
+    '</div>'
+}

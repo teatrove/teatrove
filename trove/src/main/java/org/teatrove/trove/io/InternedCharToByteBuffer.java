@@ -16,16 +16,10 @@
 
 package org.teatrove.trove.io;
 
-import org.teatrove.trove.util.IdentityMap;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
 
 /**
  * A CharToByteBuffer that keeps track of interned strings (mainly string
@@ -38,17 +32,20 @@ import java.util.Random;
 public class InternedCharToByteBuffer
     implements CharToByteBuffer, Serializable
 {
+    private static final long serialVersionUID = 1L;
+
     private static final int MIN_LENGTH = 40;
 
-    private static final Object MARKER = new Object();
+    // private static final Object MARKER = new Object();
 
-    private static Map cEncodings = new HashMap(7);
+    // private static Map<String, Map> cEncodings = new HashMap<String, Map>(7);
 
-    private static Random cLastRandom = new Random();
+    // private static Random cLastRandom = new Random();
 
+    /*
     private static Map getConvertedCache(String encoding) {
         synchronized (cEncodings) {
-            Map cache = (Map)cEncodings.get(encoding);
+            Map cache = cEncodings.get(encoding);
             if (cache == null) {
                 cache = Collections.synchronizedMap(new IdentityMap());
                 cEncodings.put(encoding, cache);
@@ -56,27 +53,22 @@ public class InternedCharToByteBuffer
             return cache;
         }
     }
-
-    private static Random getRandom() {
-        synchronized (cLastRandom) {
-            return cLastRandom = new Random(cLastRandom.nextLong());
-        }
-    }
+    */
 
     private CharToByteBuffer mBuffer;
-    private Random mRandom;
-    private transient Map mConvertedCache;
+    //private Random mRandom;
+    //private transient Map mConvertedCache;
 
     public InternedCharToByteBuffer(CharToByteBuffer buffer)
         throws IOException
     {
         mBuffer = buffer;
-        mConvertedCache = getConvertedCache(buffer.getEncoding());
+        //mConvertedCache = getConvertedCache(buffer.getEncoding());
     }
 
     public void setEncoding(String enc) throws IOException {
         mBuffer.setEncoding(enc);
-        mConvertedCache = getConvertedCache(mBuffer.getEncoding());
+        //mConvertedCache = getConvertedCache(mBuffer.getEncoding());
     }
 
     public String getEncoding() throws IOException {
@@ -198,6 +190,10 @@ public class InternedCharToByteBuffer
         mBuffer.reset();
     }
 
+    public void clear() throws IOException {
+        mBuffer.clear();
+    }
+    
     public void drain() throws IOException {
         mBuffer.drain();
     }
@@ -206,6 +202,6 @@ public class InternedCharToByteBuffer
         throws IOException, ClassNotFoundException
     {
         in.defaultReadObject();
-        mConvertedCache = getConvertedCache(mBuffer.getEncoding());
+        // mConvertedCache = getConvertedCache(mBuffer.getEncoding());
     }
 }

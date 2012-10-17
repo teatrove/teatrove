@@ -7,8 +7,16 @@ available to the TeaServlet.
 
 Change History
 
-4.1.2 to 4.1.3
+4.1.2 to 4.2.0
 ===============================
+- Fix #185 fixing stack overflow from sortList
+- Removing deprecation for now
+- Add createDateWithValidation to DateContext
+- Fix #169 adding mergeArrays to ArrayContext
+- Fix #142 adding ability to save/load JMX settings
+- Fix #134 adding createLinkedHashMap to MapContext
+- Fix #110 moving UtilityContext into StringContext, NumberFormatContext, DateContext, etc
+- Add join methods to ArrayContext and ListContext
 - Fix #77 to add HTMLContext for HTML-based pagination methods 
 - Fix #76 for SortContext to add backwards compatibility methods
 - Cleanup SortContext for consistency and performance

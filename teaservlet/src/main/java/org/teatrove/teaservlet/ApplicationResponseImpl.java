@@ -83,6 +83,7 @@ class ApplicationResponseImpl extends HttpServletResponseWrapper
     // Bit 0: When set, response redirect or error.
     // Bit 1: When set, response finished.
     protected int mState;
+    protected boolean mFlushed;
 
     private HttpContext mHttpContext;
     private final TeaServletEngineImpl mTeaServletEngine;
@@ -166,8 +167,29 @@ class ApplicationResponseImpl extends HttpServletResponseWrapper
         return Integer.MAX_VALUE;
     }
 
-    public void flushBuffer() {
-        // Ignore.
+    /**
+     * Flush the internal buffer to the output stream and clear the internal
+     * buffer to allow new data to be written.  If the stream was marked for
+     * compression, then an I/O exception is thrown as compressed streams may
+     * not be sent down early to the connection.
+     */
+    public void flushBuffer() throws IOException {
+        if (mCompressedSegments != 0) {
+            throw new IOException("cannot flush a compressed buffer");
+        }
+        
+        // marked the stream as having been previously flushed to avoid
+        // attempting to compress the stream after the fact
+        mFlushed = true;
+        
+        // write the internal buffer to the output stream and then clear any
+        // data in the internal buffer to avoid duplicated data.
+        ByteBuffer bytes = mBuffer;
+        OutputStream out = super.getOutputStream();
+        bytes.writeTo(out);
+        bytes.clear();
+        
+        super.flushBuffer();
     }
 
     public void resetBuffer() {
@@ -287,7 +309,7 @@ class ApplicationResponseImpl extends HttpServletResponseWrapper
 
         try {
             if (mCompressedSegments == 0 || length > 0xffffffffL) {
-                if (length <= Integer.MAX_VALUE) {
+                if (!mFlushed && length <= Integer.MAX_VALUE) {
                     super.setContentLength((int)length);
                 }
                 bytes.writeTo(out);

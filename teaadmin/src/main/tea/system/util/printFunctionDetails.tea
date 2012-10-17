@@ -1,0 +1,54 @@
+<% template printFunctionDetails(org.teatrove.teaservlet.TeaToolsContext$HandyClassInfo info, org.teatrove.teatools.MethodDescription metDesc)
+
+descriptor = metDesc.methodDescriptor
+
+'<div>'
+    deprecated = (info.deprecated or metDesc.deprecated)
+    if (deprecated) { '<span class="deprecated">' }
+    
+    call system.util.printMethodLink(descriptor, 1)
+    '&nbsp;'
+    '('
+    parameterTypes = metDesc.method.genericParameterTypes;
+    parameterDescriptors = descriptor.parameterDescriptors;
+    link = true;
+    if ( parameterTypes == null or parameterTypes.length == 0 ) {
+        if ( parameterDescriptors != null ) {
+            foreach ( index in 0..parameterDescriptors.length-1 ) {
+                if ( index > 0 ) {
+                    ', '
+                }
+                name = parameterDescriptors[index]
+                if ( name != null ) {
+                    call system.util.printClassLink(getClassForName(name.displayName), link)
+
+                    '&nbsp;' name.name
+                }
+            }
+        }
+    } else {
+        foreach ( index in 0..parameterTypes.length - 1 ) {
+            if ( index > 0 ) {
+                ', '
+            }
+            call system.util.printClassLink(parameterTypes[index], link)
+            if ( parameterDescriptors != null ) {
+                name = parameterDescriptors[index]
+                if ( name != null ) {
+                    '&nbsp;' name.name
+                }
+            }
+        }
+    }
+    ')'
+
+    ' : <span class="italic">' call system.util.printClassLink(metDesc.method.genericReturnType, true) '</span>'
+    
+    if (deprecated) { '</span>' }
+'</div>'
+
+if ( descriptor?.shortDescription != null and descriptor?.shortDescription != metDesc.method.name ) {
+    '<div class="italic left-margin-20 top-margin-10">'
+        getFirstSentence(descriptor?.shortDescription);
+    '</div>'
+}

@@ -210,6 +210,10 @@ class DetachedResponseImpl extends ApplicationResponseImpl {
         public void reset() throws IOException {
             mBuffer.reset();
         }
+        
+        public void clear() throws IOException {
+            mBuffer.clear();
+        }
 
         public long getBaseByteCount() throws IOException {
             return mBuffer.getBaseByteCount();

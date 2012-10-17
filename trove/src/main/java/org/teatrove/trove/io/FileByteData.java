@@ -32,7 +32,7 @@ public class FileByteData implements ByteData {
     private File mFile;
 
     // Thread-local reference to a RandomAccessFile.
-    private ThreadLocal mRAF = new ThreadLocal();
+    private ThreadLocal<Object> mRAF = new ThreadLocal<Object>();
 
     public FileByteData(File file) {
         mFile = file;
@@ -98,7 +98,7 @@ public class FileByteData implements ByteData {
             mRAF.set(null);
         }
     }
-
+    
     protected final void finalize() throws IOException {
         reset();
     }

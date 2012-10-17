@@ -1,0 +1,67 @@
+<% template printApplicationTable ()
+
+    admin = getTeaServletAdmin()
+    pathPrefix = call system.util.getPathPrefix()
+
+    applications = admin.applications
+    sort(applications, 'name', false)
+    foreach (app in applications) {
+%>
+        <thead>
+        <tr class="colhead">
+            <td style="white-space: normal; cursor: pointer;">
+                <% app.name %>
+            </td>
+        </tr>
+        </thead>
+        <tbody>
+<%
+        idx = 0
+        info = getHandyClassInfo(app.contextType)
+        if (info?.description) {
+            idx = -1
+%>
+            <tr class="oddrow">
+                <td style="white-space: nowrap; border-bottom: 1px solid #ddd;">
+                    <p style="margin-bottom: 7px;"><% getFirstSentence(info.description) %></p>
+                    <a href="<% pathPrefix %>/system/format/getApplicationDetails?context=<% app.contextType.name %>" style="font-style: italic; font-weight: bold;">more information...</a>
+                </td>
+            </tr>
+<%
+        }
+        
+        functions = app.contextFunctions
+        sort(functions, 'name', false)
+        
+        foreach (func in functions) {
+            idx = idx + 1
+%>
+            <tr class="<% idx % 2 == 0 ? 'evenrow' : 'oddrow' %>">
+                <td style="white-space: nowrap;">
+                    <a href="<% pathPrefix %>/system/format/getContextFunctionDetails?context=<% app.contextType.name %>&function=<% func.name %>">
+                        <% func.name %>
+                    </a> ( 
+<%
+                        types = func.method.genericParameterTypes
+                        descriptors = func.descriptor.parameterDescriptors
+                        if (types) {
+                            length = types.length
+                            foreach (p in 0..length-1) {
+%>
+                                <% call system.util.printClassLink(types[p], true) %> 
+                                <% descriptors?[p]?.name ?: ''; %><% (p < length-1 ? ', ' : '') %>
+<%
+                            }
+                        }
+%>
+                        ) : <% call system.util.printClassLink(func.method.genericReturnType, true) %>
+                    </a>
+                </td>
+            </tr>
+<%
+        }
+%>
+        </tbody>
+<%
+    }
+%>

@@ -16,12 +16,17 @@
 
 package org.teatrove.toolbox.beandoc;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Date;
+
 import org.teatrove.toolbox.beandoc.teadoc.ClassDoc;
 import org.teatrove.toolbox.beandoc.teadoc.MethodDoc;
 import org.teatrove.toolbox.beandoc.teadoc.MethodFinder;
 import org.teatrove.toolbox.beandoc.teadoc.ParamTag;
-
-import java.io.*;
 
 /**
  * Context class used by the beandoc Tea templates.
@@ -94,6 +99,12 @@ public class BeanDocContext extends org.teatrove.tea.runtime.DefaultContext {
         }
     }
 
+    /**
+     * Get the current date.
+     */
+    public Date currentDate() {
+        return new Date();
+    }
 
     @SuppressWarnings({"UnusedDeclaration"})
     public String getMethodComment(ClassDoc classDoc, MethodDoc md) {

@@ -19,12 +19,18 @@
 %>
 		<article>
 			<section>
-				<div class="controls">
-					<div class="controls-wrapper">
+				<div class="controls" style="width: 100%;">
+					<div class="controls-wrapper left-float">
 					    <div><input id="tree-search-text" type="search" placeholder="Search" /></div>
                         <div id="showHideTypes" class="button">Hide Types</div>
                         <div id="expandCollapseTree" class="button">Expand All</div>
-                        <div id="toggleTree" class="button">Toggle All</div>
+					</div>
+					
+					<div class="controls-wrapper right-float">
+					    <div id="buttonset-nav" class="buttonset">
+                            <a href="#" id="nav_back">&lt;</a>
+                            <a href="#" id="nav_fwd">&gt;</a>
+                        </div>
 					</div>
 				</div>
 				<br class="clear" />
@@ -39,15 +45,16 @@
                         '<a href="#">TeaServlet</a>\n';
                         if ( info != null and info.teaContextMethodDescriptors != null ) {
                             '<ul>\n'
-                            foreach ( contextFunction in info.teaContextMethodDescriptors ) {
+                            foreach ( contextFunction in info.teaContextMethodDescriptions ) {
                                 idStringAppFunc = idStringApp & '_' & contextFunction.name;
                                 '<li id="' idStringAppFunc '"  rel="function" details="format/getContextFunctionDetails?context=' httpContext '&function=' contextFunction.name '">\n';
-                                    '<a href="#">'
-                                        contextFunction.name ' : ' call system.util.printClassInfo(contextFunction.method.returnType);
+                                    '<a href="#" class="' (contextFunction.deprecated ? 'deprecated' : '') '">'
+                                        contextFunction.name ' : ' call system.util.printClassLink(contextFunction.method.genericReturnType, false);
                                     '</a>\n';
 
                                     parameterTypes = contextFunction.method.parameterTypes;
-                                    parameterDescriptors = contextFunction.parameterDescriptors;
+                                    genericTypes = contextFunction.method.genericParameterTypes;
+                                    parameterDescriptors = contextFunction.methodDescriptor.parameterDescriptors;
                                     '<ul>\n'
                                     if ( parameterTypes == null or parameterTypes.length == 0 ) {
                                         if ( parameterDescriptors != null ) {
@@ -68,13 +75,12 @@
                                         }
                                     } else {
                                         foreach ( p in 0..parameterTypes.length-1 ) {
-                                            //parameterPath = call util.printClassInfo(parameterTypes[p]);
                                             parameterPath = parameterTypes[p].name;
 
                                             '<li id="' idStringAppFunc '_' p '" rel="parameter" details="format/getBeanDetails?bean=' parameterPath '">\n';
                                                 '<a href="#">'
                                                     '<span class="italic">'
-                                                        call system.util.printClassInfo(parameterTypes[p])
+                                                        call system.util.printClassLink(genericTypes[p], false)
                                                     '</span>'
                                                     if ( parameterDescriptors != null ) {
                                                         parameterDescriptor = parameterDescriptors[p];
@@ -93,13 +99,14 @@
                         }
                     '</li>\n'
                     
+                    sort(applications, 'name', false)
                     foreach ( a in 0..applications.length-1 ) {
                         application = applications[a];
                         
                         idStringApp = 'tree_' & application.name & '_' & a;
 
                         '<li id="' idStringApp '" rel="application" details="format/getApplicationDetails?context=' application.contextType.name '">\n';
-                            '<a href="#">';
+                            '<a href="#" class="' (application.deprecated ? 'deprecated' : '') '">';
                                 application.name
                             '</a>\n';
 
@@ -111,31 +118,54 @@
                                     idStringAppFunc = idStringApp & '_' & contextFunction.name & '_' & f;
 
                                     '<li id="' idStringAppFunc '"  rel="function" details="format/getContextFunctionDetails?context=' application.contextType.name '&function=' contextFunction.name '">\n';
-                                        '<a href="#">';
+                                        '<a href="#" class="' (contextFunction.deprecated ? 'deprecated' : '') '">';
                                             '<span class="italic">'
-                                                call system.util.printClassInfo(contextFunction.method.returnType);
+                                                call system.util.printClassLink(contextFunction.method.genericReturnType, false);
                                             '</span>'
                                             contextFunction.name;
                                         '</a>\n';
 
-                                        if ( contextFunction.parameterDescriptors != null ) {
-                                            '<ul>\n'
-                                            foreach ( p in 0..contextFunction.parameterDescriptors.length-1 ) {
-                                                parameterType = contextFunction.method.parameterTypes[p];
-                                                parameterDescriptor = contextFunction.parameterDescriptors[p];
-                                                parameterPath = parameterType.name;
-
-                                                '<li id="' idStringAppFunc '_' parameterDescriptor.name '" rel="parameter" details="format/getBeanDetails?bean=' parameterPath '">\n';
+                                        parameterTypes = contextFunction.method.parameterTypes;
+                                        genericTypes = contextFunction.method.genericParameterTypes;
+                                        parameterDescriptors = contextFunction.descriptor.parameterDescriptors;
+                                        '<ul>\n'
+                                        if ( parameterTypes == null or parameterTypes.length == 0 ) {
+                                            if ( parameterDescriptors != null ) {
+                                                 foreach ( p in 0..parameterDescriptors.length-1 ) {
+                                                    parameterDescriptor = parameterDescriptors[p];
+                                                    if ( parameterDescriptor != null ) {
+                                                        parameterPath = call system.util.printClassInfo(getClassForName(parameterDescriptor.displayName));
+                                                        '<li id="' idStringAppFunc '_' p '" rel="parameter" details="format/getBeanDetails?bean=' parameterPath '">\n';
+                                                            '<a href="#">'
+                                                                '<span class="italic">'
+                                                                    parameterPath
+                                                                '</span>'
+                                                                parameterDescriptor.name;
+                                                            '</a>\n'
+                                                        '</li>\n'
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            foreach ( p in 0..parameterTypes.length-1 ) {
+                                                parameterPath = parameterTypes[p].name;
+    
+                                                '<li id="' idStringAppFunc '_' p '" rel="parameter" details="format/getBeanDetails?bean=' parameterPath '">\n';
                                                     '<a href="#">'
                                                         '<span class="italic">'
-                                                            call system.util.printClassInfo(parameterType);
+                                                            call system.util.printClassLink(genericTypes[p], false)
                                                         '</span>'
-                                                        parameterDescriptor.name;
-                                                    '</a>\n';
+                                                        if ( parameterDescriptors != null ) {
+                                                            parameterDescriptor = parameterDescriptors[p];
+                                                            if ( parameterDescriptor != null ) {
+                                                                parameterDescriptor.name;
+                                                            }
+                                                        }
+                                                    '</a>\n'
                                                 '</li>\n'
                                             }
-                                            '</ul>\n'
                                         }
+                                        '</ul>\n'
                                     '</li>\n'
                                 }
                                 '</ul>\n'

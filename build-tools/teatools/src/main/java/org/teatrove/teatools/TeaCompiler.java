@@ -22,7 +22,7 @@ import java.util.Map;
 
 import org.teatrove.tea.compiler.CompilationUnit;
 import org.teatrove.tea.compiler.Compiler;
-import org.teatrove.tea.compiler.ErrorListener;
+import org.teatrove.tea.compiler.CompileListener;
 import org.teatrove.tea.compiler.Parser;
 import org.teatrove.tea.compiler.Token;
 import org.teatrove.tea.compiler.TypeChecker;
@@ -51,10 +51,9 @@ public class TeaCompiler extends Compiler {
     public static String findTemplateName(org.teatrove.tea.compiler.Scanner scanner) {
         // System.out.println("<-- findTemplateName -->");
         Token token;
-        int id;
         String name = null;
         try {
-            while ((id = (token = scanner.readToken()).getID()) != Token.EOF) {
+            while (((token = scanner.readToken()).getID()) != Token.EOF) {
                 /*
                 System.out.println("Token [Code: " +
                                    token.getCode() + "] [Image: " +
@@ -81,18 +80,18 @@ public class TeaCompiler extends Compiler {
     /** The Runtime Context Class */
     protected Class<?> mRuntimeContextClass;
 
-    /** The ErrorListener for Scanner errors.  These
+    /** The CompileListener for Scanner errors.  These
         errors are in the category of syntax errors. */
-    protected ErrorListener mScannerErrorListener;
+    protected CompileListener mScannerListener;
 
-    /** The ErrorListener for Parser errors.  These
+    /** The CompileListener for Parser errors.  These
         errors are in the category of syntax errors. */
-    protected ErrorListener mParserErrorListener;
+    protected CompileListener mParserListener;
 
-    /** The ErrorListener for TypeChecker
-        errors.  These errors are in the category of semantic errors.  A
-        common cause of a semantic error is a type misuse. */
-    protected ErrorListener mTypeCheckerErrorListener;
+    /** The CompileListener for TypeChecker
+        issues.  These issues are in the category of semantic errors or 
+        warnings.  A common cause of a semantic error is a type misuse. */
+    protected CompileListener mTypeCheckerListener;
 
 
     /**
@@ -143,28 +142,28 @@ public class TeaCompiler extends Compiler {
     }
 
 
-    public void setScannerErrorListener(ErrorListener listener) {
-        mScannerErrorListener = listener;
+    public void setScannerListener(CompileListener listener) {
+        mScannerListener = listener;
     }
 
-    public ErrorListener getScannerErrorListener() {
-        return mScannerErrorListener;
+    public CompileListener getScannerListener() {
+        return mScannerListener;
     }
 
-    public void setParserErrorListener(ErrorListener listener) {
-        mParserErrorListener = listener;
+    public void setParserListener(CompileListener listener) {
+        mParserListener = listener;
     }
 
-    public ErrorListener getParserErrorListener() {
-        return mParserErrorListener;
+    public CompileListener getParserListener() {
+        return mParserListener;
     }
 
-    public void setTypeCheckerErrorListener(ErrorListener listener) {
-        mTypeCheckerErrorListener = listener;
+    public void setTypeCheckerListener(CompileListener listener) {
+        mTypeCheckerListener = listener;
     }
 
-    public ErrorListener getTypeCheckerErrorListener() {
-        return mTypeCheckerErrorListener;
+    public CompileListener getTypeCheckerListener() {
+        return mTypeCheckerListener;
     }
 
     // Overridden to make public
@@ -182,9 +181,9 @@ public class TeaCompiler extends Compiler {
     public org.teatrove.tea.compiler.Scanner createScanner(SourceReader sr, CompilationUnit unit)
     throws IOException {
         org.teatrove.tea.compiler.Scanner scanner = super.createScanner(sr, unit);
-        ErrorListener scannerErrorListener = getScannerErrorListener();
-        if (scannerErrorListener != null) {
-            scanner.addErrorListener(scannerErrorListener);
+        CompileListener scannerListener = getScannerListener();
+        if (scannerListener != null) {
+            scanner.addCompileListener(scannerListener);
         }
         return scanner;
     }
@@ -194,9 +193,9 @@ public class TeaCompiler extends Compiler {
     throws IOException {
 
         Parser parser = super.createParser(scanner, unit);
-        ErrorListener parserErrorListener = getParserErrorListener();
-        if (parserErrorListener != null) {
-            parser.addErrorListener(parserErrorListener);
+        CompileListener parserListener = getParserListener();
+        if (parserListener != null) {
+            parser.addCompileListener(parserListener);
         }
 
         return parser;
@@ -206,9 +205,9 @@ public class TeaCompiler extends Compiler {
     public TypeChecker createTypeChecker(CompilationUnit unit) {
 
         TypeChecker typeChecker = super.createTypeChecker(unit);
-        ErrorListener typeCheckerErrorListener = getTypeCheckerErrorListener();
-        if (typeCheckerErrorListener != null) {
-            typeChecker.addErrorListener(typeCheckerErrorListener);
+        CompileListener typeCheckerListener = getTypeCheckerListener();
+        if (typeCheckerListener != null) {
+            typeChecker.addCompileListener(typeCheckerListener);
         }
 
         return typeChecker;

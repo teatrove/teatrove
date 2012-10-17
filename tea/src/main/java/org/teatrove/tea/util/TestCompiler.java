@@ -38,7 +38,7 @@ public class TestCompiler extends Compiler {
     public static void main(String[] args) throws Exception {
         File dir = new File(".");
         TestCompiler tc = new TestCompiler(dir, null, dir);
-        tc.addErrorListener(new ConsoleErrorReporter(System.out));
+        tc.addCompileListener(new ConsoleReporter(System.out));
         tc.setForceCompile(true);
         String[] names = tc.compile(args[0]);
 
@@ -57,6 +57,16 @@ public class TestCompiler extends Compiler {
             return;
         }
 
+        int warningCount = tc.getWarningCount();
+        if (warningCount > 0) {
+            String msg = String.valueOf(warningCount) + " warning";
+            if (warningCount != 1) {
+                msg += 's';
+            }
+            System.out.println(msg);
+            return;
+        }
+        
         TemplateLoader loader = new TemplateLoader();
         TemplateLoader.Template template = loader.getTemplate(args[0]);
 

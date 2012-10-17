@@ -1,0 +1,70 @@
+<% template getMBeanAttribute(String type, Object value)
+
+if (value == null) {
+    '<td>' call system.util.cleanClassName(type) '</td>'
+    '<td>'
+}
+else if (value isa javax.management.openmbean.CompositeData or
+    value isa Map) {
+    
+    '<td colspan="2" style="white-space: normal;">'
+}
+else if (isArray(value)) {
+    base = getRootComponentType(value)
+    dimensions = getDimensions(value)
+    '<td>'
+        base.name
+        foreach (idx in 0..dimensions - 1) {
+            '[]'
+        }
+    '</td>'
+    '<td>'
+}
+else {
+    '<td>' call system.util.cleanClassName(type) '</td>'
+    '<td>'
+}
+
+// handle nulls
+if (value == null) { 'null' }
+
+// handle arrays
+else if (value isa Object[]) { join(value, '<br />') }
+else if (value isa int[]) { join(value, '<br />') }
+else if (value isa long[]) { join(value, '<br />') }
+else if (value isa double[]) { join(value, '<br />') }
+
+// handle collections
+else if (value isa Collection) { 
+    foreach (item in value) {
+        item '<br />'
+    } 
+}
+
+// handle maps
+else if (value isa Map) {
+    value.class.name '<br />'
+    '<table class="mbean-table" cellspacing="1" cellpadding="3">'
+        foreach (entry in entrySet(value)) {
+            '<tr><th align="left">' entry.key '</th><td>' entry.value '</td></tr>'
+        }
+    '</table>'
+}
+
+// handle composite data
+else if (value isa javax.management.openmbean.CompositeData) {
+    value.compositeType.typeName '<br />'
+    '<table class="mbean-table" cellspacing="1" cellpadding="3">'
+        foreach (name in value.compositeType.keySet()) {
+            item = value.get(name)
+            '<tr><th align="left">' name '</th><td>' item '</td></tr>'
+        }
+    '</table>'
+}
+
+// default
+else {
+    value.toString()
+}
+
+'</td>'

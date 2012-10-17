@@ -16,19 +16,17 @@
 
 package org.teatrove.teaservlet;
 
-import java.util.Map;
 import java.util.Hashtable;
+import java.util.Map;
 
 import javax.servlet.ServletContext;
 
-import org.teatrove.trove.log.Log;
-import org.teatrove.trove.util.ClassInjector;
-import org.teatrove.trove.util.MergedClass;
-import org.teatrove.tea.engine.ContextSource;
+import org.teatrove.tea.engine.ContextCreationException;
 import org.teatrove.tea.engine.DynamicContextSource;
 import org.teatrove.tea.engine.MergedContextSource;
-import org.teatrove.tea.engine.ContextCreationException;
 import org.teatrove.teaservlet.management.HttpContextManagement;
+import org.teatrove.trove.log.Log;
+import org.teatrove.trove.util.MergedClass;
 
 /**
  * 
@@ -36,9 +34,8 @@ import org.teatrove.teaservlet.management.HttpContextManagement;
  */
 public class TeaServletContextSource extends MergedContextSource {
 
-    private Map mPastContextTypes;
     private Application[] mApplications;
-    private Map mContextTypeMap;
+    private Map<Application, Class<?>> mContextTypeMap;
     private DynamicContextSource[] mDynSources;
     private Log mLog;
     private boolean mProfilingEnabled;
@@ -96,11 +93,11 @@ public class TeaServletContextSource extends MergedContextSource {
     }
 
 
-    public final Map getApplicationContextTypes() {
+    public final Map<Application, Class<?>> getApplicationContextTypes() {
         if (mContextTypeMap == null) {
             int tableSize = mApplications.length;
-            Class[] contextTypes = getContextsInOrder();
-            mContextTypeMap = new Hashtable(tableSize);
+            Class<?>[] contextTypes = getContextsInOrder();
+            mContextTypeMap = new Hashtable<Application, Class<?>>(tableSize);
             int prependAdjustment = 
                 ((tableSize == contextTypes.length) ? 0 : 1);
 

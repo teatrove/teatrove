@@ -16,28 +16,41 @@
 
 package org.teatrove.teaservlet;
 
-import java.lang.reflect.Method;
-import java.beans.*;
-import java.util.*;
+import java.beans.Introspector;
+import java.beans.MethodDescriptor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.teatrove.teaservlet.util.NameValuePair;
-import org.teatrove.trove.util.BeanComparator;
+import org.teatrove.trove.util.ClassUtils;
 
 /**
  *
  * @author Brian S O'Neill
  */
-public class ApplicationInfo extends NameValuePair {
-    private Class mContext;
+public class ApplicationInfo extends NameValuePair<Application> {
+    private static final long serialVersionUID = 1L;
+
+    private Class<?> mContext;
     private String mPrefix;
 
     public ApplicationInfo(String name, Application app,
-                           Class context, String prefix) {
+                           Class<?> context, String prefix) {
         super(name, app);
         mContext = context;
         mPrefix = prefix;
     }
 
-    public Class getContextType() {
+    public boolean isDeprecated() {
+        if (ClassUtils.isDeprecated(getContextType())) {
+            return true;
+        }
+        
+        return ClassUtils.isDeprecated(this.getValue().getClass());
+    }
+    
+    public Class<?> getContextType() {
         return mContext;
     }
 
@@ -45,38 +58,40 @@ public class ApplicationInfo extends NameValuePair {
         return mPrefix;
     }
 
-    public MethodDescriptor[] getContextFunctions() {
-        Class contextType = getContextType();
+    public FunctionInfo[] getContextFunctions() {
+        Class<?> contextType = getContextType();
         if (contextType == null) {
-            return new MethodDescriptor[0];
+            return new FunctionInfo[0];
         }
 
         try {
             MethodDescriptor[] methods =
                 Introspector.getBeanInfo(contextType).getMethodDescriptors();
             
-            List list = new ArrayList(methods.length);
-            for (int i=methods.length; --i >= 0; ) {
+            List<FunctionInfo> list = 
+                new ArrayList<FunctionInfo>(methods.length);
+            
+            for (int i = methods.length; --i >= 0; ) {
                 MethodDescriptor m = methods[i];
                 if (m.getMethod().getDeclaringClass() != Object.class) {
-                    list.add(m);
+                    list.add(new FunctionInfo(m, this));
                 }
             }
 
-            MethodDescriptor[] functions = 
-                (MethodDescriptor[])list.toArray(new MethodDescriptor[list.size()]);
-            Comparator c = BeanComparator.forClass(MethodDescriptor.class).orderBy("method.name");
-            Arrays.sort(functions, c);
+            FunctionInfo[] functions = 
+                list.toArray(new FunctionInfo[list.size()]);
+            
+            Arrays.sort(functions);
             return functions;
         }
         catch (Exception e) {
             Thread t = Thread.currentThread();
             t.getThreadGroup().uncaughtException(t, e);
-            return new MethodDescriptor[0];
+            return new FunctionInfo[0];
         }
     }
 
-    public NameValuePair[] getInitParameters() {
+    public NameValuePair<String>[] getInitParameters() {
         // TODO: implement
         return null;
     }

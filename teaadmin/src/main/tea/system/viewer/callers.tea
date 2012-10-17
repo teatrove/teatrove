@@ -1,0 +1,28 @@
+<% template callers(String id, String method)
+
+parts = tokenize(id, '-')
+if (parts.length != 2) { error('invalid: ' & id); }
+
+name = parts[1]
+view = getTemplateView(null, name)
+
+%>
+
+[
+    <% first = true; foreach (caller in view.callers) { %>
+        <% if (not first) { ',' } %>
+
+        {
+            "data" : {
+                "title" : "<% caller.name %>",
+                "attr" : {
+                    "class" : "caller-link",
+                    "href" : "?page=viewer&parent=<% name %>&name=<% caller.name %>"
+                }
+            },
+            "attr" : { "rel" : "template", "id" : "caller-<% caller.name %>" },
+            "state" : "closed",
+            "metadata" : { "name" : "<% caller.name %>" }
+        }
+    <% first = false; } %>
+]

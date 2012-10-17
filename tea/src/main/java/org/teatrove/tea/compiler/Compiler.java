@@ -38,6 +38,8 @@ import java.util.Vector;
 import org.teatrove.tea.parsetree.Template;
 import org.teatrove.trove.io.SourceReader;
 import org.teatrove.trove.util.ClassInjector;
+import org.teatrove.trove.util.StatusEvent;
+import org.teatrove.trove.util.StatusListener;
 
 /**
  * The Tea compiler. This class is abstract, and a few concrete
@@ -75,17 +77,18 @@ public class Compiler {
     private Set<String> mPreserveTree;
 
     private Class<?> mContextClass = 
-        org.teatrove.tea.runtime.UtilityContext.class;
+        org.teatrove.tea.runtime.Context.class;
     
     private Method[] mRuntimeMethods;
     private Method[] mStringConverters;
 
-    private ErrorListener mErrorListener;
+    private CompileListener mCompileListener;
 
-    private Vector<ErrorListener> mErrorListeners =
-        new Vector<ErrorListener>(4);
+    private Vector<CompileListener> mCompileListeners =
+        new Vector<CompileListener>(4);
 
     private int mErrorCount = 0;
+    private int mWarningCount = 0;
 
     private Vector<StatusListener> mStatusListeners =
         new Vector<StatusListener>();
@@ -169,9 +172,13 @@ public class Compiler {
         mParseTreeMap = parseTreeMap;
         mPrecompiledTolerance = precompiledTolerance;
         
-        mErrorListener = new ErrorListener() {
-            public void compileError(ErrorEvent e) {
+        mCompileListener = new CompileListener() {
+            public void compileError(CompileEvent e) {
                 dispatchCompileError(e);
+            }
+            
+            public void compileWarning(CompileEvent e) {
+                dispatchCompileWarning(e);
             }
         };
         
@@ -253,28 +260,37 @@ public class Compiler {
     }
     
     /**
-     * Add an ErrorListener in order receive events of compile-time errors.
-     * @see org.teatrove.tea.util.ConsoleErrorReporter
+     * Add an CompileListener in order receive events of compile-time events.
+     * @see org.teatrove.tea.util.ConsoleReporter
      */
-    public void addErrorListener(ErrorListener listener) {
-        mErrorListeners.addElement(listener);
+    public void addCompileListener(CompileListener listener) {
+        mCompileListeners.addElement(listener);
     }
 
-    public void removeErrorListener(ErrorListener listener) {
-        mErrorListeners.removeElement(listener);
+    public void removeCompileListener(CompileListener listener) {
+        mCompileListeners.removeElement(listener);
     }
 
-    private void dispatchCompileError(ErrorEvent e) {
+    private void dispatchCompileError(CompileEvent e) {
         mErrorCount++;
 
-        synchronized (mErrorListeners) {
-            for (int i = 0; i < mErrorListeners.size(); i++) {
-                mErrorListeners.elementAt(i).compileError(e);
+        synchronized (mCompileListeners) {
+            for (int i = 0; i < mCompileListeners.size(); i++) {
+                mCompileListeners.elementAt(i).compileError(e);
             }
         }
     }
 
+    private void dispatchCompileWarning(CompileEvent e) {
+        mWarningCount++;
 
+        synchronized (mCompileListeners) {
+            for (int i = 0; i < mCompileListeners.size(); i++) {
+                mCompileListeners.elementAt(i).compileWarning(e);
+            }
+        }
+    }
+    
     /**
      * Add a StatusListener in order to receive events of compilation progress.
      */
@@ -386,6 +402,16 @@ public class Compiler {
         mPreserveTree.add(name);
     }
 
+    /**
+     * Get the flag of whether to force all templates to be compiled even if
+     * up-to-date.
+     * 
+     * @return true to compile all source, even if up-to-date
+     */
+    public boolean isForceCompile() {
+        return mForce;
+    }
+    
     /**
      * Set the flag of whether to force all templates to be compiled even if
      * up-to-date.
@@ -528,8 +554,8 @@ public class Compiler {
                 CompilationUnit unit = getCompilationUnit(names[i], null);
                 if (unit == null) {
                     String msg = mFormatter.format("not.found", names[i]);
-                    dispatchCompileError
-                            (new ErrorEvent(this, msg, (SourceInfo)null, null));
+                    dispatchCompileError(new CompileEvent(this, 
+                        CompileEvent.Type.ERROR, msg, (SourceInfo) null, null));
                 } else if (!mCompiled.contains(names[i]) &&
                         unit.shouldCompile()) {
                     mParseTreeMap.remove(names[i]);
@@ -552,6 +578,10 @@ public class Compiler {
         return mErrorCount;
     }
 
+    public int getWarningCount() {
+        return mWarningCount;
+    }
+    
     /**
      * Returns a compilation unit associated with the given name, or null if
      * not found.
@@ -639,10 +669,9 @@ public class Compiler {
      * is compiled such that the first parameter of its execute method must
      * be an instance of the runtime context.
      *
-     * <p>Default implementation returns
-     * org.teatrove.tea.runtime.UtilityContext.
+     * <p>Default implementation returns org.teatrove.tea.runtime.Context.</p>
      *
-     * @see org.teatrove.tea.runtime.UtilityContext
+     * @see org.teatrove.tea.runtime.Context
      */
     public Class<?> getRuntimeContext() {
         return mContextClass;
@@ -885,30 +914,30 @@ public class Compiler {
         try {
             // Parse and type check the parse tree.
 
-            // Direct all compile errors into the CompilationUnit.
-            // Remove the unit as an ErrorListener in the finally block
+            // Direct all compile events into the CompilationUnit.
+            // Remove the unit as an CompileListener in the finally block
             // at the end of this method.
-            addErrorListener(unit);
+            addCompileListener(unit);
 
             try {
                 Scanner s = createScanner(createSourceReader(unit), unit);
-                s.addErrorListener(mErrorListener);
+                s.addCompileListener(mCompileListener);
                 Parser p = createParser(s, unit);
-                p.addErrorListener(mErrorListener);
+                p.addCompileListener(mCompileListener);
                 tree = p.parse();
                 mParseTreeMap.put(name, tree);
                 s.close();
             } catch (IOException e) {
                 uncaughtException(e);
                 String msg = mFormatter.format("read.error", e.toString());
-                dispatchCompileError
-                        (new ErrorEvent(this, msg, (SourceInfo)null, unit));
+                dispatchCompileError(new CompileEvent(this, 
+                    CompileEvent.Type.ERROR, msg, (SourceInfo) null, unit));
                 return tree;
             }
 
             TypeChecker tc = createTypeChecker(unit);
             tc.setClassLoader(getClassLoader());
-            tc.addErrorListener(mErrorListener);
+            tc.addCompileListener(mCompileListener);
             tc.typeCheck();
 
             if (mCompiled.contains(name) || !unit.shouldCompile()) {
@@ -929,6 +958,7 @@ public class Compiler {
                         mParseTreeMap.put(name, tree);
 
                         CodeGenerator codegen = createCodeGenerator(unit);
+                        codegen.addCompileListener(mCompileListener);
                         codegen.writeTo(out);
                         out.flush();
                         out.close();
@@ -958,18 +988,18 @@ public class Compiler {
                     uncaughtException(e);
                     String msg = mFormatter.format
                             ("write.error", e.toString());
-                    dispatchCompileError
-                            (new ErrorEvent(this, msg, (SourceInfo)null, unit));
+                    dispatchCompileError(new CompileEvent(this, 
+                        CompileEvent.Type.ERROR, msg, (SourceInfo) null, unit));
                     return tree;
                 }
             }
         } catch (Throwable e) {
             uncaughtException(e);
             String msg = mFormatter.format("internal.error", e.toString());
-            dispatchCompileError
-                    (new ErrorEvent(this, msg, (SourceInfo)null, unit));
+            dispatchCompileError(new CompileEvent(this, 
+                CompileEvent.Type.ERROR, msg, (SourceInfo) null, unit));
         } finally {
-            removeErrorListener(unit);
+            removeCompileListener(unit);
             // Conserve memory by removing the bulk of the parse tree after
             // compilation. This preserves the signature for templates that
             // may need to call this one.

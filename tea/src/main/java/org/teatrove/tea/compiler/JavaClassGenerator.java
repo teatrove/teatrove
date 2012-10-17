@@ -88,6 +88,7 @@ import org.teatrove.tea.runtime.Context;
 import org.teatrove.tea.runtime.Substitution;
 import org.teatrove.tea.runtime.SubstitutionId;
 import org.teatrove.tea.runtime.Truthful;
+import org.teatrove.tea.runtime.WrapperTypeConversionUtil;
 import org.teatrove.trove.classfile.ClassFile;
 import org.teatrove.trove.classfile.CodeBuilder;
 import org.teatrove.trove.classfile.Label;
@@ -142,6 +143,11 @@ public class JavaClassGenerator extends CodeGenerator {
     private static TypeDesc makeDesc(Class<?> clazz) {
         return TypeDesc.forClass(clazz);
     }
+    
+    private static TypeDesc makeDesc(Class<?> clazz, 
+                                     java.lang.reflect.Type genericType) {
+        return TypeDesc.forClass(clazz, genericType);
+    }
 
     private static TypeDesc makeDesc(Type type) {
         return makeDesc(type, true);
@@ -149,9 +155,9 @@ public class JavaClassGenerator extends CodeGenerator {
 
     private static TypeDesc makeDesc(Type type, boolean natural) {
         if (natural) {
-            return makeDesc(type.getNaturalClass());
+            return makeDesc(type.getNaturalClass(), type.getGenericClass());
         } else {
-            return makeDesc(type.getObjectClass());
+            return makeDesc(type.getObjectClass(), type.getGenericClass());
         }
     }
 
@@ -247,11 +253,108 @@ public class JavaClassGenerator extends CodeGenerator {
     private List<Object> mInitializerStatements =
         new ArrayList<Object>();
 
+    private MessageFormatter mFormatter;
+
     public JavaClassGenerator(CompilationUnit unit) {
         super(unit.getParseTree());
         mUnit = unit;
+        mFormatter = MessageFormatter.lookup(this);
     }
 
+    @SuppressWarnings("unused")
+    private void error(String str, Node culprit) {
+        str = mFormatter.format(str);
+        error(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg, Node culprit) {
+        str = mFormatter.format(str, arg);
+        error(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg1, String arg2, Node culprit) {
+        str = mFormatter.format(str, arg1, arg2);
+        error(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg1, String arg2, String arg3,
+                       Node culprit) {
+        str = mFormatter.format(str, arg1, arg2, arg3);
+        error(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg, Token culprit) {
+        str = mFormatter.format(str, arg);
+        error(str, culprit.getSourceInfo());
+    }
+
+    private void error(String str, SourceInfo info) {
+        dispatchCompileError(new CompileEvent(this, CompileEvent.Type.ERROR,
+                                              str, info, mUnit));
+    }
+    
+    @SuppressWarnings("unused")
+    private void error(String str, String arg, SourceInfo info) {
+        str = mFormatter.format(str, arg);
+        error(str, info);
+    }
+
+    @SuppressWarnings("unused")
+    private void error(String str, String arg1, String arg2, SourceInfo info) {
+        str = mFormatter.format(str, arg1, arg2);
+        error(str, info);
+    }
+
+    private void warn(String str, Node culprit) {
+        str = mFormatter.format(str);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, Node culprit) {
+        str = mFormatter.format(str, arg);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, String arg1, String arg2, Node culprit) {
+        str = mFormatter.format(str, arg1, arg2);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg1, String arg2, String arg3,
+                      Node culprit) {
+        str = mFormatter.format(str, arg1, arg2, arg3);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, Token culprit) {
+        str = mFormatter.format(str, arg);
+        warn(str, culprit.getSourceInfo());
+    }
+
+    private void warn(String str, SourceInfo info) {
+        dispatchCompileWarning(new CompileEvent(this, CompileEvent.Type.WARNING,
+                                                str, info, mUnit));
+    }
+    
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg, SourceInfo info) {
+        str = mFormatter.format(str, arg);
+        warn(str, info);
+    }
+
+    @SuppressWarnings("unused")
+    private void warn(String str, String arg1, String arg2, SourceInfo info) {
+        str = mFormatter.format(str, arg1, arg2);
+        warn(str, info);
+    }
+    
     public void writeTo(OutputStream out) throws IOException {
         String className = mUnit.getName();
         String targetPackage = mUnit.getTargetPackage();
@@ -262,7 +365,7 @@ public class JavaClassGenerator extends CodeGenerator {
         ClassFile classFile = new ClassFile(className);
         classFile.getModifiers().setFinal(true);
 
-        String sourceFile = mUnit.getName();
+        String sourceFile = mUnit.getSourcePath();
         if (sourceFile != null) {
             classFile.setSourceFile(sourceFile);
         }
@@ -615,7 +718,7 @@ public class JavaClassGenerator extends CodeGenerator {
         Modifiers flags = new Modifiers();
         flags.setPrivate(true);
         while (it.hasNext()) {
-            Variable v = (Variable)it.next();
+            Variable v = it.next();
             flags.setStatic(v.isStatic());
             flags.setTransient(v.isTransient());
             TypeDesc td = makeDesc(v);
@@ -795,14 +898,14 @@ public class JavaClassGenerator extends CodeGenerator {
                         mBuilder.storeLocal(startTime);
                     }
 
-                    generate((Node)mCaseNodes.get(size));
+                    generate(mCaseNodes.get(size));
 
                     // Inject post-call profiling bytecode.
                     if (profilingEnabled && size > 0) {
                         mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                             "getInvocationObserver", methodObserverType);
                         mBuilder.loadConstant(mUnit.getName());
-                        mBuilder.loadConstant((String) mCallerToSubNoList.get(size - 1));
+                        mBuilder.loadConstant(mCallerToSubNoList.get(size - 1));
                         mBuilder.invokeStatic(mContextParam.getVariable().getType().getObjectClass().getName(),
                             "getInvocationObserver", methodObserverType);
                         mBuilder.invokeInterface(methodObserverType.getFullName(), "currentTime",
@@ -889,7 +992,7 @@ public class JavaClassGenerator extends CodeGenerator {
             Label dumpException = mBuilder.createLabel();
 
             for (int i=0; i<size; i++) {
-                GuardHandler gh = (GuardHandler)mExceptionGuardHandlers.get(i);
+                GuardHandler gh = mExceptionGuardHandlers.get(i);
                 mBuilder.exceptionHandler(gh.tryStart, gh.tryEnd,
                                           "java.lang.RuntimeException");
                 // Subroutine will pop exception object off stack.
@@ -1509,6 +1612,14 @@ public class JavaClassGenerator extends CodeGenerator {
             // generate line number
             setLineNumber(node.getSourceInfo());
             
+            // handle class references
+            if (expr instanceof TypeExpression &&
+                "class".equals(node.getLookupName().getName())) {
+                
+                mBuilder.loadClass(makeDesc(expr.getType()));
+                return null;
+            }
+            
             // generate static field lookup if provided
             Field field = node.getReadProperty();
             if (field != null) {
@@ -1664,121 +1775,175 @@ public class JavaClassGenerator extends CodeGenerator {
             Expression left = node.getLeftExpression();
             Expression right = node.getRightExpression();
 
-            Type type = left.getType();
-            if (type == null || !type.equals(right.getType())) {
-                throw new RuntimeException
-                    ("ArithmeticExpression types don't match: " +
-                     type + ", " + right.getType());
+            Type ltype = left.getType();
+            Type rtype = right.getType();
+            if (ltype == null || rtype == null) {
+                throw new RuntimeException(
+                    "ArithmeticExpression types invalid: " + 
+                    ltype + ", " + rtype
+                );
             }
-
-            generate(node.getLeftExpression());
-            generate(node.getRightExpression());
 
             setLineNumber(node.getOperator().getSourceInfo());
 
-            byte opcode = Opcode.NOP;
             int ID = node.getOperator().getID();
 
-            Class<?> clazz = type.getNaturalClass();
-            if (clazz == int.class) {
-                switch (ID) {
-                case Token.PLUS:
-                    opcode = Opcode.IADD;
-                    break;
-                case Token.MINUS:
-                    opcode = Opcode.ISUB;
-                    break;
-                case Token.MULT:
-                    opcode = Opcode.IMUL;
-                    break;
-                case Token.DIV:
-                    opcode = Opcode.IDIV;
-                    break;
-                case Token.MOD:
-                    opcode = Opcode.IREM;
-                    break;
+            // handle simple scenario of primitive to primitive calculation
+            if (ltype.isPrimitive() && rtype.isPrimitive()) {
+                if (!ltype.equals(rtype)) {
+                    throw new RuntimeException(
+                        "ArithmeticExpression types must match as primitives: " +
+                        ltype + ", " + rtype
+                    );
                 }
-            }
-            else if (clazz == float.class) {
-                switch (ID) {
-                case Token.PLUS:
-                    opcode = Opcode.FADD;
-                    break;
-                case Token.MINUS:
-                    opcode = Opcode.FSUB;
-                    break;
-                case Token.MULT:
-                    opcode = Opcode.FMUL;
-                    break;
-                case Token.DIV:
-                    opcode = Opcode.FDIV;
-                    break;
-                case Token.MOD:
-                    opcode = Opcode.FREM;
-                    break;
-                }
-            }
-            else if (clazz == long.class) {
-                switch (ID) {
-                case Token.PLUS:
-                    opcode = Opcode.LADD;
-                    break;
-                case Token.MINUS:
-                    opcode = Opcode.LSUB;
-                    break;
-                case Token.MULT:
-                    opcode = Opcode.LMUL;
-                    break;
-                case Token.DIV:
-                    opcode = Opcode.LDIV;
-                    break;
-                case Token.MOD:
-                    opcode = Opcode.LREM;
-                    break;
-                }
-            }
-            else if (clazz == double.class) {
-                switch (ID) {
-                case Token.PLUS:
-                    opcode = Opcode.DADD;
-                    break;
-                case Token.MINUS:
-                    opcode = Opcode.DSUB;
-                    break;
-                case Token.MULT:
-                    opcode = Opcode.DMUL;
-                    break;
-                case Token.DIV:
-                    opcode = Opcode.DDIV;
-                    break;
-                case Token.MOD:
-                    opcode = Opcode.DREM;
-                    break;
-                }
-            }
 
-            mBuilder.math(opcode);
+                byte opcode = Opcode.NOP;
+                Class<?> clazz = ltype.getNaturalClass();
+                if (clazz == int.class) {
+                    switch (ID) {
+                    case Token.PLUS:
+                        opcode = Opcode.IADD;
+                        break;
+                    case Token.MINUS:
+                        opcode = Opcode.ISUB;
+                        break;
+                    case Token.MULT:
+                        opcode = Opcode.IMUL;
+                        break;
+                    case Token.DIV:
+                        opcode = Opcode.IDIV;
+                        break;
+                    case Token.MOD:
+                        opcode = Opcode.IREM;
+                        break;
+                    }
+                }
+                else if (clazz == float.class) {
+                    switch (ID) {
+                    case Token.PLUS:
+                        opcode = Opcode.FADD;
+                        break;
+                    case Token.MINUS:
+                        opcode = Opcode.FSUB;
+                        break;
+                    case Token.MULT:
+                        opcode = Opcode.FMUL;
+                        break;
+                    case Token.DIV:
+                        opcode = Opcode.FDIV;
+                        break;
+                    case Token.MOD:
+                        opcode = Opcode.FREM;
+                        break;
+                    }
+                }
+                else if (clazz == long.class) {
+                    switch (ID) {
+                    case Token.PLUS:
+                        opcode = Opcode.LADD;
+                        break;
+                    case Token.MINUS:
+                        opcode = Opcode.LSUB;
+                        break;
+                    case Token.MULT:
+                        opcode = Opcode.LMUL;
+                        break;
+                    case Token.DIV:
+                        opcode = Opcode.LDIV;
+                        break;
+                    case Token.MOD:
+                        opcode = Opcode.LREM;
+                        break;
+                    }
+                }
+                else if (clazz == double.class) {
+                    switch (ID) {
+                    case Token.PLUS:
+                        opcode = Opcode.DADD;
+                        break;
+                    case Token.MINUS:
+                        opcode = Opcode.DSUB;
+                        break;
+                    case Token.MULT:
+                        opcode = Opcode.DMUL;
+                        break;
+                    case Token.DIV:
+                        opcode = Opcode.DDIV;
+                        break;
+                    case Token.MOD:
+                        opcode = Opcode.DREM;
+                        break;
+                    }
+                }
+    
+                generate(node.getLeftExpression());
+                generate(node.getRightExpression());
+                
+                mBuilder.math(opcode);
+            }
+            
+            // otherwise, we must be using some unknown numerical value, so
+            // attempt a runtime calculation (Number, etc)
+            else {
+                int opcode = 0;
+                switch (ID) {
+                case Token.PLUS:
+                    opcode = WrapperTypeConversionUtil.OP_ADD;
+                    break;
+                case Token.MINUS:
+                    opcode = WrapperTypeConversionUtil.OP_SUB;
+                    break;
+                case Token.MULT:
+                    opcode = WrapperTypeConversionUtil.OP_MULT;
+                    break;
+                case Token.DIV:
+                    opcode = WrapperTypeConversionUtil.OP_DIV;
+                    break;
+                case Token.MOD:
+                    opcode = WrapperTypeConversionUtil.OP_MOD;
+                    break;
+                }
+                
+                Class<?> lclass = Number.class, rclass = Number.class;
+                if (ltype.isPrimitive()) {
+                    lclass = ltype.getNaturalClass();
+                }
+                else if (rtype.isPrimitive()) {
+                    rclass = rtype.getNaturalClass();
+                }
+                
+                Method method = getMethod(
+                    WrapperTypeConversionUtil.class, "math", int.class, 
+                    lclass, rclass
+                );
+                
+                mBuilder.loadConstant(opcode);
+                generate(node.getLeftExpression());
+                generate(node.getRightExpression());
+                
+                mBuilder.invoke(method);
+            }
 
             return null;
         }
 
         public Object visit(RelationalExpression node) {
-            generateLogical((Expression)node);
+            generateLogical(node);
             return null;
         }
 
         public Object visit(NotExpression node) {
-            generateLogical((Expression)node);
+            generateLogical(node);
             return null;
         }
 
         public Object visit(AndExpression node) {
-            generateLogical((Expression)node);
+            generateLogical(node);
             return null;
         }
 
         public Object visit(OrExpression node) {
-            generateLogical((Expression)node);
+            generateLogical(node);
             return null;
         }
 
@@ -1789,8 +1954,6 @@ public class JavaClassGenerator extends CodeGenerator {
 
             Label elseLabel = mBuilder.createLabel();
             Label endLabel = mBuilder.createLabel();
-
-            // TODO: ternary invalid types with object & primitive
 
             // if elvis relationship (then/condition the same), generate shared
             // statement
@@ -1839,95 +2002,248 @@ public class JavaClassGenerator extends CodeGenerator {
             LocalVariable lvar = 
                 mBuilder.createLocalVariable(null, makeDesc(ltype));
             mBuilder.storeLocal(lvar);
-            
+        
             generate(right);
             LocalVariable rvar =
                 mBuilder.createLocalVariable(null, makeDesc(rtype));
             mBuilder.storeLocal(rvar);
 
-            // check if comparable
-            boolean comparable =
-                Comparable.class.isAssignableFrom(ltype.getObjectClass()) &&
-                ltype.getNaturalClass().isAssignableFrom(rtype.getNaturalClass());
-                
             // check if primitives and handle directly
             if (ltype.isPrimitive() && rtype.isPrimitive()) {
-                // TODO: long, double?
-                
-                Label endLocation = mBuilder.createLabel();
-                Label ltLocation = mBuilder.createLabel();
-                Label gtLocation = mBuilder.createLabel();
 
-                mBuilder.loadLocal(lvar);
-                mBuilder.loadLocal(rvar);
-                generateComparison(ltLocation, "!=", ltype);
-                mBuilder.loadConstant(0);
-                mBuilder.branch(endLocation);
-
-                ltLocation.setLocation();
-                mBuilder.loadLocal(lvar);
-                mBuilder.loadLocal(rvar);
-                generateComparison(gtLocation, "<", ltype);
-                mBuilder.loadConstant(1);
-                mBuilder.branch(endLocation);
+                if (!ltype.equals(rtype)) {
+                    throw new RuntimeException(
+                        "CompareExpression has invalid types: " +
+                        ltype + ", " + rtype
+                    );
+                }
                 
-                gtLocation.setLocation();
-                mBuilder.loadConstant(-1);
-                
-                endLocation.setLocation();
+                generateComparison(lvar, rvar, ltype);
             }
+            
+            // otherwise, compare as nulls and then handle comparison
             else {
+                Class<?> lclass = ltype.getNaturalClass();
+                Class<?> rclass = rtype.getNaturalClass();
+                
                 Label location1 = mBuilder.createLabel();
-                Label location2 = mBuilder.createLabel();
-                Label location3 = mBuilder.createLabel();
-                Label location4 = mBuilder.createLabel();
                 Label endLocation = mBuilder.createLabel();
                 
-                mBuilder.loadLocal(lvar);
-                mBuilder.ifNullBranch(location1, false);
-                
-                mBuilder.loadLocal(rvar);
-                mBuilder.ifNullBranch(location2, false);
-                
-                mBuilder.loadConstant(0);
-                mBuilder.branch(endLocation);
-                
-                location2.setLocation();
-                mBuilder.loadConstant(-1);
-                mBuilder.branch(endLocation);
-                
-                location1.setLocation();
-                mBuilder.loadLocal(rvar);
-                mBuilder.ifNullBranch(location3, false);
-                
-                mBuilder.loadConstant(1);
-                mBuilder.branch(endLocation);
-                
-                location3.setLocation();
-                
-                mBuilder.loadLocal(lvar);
-                mBuilder.loadLocal(rvar);
-                
-                if (!comparable) {
+                if (ltype.isNonNull()) {
+                    if (rtype.isNullable()) {
+                        // left is non-null, but right is nullable, so do a
+                        // null check on right and if null we return [1], else
+                        // we jump to the beginning of the comparison block
+                        // as both are non-null at that point
+                        mBuilder.loadLocal(rvar);
+                        mBuilder.ifNullBranch(location1, false);
+                        mBuilder.loadConstant(1);
+                        mBuilder.branch(endLocation);
+                    }
+                }
+                else {
+                    Label location2 = mBuilder.createLabel();
+                    
+                    // left is nullable, so do a null check on left.  If null
+                    // we check right if necessary; otherwise if non-null, we
+                    // check right for nullability or do the comparison
                     mBuilder.loadLocal(lvar);
-                    mBuilder.instanceOf(makeDesc(Comparable.class));
-                    mBuilder.ifZeroComparisonBranch(location4, "!=");
+                    mBuilder.ifNullBranch(location2, false);
                     
-                    mBuilder.swap();
+                    if (rtype.isNonNull()) {
+                        // right is non-null and at this point we have found
+                        // left to be null, so just return [-1]. We also must
+                        // set the location so that the left check will jump
+                        // to here to begin the general comparison block
+                        mBuilder.loadConstant(-1);
+                        mBuilder.branch(endLocation);
+                        location2.setLocation();
+                    }
+                    else {
+                        Label location3 = mBuilder.createLabel();
+                        
+                        // right is nullable so we must check if right is null
+                        // or not.  If right is null, then left is already null,
+                        // so we purely return [0]. Otherwise
+                        mBuilder.loadLocal(rvar);
+                        mBuilder.ifNullBranch(location3, false);
+                        mBuilder.loadConstant(0);
+                        mBuilder.branch(endLocation);
+                        
+                        // left is already null and per the above we have now
+                        // found right to be non-null, so return [-1].
+                        location3.setLocation();
+                        mBuilder.loadConstant(-1);
+                        mBuilder.branch(endLocation);
+                        
+                        // branch point from the initial nullable check on left
+                        // so at this point left is not null so we must now
+                        // check if right is null or not.  if not null, we jump
+                        // to the comparison point...otherwise, left is not and
+                        // right is, so we return [1]
+                        location2.setLocation();
+                        mBuilder.loadLocal(rvar);
+                        mBuilder.ifNullBranch(location1, false);
+                        mBuilder.loadConstant(1);
+                        mBuilder.branch(endLocation);
+                    }
+                }
+                
+                // comparison branch point at which point both left and right
+                // are non-null
+                location1.setLocation();
+
+                // if left is primitive and right has primitive peer
+                if (ltype.isPrimitive() && rtype.hasPrimitivePeer()) {
+                    Type type = ltype.getCompatibleType(rtype.toPrimitive());
+                    TypeDesc desc = makeDesc(type);
+                    
+                    LocalVariable lvar2 = lvar; 
+                    if (!type.equals(ltype)) {
+                        lvar2 = mBuilder.createLocalVariable(null, desc);
+                    
+                        mBuilder.loadLocal(lvar);
+                        typeConvertEnd(ltype, type, false);
+                        mBuilder.storeLocal(lvar2);
+                    }
+                    
+                    LocalVariable rvar2 = 
+                        mBuilder.createLocalVariable(null, desc);
+                    mBuilder.loadLocal(rvar);
+                    typeConvertEnd(rtype, type, false);
+                    mBuilder.storeLocal(rvar2);
+                    
+                    // primitive comparison
+                    generateComparison(lvar2, rvar2, type);
+                }
+                
+                // if right is primitive and left has primitive peer
+                else if (ltype.hasPrimitivePeer() && rtype.isPrimitive()) {
+                    Type type = rtype.getCompatibleType(ltype.toPrimitive());
+                    TypeDesc desc = makeDesc(type);
+                    
+                    LocalVariable lvar2 = 
+                        mBuilder.createLocalVariable(null, desc);
+                    mBuilder.loadLocal(lvar);
+                    typeConvertEnd(ltype, type, false);
+                    mBuilder.storeLocal(lvar2);
+                    
+                    LocalVariable rvar2 = rvar; 
+                    if (!type.equals(rtype)) {
+                        rvar2 = mBuilder.createLocalVariable(null, desc);
+                        
+                        mBuilder.loadLocal(rvar);
+                        typeConvertEnd(rtype, type, false);
+                        mBuilder.storeLocal(rvar2);
+                    }
+                    
+                    // primitive comparison
+                    generateComparison(lvar2, rvar2, type);
+                }
+                
+                // if left parent class of right and comparable
+                else if (lclass.isAssignableFrom(rclass) &&
+                         Comparable.class.isAssignableFrom(lclass)) {
+                    
+                    Method method =
+                        getMethod(Comparable.class, "compareTo", Object.class);
+                    
+                    mBuilder.loadLocal(lvar);
+                    mBuilder.loadLocal(rvar);
+                    mBuilder.invoke(method);
+                }
+                
+                // if right parent class of left and comparable
+                else if (rclass.isAssignableFrom(lclass) &&
+                         Comparable.class.isAssignableFrom(rclass)) {
+                   
+                   Method method =
+                       getMethod(Comparable.class, "compareTo", Object.class);
+                   
+                   mBuilder.loadLocal(rvar);
+                   mBuilder.loadLocal(lvar);
+                   mBuilder.invoke(method);
+                   mBuilder.math(Opcode.INEG);
+               }
+                
+                // if Number parent class of either object types, then we must
+                // perform runtime analysis of the numbers to compare to each
+                // other
+                else if ((ltype.isPrimitive() || Number.class.isAssignableFrom(lclass)) &&
+                         (rtype.isPrimitive() || Number.class.isAssignableFrom(rclass))) {
+                
+                    if (!ltype.isPrimitive()) {
+                        lclass = Number.class;
+                    }
+                    
+                    if (!rtype.isPrimitive()) {
+                        rclass = Number.class;
+                    }
+                    
+                    mBuilder.loadLocal(lvar);
+                    mBuilder.loadLocal(rvar);
+                    
+                    Method method = getMethod(
+                        WrapperTypeConversionUtil.class, "compare", 
+                        lclass, rclass
+                    );
+                    
+                    mBuilder.invoke(method);
+                }
+                
+                // otherwise, compare at runtime as strings
+                else {
+                    warn("compare.not.convertible",
+                          ltype.getClassName(), rtype.getClassName(), node);
+                    
+                    mBuilder.loadLocal(lvar);
+                    if (ltype.isPrimitive()) {
+                        typeConvertEnd(ltype, ltype.toNonPrimitive(), false);
+                    }
+                    
                     mBuilder.invoke(getMethod(Object.class, "toString"));
                     
-                    mBuilder.swap();
+                    mBuilder.loadLocal(rvar);
+                    if (rtype.isPrimitive()) {
+                        typeConvertEnd(rtype, rtype.toNonPrimitive(), false);
+                    }
+                    
                     mBuilder.invoke(getMethod(Object.class, "toString"));
+                    
+                    Method method =
+                        getMethod(Comparable.class, "compareTo", Object.class);
+                    mBuilder.invoke(method);
                 }
 
-                location4.setLocation();
-                mBuilder.invoke(getMethod(Comparable.class, "compareTo", 
-                                          Object.class));
-                
                 endLocation.setLocation();
             }
 
             return null;
+        }
+        
+        private void generateComparison(LocalVariable lvar, LocalVariable rvar, 
+                                        Type type) {
+            Label endLocation = mBuilder.createLabel();
+            Label ltLocation = mBuilder.createLabel();
+            Label gtLocation = mBuilder.createLabel();
+
+            mBuilder.loadLocal(lvar);
+            mBuilder.loadLocal(rvar);
+            generateComparison(ltLocation, "!=", type);
+            mBuilder.loadConstant(0);
+            mBuilder.branch(endLocation);
+
+            ltLocation.setLocation();
+            mBuilder.loadLocal(lvar);
+            mBuilder.loadLocal(rvar);
+            generateComparison(gtLocation, "<", type);
+            mBuilder.loadConstant(1);
+            mBuilder.branch(endLocation);
+            
+            gtLocation.setLocation();
+            mBuilder.loadConstant(-1);
+            
+            endLocation.setLocation();
         }
         
         private void generateComparison(Label label, String choice, 
@@ -1951,6 +2267,33 @@ public class JavaClassGenerator extends CodeGenerator {
             }
             else {
                 mBuilder.ifComparisonBranch(label, choice);                
+            }
+        }
+        
+        private void generateZeroComparison(Label label, String choice, 
+                                            Type type) {
+            generateZeroComparison(label, choice, type.getNaturalClass());
+        }
+        
+        private void generateZeroComparison(Label label, String choice, 
+                                            Class<?> clazz) {
+            if (clazz == long.class) {
+                mBuilder.loadConstant(0L);
+                mBuilder.math(Opcode.LCMP);
+                mBuilder.ifZeroComparisonBranch(label, choice);
+            }
+            else if (clazz == float.class) {
+                mBuilder.loadConstant(0.0f);
+                mBuilder.math(Opcode.FCMPG);
+                mBuilder.ifZeroComparisonBranch(label, choice);
+            }
+            else if (clazz == double.class) {
+                mBuilder.loadConstant(0.0);
+                mBuilder.math(Opcode.DCMPG);
+                mBuilder.ifZeroComparisonBranch(label, choice);
+            }
+            else {
+                mBuilder.ifZeroComparisonBranch(label, choice);                
             }
         }
         
@@ -2253,8 +2596,17 @@ public class JavaClassGenerator extends CodeGenerator {
             else if (Double.class.isAssignableFrom(fromClass)) {
                 mBuilder.loadConstant(value.doubleValue());
             }
+            else if (value instanceof Long) {
+                mBuilder.loadConstant(value.longValue());
+            }
+            else if (value instanceof Float) {
+                mBuilder.loadConstant(value.floatValue());
+            }
+            else if (value instanceof Double) {
+                mBuilder.loadConstant(value.doubleValue());
+            }
             else {
-                typeError(fromType, toType);
+                mBuilder.loadConstant(value.intValue());
             }
 
             return null;
@@ -2273,8 +2625,21 @@ public class JavaClassGenerator extends CodeGenerator {
             }
         }
 
-        private void generateBranch(Expression expr,
-                                    Label label, boolean whenTrue) {
+        private void generateBranch(Expression expr, Label label,
+                                    boolean whenTrue) {
+            generateBranch(expr, label, whenTrue, false);
+        }
+        
+        private void generateBranch(Expression expr, Label label,
+                                    boolean whenTrue, boolean invert) {
+            
+            // get the simple state for handling whenTrue
+            // if this is an inversion (ie: not operation), then we use the
+            // opposite.  Note that this does not apply for compound statements
+            // such as truthful expressions which requires the aggregate to be
+            // the opposite rather than its individual parts
+            boolean _whenTrue = (invert ? !whenTrue : whenTrue);
+            
             if (expr instanceof Logical) {
                 // What follows is something that the visitor design pattern
                 // solves, but I would need to make a special visitor
@@ -2282,16 +2647,16 @@ public class JavaClassGenerator extends CodeGenerator {
                 // labels and "whenTrue" flags.
 
                 if (expr instanceof RelationalExpression) {
-                    generateBranch((RelationalExpression)expr, label,whenTrue);
+                    generateBranch((RelationalExpression)expr, label, _whenTrue);
                 }
                 else if (expr instanceof NotExpression) {
-                    generateBranch((NotExpression)expr, label, whenTrue);
+                    generateBranch((NotExpression)expr, label, _whenTrue);
                 }
                 else if (expr instanceof AndExpression) {
-                    generateBranch((AndExpression)expr, label, whenTrue);
+                    generateBranch((AndExpression)expr, label, _whenTrue);
                 }
                 else if (expr instanceof OrExpression) {
-                    generateBranch((OrExpression)expr, label, whenTrue);
+                    generateBranch((OrExpression)expr, label, _whenTrue);
                 }
             }
             else {
@@ -2300,72 +2665,64 @@ public class JavaClassGenerator extends CodeGenerator {
                 Type type = expr.getType();
                 if (expr.isValueKnown()) {
                     Object value = expr.getValue();
-                    if (value == null && !whenTrue) {
+                    if (value == null && !_whenTrue) {
                         mBuilder.branch(label);
                     }
                     else if (value instanceof Truthful) {
                         boolean isTrue = ((Truthful) value).isTrue();
-                        if ((!isTrue && !whenTrue) || (isTrue && whenTrue)) {
+                        if ((!isTrue && !_whenTrue) || (isTrue && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof Boolean) {
                         boolean isTrue = ((Boolean) value).booleanValue();
-                        if ((!isTrue && !whenTrue) || (isTrue && whenTrue)) {
-                            mBuilder.branch(label);
-                        }
-                    }
-                    else if (value instanceof Float ||
-                             value instanceof Double) {
-                        double dblvalue = ((Number) value).doubleValue();
-                        if ((dblvalue == 0.0 && !whenTrue) ||
-                            (dblvalue != 0.0 && whenTrue)) {
+                        if ((!isTrue && !_whenTrue) || (isTrue && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof Number) {
-                        int intvalue = ((Number) value).intValue();
-                        if ((intvalue == 0 && !whenTrue) ||
-                            (intvalue != 0 && whenTrue)) {
+                        boolean valid = 
+                            WrapperTypeConversionUtil.isValid((Number) value);
+                        if ((!valid && !_whenTrue) || (valid && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof String) {
                         int length = ((String) value).length();
-                        if ((length == 0 && !whenTrue) ||
-                            (length != 0 && whenTrue)) {
+                        if ((length == 0 && !_whenTrue) ||
+                            (length != 0 && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value != null && value.getClass().isArray()) {
                         int length = Array.getLength(value);
-                        if ((length == 0 && !whenTrue) ||
-                            (length != 0 && whenTrue)) {
+                        if ((length == 0 && !_whenTrue) ||
+                            (length != 0 && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof Collection) {
                         int length = ((Collection<?>) value).size();
-                        if ((length == 0 && !whenTrue) ||
-                            (length != 0 && whenTrue)) {
+                        if ((length == 0 && !_whenTrue) ||
+                            (length != 0 && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
                     else if (value instanceof Map) {
                         int length = ((Map<?, ?>) value).size();
-                        if ((length == 0 && !whenTrue) ||
-                            (length != 0 && whenTrue)) {
+                        if ((length == 0 && !_whenTrue) ||
+                            (length != 0 && _whenTrue)) {
                             mBuilder.branch(label);
                         }
                     }
-                    else if (value != null && whenTrue) {
+                    else if (value != null && _whenTrue) {
                         mBuilder.branch(label);
                     }
                 }
                 else if (type == null) {
                     // unknown type, just perform straight comparison
                     generate(expr);
-                    mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                    mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                 }
                 else if (type.isPrimitive()) {
                     generate(expr);
@@ -2373,106 +2730,158 @@ public class JavaClassGenerator extends CodeGenerator {
                     if (long.class.equals(clazz)) {
                            mBuilder.loadConstant(0L);
                            mBuilder.math(Opcode.LCMP);
-                           mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                           mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                     }
                     else if (float.class.equals(clazz)) {
                         mBuilder.loadConstant(0.0f);
                         mBuilder.math(Opcode.FCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                     }
                     else if (double.class.equals(clazz)) {
                         mBuilder.loadConstant(0.0);
                         mBuilder.math(Opcode.DCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                     }
                     else {
                         // standard type, just perform straight comparison
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, _whenTrue ? "!=" : "==");
                     }
                 }
                 else {
                     generate(expr);
-                    LocalVariable local =
-                        mBuilder.createLocalVariable(null, makeDesc(type));
-                    mBuilder.storeLocal(local);
 
-                    // test for null (false value)
-                    if (type.isNullable()) {
-                        mBuilder.loadLocal(local);
-                        mBuilder.ifNullBranch(label, !whenTrue);
+                    // load the variable for variable refs to avoid duplicating
+                    // local variables
+                    Variable var = null;
+                    if (expr instanceof VariableRef) {
+                        var = ((VariableRef) expr).getVariable(); 
+                    }
+                    
+                    // create a temp local variable for non-variable refs
+                    // as long as we are nullable such that we must make two
+                    // checks (null and truth)
+                    LocalVariable local = null;
+                    if (var == null && type.isNullable()) {
+                        TypeDesc desc = makeDesc(type);
+                        if (desc.isDoubleWord()) { mBuilder.dup2(); }
+                        else { mBuilder.dup(); }
+                        
+                        local = mBuilder.createLocalVariable(null, desc);
+                        mBuilder.storeLocal(local);
                     }
 
-                    mBuilder.loadLocal(local);
+                    // create a branch to go to in order to evaluate the truth
+                    // check after the null check...only valid if we need the
+                    // null check
+                    Label branch = null;
+                    if (_whenTrue && type.isNullable()) {
+                        branch = mBuilder.createLabel();
+                    }
+                    
+                    // test for null (false value)
+                    if (type.isNullable()) {
+                        mBuilder.ifNullBranch(_whenTrue ? branch : label, true);
+
+                        // load the data again to do further testing after the
+                        // null check...if we have a local variable from 
+                        // earlier, load it otherwise, if we have a reference 
+                        // load that instead
+                        if (local != null) { mBuilder.loadLocal(local); }
+                        else if (var != null) { loadFromVariable(var); }
+                    }
+                    
+                    // get the associated class for comparison
                     Class<?> clazz = type.getNaturalClass();
 
                     // handle truthful values
                     if (Truthful.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(Truthful.class, "isTrue"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, 
+                            _whenTrue ? "!=" : "==");
                     }
 
                     // handle boolean values
                     else if (Boolean.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(Boolean.class, "booleanValue"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, 
+                            _whenTrue ? "!=" : "==");
                     }
 
                     // handle numeric values
-                    else if (Long.class.isAssignableFrom(clazz)) {
-                        mBuilder.invoke(getMethod(Long.class, "longValue"));
-
-                        mBuilder.loadConstant(0L);
-                        mBuilder.math(Opcode.FCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
-                    }
-                    else if (Double.class.isAssignableFrom(clazz)) {
-                        mBuilder.invoke(getMethod(Double.class, "doubleValue"));
-
-                        mBuilder.loadConstant(0.0);
-                        mBuilder.math(Opcode.DCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
-                    }
-                    else if (Float.class.isAssignableFrom(clazz)) {
-                        mBuilder.invoke(getMethod(Float.class, "floatValue"));
-
-                        mBuilder.loadConstant(0.0f);
-                        mBuilder.math(Opcode.FCMPG);
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
-                    }
                     else if (Number.class.isAssignableFrom(clazz)) {
-                        mBuilder.invoke(getMethod(Number.class, "intValue"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        Type ctype = 
+                            type.getCompatibleType(Type.INT_TYPE).toPrimitive();
+                        
+                        // handle types that are primitive and known
+                        if (ctype.isPrimitive()) {
+                            if (!type.equals(ctype)) {
+                                typeConvertEnd(type, ctype, false);
+                            }
+                            
+                            generateZeroComparison(label, 
+                                _whenTrue ? "!=" : "==", ctype);
+                        }
+                        
+                        // otherwise, test at runtime to evaluate
+                        else {
+                            Method method = getMethod
+                            (
+                                WrapperTypeConversionUtil.class, 
+                                "isValid", Number.class
+                            );
+                            
+                            mBuilder.invoke(method);
+                            mBuilder.ifZeroComparisonBranch(label, 
+                                _whenTrue ? "!=" : "==");
+                        }
                     }
 
                     // handle string values
                     else if (String.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(String.class, "length"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, 
+                            _whenTrue ? "!=" : "==");
                     }
 
                     // handle array values
                     else if (clazz.isArray()) {
                         mBuilder.arrayLength();
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, 
+                            _whenTrue ? "!=" : "==");
                     }
 
                     // handle collection values
                     else if (Collection.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(Collection.class, "size"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, 
+                            _whenTrue ? "!=" : "==");
                     }
                     
                     // handle map values
                     else if (Map.class.isAssignableFrom(clazz)) {
                         mBuilder.invoke(getMethod(Map.class, "size"));
-                        mBuilder.ifZeroComparisonBranch(label, whenTrue ? "!=" : "==");
+                        mBuilder.ifZeroComparisonBranch(label, 
+                            _whenTrue ? "!=" : "==");
                     }
 
                     // any other case, just pop last value (assume true)
                     // if expected true, then branch
                     else {
+                        // warn("truthful.object.expression", expr);
+                        
                         mBuilder.pop();
-                        if (whenTrue) { mBuilder.branch(label); }
+                        if (_whenTrue) { 
+                            mBuilder.branch(label); 
+                        }
+                    }
+
+                    // set the location to jump the null check to for when the
+                    // request was to jump to the actual label if only true
+                    // this branch is placed here as the next lines of code
+                    // are the false aspect.  If the null check fails, it is
+                    // not true and thus it jump here.
+                    if (branch != null) {
+                        branch.setLocation();
                     }
                 }
             }
@@ -2510,7 +2919,10 @@ public class JavaClassGenerator extends CodeGenerator {
             String choice = getChoice(operator, whenTrue);
 
             Type leftType = left.getType();
+            Class<?> leftClass = leftType.getNaturalClass();
+            
             Type rightType = right.getType();
+            Class<?> rightClass = rightType.getNaturalClass();
 
             Class<?> clazz = 
                 leftType.getCompatibleType(rightType).getNaturalClass();
@@ -2520,103 +2932,133 @@ public class JavaClassGenerator extends CodeGenerator {
                                            leftType + ", " + rightType);
             }
 
-            if (!leftType.isPrimitive()) {
-                String className;
-                String methodName;
-                TypeDesc ret;
+            boolean isPrimitive = 
+                leftType.isPrimitive() && rightType.isPrimitive();
+            
+            // handle object comparisons where at least one value is an object
+            // rather than both being primitives
+            
+            if (!isPrimitive) {
+                
+                // if both are a number value including both being numbers or
+                // one being primitive and the other a number, then we are
+                // assuming we have an unknown or general purpose number we 
+                // have to deal with at runtime so compare together using the
+                // runtime types for type safety
 
-                if (choice == "==" || choice == "!=") {
-                    if (right.isValueKnown() && right.getValue() == null) {
-                        generate(left);
-                        mBuilder.ifNullBranch(label, choice == "==");
+                if (Number.class.equals(clazz)) {
+
+                    if (!leftType.isPrimitive() && !rightType.isPrimitive()) {
+                        // both are objects, so do pure equality checking
+                        if (choice == "==" || choice == "!=") {
+                            generateEquals(left, right, label, choice, operator);
+                        }
+                        
+                        // convert both to Numbers and runtime compare for
+                        // relational checking
+                        else {
+                            generate(left);
+                            generate(right);
+                            
+                            Method method = getMethod(
+                                WrapperTypeConversionUtil.class, "compare", 
+                                Number.class, Number.class
+                            );
+                            
+                            mBuilder.invoke(method);
+                            mBuilder.ifZeroComparisonBranch(label, choice);
+                        }
                     }
-                    else if (left.isValueKnown() && left.getValue() == null) {
+                    
+                    // handle cases where one value is primitive and the other
+                    // is some unknown numeric object and compare at runtime
+                    else {
+                        leftClass = Number.class;
+                        if (leftType.isPrimitive()) {
+                            leftClass = leftType.getNaturalClass();
+                        }
+                        
+                        rightClass = Number.class;
+                        if (rightType.isPrimitive()) {
+                            rightClass = rightType.getNaturalClass();
+                        }
+                    
+                        Method method = getMethod(
+                            WrapperTypeConversionUtil.class, "compare", 
+                            leftClass, rightClass
+                        );
+
+                        generate(left);
                         generate(right);
-                        mBuilder.ifNullBranch(label, choice == "==");
+                        mBuilder.invoke(method);
+                        mBuilder.ifZeroComparisonBranch(label, choice);
+                    }
+                }
+                
+                // non-numbers, so assume both are objects and do equality check
+                else if (choice == "==" || choice == "!=") {
+                    generateEquals(left, right, label, choice, operator);
+                }
+                
+                // use comparable comparisons for relational checks
+                else if (Comparable.class.isAssignableFrom(clazz) &&
+                         (leftClass.isAssignableFrom(rightClass) ||
+                          rightClass.isAssignableFrom(leftClass))) {
+
+                    // check whether we need to compare left to right when
+                    // left is the parent or right to left when right is the
+                    // parent...in the latter case we also negate it
+                    
+                    boolean leftToRight = 
+                        leftClass.isAssignableFrom(rightClass);
+                    
+                    if (leftToRight) {
+                        generate(left);
+                        generate(right);
                     }
                     else {
-                        className = "java.lang.Object";
-                        methodName = "equals";
-                        ret = TypeDesc.BOOLEAN;
-
-                        if (leftType.isNonNull() || right.isValueKnown()) {
-                            if (leftType.isNonNull()) {
-                                generate(left);
-                                generate(right);
-                            }
-                            else {
-                                // Reversing the order of generation is
-                                // safe because the right expression is
-                                // constant.
-                                generate(right);
-                                generate(left);
-                            }
-                            setLineNumber(operator.getSourceInfo());
-                            mBuilder.invokeVirtual(className, methodName, ret,
-                                                   cObjectParam);
-                            mBuilder.ifZeroComparisonBranch
-                                (label, (choice == "==") ? "!=" : "==");
-                        }
-                        else {
-                            // This is a little bit complicated. The results
-                            // of the left expression are tested against null
-                            // before the equals method is invoked on it.
-
-                            generate(left);
-                            mBuilder.dup();
-                            Label leftNotNull = mBuilder.createLabel();
-                            mBuilder.ifNullBranch(leftNotNull, false);
-                            mBuilder.pop(); // discard left expression result
-
-                            Label fallThrough = mBuilder.createLabel();
-
-                            if (rightType.isNonNull()) {
-                                if (choice == "==") {
-                                    mBuilder.branch(fallThrough);
-                                }
-                                else {
-                                    mBuilder.branch(label);
-                                }
-                            }
-                            else {
-                                generate(right);
-                                mBuilder.ifNullBranch(label, choice == "==");
-                                mBuilder.branch(fallThrough);
-                            }
-
-                            leftNotNull.setLocation();
-                            generate(right);
-                            setLineNumber(operator.getSourceInfo());
-                            mBuilder.invokeVirtual(className, methodName, ret,
-                                                   cObjectParam);
-                            mBuilder.ifZeroComparisonBranch
-                                (label, (choice == "==") ? "!=" : "==");
-
-                            fallThrough.setLocation();
-                        }
+                        generate(right);
+                        generate(left);
                     }
-                }
-                else if (String.class.isAssignableFrom(clazz)) {
-                    // The compareTo method is called only for <, >, <= or >=
-                    // relational operators.
-                    generate(left);
-                    generate(right);
+                    
                     setLineNumber(operator.getSourceInfo());
 
-                    mBuilder.invokeVirtual("java.lang.String", "compareTo",
-                                           TypeDesc.INT, cStringParam);
+                    Method method = 
+                        getMethod(Comparable.class, "compareTo", Object.class);
+                    mBuilder.invoke(method);
+                    
+                    if (!leftToRight) {
+                        mBuilder.math(Opcode.INEG);
+                    }
+                    
                     mBuilder.ifZeroComparisonBranch(label, choice);
                 }
-                else if (Comparable.class.isAssignableFrom(clazz)) {
-                    // The compareTo method is called only for <, >, <= or >=
-                    // relational operators.
+                else if (Number.class.isAssignableFrom(clazz)) {
+                    // numbers must be converted down to primitives to be
+                    // compared...this is potentially dangerous as we are
+                    // converting types
+                    warn("compare.as.double", expr);
+                    
+                    Method doubleMethod = 
+                        getMethod(Number.class, "doubleValue");
+                    
                     generate(left);
+                    mBuilder.invoke(doubleMethod);
                     generate(right);
+                    mBuilder.invoke(doubleMethod);
                     setLineNumber(operator.getSourceInfo());
-
-                    mBuilder.invokeInterface("java.lang.Comparable",
-                                             "compareTo",
-                                             TypeDesc.INT, cObjectParam);
+                    
+                    byte op;
+                    int ID = operator.getID();
+                    if (ID == Token.LT || ID == Token.LE ||
+                        ID == Token.EQ) {
+                        op = Opcode.DCMPG;
+                    }
+                    else {
+                        op = Opcode.DCMPL;
+                    }
+                    
+                    mBuilder.math(op);
                     mBuilder.ifZeroComparisonBranch(label, choice);
                 }
                 else {
@@ -2624,10 +3066,11 @@ public class JavaClassGenerator extends CodeGenerator {
                                                " for type " + leftType);
                 }
             }
+            
+            // otherwise, handle purely primitive comparisons
             else {
-                // Deal with expressions that evaluate to primitive types...
                 if (clazz == int.class) {
-                    if (right.isValueKnown()) {
+                    if (right.isValueKnown() && right.getValue() != null) {
                         int value = ((Integer)right.getValue()).intValue();
                         if (value == 0) {
                             generate(left);
@@ -2635,7 +3078,7 @@ public class JavaClassGenerator extends CodeGenerator {
                             return;
                         }
                     }
-                    else if (left.isValueKnown()) {
+                    else if (left.isValueKnown() && left.getValue() != null) {
                         int value = ((Integer)left.getValue()).intValue();
                         if (value == 0) {
                             generate(right);
@@ -2697,14 +3140,89 @@ public class JavaClassGenerator extends CodeGenerator {
                 }
             }
         }
+        
+        private void generateEquals(Expression left, Expression right,
+                                    Label label, String choice, 
+                                    Token operator) {
+            
+            if (right.isValueKnown() && right.getValue() == null) {
+                generate(left);
+                mBuilder.ifNullBranch(label, choice == "==");
+            }
+            else if (left.isValueKnown() && left.getValue() == null) {
+                generate(right);
+                mBuilder.ifNullBranch(label, choice == "==");
+            }
+            else {
+                Method method =  
+                    getMethod(Object.class ,"equals", Object.class);
+
+                Type leftType = left.getType();
+                Type rightType = right.getType();
+                
+                if (leftType.isNonNull() || right.isValueKnown()) {
+                    if (leftType.isNonNull()) {
+                        generate(left);
+                        generate(right);
+                    }
+                    else {
+                        // Reversing the order of generation is
+                        // safe because the right expression is
+                        // constant.
+                        generate(right);
+                        generate(left);
+                    }
+                    setLineNumber(operator.getSourceInfo());
+                    mBuilder.invoke(method);
+                    mBuilder.ifZeroComparisonBranch
+                        (label, (choice == "==") ? "!=" : "==");
+                }
+                else {
+                    // This is a little bit complicated. The results
+                    // of the left expression are tested against null
+                    // before the equals method is invoked on it.
+
+                    generate(left);
+                    mBuilder.dup();
+                    Label leftNotNull = mBuilder.createLabel();
+                    mBuilder.ifNullBranch(leftNotNull, false);
+                    mBuilder.pop(); // discard left expression result
+
+                    Label fallThrough = mBuilder.createLabel();
+
+                    if (rightType.isNonNull()) {
+                        if (choice == "==") {
+                            mBuilder.branch(fallThrough);
+                        }
+                        else {
+                            mBuilder.branch(label);
+                        }
+                    }
+                    else {
+                        generate(right);
+                        mBuilder.ifNullBranch(label, choice == "==");
+                        mBuilder.branch(fallThrough);
+                    }
+
+                    leftNotNull.setLocation();
+                    generate(right);
+                    setLineNumber(operator.getSourceInfo());
+                    mBuilder.invoke(method);
+                    mBuilder.ifZeroComparisonBranch
+                        (label, (choice == "==") ? "!=" : "==");
+
+                    fallThrough.setLocation();
+                }
+            }
+        }
 
         // "not", "and" and "or" have short circuit semantics.
 
         private void generateBranch(NotExpression expr,
                                     Label label, boolean whenTrue) {
             // If someone is branching based on the result of this not
-            // expression, just invert the branch condition.
-            generateBranch(expr.getExpression(), label, !whenTrue);
+            // expression, we must invert the branch condition.
+            generateBranch(expr.getExpression(), label, whenTrue, true);
         }
 
         private void generateBranch(AndExpression expr,
@@ -3116,6 +3634,12 @@ public class JavaClassGenerator extends CodeGenerator {
                         else if (toNat == double.class) {
                             methodName = "doubleValue";
                         }
+                        else if (toNat == byte.class) {
+                            methodName = "byteValue";
+                        }
+                        else if (toNat == short.class) {
+                            methodName = "shortValue";
+                        }
 
                         if (methodName != null) {
                             mBuilder.invokeVirtual("java.lang.Number",
@@ -3149,10 +3673,15 @@ public class JavaClassGenerator extends CodeGenerator {
                             return;
                         }
 
-                        mBuilder.loadStaticField(toNat.getName(), "TYPE", makeDesc(Class.class));
-                        mBuilder.invokeStatic("org.teatrove.tea.runtime.WrapperTypeConversionUtil",
-                            "convert", makeDesc(Number.class), new TypeDesc[] {
-                            makeDesc(Number.class), makeDesc(Class.class) });
+                        mBuilder.loadStaticField(toNat.getName(), "TYPE", 
+                                                 makeDesc(Class.class));
+
+                        Method method = getMethod(
+                            WrapperTypeConversionUtil.class, "convert", 
+                            Number.class, Class.class
+                        );
+
+                        mBuilder.invoke(method);
                         mBuilder.checkCast(makeDesc(toNat));
                         return;
 
@@ -3690,7 +4219,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 }
             }
             else if (longRange) {
-                mBuilder.loadConstant((long)endIndexValue);
+                mBuilder.loadConstant(endIndexValue);
                 mBuilder.math(Opcode.LCMP);
                 mBuilder.ifZeroComparisonBranch(startLabel, choice);
             }
@@ -4117,7 +4646,7 @@ public class JavaClassGenerator extends CodeGenerator {
             if (!mVariableMap.containsKey(var)) {
                 declareVariable(var, null);
             }
-            return (LocalVariable)mVariableMap.get(var);
+            return mVariableMap.get(var);
         }
 
         private void loadFromVariable(Variable var) {
@@ -4137,7 +4666,7 @@ public class JavaClassGenerator extends CodeGenerator {
                 }
             }
             else {
-                LocalVariable local = (LocalVariable)mVariableMap.get(var);
+                LocalVariable local = mVariableMap.get(var);
                 if (local == null) {
                     throw new RuntimeException
                         ("Attempting to read from uninitialized local " +
@@ -4191,11 +4720,11 @@ public class JavaClassGenerator extends CodeGenerator {
 
                         if (clazz == int.class) {
                             if (amount >= 0) {
-                                mBuilder.loadConstant((int)amount);
+                                mBuilder.loadConstant(amount);
                                 mBuilder.math(Opcode.IADD);
                             }
                             else {
-                                mBuilder.loadConstant((int)-amount);
+                                mBuilder.loadConstant(-amount);
                                 mBuilder.math(Opcode.ISUB);
                             }
                         }

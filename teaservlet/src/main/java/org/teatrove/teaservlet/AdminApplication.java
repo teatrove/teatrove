@@ -16,37 +16,60 @@
 
 package org.teatrove.teaservlet;
 
-import java.beans.*;
-import java.io.*;
-import java.util.*;
-import java.net.*;
+import java.beans.MethodDescriptor;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.Vector;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-import org.teatrove.trove.log.Log;
-
-import org.teatrove.teaservlet.util.ClassDB;
-import org.teatrove.trove.util.BeanComparator;
-import org.teatrove.trove.util.PropertyMap;
-
-import org.teatrove.trove.io.ByteBuffer;
-import org.teatrove.trove.classfile.TypeDesc;
+import org.teatrove.tea.compiler.CompilationUnit;
+import org.teatrove.tea.compiler.TemplateRepository;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
-
-import org.teatrove.tea.compiler.TemplateRepository;
-
-import org.teatrove.teatools.*;
+import org.teatrove.tea.engine.TemplateCompilationStatus;
+import org.teatrove.tea.engine.TemplateIssue;
+import org.teatrove.tea.engine.TemplateExecutionResult;
+import org.teatrove.tea.runtime.Context;
+import org.teatrove.tea.runtime.DefaultContext;
+import org.teatrove.tea.runtime.OutputReceiver;
+import org.teatrove.tea.runtime.Substitution;
+import org.teatrove.teaservlet.stats.AggregateInterval;
+import org.teatrove.teaservlet.stats.AggregateSummary;
+import org.teatrove.teaservlet.stats.Milestone;
+import org.teatrove.teaservlet.stats.TeaServletRequestStats;
+import org.teatrove.teaservlet.stats.TemplateStats;
+import org.teatrove.teaservlet.util.ClassDB;
 import org.teatrove.teaservlet.util.ServerNote;
-//REMOTE stuff
-import java.rmi.RemoteException;
-
-import org.teatrove.teaservlet.stats.*;
-import org.teatrove.teaservlet.util.cluster.Restartable;
-import org.teatrove.teaservlet.util.cluster.Clustered;
 import org.teatrove.teaservlet.util.cluster.ClusterManager;
+import org.teatrove.teaservlet.util.cluster.Clustered;
+import org.teatrove.teaservlet.util.cluster.Restartable;
+import org.teatrove.teatools.TeaToolsUtils;
+import org.teatrove.teatools.TypeDescription;
+import org.teatrove.trove.classfile.TypeDesc;
+import org.teatrove.trove.io.ByteBuffer;
+import org.teatrove.trove.log.Log;
+import org.teatrove.trove.util.BeanComparator;
+import org.teatrove.trove.util.PropertyMap;
 
 /**
  * The Admin application defines functions for administering the TeaServlet.
@@ -60,7 +83,7 @@ public class AdminApplication implements AdminApp {
     protected String mAdminKey;
     protected String mAdminValue;
     protected AppAdminLinks[] mAdminLinks;
-    protected Map mNotes;
+    protected Map<String, Set<ServerNote>> mNotes;
     protected int mMaxNotes;
     protected int mNoteAge;
     protected ClassDB mClassDB;
@@ -122,9 +145,9 @@ public class AdminApplication implements AdminApp {
             }
         }
 
-        List serverList = new ArrayList();
+        /*
+           List serverList = new ArrayList();
 
-        /* OLD CLUSTER stuff
            // Get the server list.
            String clusterServers = config.getInitParameter("cluster.servers");
            if (clusterServers != null) {
@@ -249,44 +272,15 @@ public class AdminApplication implements AdminApp {
     /**
      * Returns {@link AdminContext}.class.
      */
-    public Class getContextType() {
+    public Class<AdminContext> getContextType() {
         return AdminContext.class;
     }
 
-    void adminCheck(ApplicationRequest request, ApplicationResponse response)
-        throws AbortTemplateException
-    {
-        if (mAdminKey == null) {
-            return;
-        }
-
-        // Check for admin key.
-        String adminParam = request.getParameter(mAdminKey);
-
-        // Look in cookie for admin param.
-        if (adminParam == null) {
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (int i = 0; i < cookies.length; i++) {
-                    Cookie cookie = cookies[i];
-                    if (cookie.getName().equals(mAdminKey)) {
-                        adminParam = cookie.getValue();
-                    }
-                }
-            }
-        }
-
-        if (adminParam != null && adminParam.equals(mAdminValue)) {
-            // Set the admin param in the cookie.
-            Cookie c = new Cookie(mAdminKey, adminParam);
-            // Save cookie for 7 days.
-            c.setMaxAge(24 * 60 * 60 * 7);
-            c.setPath("/");
-            response.addCookie(c);
-        }
-        else {
-            // User is unauthorized.
-
+    void adminCheck(ApplicationRequest request, 
+                    ApplicationResponse response) 
+        throws AbortTemplateException {
+        
+        if (!adminCheck(mAdminKey, mAdminValue, request, response)) {
             mLog.warn("Unauthorized Admin access to " +
                       request.getRequestURI() +
                       " from " + request.getRemoteAddr() +
@@ -295,12 +289,50 @@ public class AdminApplication implements AdminApp {
 
             try {
                 response.sendError
-                    (response.SC_NOT_FOUND, request.getRequestURI());
+                    (HttpServletResponse.SC_NOT_FOUND, request.getRequestURI());
             }
             catch (IOException e) {
             }
 
             throw new AbortTemplateException();
+        }
+    }
+    
+    
+    public static boolean adminCheck(String adminKey, String adminValue,
+                                     HttpServletRequest request, 
+                                     HttpServletResponse response) {
+        if (adminKey == null) {
+            return true;
+        }
+
+        // Check for admin key.
+        String adminParam = request.getParameter(adminKey);
+
+        // Look in cookie for admin param.
+        if (adminParam == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (int i = 0; i < cookies.length; i++) {
+                    Cookie cookie = cookies[i];
+                    if (cookie.getName().equals(adminKey)) {
+                        adminParam = cookie.getValue();
+                    }
+                }
+            }
+        }
+
+        if (adminParam != null && adminParam.equals(adminValue)) {
+            // Set the admin param in the cookie.
+            Cookie c = new Cookie(adminKey, adminParam);
+            // Save cookie for 7 days.
+            c.setMaxAge(24 * 60 * 60 * 7);
+            c.setPath("/");
+            response.addCookie(c);
+            return true;
+        }
+        else {
+            return false;
         }
     }
 
@@ -345,7 +377,7 @@ public class AdminApplication implements AdminApp {
         protected ApplicationResponse mResponse;
         private TeaServletAdmin mTSAdmin;
         private TemplateCompilationResults mCompilationResults;
-        private List mServerStatus;
+        private List<ServerStatus> mServerStatus;
 
         protected ContextImpl(ApplicationRequest request,
                               ApplicationResponse response) {
@@ -355,6 +387,11 @@ public class AdminApplication implements AdminApp {
 
         public TemplateCompilationResults getCompilationResults() {
             return mCompilationResults;
+        }
+        
+        @Override
+        public TemplateCompilationStatus getCompilationStatus() {
+            return mTSAdmin.getCompilationStatus();
         }
 
         public FunctionInfo getFunction(String methodName) {
@@ -386,7 +423,7 @@ public class AdminApplication implements AdminApp {
             if (mTSAdmin.getAdminLinks() == null) {
 
                 // add the Teaservlet links first.
-                List links = new ArrayList();
+                List<AppAdminLinks> links = new ArrayList<AppAdminLinks>();
                 links.add(getAdminLinks());
 
                 // go through the apps looking for other AdminApps
@@ -401,7 +438,7 @@ public class AdminApplication implements AdminApp {
                     }
                 }
                 mTSAdmin
-                    .setAdminLinks((AppAdminLinks[])links
+                    .setAdminLinks(links
                                    .toArray(new AppAdminLinks[links.size()]));
             }
 
@@ -458,7 +495,7 @@ public class AdminApplication implements AdminApp {
             return mTSAdmin;
         }
 
-        public Class getClassForName(String classname) {
+        public Class<?> getClassForName(String classname) {
             try {
                 ClassLoader cl = mTeaServlet.getEngine().getApplicationDepot()
                     .getContextType().getClassLoader();
@@ -528,12 +565,12 @@ public class AdminApplication implements AdminApp {
                     in.close();
                 }
                 catch (Exception e) {
-                    mResponse.setStatus(mResponse.SC_NOT_FOUND);
+                    mResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     mLog.debug(e);
                 }
             }
             else {
-                mResponse.setStatus(mResponse.SC_NOT_FOUND);
+                mResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
 
             mResponse.setContentType("application/java");
@@ -596,19 +633,16 @@ public class AdminApplication implements AdminApp {
         public void dynamicTemplateCall(String templateName, Object[] params)
             throws Exception
         {
-            org.teatrove.tea.runtime.Context context = mResponse
-                .getHttpContext();
+            Context context = mResponse.getHttpContext();
 
-            Template currentTemplate =
-                (Template)mRequest.getTemplate();
+            Template currentTemplate = (Template) mRequest.getTemplate();
 
             org.teatrove.tea.runtime.TemplateLoader.Template td =
                 mTeaServlet.getEngine().findTemplate(templateName,
                                                      mRequest,
                                                      mResponse,
-                                                     (TeaServletTemplateSource)
                                                      currentTemplate
-                                                     .getTemplateSource());
+                                                         .getTemplateSource());
 
             if (td==null) {
                 throw new ServletException("dynamicTemplateCall() could not find template: " + templateName
@@ -648,7 +682,7 @@ public class AdminApplication implements AdminApp {
                 getTeaServletAdmin().getApplications();
             for (int j=0;j<applications.length;j++) {
                 if (appName.equals(applications[j].getName())) {
-                    return ((Application)applications[j].getValue())
+                    return (applications[j].getValue())
                         .createContext(mRequest,mResponse);
                 }
             }
@@ -656,6 +690,7 @@ public class AdminApplication implements AdminApp {
         }
 
 
+        @SuppressWarnings("unchecked")
         public ServerStatus[] getReloadStatusOfServers() {
             ServerStatus[] statusArray;
 
@@ -663,12 +698,13 @@ public class AdminApplication implements AdminApp {
                 statusArray = new ServerStatus[0];
             }
             else {
-                statusArray = (ServerStatus[])mServerStatus
+                statusArray = mServerStatus
                     .toArray(new ServerStatus[mServerStatus.size()]);
 
-                Comparator c = BeanComparator.forClass(ServerStatus.class)
-                    .orderBy("statusCode").reverse()
-                    .orderBy("serverName");
+                Comparator<ServerStatus> c = 
+                    BeanComparator.forClass(ServerStatus.class)
+                        .orderBy("statusCode").reverse()
+                        .orderBy("serverName");
                 Arrays.sort(statusArray, c);
             }
             return statusArray;
@@ -677,32 +713,37 @@ public class AdminApplication implements AdminApp {
         protected void setServerReloadStatus(String name,
                                           int statusCode, String message) {
             if (mServerStatus == null) {
-                mServerStatus = new Vector();
+                mServerStatus = new Vector<ServerStatus>();
             }
             mServerStatus.add(new ServerStatus(name, statusCode, message));
         }
 
 
-        public Set addNote(String ID, String contents, int lifespan) {
+        @SuppressWarnings("unchecked")
+        public Set<?> addNote(String ID, String contents, int lifespan) {
 
-            Set noteSet = null;
+            Set<ServerNote> noteSet = null;
             if (mNotes == null) {
-                mNotes = Collections.synchronizedSortedMap(new TreeMap());
+                mNotes = Collections.synchronizedSortedMap(
+                    new TreeMap<String, Set<ServerNote>>()
+                );
             }
             if (ID != null) {
-                if ((noteSet = (Set)mNotes.get(ID)) == null) {
-                    Comparator comp = BeanComparator.forClass(ServerNote.class)
-                        .orderBy("timestamp").orderBy("contents");
-                    noteSet = Collections
-                        .synchronizedSortedSet(new TreeSet(comp));
+                if ((noteSet = mNotes.get(ID)) == null) {
+                    Comparator<ServerNote> comp = 
+                        BeanComparator.forClass(ServerNote.class)
+                            .orderBy("timestamp").orderBy("contents");
+                    noteSet = Collections.synchronizedSortedSet(
+                        new TreeSet<ServerNote>(comp)
+                    );
                     mNotes.put(ID, noteSet);
                 }
                 else {
                     Date now = new Date();
                     synchronized (noteSet) {
-                        Iterator expireIt = noteSet.iterator();
+                        Iterator<ServerNote> expireIt = noteSet.iterator();
                         while (expireIt.hasNext()) {
-                            ServerNote nextNote = (ServerNote)expireIt.next();
+                            ServerNote nextNote = expireIt.next();
                             if (now.after(nextNote.getExpiration())) {
                                 expireIt.remove();
                             }
@@ -953,9 +994,9 @@ public class AdminApplication implements AdminApp {
             Map expectedTypes = mRequest.getApplicationContextTypes();
 
             for (int j = 0; j < apps.length; j++) {
-                Application app = (Application)apps[j].getValue();
-                Class currentContextType = app.getContextType();
-                Class expectedContextType = (Class)expectedTypes.get(app);
+                Application app = apps[j].getValue();
+                Class<?> currentContextType = app.getContextType();
+                Class<?> expectedContextType = (Class<?>) expectedTypes.get(app);
                 if (currentContextType != expectedContextType) {
                     return true;
                 }
@@ -991,12 +1032,11 @@ public class AdminApplication implements AdminApp {
 
                 TemplateCompilationResults results =
                     new TemplateCompilationResults
-                        (Collections.synchronizedSet(new TreeSet()),
-                         new Hashtable());
+                        (Collections.synchronizedMap(new TreeMap<String, CompilationUnit>()),
+                         new Hashtable<String, List<TemplateIssue>>());
 
                 Clustered[] peers =
-                    (Clustered[])mClusterManager.getCluster()
-                    .getKnownPeers();
+                    mClusterManager.getCluster().getKnownPeers();
 
                 final ClusterThread[] ct = new ClusterThread[peers.length];
 
@@ -1054,7 +1094,7 @@ public class AdminApplication implements AdminApp {
                             fb.deleteCharAt(i);
                     }
 
-                    Class clazz = getClassForName(fb.toString());
+                    Class<?> clazz = getClassForName(fb.toString());
                     if (clazz != null) {
                         return getHandyClassInfo(clazz);
                     }
@@ -1063,15 +1103,41 @@ public class AdminApplication implements AdminApp {
             return null;
         }
 
-        public TemplateCompilationResults checkTemplates(boolean forceAll) throws Exception {
+        public TemplateCompilationResults checkTemplates(boolean forceAll) 
+            throws Exception {
+            
             return mTSAdmin.checkTemplates(forceAll, null);
         }
 
-        public TemplateCompilationResults checkTemplates(String[] templateNames) throws Exception {
+        public TemplateCompilationResults checkTemplates(String[] templateNames) 
+            throws Exception {
+            
             return mTSAdmin.checkTemplates(false, templateNames);
         }
+        
+        public TemplateExecutionResult executeSource(String source)
+            throws Exception {
 
-        public TeaToolsContext.HandyClassInfo getHandyClassInfo(Class clazz) {
+            // compile the given source
+            TemplateExecutionResult result = mTSAdmin.compileSource(source);
+            
+            // execute if no errors
+            if (result.isSuccessful()) {
+                // invoke the template stealing the output to a local buffer
+                Context context = mResponse.getHttpContext();
+                TemplateExecutionReceiver receiver =
+                    new TemplateExecutionReceiver(context, result.getTemplate());
+                mResponse.stealOutput(receiver, receiver);
+              
+                // set the output of the invocation
+                result.setOutput(receiver.getOutput());
+            }
+            
+            // return the result of compilation and output
+            return result;
+        }
+        
+        public TeaToolsContext.HandyClassInfo getHandyClassInfo(Class<?> clazz) {
             if (clazz != null) {
                 return new HandyClassInfoImpl(clazz);
             }
@@ -1082,7 +1148,7 @@ public class AdminApplication implements AdminApp {
             implements TeaToolsContext.HandyClassInfo
         {
 
-            HandyClassInfoImpl(Class clazz) {
+            HandyClassInfoImpl(Class<?> clazz) {
                 super(clazz,ContextImpl.this);
             }
         }
@@ -1123,13 +1189,6 @@ public class AdminApplication implements AdminApp {
         public ClusterThread(ContextImpl cont,
                              TemplateCompilationResults res,
                              Clustered peer,
-                             Integer all) {
-            this(cont, res, peer, (Object)all);
-        }
-
-        public ClusterThread(ContextImpl cont,
-                             TemplateCompilationResults res,
-                             Clustered peer,
                              Object all) {
             mContext = cont;
             mResults = res;
@@ -1153,8 +1212,9 @@ public class AdminApplication implements AdminApp {
                                                    "template reload already in progress");
                     }
                     else {
-                        mResults.appendNames(res.getReloadedTemplateNames());
-                        mResults.appendErrors(res.getTemplateErrors());
+                        mResults.appendTemplates(res.getReloadedTemplateNames());
+                        mResults.appendTemplates(res.getReloadedTemplates());
+                        mResults.appendIssues(res.getTemplateIssues());
                     }
                 }
                 else {
@@ -1178,6 +1238,81 @@ public class AdminApplication implements AdminApp {
                     mLog.warn(re2);
                 }
             }
+        }
+    }
+    
+    protected static class TemplateExecutionReceiver 
+        implements Substitution, OutputReceiver {
+    
+        private final Context context;
+        private final Template template;
+        private final StringBuilder output;
+        
+        public TemplateExecutionReceiver(Context context, Template template) {
+            this(context, template, 4096);
+        }
+        
+        public TemplateExecutionReceiver(Context context, Template template,
+                                         int bufSize) {
+            this.context = context;
+            this.template = template;
+            this.output = new StringBuilder(bufSize);
+        }
+        
+        public String getOutput() { 
+            return output.toString(); 
+        }
+        
+        @Override
+        public void substitute(Context context) 
+            throws Exception {
+            
+            template.execute(context, new Object[0]);
+        }
+        
+        @Override
+        public void substitute() throws Exception {
+            this.substitute(context);
+        }
+        
+        @Override
+        public Object getIdentifier() {
+            throw new UnsupportedOperationException("getIdentifier");
+        }
+        
+        @Override
+        public Substitution detach() {
+            throw new UnsupportedOperationException("detach");
+        }
+        
+        @Override
+        public void write(String str, int off, int len) throws IOException {
+            output.append(str, off, off + len);
+        }
+        
+        @Override
+        public void write(String str) throws IOException {
+            output.append(str);
+        }
+        
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            output.append(cbuf, off, len);
+        }
+        
+        @Override
+        public void write(char[] cbuf) throws IOException {
+            output.append(cbuf);
+        }
+        
+        @Override
+        public void write(int c) throws IOException {
+            output.append((char) c);
+        }
+        
+        @Override
+        public void print(Object obj) throws Exception {
+            output.append(context.toString(obj));
         }
     }
 }

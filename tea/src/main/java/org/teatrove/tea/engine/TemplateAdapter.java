@@ -87,12 +87,24 @@ class TemplateAdapter extends TemplateLoader {
             return mContextConstructor.getDeclaringClass();
         }
 
+        public Class<?> getReturnType() {
+            return mTemplate.getReturnType();
+        }
+        
+        public Type getGenericReturnType() {
+            return mTemplate.getGenericReturnType();
+        }
+        
         public String[] getParameterNames() {
             return mTemplate.getParameterNames();
         }
 
         public Class<?>[] getParameterTypes() {
             return mTemplate.getParameterTypes();
+        }
+        
+        public Type[] getGenericParameterTypes() {
+            return mTemplate.getGenericParameterTypes();
         }
 
         public void execute(Context context, Object[] parameters)

@@ -16,7 +16,21 @@
 
 package org.teatrove.teaservlet;
 
-import org.teatrove.tea.compiler.StatusListener;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.teatrove.tea.engine.ContextSource;
 import org.teatrove.tea.engine.Template;
 import org.teatrove.tea.engine.TemplateCompilationResults;
@@ -27,19 +41,11 @@ import org.teatrove.teaservlet.management.HttpContextManagementMBean;
 import org.teatrove.trove.log.Log;
 import org.teatrove.trove.log.LogEvent;
 import org.teatrove.trove.util.PropertyMap;
+import org.teatrove.trove.util.StatusEvent;
+import org.teatrove.trove.util.StatusListener;
 import org.teatrove.trove.util.Utils;
 import org.teatrove.trove.util.plugin.Plugin;
 import org.teatrove.trove.util.plugin.PluginContext;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.*;
 
 /**
  *
@@ -59,32 +65,50 @@ public class TeaServletEngineImpl implements TeaServletEngine {
     private ApplicationDepot mApplicationDepot;
     private TeaServletTemplateSource mTemplateSource;
     private List mLogEvents;
+    private boolean mProfilingEnabled;
 
     private PluginContext mPluginContext;
     
-    private boolean initialized;
-    private Exception initializationException;
+    private StatusListener mTemplateListener;
+    private StatusListener mApplicationListener;
+
+    private boolean mInitialized;
+    private Exception mInitializationException;
 
     protected void compileTemplates() {
         compileTemplates(null);
     }
     
     protected void compileTemplates(StatusListener listener) {
+        TeaServletTemplateSource source = getTemplateSource();
+        
+        if (listener != null) {
+            listener.statusStarted(new StatusEvent(source, 0, 0, null));
+        }
+
         try {
             mLog.debug("loading templates");
-            getTemplateSource().compileTemplates(null, false, listener);
+            source.compileTemplates(null, false, listener);
         }
         catch (Exception e) {
             mLog.error(e);
-            initializationException = e;
+            mInitializationException = e;
         }
         finally {
-            initialized = true;
+            mInitialized = true;
+        }
+        
+        if (listener != null) {
+            listener.statusCompleted(new StatusEvent(source, 0, 0, null));
         }
     }
     
     protected boolean isInitialized() {
-        return initialized;
+        return mInitialized;
+    }
+    
+    protected Exception getInitializationException() {
+        return mInitializationException;
     }
     
     public void startEngine(PropertyMap properties,
@@ -103,6 +127,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
             setLogEvents(memLog);
             setPluginContext(plug);
             setAssetEngine(servletContext, properties);
+            setProfilingEnabled(properties);
             mApplicationDepot = new ApplicationDepot(this);
             
             // Initialize the HttpContext JMX angent
@@ -120,7 +145,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
             }
             
             // compile templates
-            compileTemplates();
+            compileTemplates(mTemplateListener);
         }
         catch (Exception e) {
             throw new ServletException(e);
@@ -191,6 +216,30 @@ public class TeaServletEngineImpl implements TeaServletEngine {
         mProperties = properties;
     }
 
+    public boolean isProfilingEnabled() {
+        return mProfilingEnabled;
+    }
+
+    private void setProfilingEnabled(PropertyMap properties) {
+        mProfilingEnabled = properties.getBoolean("profiling.enabled", true);
+    }
+    
+    public StatusListener getTemplateListener() {
+        return mTemplateListener;
+    }
+    
+    public void setTemplateListener(StatusListener listener) {
+        mTemplateListener = listener;
+    }
+    
+    public StatusListener getApplicationListener() {
+        return mApplicationListener;
+    }
+    
+    public void setApplicationListener(StatusListener listener) {
+        mApplicationListener = listener;
+    }
+    
     public TeaServletTransaction createTransaction
         (HttpServletRequest request, HttpServletResponse response)
         throws IOException {
@@ -336,7 +385,7 @@ public class TeaServletEngineImpl implements TeaServletEngine {
                 true,
                 mProperties.getBoolean("management.httpcontext", false),
                 mProperties.getInt("management.httpcontext.readUrlCacheSize", 500),
-                mProperties.getBoolean("profiling.enabled", true));
+                isProfilingEnabled());
 
         // Create a new template source using the newly loaded context
         // source from the new application depot

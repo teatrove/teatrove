@@ -82,6 +82,9 @@ public class MergedClass {
     public static final int OBSERVER_ACTIVE = 2;    // Invocation events enabled and active.
     public static final int OBSERVER_EXTERNAL = 4;    // Invocation events enabled but triggered externally.
 
+    private static final boolean DEBUG = 
+        Boolean.getBoolean(MergedClass.class.getName().concat(".DEBUG"));
+    
     static {
         try {
             cMergedMap = new IdentityMap(7);
@@ -123,9 +126,17 @@ public class MergedClass {
                                                 Class<?>[] classes)
         throws IllegalArgumentException
     {
-        return getConstructor(injector, classes, null, OBSERVER_DISABLED);
+        return getConstructor(injector, classes, null, null, OBSERVER_DISABLED);
     }
-
+    
+    public static Constructor<?> getConstructor(ClassInjector injector,
+                                                Class<?>[] classes,
+                                                Class<?>[] interfaces)
+        throws IllegalArgumentException
+    {
+        return getConstructor(injector, classes, null, interfaces, OBSERVER_DISABLED);
+    }
+    
     /**
      * Returns the constructor for a class that merges all of the given source
      * classes. The constructor's parameter types match the source classes.
@@ -165,9 +176,18 @@ public class MergedClass {
                                                 String[] prefixes)
         throws IllegalArgumentException {
 
-        return getConstructor(injector, classes, prefixes, OBSERVER_DISABLED);
+        return getConstructor(injector, classes, prefixes, null, OBSERVER_DISABLED);
     }
 
+    public static Constructor<?> getConstructor(ClassInjector injector,
+                                                Class<?>[] classes,
+                                                String[] prefixes,
+                                                Class<?>[] interfaces)
+        throws IllegalArgumentException {
+
+        return getConstructor(injector, classes, prefixes, interfaces, OBSERVER_DISABLED);
+    }
+    
     /**
      * Returns the constructor for a class that merges all of the given source
      * classes. The constructor's parameter types match the source classes.
@@ -211,13 +231,23 @@ public class MergedClass {
                                                 int observerMode)
         throws IllegalArgumentException
     {
+        return getConstructor(injector, classes, prefixes, null, observerMode);
+    }
+
+    public static Constructor<?> getConstructor(ClassInjector injector,
+                                                Class<?>[] classes,
+                                                String[] prefixes,
+                                                Class<?>[] interfaces,
+                                                int observerMode)
+        throws IllegalArgumentException
+    {
         if (classes.length > 254) {
             throw new IllegalArgumentException
                 ("More than 254 merged classes: " + classes.length);
         }
 
         Class<?> clazz = 
-            getMergedClass(injector, classes, prefixes, observerMode);
+            getMergedClass(injector, classes, prefixes, interfaces, observerMode);
 
         try {
             if ((observerMode & OBSERVER_ENABLED) == 0)
@@ -235,7 +265,7 @@ public class MergedClass {
             throw new InternalError(e.toString());
         }
     }
-
+    
     /**
      * Returns the constructor for a class that merges all of the given source
      * classes. The constructor accepts one parameter type: an
@@ -258,7 +288,15 @@ public class MergedClass {
                                                  Class<?>[] classes)
         throws IllegalArgumentException
     {
-        return getConstructor2(injector, classes, null, OBSERVER_DISABLED);
+        return getConstructor2(injector, classes, null, null, OBSERVER_DISABLED);
+    }
+    
+    public static Constructor<?> getConstructor2(ClassInjector injector,
+                                                 Class<?>[] classes,
+                                                 Class<?>[] interfaces)
+        throws IllegalArgumentException
+    {
+        return getConstructor2(injector, classes, null, interfaces, OBSERVER_DISABLED);
     }
 
     /**
@@ -296,8 +334,15 @@ public class MergedClass {
                                                  Class<?>[] classes,
                                                  String[] prefixes)
             throws IllegalArgumentException {
-        return getConstructor2(injector, classes, prefixes, OBSERVER_DISABLED);
-
+        return getConstructor2(injector, classes, prefixes, null, OBSERVER_DISABLED);
+    }
+    
+    public static Constructor<?> getConstructor2(ClassInjector injector,
+                                                 Class<?>[] classes,
+                                                 String[] prefixes,
+                                                 Class<?>[] interfaces)
+            throws IllegalArgumentException {
+        return getConstructor2(injector, classes, prefixes, interfaces, OBSERVER_DISABLED);
     }
 
     /**
@@ -340,7 +385,18 @@ public class MergedClass {
                                                  int observerMode)
         throws IllegalArgumentException
     {
-        Class<?> clazz = getMergedClass(injector, classes, prefixes, observerMode);
+        return getConstructor2(injector, classes, prefixes, null, observerMode);
+    }
+
+    public static Constructor<?> getConstructor2(ClassInjector injector,
+                                                 Class<?>[] classes,
+                                                 String[] prefixes,
+                                                 Class<?>[] interfaces,
+                                                 int observerMode)
+        throws IllegalArgumentException
+    {
+        Class<?> clazz = getMergedClass(injector, classes, prefixes, interfaces, 
+                                        observerMode);
 
         try {
             if ((observerMode & OBSERVER_ENABLED) != 0)
@@ -352,7 +408,7 @@ public class MergedClass {
             throw new InternalError(e.toString());
         }
     }
-
+    
     /**
      * Just create the bytecode for the merged class, but don't load it. Since
      * no ClassInjector is provided to resolve name conflicts, the class name
@@ -364,7 +420,14 @@ public class MergedClass {
     public static ClassFile buildClassFile(String className, Class<?>[] classes)
         throws IllegalArgumentException
     {
-        return buildClassFile(className, classes, null, OBSERVER_DISABLED);
+        return buildClassFile(className, classes, null, null, OBSERVER_DISABLED);
+    }
+    
+    public static ClassFile buildClassFile(String className, Class<?>[] classes,
+                                           Class<?>[] interfaces)
+        throws IllegalArgumentException
+    {
+        return buildClassFile(className, classes, null, interfaces, OBSERVER_DISABLED);
     }
 
     /**
@@ -380,9 +443,15 @@ public class MergedClass {
     public static ClassFile buildClassFile(String className,
                                            Class<?>[] classes, 
                                            String[] prefixes) {
-        return buildClassFile(className, classes, prefixes, OBSERVER_DISABLED);
+        return buildClassFile(className, classes, prefixes, null, OBSERVER_DISABLED);
     }
 
+    public static ClassFile buildClassFile(String className,
+                                           Class<?>[] classes, 
+                                           String[] prefixes,
+                                           Class<?>[] interfaces) {
+        return buildClassFile(className, classes, prefixes, interfaces, OBSERVER_DISABLED);
+    }
 
     /**
      * Just create the bytecode for the merged class, but don't load it. Since
@@ -402,6 +471,16 @@ public class MergedClass {
                                            int observerMode)
         throws IllegalArgumentException
     {
+        return buildClassFile(className, classes, prefixes, null, observerMode);
+    }
+
+    public static ClassFile buildClassFile(String className,
+                                           Class<?>[] classes, 
+                                           String[] prefixes,
+                                           Class<?>[] interfaces,
+                                           int observerMode)
+        throws IllegalArgumentException
+    {
         ClassEntry[] classEntries = new ClassEntry[classes.length];
         for (int i=0; i<classes.length; i++) {
             if (prefixes == null || i >= prefixes.length) {
@@ -415,12 +494,22 @@ public class MergedClass {
                 classEntries[i] = new ClassEntry(classes[i], prefix);
             }
         }
-        return buildClassFile(null, className, classEntries, observerMode);
+        return buildClassFile(null, className, classEntries, interfaces, observerMode);
+    }
+    
+    private static Class<?> getMergedClass(ClassInjector injector,
+                                           Class<?>[] classes,
+                                           String[] prefixes,
+                                           int observerMode)
+        throws IllegalArgumentException
+    {
+        return getMergedClass(injector, classes, prefixes, null, observerMode);
     }
 
     private static Class<?> getMergedClass(ClassInjector injector,
                                            Class<?>[] classes,
                                            String[] prefixes,
+                                           Class<?>[] interfaces, 
                                            int observerMode)
         throws IllegalArgumentException
     {
@@ -448,9 +537,9 @@ public class MergedClass {
             }
         }
 
-        return getMergedClass(injector, classEntries, observerMode);
+        return getMergedClass(injector, classEntries, interfaces, observerMode);
     }
-
+    
     /**
      * Creates a class with a public constructor whose parameter types match
      * the given source classes. Another constructor is also created that
@@ -458,6 +547,7 @@ public class MergedClass {
      */
     private static synchronized Class<?> getMergedClass(ClassInjector injector,
                                                         ClassEntry[] classEntries,
+                                                        Class<?>[] interfaces,
                                                         int observerMode)
         throws IllegalArgumentException
     {
@@ -479,7 +569,8 @@ public class MergedClass {
 
         ClassFile cf;
         try {
-            cf = buildClassFile(injector, null, classEntries, observerMode);
+            cf = buildClassFile(injector, null, classEntries, interfaces, 
+                                observerMode);
         }
         catch (IllegalArgumentException e) {
             e.fillInStackTrace();
@@ -499,6 +590,11 @@ public class MergedClass {
             );
         }
 
+        if (DEBUG) {
+            String output = outputClassToFile(cf);
+            System.out.println("Saved merged class to: " + output);
+        }
+        
         Class<?> merged;
         try {
             merged = injector.loadClass(cf.getClassName());
@@ -514,7 +610,6 @@ public class MergedClass {
     private static String outputClassToFile(ClassFile cf) {
         try {
             File file = 
-                //new File(new File("C:/opt/projects/git/teatrove/teaadmin"), cf.getClassName() + ".class");
                 File.createTempFile(cf.getClassName(), ".class");
             FileOutputStream out = new FileOutputStream(file);
             cf.writeTo(out);
@@ -546,6 +641,7 @@ public class MergedClass {
     private static ClassFile buildClassFile(ClassInjector injector,
                                             String className,
                                             ClassEntry[] classEntries,
+                                            Class<?>[] interfaces,
                                             int observerMode)
         throws IllegalArgumentException
     {
@@ -676,7 +772,15 @@ public class MergedClass {
         cf.markSynthetic();
 
         List<GenericTypeDesc> generics = new ArrayList<GenericTypeDesc>();
-        for (int i=0; i<classEntries.length; i++) {
+        
+        if (interfaces != null) {
+            for (int i = 0; i < interfaces.length; i++) {
+                GenericType classType = new GenericType(interfaces[i]);
+                addAllInterfaces(cf, generics, classType);
+            }
+        }
+        
+        for (int i = 0; i < classEntries.length; i++) {
             ClassEntry classEntry = classEntries[i];
             if (nonConflictingClasses.contains(classEntry)) {
                 // TODO: detect when multiple classes contain interfaces
@@ -686,7 +790,7 @@ public class MergedClass {
                 addAllInterfaces(cf, generics, classType);
             }
         }
-
+        
         cf.setSignature(SignatureDesc.forClass(
             null, null, generics.toArray(new GenericTypeDesc[generics.size()])
         ).toString());
@@ -1107,6 +1211,11 @@ public class MergedClass {
             mi.addException(exceptions[i].getName());
         }
 
+        // Check for deprecation
+        if (ClassUtils.isDeprecated(method)) {
+            mi.addRuntimeVisibleAnnotation(TypeDesc.forClass(Deprecated.class));
+        }
+        
         // Delegate to wrapped object.
         CodeBuilder builder = new CodeBuilder(mi);
         if (!Modifier.isStatic(method.getModifiers())) {
@@ -1176,6 +1285,11 @@ public class MergedClass {
             mi.addException(exceptions[i].getName());
         }
 
+        // Check for deprecation
+        if (ClassUtils.isDeprecated(method)) {
+            mi.addRuntimeVisibleAnnotation(TypeDesc.forClass(Deprecated.class));
+        }
+        
         // Delegate to wrapped object.
         CodeBuilder builder = new CodeBuilder(mi);
 

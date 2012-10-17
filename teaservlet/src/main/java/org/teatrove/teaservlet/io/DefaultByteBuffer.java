@@ -27,6 +27,8 @@ import java.io.IOException;
 public class DefaultByteBuffer extends org.teatrove.trove.io.DefaultByteBuffer
     implements ByteBuffer
 {
+    private static final long serialVersionUID = 1L;
+
     public DefaultByteBuffer() {
         super();
     }

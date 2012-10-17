@@ -26,7 +26,7 @@ public interface TeaToolsConstants {
 
     /** An empty array of Class objects.  Used for the reflection-based method 
         invocation */
-    public final static Class[] EMPTY_CLASS_ARRAY = new Class[0];
+    public final static Class<?>[] EMPTY_CLASS_ARRAY = new Class[0];
 
     /** An empty array of Objects.  Used for the reflection-based method 
         invocation */
@@ -45,8 +45,8 @@ public interface TeaToolsConstants {
         new String[] { "java.lang", "java.util" };
 
     /** The "default" runtime context class */
-    public final static Class DEFAULT_CONTEXT_CLASS = 
-        org.teatrove.tea.runtime.UtilityContext.class;
+    public final static Class<?> DEFAULT_CONTEXT_CLASS = 
+        org.teatrove.tea.runtime.Context.class;
 
     /** The file extension for Tea files */
     public final static String TEA_FILE_EXTENSION = ".tea"; 

@@ -1,0 +1,71 @@
+<% template getGenericTypeAsString(java.lang.reflect.Type type, StringBuilder result, Boolean showLink, Boolean showVariables, Boolean resolveVariables)
+
+pathPrefix = call system.util.getPathPrefix()
+
+if (type isa java.lang.Class)
+{
+    info = getHandyClassInfo(type)
+
+    name = info.fullName
+    fullName = info.fullName
+    if (name == "org.teatrove.tea.runtime.Substitution") {
+        name = '<strong>...</strong>'
+    }
+    else {
+        idx = name.lastIndexOf('.')
+        if (idx > 0) {
+            name = name.substring(idx + 1)
+        }
+    }
+    
+    name = replace(name, "$", ".")
+
+    // these are not classes or are classes we don't want
+    // to display properties of
+    unlinked = ##(
+                  "void", "",
+                  "char", "",
+                  "int", "",
+                  "byte", "",
+                  "long", "",
+                  "float", "",
+                  "boolean", "",
+                  "org.teatrove.tea.runtime.Substitution", ""
+                  )
+                  
+    if (not showLink) {
+        append(result, name)
+    } 
+    else if (unlinked[type.name] != null) {
+        append(result, name)
+    }
+    else {
+        append(result, '<a href="')
+        append(result, pathPrefix)
+        append(result, 'system/format/getBeanDetails?bean=')
+        append(result, type.name)
+        append(result, '" title="')
+        append(result, fullName)
+        append(result, '">')
+        append(result, name)
+        append(result, '</a>')
+    }
+}
+else if (type isa java.lang.reflect.ParameterizedType)
+{
+    call system.generics.getParameterizedTypeAsString(type, result, showLink, showVariables, resolveVariables)
+}
+else if (type isa java.lang.reflect.WildcardType)
+{
+    call system.generics.getWildcardTypeAsString(type, result, showLink, showVariables, resolveVariables)
+}
+else if (type isa java.lang.reflect.TypeVariable)
+{
+    call system.generics.getTypeVariableAsString(type, result, showLink, showVariables, resolveVariables)
+}
+else if (type isa java.lang.reflect.GenericArrayType)
+{
+    call system.generics.getGenericArrayTypeAsString(type, result, showLink, showVariables, resolveVariables)
+}
+
+%>

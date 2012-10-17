@@ -24,6 +24,12 @@ import java.io.IOException;
  * @author Brian S O'Neill
  */
 public interface ByteBuffer extends ByteData {
+    
+    /**
+     * Clears any bytes added to this buffer.
+     */
+    public void clear() throws IOException;
+    
     /**
      * Returns the base byte count, which excludes surrogates.
      */

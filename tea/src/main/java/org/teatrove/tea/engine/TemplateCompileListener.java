@@ -14,13 +14,26 @@
  *  limitations under the License.
  */
 
-package org.teatrove.tea.compiler;
+package org.teatrove.tea.engine;
+
+import java.util.List;
+import java.util.Map;
+
+import org.teatrove.tea.compiler.CompileListener;
 
 /**
- * The listener interface for receiving error events.
- *
- * @author Brian S O'Neill
+ * 
+ * @author Jonathan Colwell
  */
-public interface ErrorListener extends java.util.EventListener {
-    public void compileError(ErrorEvent e);
+public interface TemplateCompileListener extends CompileListener {
+    
+    public Map<String, List<TemplateIssue>> getTemplateIssues();
+    public Map<String, List<TemplateIssue>> getTemplateErrors();
+    public Map<String, List<TemplateIssue>> getTemplateWarnings();
+
+    /**
+     * Close listener to dispose of any resources (i.e. open files) that the
+     * error listener is hanging on to.
+     */
+    public void close();
 }

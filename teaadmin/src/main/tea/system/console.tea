@@ -18,9 +18,17 @@
 
             call pages.compile(configuration);
 
+        } else if ( page == 'console' ) {
+
+            call pages.console(configuration);
+
         } else if ( page == 'templates' ) {
 
             call pages.templates(configuration);
+
+        } else if ( page == 'viewer' ) {
+
+            call pages.viewer(configuration);
 
         } else if ( page == 'functions' ) {
 
@@ -57,6 +65,10 @@
         } else if ( page == 'system_information' ) {
 
             call pages.system_information(configuration);
+
+        } else if ( page == 'timelapse' ) {
+
+            call pages.timelapse(configuration);
 
         } else {
 

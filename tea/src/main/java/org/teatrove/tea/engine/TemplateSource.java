@@ -19,9 +19,9 @@ package org.teatrove.tea.engine;
 import java.util.Date;
 import java.util.Map;
 
-import org.teatrove.tea.compiler.StatusListener;
 import org.teatrove.tea.runtime.TemplateLoader;
 import org.teatrove.trove.util.ClassInjector;
+import org.teatrove.trove.util.StatusListener;
 
 
 /**
@@ -37,7 +37,7 @@ import org.teatrove.trove.util.ClassInjector;
 public interface TemplateSource {
 
     public void init(TemplateSourceConfig config) throws Exception;
-
+    
     /**
      * Compile templates recursively
      *

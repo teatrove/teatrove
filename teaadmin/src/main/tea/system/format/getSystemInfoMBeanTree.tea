@@ -1,0 +1,20 @@
+<% template getSystemInfoMBeanTree(String parent, org.teatrove.teaapps.contexts.JMXContext$MBeanEntry mbean) %>
+
+<% if (mbean.isMBean()) { %>
+    <li id="<% parent %>-<% mbean.name %>" rel="application" details="format/getMBeanDetails?name=<% encodeParameter(mbean.objectName.canonicalName) %>">
+        <a href="#"><% mbean.name %></a>
+    </li>
+<% } else { %>
+    <% fullName = parent & '-' & mbean.name %>
+    
+    <li id="<% fullName %>" rel="folder">
+        <a href="#"><% mbean.name %></a>
+        <ul>
+        <% 
+            foreach (entry in mbean.entries) {
+                call getSystemInfoMBeanTree(fullName, entry)
+            }
+        %>
+        </ul>
+    </li>
+<% } %>

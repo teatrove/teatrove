@@ -61,10 +61,10 @@ public class MergedContextClassBuilder implements ContextClassBuilder {
         // Figure out location for class
         final File mergedClassLocation = findMergedInterfaceFile(mergedClassName, helper);
 
-        // The UtilityContext should be always be available
-        contexts.add(0, "org.teatrove.tea.runtime.UtilityContext");
+        // The standard Context should be always be available
+        contexts.add(0, "org.teatrove.tea.runtime.Context");
 
-        List<Class> contextClasses = new ArrayList<Class>(contexts.size());
+        List<Class<?>> contextClasses = new ArrayList<Class<?>>(contexts.size());
         for (String context : contexts) {
             try {
                 contextClasses.add(Class.forName(context, false, helper.getProjectClassLoader()));
@@ -96,6 +96,7 @@ public class MergedContextClassBuilder implements ContextClassBuilder {
         return mergedClassLocation;
     }
 
+    @SuppressWarnings("unchecked")
     private Class<Context> loadMergedInterface(ClassInjector injector, String mergedClassName) throws ContextClassBuilderException {
         try {
             //noinspection unchecked
@@ -137,13 +138,14 @@ public class MergedContextClassBuilder implements ContextClassBuilder {
         }
     }
 
-    private ClassFile createMergedInterface(String mergedClassName, List<Class> contextClasses) {
+    private ClassFile createMergedInterface(String mergedClassName, 
+                                            List<Class<?>> contextClasses) {
         final ClassFile classFile = new ClassFile(mergedClassName);
 
         // For the runtime to be able to adapt to this class, make it an interface
         Set<Method> methods = new HashSet<Method>();
         classFile.getModifiers().setInterface(true);
-        for (Class contextClass : contextClasses) {
+        for (Class<?> contextClass : contextClasses) {
             if (contextClass.isInterface()) {
                 classFile.addInterface(contextClass);
             }
