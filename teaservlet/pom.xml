@@ -147,7 +147,14 @@
         </executions>
       </plugin>
 
-        <!-- Use a Javadoc doclet to generate BeanInfo classes -->
+        <!-- 
+        Use a Javadoc doclet to generate BeanInfo classes
+        NOTE that we include both TeaServlet and Tea sources here since this
+        requires toolbox which requires tea.  As a result, Tea cannot generate
+        beaninfo via toolbox until it is built which will only happen once tea
+        is built. As a result, we build tea first, then toolbox, then teaservlet
+        at which point the beaninfo is generated for both tea and teaservlet. 
+        -->
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
@@ -158,8 +165,8 @@
                     <phase>generate-sources</phase>
                     <configuration>
                         <useStandardDocletOptions>false</useStandardDocletOptions>
-                        <reportOutputDirectory>${project.build.directory}/generated-sources/beaninfo
-                        </reportOutputDirectory>
+                        <reportOutputDirectory>${project.build.directory}/generated-sources/beaninfo</reportOutputDirectory>
+                        <sourcepath>src/main/java;../tea/src/main/java</sourcepath>
                         <destDir>.</destDir>
                         <doclet>org.teatrove.toolbox.beandoc.BeanDocDoclet</doclet>
                         <docletArtifact>
