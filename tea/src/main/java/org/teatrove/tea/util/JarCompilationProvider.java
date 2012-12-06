@@ -44,7 +44,7 @@ public class JarCompilationProvider implements CompilationProvider {
     
     public JarCompilationProvider(File sourceJarFile) {
         
-        if (sourceJarFile == null || !sourceJarFile.exists()) {
+    	if (sourceJarFile == null ) {
             throw new IllegalArgumentException("sourceJarFile");
         }
         
