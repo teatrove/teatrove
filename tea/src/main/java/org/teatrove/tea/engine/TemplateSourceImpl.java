@@ -763,10 +763,8 @@ public class TemplateSourceImpl implements TemplateSource {
         
         // handle jar-based paths
         else if (path.startsWith("jar:")) {
-            File file = new File(path.substring(4));
-            if (file.isFile() && file.getPath().endsWith(".jar")) {
-                return new JarCompilationProvider(file);
-            }
+        	File file = new File(path);
+            return new JarCompilationProvider(file);
         }
         
         // handle classpath-based paths
