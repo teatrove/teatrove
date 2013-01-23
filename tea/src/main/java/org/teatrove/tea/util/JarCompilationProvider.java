@@ -146,7 +146,10 @@ public class JarCompilationProvider implements CompilationProvider {
 
         public JarOfTemplates(File file) throws IOException {
             mUrl = makeJarUrlFromFile(file);
+            
             mConn = (JarURLConnection)mUrl.openConnection();
+            mConn.setUseCaches(false);
+            
             mJarFile = mConn.getJarFile();
         }
 
