@@ -8,17 +8,17 @@
     // 1 minute
     aggregateIntervalForRawData = stats.latestAggregateIntervalForRawData
 
-    info('TESTING!!! ' & (stats ? 'valid' : 'invalid'))
+    //info('TESTING!!! ' & (stats ? 'valid' : 'invalid'))
     if ( stats != null and aggregateIntervalForRawData != null ) {
 
         durationStressMeasure = aggregateIntervalForRawData.durationStressMeasure;
-        info('MEASURE: ' & durationStressMeasure & ' : ' & aggregateIntervalForRawData.class.name)
+        //info('MEASURE: ' & durationStressMeasure & ' : ' & aggregateIntervalForRawData.class.name)
         if ( durationStressMeasure + 0.0 == durationStressMeasure ) {
             stressValue = durationStressMeasure;
         }
     }
 
-    info('STRESS: ' & stressValue)
+    //info('STRESS: ' & stressValue)
     
     // return stress value
     stressValue
